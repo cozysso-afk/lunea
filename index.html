@@ -7,14 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@300;400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #fdf6f5 0%, #f6edf2 50%, #f0eaf5 100%);
-            --text-dark: #2d2438;
-            --text-light: #7c7385;
-            --accent-purple: #8670a3;
-            --accent-soft: #ebdfe8;
-            --card-bg: rgba(255, 255, 255, 0.88);
-            --shadow: 0 10px 30px rgba(74, 58, 89, 0.05);
-            --border-radius: 24px;
+            --bg-gradient: linear-gradient(145deg, #fdf7f6 0%, #f6edf4 40%, #eee8f5 100%);
+            --text-main: #2b2338;
+            --text-sub: #786f82;
+            --purple-main: #8a73a8;
+            --purple-light: #f3ebf5;
+            --glass-bg: rgba(255, 255, 255, 0.82);
+            --glass-border: rgba(255, 255, 255, 0.7);
+            --shadow-soft: 0 10px 32px rgba(62, 45, 78, 0.05);
+            --radius-main: 26px;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -22,9 +23,9 @@
         body {
             margin: 0;
             padding: 0;
-            font-family: 'Pretendard', sans-serif;
+            font-family: 'Pretendard', -apple-system, sans-serif;
             background: var(--bg-gradient);
-            color: var(--text-dark);
+            color: var(--text-main);
             min-height: 100vh;
             display: flex;
             justify-content: center;
@@ -46,101 +47,99 @@
         }
         .logo-area { display: flex; align-items: center; gap: 12px; }
         .moon-icon {
-            width: 42px;
-            height: 42px;
+            width: 42px; height: 42px;
             background: #ffffff;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            box-shadow: var(--shadow);
-            border: 1px solid #eee4ec;
+            box-shadow: var(--shadow-soft);
+            border: 1px solid #ede3ec;
         }
         .logo-text h1 {
             margin: 0;
             font-family: 'Noto Serif KR', serif;
-            font-size: 20px;
+            font-size: 21px;
             letter-spacing: 3px;
             font-weight: 700;
         }
         .logo-text p {
             margin: 0;
             font-size: 11px;
-            color: var(--text-light);
+            color: var(--text-sub);
             letter-spacing: 1.5px;
         }
         .record-btn {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #ede3eb;
+            background: rgba(255, 255, 255, 0.88);
+            border: 1px solid #ebdfee;
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 13px;
-            color: var(--text-dark);
+            color: var(--text-main);
             cursor: pointer;
-            box-shadow: var(--shadow);
-            transition: 0.2s;
+            box-shadow: var(--shadow-soft);
         }
 
         /* 히어로 배너 */
         .hero-banner {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
+            background: var(--glass-bg);
+            border-radius: var(--radius-main);
             padding: 28px 24px;
-            box-shadow: var(--shadow);
-            margin-bottom: 32px;
+            box-shadow: var(--shadow-soft);
+            margin-bottom: 34px;
             position: relative;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
         }
         .hero-subtitle {
             font-size: 11px;
             font-weight: 700;
-            color: var(--accent-purple);
-            letter-spacing: 1.5px;
+            color: var(--purple-main);
+            letter-spacing: 1.8px;
             margin-bottom: 12px;
         }
         .hero-title {
             font-family: 'Noto Serif KR', serif;
             font-size: 27px;
-            line-height: 1.38;
+            line-height: 1.4;
             margin: 0 0 16px 0;
             font-weight: 600;
         }
         .hero-title span {
-            color: var(--accent-purple);
+            color: var(--purple-main);
             font-style: italic;
         }
         .hero-desc {
             font-size: 13px;
-            color: var(--text-light);
+            color: var(--text-sub);
             line-height: 1.65;
             margin: 0;
         }
 
-        /* 타이틀 */
+        /* 섹션 타이틀 */
         .section-title {
             font-size: 11px;
             font-weight: 700;
-            color: var(--accent-purple);
+            color: var(--purple-main);
             letter-spacing: 2px;
             margin-bottom: 6px;
         }
         .section-heading {
             font-family: 'Noto Serif KR', serif;
-            font-size: 22px;
+            font-size: 23px;
             margin: 0 0 20px 0;
         }
 
-        /* 카테고리 카드 & 아코디언 */
+        /* 아코디언 카테고리 카드 */
         .category-card {
-            background: var(--card-bg);
-            border-radius: var(--border-radius);
-            margin-bottom: 14px;
-            box-shadow: var(--shadow);
+            background: var(--glass-bg);
+            border-radius: var(--radius-main);
+            margin-bottom: 15px;
+            box-shadow: var(--shadow-soft);
             overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.7);
-            backdrop-filter: blur(8px);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
         }
         .category-header {
@@ -152,26 +151,25 @@
         }
         .cat-icon-title { display: flex; align-items: center; gap: 14px; }
         .cat-icon {
-            width: 36px;
-            height: 36px;
-            background: #f5eff5;
+            width: 36px; height: 36px;
+            background: var(--purple-light);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--accent-purple);
+            color: var(--purple-main);
             font-size: 14px;
         }
         .cat-text h3 {
             margin: 0;
             font-family: 'Noto Serif KR', serif;
-            font-size: 17px;
+            font-size: 18px;
             letter-spacing: 1px;
         }
         .cat-text p {
             margin: 3px 0 0 0;
             font-size: 12px;
-            color: var(--text-light);
+            color: var(--text-sub);
         }
         .toggle-btn {
             font-size: 24px;
@@ -181,7 +179,7 @@
         }
         .category-content {
             display: none;
-            padding: 0 20px 16px 20px;
+            padding: 0 20px 10px 20px;
         }
         .category-card.active .category-content { display: block; }
         .category-card.active .toggle-btn { transform: rotate(45deg); }
@@ -192,25 +190,26 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px 0;
-            border-top: 1px solid #f1e9f0;
+            border-top: 1px solid #f1e7f0;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
+        .reading-item:active { opacity: 0.6; }
         .reading-item h4 { margin: 0 0 4px 0; font-size: 15px; font-weight: 600; }
-        .reading-item p { margin: 0; font-size: 12px; color: var(--text-light); }
+        .reading-item p { margin: 0; font-size: 12px; color: var(--text-sub); }
         .card-count {
-            background: #f1e8ee;
-            color: #9b7e93;
+            background: #f1e6ef;
+            color: #95768e;
             font-size: 12px;
             font-weight: 700;
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
+            padding: 4px 10px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* 하단 설정 팝업창 */
+        /* 하단 설정 팝업창 (Bottom Sheet) */
         .bottom-sheet {
             position: fixed;
             bottom: -120%;
@@ -219,26 +218,26 @@
             width: 100%;
             max-width: 480px;
             background: rgba(255, 255, 255, 0.96);
-            backdrop-filter: blur(16px);
-            border-radius: 28px 28px 0 0;
+            backdrop-filter: blur(20px);
+            border-radius: 30px 30px 0 0;
             padding: 28px 24px 34px 24px;
-            box-shadow: 0 -12px 40px rgba(50, 35, 65, 0.12);
+            box-shadow: 0 -12px 45px rgba(45, 30, 60, 0.15);
             transition: bottom 0.35s cubic-bezier(0.2, 0.9, 0.3, 1);
             z-index: 100;
-            border: 1px solid #efe4ee;
+            border: 1px solid #ebdfee;
         }
         .bottom-sheet.open { bottom: 0; }
         .bs-header { margin-bottom: 18px; }
-        .bs-subtitle { font-size: 11px; font-weight: 700; color: var(--accent-purple); letter-spacing: 1px; }
+        .bs-subtitle { font-size: 11px; font-weight: 700; color: var(--purple-main); letter-spacing: 1px; }
         .bs-title { font-family: 'Noto Serif KR', serif; font-size: 24px; margin: 4px 0; }
-        .bs-desc { font-size: 13px; color: var(--text-light); margin: 0; }
+        .bs-desc { font-size: 13px; color: var(--text-sub); margin: 0; }
 
         .input-group { margin-bottom: 16px; }
         .input-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
         textarea {
             width: 100%;
-            background: #faf7f9;
-            border: 1px solid #ede3eb;
+            background: #faf6f9;
+            border: 1px solid #ede1eb;
             border-radius: 14px;
             padding: 14px;
             font-family: inherit;
@@ -248,8 +247,8 @@
         }
 
         .radio-box {
-            background: #faf7f9;
-            border: 1.5px solid #ede3eb;
+            background: #faf6f9;
+            border: 1.5px solid #ede1eb;
             padding: 14px 16px;
             border-radius: 14px;
             margin-bottom: 8px;
@@ -257,15 +256,15 @@
             transition: 0.2s;
         }
         .radio-box.selected {
-            background: #f7eff6;
-            border-color: var(--accent-purple);
+            background: #f6eef6;
+            border-color: var(--purple-main);
         }
         .radio-box h5 { margin: 0 0 2px 0; font-size: 14px; font-weight: 600; }
-        .radio-box p { margin: 0; font-size: 12px; color: var(--text-light); }
+        .radio-box p { margin: 0; font-size: 12px; color: var(--text-sub); }
 
         .draw-btn {
             width: 100%;
-            background: #392e44;
+            background: #342742;
             color: #ffffff;
             border: none;
             padding: 18px;
@@ -274,63 +273,74 @@
             font-weight: 600;
             cursor: pointer;
             margin-top: 8px;
-            box-shadow: 0 6px 20px rgba(57, 46, 68, 0.25);
+            box-shadow: 0 8px 24px rgba(52, 39, 66, 0.25);
             transition: 0.2s;
         }
 
-        /* 🔮 리딩 및 카드 펼치기 모달 창 */
+        /* 🔮 카드 펼치기 리딩 모달창 */
         .spread-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(30, 24, 38, 0.85);
-            backdrop-filter: blur(12px);
+            background: rgba(24, 18, 33, 0.88);
+            backdrop-filter: blur(14px);
             z-index: 200;
             display: none;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 16px;
         }
         .spread-modal.show { display: flex; }
         .modal-content {
-            background: #fcf9fb;
+            background: #fdfafc;
             width: 100%;
             max-width: 440px;
-            max-height: 90vh;
+            max-height: 92vh;
             border-radius: 28px;
-            padding: 24px 20px;
+            padding: 24px 18px;
             overflow-y: auto;
             position: relative;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.35);
             text-align: center;
         }
         .close-modal {
             position: absolute;
-            top: 18px; right: 20px;
-            background: none; border: none; font-size: 24px;
-            color: var(--text-light); cursor: pointer;
+            top: 16px; right: 18px;
+            background: none; border: none; font-size: 26px;
+            color: var(--text-sub); cursor: pointer;
         }
 
-        /* 3D 카드 셔플 & 플립 애니메이션 */
+        .flip-all-btn {
+            background: #f3ebf5;
+            border: 1px solid #ebddee;
+            color: var(--purple-main);
+            padding: 8px 16px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            cursor: pointer;
+        }
+
+        /* 3D 타로 카드 그리드 */
         .cards-grid {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 12px;
-            margin: 24px 0;
+            gap: 10px;
+            margin: 16px 0 24px 0;
             perspective: 1000px;
         }
         .tarot-card-wrapper {
-            width: 100px;
-            height: 160px;
+            width: 90px;
+            height: 145px;
             cursor: pointer;
         }
         .tarot-card {
-            width: 100%;
-            height: 100%;
+            width: 100%; height: 100%;
             position: relative;
             transform-style: preserve-3d;
-            transition: transform 0.7s cubic-bezier(0.4, 0.2, 0.2, 1);
-            border-radius: 12px;
+            transition: transform 0.65s cubic-bezier(0.4, 0.2, 0.2, 1);
+            border-radius: 10px;
             box-shadow: 0 6px 16px rgba(0,0,0,0.12);
         }
         .tarot-card.flipped { transform: rotateY(180deg); }
@@ -340,23 +350,23 @@
             position: absolute;
             width: 100%; height: 100%;
             backface-visibility: hidden;
-            border-radius: 12px;
+            border-radius: 10px;
             overflow: hidden;
         }
         .card-back {
-            background: linear-gradient(135deg, #2b2238 0%, #463457 100%);
-            border: 2px solid #e0d0df;
+            background: linear-gradient(135deg, #2b2038 0%, #473259 100%);
+            border: 1.5px solid #dfcedf;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            color: #d6c6dc;
+            color: #d8c7de;
             font-size: 18px;
         }
         .card-front {
             background: #fff;
             transform: rotateY(180deg);
-            border: 2px solid #e4d7e2;
+            border: 1.5px solid #e3d5e2;
         }
         .card-front img {
             width: 100%; height: 100%;
@@ -367,13 +377,19 @@
             background: #ffffff;
             border-radius: 16px;
             padding: 16px;
-            margin-top: 14px;
+            margin-top: 12px;
             text-align: left;
-            border: 1px solid #ede3eb;
+            border: 1px solid #ede1eb;
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+            animation: fadeIn 0.4s ease;
         }
-        .card-info-box h4 { margin: 0 0 6px 0; color: var(--accent-purple); font-size: 15px; }
-        .card-info-box p { margin: 0; font-size: 13px; color: var(--text-dark); line-height: 1.55; }
+        .card-info-box h4 { margin: 0 0 4px 0; color: var(--purple-main); font-size: 14px; }
+        .card-info-box p { margin: 0; font-size: 13px; color: var(--text-main); line-height: 1.55; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
@@ -412,18 +428,36 @@
         </div>
         <div class="category-content" onclick="event.stopPropagation()">
             <div class="reading-item" onclick="openBottomSheet('GENERAL', 'YES / NO', '결정의 흐름을 고정 점수로 확인해요.', 3)">
-                <div>
-                    <h4>YES / NO</h4>
-                    <p>결정의 흐름을 고정 점수로 확인해요.</p>
-                </div>
+                <div><h4>YES / NO</h4><p>결정의 흐름을 고정 점수로 확인해요.</p></div>
                 <div class="card-count">3</div>
             </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'ONE CARD', '지금 필요한 핵심 메시지 한 장.', 1)">
+                <div><h4>ONE CARD</h4><p>지금 필요한 핵심 메시지 한 장.</p></div>
+                <div class="card-count">1</div>
+            </div>
             <div class="reading-item" onclick="openBottomSheet('GENERAL', 'TIMELINE', '과거부터 미래까지의 흐름.', 3)">
-                <div>
-                    <h4>TIMELINE</h4>
-                    <p>과거부터 미래까지의 흐름.</p>
-                </div>
+                <div><h4>TIMELINE</h4><p>과거부터 미래까지의 흐름.</p></div>
                 <div class="card-count">3</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'SITUATION', '상황의 원인과 방향을 차분히 봐요.', 5)">
+                <div><h4>SITUATION</h4><p>상황의 원인과 방향을 차분히 봐요.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'DEEP FLOW', '숨은 원인까지 깊게 읽는 배열.', 7)">
+                <div><h4>DEEP FLOW</h4><p>숨은 원인까지 깊게 읽는 배열.</p></div>
+                <div class="card-count">7</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'CELTIC CROSS', '큰 흐름과 내·외부 변수를 보는 전용 배열.', 10)">
+                <div><h4>CELTIC CROSS</h4><p>큰 흐름과 내·외부 변수를 보는 전용 배열.</p></div>
+                <div class="card-count">10</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'FREE SPREAD', '카드 수와 자리 이름을 직접 만드는 자유 배열.', 5)">
+                <div><h4>FREE SPREAD</h4><p>카드 수와 자리 이름을 직접 만드는 자유 배열.</p></div>
+                <div class="card-count">1–10</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 배열', '외부 AI 없이 질문 구조에 맞는 배열을 추천해요.', 5)">
+                <div><h4>질문 맞춤 배열</h4><p>외부 AI 없이 질문 구조에 맞는 배열을 추천해요.</p></div>
+                <div class="card-count">추천</div>
             </div>
         </div>
     </div>
@@ -441,18 +475,28 @@
         </div>
         <div class="category-content" onclick="event.stopPropagation()">
             <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5)">
-                <div>
-                    <h4>상대 속마음</h4>
-                    <p>겉과 속, 감정의 방향을 나누어 봐요.</p>
-                </div>
+                <div><h4>상대 속마음</h4><p>겉과 속, 감정의 방향을 나누어 봐요.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '내 외모 · 분위기', '그 사람 눈에 비친 외적 인상과 아우라.', 7)">
+                <div><h4>내 외모 · 분위기</h4><p>그 사람 눈에 비친 외적 인상과 아우라.</p></div>
+                <div class="card-count">7</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '성인 간 욕구·리듬·경계·친밀감의 조화.', 9)">
+                <div><h4>속궁합 · 19+</h4><p>성인 간 욕구·리듬·경계·친밀감의 조화.</p></div>
+                <div class="card-count">9</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '연락운', '연락 의향과 가까운 흐름.', 5)">
+                <div><h4>연락운</h4><p>연락 의향과 가까운 흐름.</p></div>
                 <div class="card-count">5</div>
             </div>
             <div class="reading-item" onclick="openBottomSheet('LOVE', '연락 시기', '시간 흐름만 보는 전용 배열.', 5)">
-                <div>
-                    <h4>연락 시기</h4>
-                    <p>시간 흐름만 보는 전용 배열.</p>
-                </div>
+                <div><h4>연락 시기</h4><p>시간 흐름만 보는 전용 배열.</p></div>
                 <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '재회운', '재회의 장애물과 앞으로의 흐름.', 7)">
+                <div><h4>재회운</h4><p>재회의 장애물과 앞으로의 흐름.</p></div>
+                <div class="card-count">7</div>
             </div>
         </div>
     </div>
@@ -469,12 +513,21 @@
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="openBottomSheet('STOCK', '매수 판단', '진입 흐름과 위험을 상징적으로 봐요.', 3)">
-                <div>
-                    <h4>매수 판단</h4>
-                    <p>진입 흐름과 위험을 상징적으로 봐요.</p>
-                </div>
-                <div class="card-count">3</div>
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '매수 판단', '진입 흐름과 위험을 상징적으로 봐요.', 5)">
+                <div><h4>매수 판단</h4><p>진입 흐름과 위험을 상징적으로 봐요.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '보유 / 익절', '보유와 수익 실현 흐름을 살펴봐요.', 5)">
+                <div><h4>보유 / 익절</h4><p>보유와 수익 실현 흐름을 살펴봐요.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '매도', '계속 보유와 지금 매도의 상징적 흐름.', 5)">
+                <div><h4>매도</h4><p>계속 보유와 지금 매도의 상징적 흐름.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '수익실현 금액', '입력한 금액에 카드 밴드를 재미로 적용해요.', 5)">
+                <div><h4>수익실현 금액</h4><p>입력한 금액에 카드 밴드를 재미로 적용해요.</p></div>
+                <div class="card-count">5</div>
             </div>
         </div>
     </div>
@@ -511,43 +564,42 @@
     <div class="modal-content">
         <button class="close-modal" onclick="closeModal()">×</button>
         <div class="bs-subtitle" id="modalReadingType">LOVE SPREAD</div>
-        <h3 style="font-family: 'Noto Serif KR'; margin: 6px 0 16px 0;" id="modalQuestionText">카드를 터치하여 뒤집어 보세요</h3>
+        <h3 style="font-family: 'Noto Serif KR'; margin: 6px 0 14px 0;" id="modalQuestionText">카드를 터치하여 뒤집어 보세요</h3>
+        <button class="flip-all-btn" onclick="flipAllCards()">✦ 모든 카드 한 번에 뒤집기</button>
         
-        <div class="cards-grid" id="cardsGrid">
-            </div>
-
+        <div class="cards-grid" id="cardsGrid"></div>
         <div id="readingResults"></div>
     </div>
 </div>
 
 <script>
-    // 78장 타로 덱 데이터베이스 (고화질 클래식/실버 스타일 이미지 링크 매핑)
+    // 22장 메이저 타로 덱 (고화질 클래식 & 은은한 일러스트)
     const TAROT_DECK = [
-        { name: "0. The Fool (바보)", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keyword: "새로운 시작, 순수, 모험, 자유" },
-        { name: "I. The Magician (마법사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", keyword: "창조력, 잠재력, 기술, 실행력" },
-        { name: "II. The High Priestess (여사제)", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", keyword: "직관, 비밀, 신비, 내면의 지혜" },
-        { name: "III. The Empress (여황제)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", keyword: "풍요, 모성애, 번영, 자연스러운 결실" },
-        { name: "IV. The Emperor (황제)", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", keyword: "권위, 안정, 규율, 확고한 리더십" },
-        { name: "V. The Hierophant (교황)", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", keyword: "전통, 멘토, 신뢰, 도덕적 조언" },
-        { name: "VI. The Lovers (연인)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3b/RWS_Tarot_06_Lovers.jpg", keyword: "사랑, 조화, 깊은 유대, 선택의 기로" },
-        { name: "VII. The Chariot (전차)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", keyword: "돌파, 승리, 강한 추진력, 극복" },
-        { name: "VIII. Strength (힘)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", keyword: "부드러운 용기, 인내, 자기 절제" },
-        { name: "IX. The Hermit (은둔자)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", keyword: "성찰, 탐구, 고독, 내면의 길잡이" },
-        { name: "X. Wheel of Fortune (운명의 수레바퀴)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg", keyword: "전환점, 운명적 기회, 주기적 변화" },
-        { name: "XI. Justice (정의)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", keyword: "공정함, 균형, 인과관계, 현명한 판단" },
-        { name: "XII. The Hanged Man (매달린 사람)", img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", keyword: "관점의 전환, 기다림, 자발적 희생" },
-        { name: "XIII. Death (죽음)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", keyword: "끝과 새로운 시작, 탈바꿈, 근본적 변화" },
-        { name: "XIV. Temperance (절제)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", keyword: "조화, 융합, 인내, 평온한 중용" },
-        { name: "XV. The Devil (악마)", img: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", keyword: "집착, 유혹, 벗어날 수 없는 굴레" },
-        { name: "XVI. The Tower (탑)", img: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", keyword: "예기치 못한 충격, 환상의 붕괴, 각성" },
-        { name: "XVII. The Star (별)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", keyword: "희망, 영감, 치유, 긍정적인 미래" },
-        { name: "XVIII. The Moon (달)", img: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", keyword: "불안, 무의식의 환상, 안개 속의 길" },
-        { name: "XIX. The Sun (태양)", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", keyword: "명확한 성공, 기쁨, 활력, 진실의 빛" },
-        { name: "XX. Judgement (심판)", img: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg", keyword: "부활, 최종 결단, 보상, 소명의 자각" },
-        { name: "XXI. The World (세계)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", keyword: "완성, 성취, 하나의 주기 마감, 온전함" }
+        { name: "0. The Fool (바보)", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keyword: "새로운 시작, 순수한 모험, 무한한 잠재력, 자유" },
+        { name: "I. The Magician (마법사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", keyword: "탁월한 창조력, 주도권, 언변, 현실화하는 힘" },
+        { name: "II. The High Priestess (여사제)", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", keyword: "깊은 직관, 비밀, 신비, 내면의 통찰, 통제된 감정" },
+        { name: "III. The Empress (여황제)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", keyword: "풍요로움, 매력, 따뜻한 수용, 자연스러운 결실" },
+        { name: "IV. The Emperor (황제)", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", keyword: "확고한 통제력, 안정, 현실적 권위, 책임감" },
+        { name: "V. The Hierophant (교황)", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", keyword: "신뢰할 수 있는 조언, 멘토, 도덕적 합의, 제도적 결합" },
+        { name: "VI. The Lovers (연인)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3b/RWS_Tarot_06_Lovers.jpg", keyword: "운명적 끌림, 감정적 일치, 중요한 선택, 조화" },
+        { name: "VII. The Chariot (전차)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", keyword: "강한 추진력, 승리, 돌파구 마련, 적극적인 행동" },
+        { name: "VIII. Strength (힘)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", keyword: "부드러운 카리스마, 인내, 내면의 절제, 길들이는 지혜" },
+        { name: "IX. The Hermit (은둔자)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", keyword: "깊은 성찰, 신중한 탐색, 시간의 숙성, 홀로 서기" },
+        { name: "X. Wheel of Fortune (운명의 수레바퀴)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg", keyword: "전환점, 타이밍의 일치, 예상치 못한 기회, 순환" },
+        { name: "XI. Justice (정의)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", keyword: "냉철한 균형, 인과관계, 공정한 대가, 결단" },
+        { name: "XII. The Hanged Man (매달린 사람)", img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", keyword: "관점의 전환, 자발적 정체, 큰 그림을 위한 인내" },
+        { name: "XIII. Death (죽음)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", keyword: "과거의 완전한 마감, 피할 수 없는 탈바꿈, 재탄생" },
+        { name: "XIV. Temperance (절제)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", keyword: "감정의 조율, 평온한 타협, 부드러운 순환, 중용" },
+        { name: "XV. The Devil (악마)", img: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", keyword: "강렬한 집착, 벗어날 수 없는 유혹, 본능적 얽힘" },
+        { name: "XVI. The Tower (탑)", img: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", keyword: "갑작스러운 각성, 환상의 붕괴, 급격한 변화" },
+        { name: "XVII. The Star (별)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", keyword: "희망의 빛, 영감, 순수한 치유, 긍정적인 기대" },
+        { name: "XVIII. The Moon (달)", img: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", keyword: "모호한 불안, 무의식의 감정, 안개 속의 기다림" },
+        { name: "XIX. The Sun (태양)", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", keyword: "명쾌한 확신, 기쁨과 생명력, 투명한 진실, 축복" },
+        { name: "XX. Judgement (심판)", img: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg", keyword: "소식의 도착, 결정적 깨달음, 해소, 최종 결말" },
+        { name: "XXI. The World (세계)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", keyword: "완전한 성취, 하나의 주기 완성, 온전한 통합" }
     ];
 
-    let currentCardCount = 3;
+    let currentCardCount = 5;
     let allowReversed = false;
 
     function toggleCategory(element) {
@@ -574,7 +626,7 @@
         allowReversed = isReversed;
     }
 
-    // 🔒 Web Crypto API 기반의 암호학적 난수 생성 및 셔플 함수
+    // 🔒 Web Crypto API 기반 암호학적 무작위 셔플
     function getCryptoShuffledDeck() {
         let deck = [...TAROT_DECK];
         for (let i = deck.length - 1; i > 0; i--) {
@@ -586,7 +638,7 @@
         return deck;
     }
 
-    // 카드 펼치기 및 리딩 시작
+    // 리딩 시작
     function startReading() {
         document.getElementById('bottomSheet').classList.remove('open');
         const modal = document.getElementById('spreadModal');
@@ -598,12 +650,12 @@
         
         const qText = document.getElementById('userQuestion').value.trim();
         document.getElementById('modalQuestionText').innerText = qText ? `"${qText}"` : "카드를 차례대로 터치해 보세요";
+        document.getElementById('modalReadingType').innerText = document.getElementById('bsTitle').innerText;
 
         const shuffled = getCryptoShuffledDeck();
         const selectedCards = shuffled.slice(0, currentCardCount);
 
         selectedCards.forEach((card, index) => {
-            // 역방향 여부 난수 결정
             const randArray = new Uint8Array(1);
             window.crypto.getRandomValues(randArray);
             const isReversed = allowReversed && (randArray[0] % 2 === 1);
@@ -614,7 +666,7 @@
                 <div class="tarot-card ${isReversed ? 'reversed' : ''}" id="card-${index}">
                     <div class="card-back">
                         <span>🌙</span>
-                        <span style="font-size:10px; margin-top:4px; opacity:0.7;">LUNEA</span>
+                        <span style="font-size:10px; margin-top:4px; opacity:0.75;">LUNEA</span>
                     </div>
                     <div class="card-front">
                         <img src="${card.img}" alt="${card.name}">
@@ -627,12 +679,12 @@
                 if (!cardElem.classList.contains('flipped')) {
                     cardElem.classList.add('flipped');
                     
-                    // 결과 텍스트 추가
                     const infoBox = document.createElement('div');
                     infoBox.className = 'card-info-box';
+                    infoBox.id = `info-${index}`;
                     infoBox.innerHTML = `
                         <h4>Card ${index + 1}: ${card.name} ${isReversed ? '(역방향 ↺)' : '(정방향)'}</h4>
-                        <p><strong>핵심 상징:</strong> ${card.keyword}</p>
+                        <p><strong>상징 키워드:</strong> ${card.keyword}</p>
                     `;
                     resultsContainer.appendChild(infoBox);
                 }
@@ -644,11 +696,19 @@
         modal.classList.add('show');
     }
 
+    function flipAllCards() {
+        document.querySelectorAll('.tarot-card').forEach((card, idx) => {
+            if (!card.classList.contains('flipped')) {
+                card.parentElement.click();
+            }
+        });
+    }
+
     function closeModal() {
         document.getElementById('spreadModal').classList.remove('show');
     }
 
-    // 팝업 외부 닫기
+    // 팝업 외부 터치 닫기
     document.addEventListener('click', function(e) {
         const bs = document.getElementById('bottomSheet');
         if (!bs.contains(e.target) && !e.target.closest('.reading-item') && bs.classList.contains('open')) {
