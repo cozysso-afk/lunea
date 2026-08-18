@@ -10,7 +10,7 @@
             --bg-deep: #0e0b16;
             --moon-glow: #bda4f8;
             --gold-spark: #ffd27d;
-            --glass-panel: rgba(26, 21, 38, 0.72);
+            --glass-panel: rgba(26, 21, 38, 0.75);
             --glass-border: rgba(197, 178, 250, 0.22);
             --text-pure: #f9f7fd;
             --text-dim: #a69cb8;
@@ -37,7 +37,6 @@
             position: relative;
         }
 
-        /* 영롱한 달빛 헤더 */
         header {
             display: flex;
             justify-content: space-between;
@@ -53,7 +52,7 @@
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            box-shadow: 0 0 20px rgba(189, 164, 248, 0.45), inset 0 0 8px rgba(255,255,255,0.7);
+            box-shadow: 0 0 20px rgba(189, 164, 248, 0.45);
             border: 1px solid rgba(255, 255, 255, 0.4);
             animation: pulseGlow 4s infinite alternate ease-in-out;
         }
@@ -91,18 +90,15 @@
             color: var(--text-pure);
             cursor: pointer;
             backdrop-filter: blur(10px);
-            transition: all 0.25s;
         }
-        .icon-btn:active { transform: scale(0.94); }
 
-        /* 데일리 운세 배너 */
         .daily-orbit-card {
             background: linear-gradient(145deg, rgba(62, 45, 99, 0.45) 0%, rgba(20, 15, 33, 0.7) 100%);
             border: 1px solid rgba(218, 196, 255, 0.35);
             border-radius: var(--radius-box);
             padding: 22px 20px;
             margin-bottom: 24px;
-            box-shadow: 0 14px 36px rgba(0,0,0,0.35), inset 0 0 18px rgba(189, 164, 248, 0.1);
+            box-shadow: 0 14px 36px rgba(0,0,0,0.35);
             backdrop-filter: blur(16px);
             display: flex;
             justify-content: space-between;
@@ -113,7 +109,6 @@
             font-family: 'Cinzel', 'Noto Serif KR', serif;
             font-size: 18px;
             color: #f1ebff;
-            letter-spacing: 1px;
         }
         .daily-text p {
             margin: 0;
@@ -130,13 +125,9 @@
             font-size: 13px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 6px 18px rgba(126, 93, 196, 0.4);
-            transition: 0.2s;
             white-space: nowrap;
         }
-        .daily-btn:active { transform: scale(0.95); }
 
-        /* 섹션 타이틀 */
         .section-tag {
             font-family: 'Cinzel', serif;
             font-size: 11px;
@@ -152,7 +143,6 @@
             font-weight: 600;
         }
 
-        /* 아코디언 카드 */
         .category-card {
             background: var(--glass-panel);
             border-radius: var(--radius-box);
@@ -161,7 +151,6 @@
             backdrop-filter: blur(14px);
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
         }
         .category-header {
             padding: 18px 20px;
@@ -214,9 +203,7 @@
             padding: 14px 0;
             border-top: 1px solid rgba(255,255,255,0.06);
             cursor: pointer;
-            transition: opacity 0.2s;
         }
-        .reading-item:active { opacity: 0.5; }
         .reading-item h4 { margin: 0 0 3px 0; font-size: 14px; font-weight: 600; color: #eee8f8; }
         .reading-item p { margin: 0; font-size: 11.5px; color: var(--text-dim); }
         .card-count {
@@ -229,7 +216,6 @@
             border: 1px solid rgba(189, 164, 248, 0.3);
         }
 
-        /* 하단 팝업 (Bottom Sheet) */
         .bottom-sheet {
             position: fixed;
             bottom: -120%;
@@ -276,7 +262,6 @@
             border-radius: 14px;
             margin-bottom: 8px;
             cursor: pointer;
-            transition: 0.2s;
         }
         .radio-box.selected {
             background: rgba(189, 164, 248, 0.14);
@@ -297,15 +282,12 @@
             cursor: pointer;
             margin-top: 6px;
             box-shadow: 0 8px 24px rgba(126, 93, 196, 0.4);
-            transition: transform 0.2s;
         }
-        .draw-btn:active { transform: scale(0.98); }
 
-        /* 리딩 뷰 모달창 */
         .spread-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 3, 10, 0.92);
+            background: rgba(5, 3, 10, 0.94);
             backdrop-filter: blur(18px);
             z-index: 200;
             display: none;
@@ -350,11 +332,8 @@
             font-size: 11.5px;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
         }
-        .act-btn:active { transform: scale(0.95); background: rgba(189, 164, 248, 0.25); }
 
-        /* 3D 카드 그리드 & 애니메이션 */
         .cards-grid {
             display: flex;
             flex-wrap: wrap;
@@ -387,7 +366,6 @@
         .tarot-card.flipped { transform: rotateY(180deg); }
         .tarot-card.reversed .card-front img { transform: rotate(180deg); }
 
-        /* 커스텀 카드 뒷면 */
         .card-back {
             position: absolute;
             width: 100%; height: 100%;
@@ -469,6 +447,33 @@
         .card-info-box h4 { margin: 0 0 4px 0; font-size: 14px; color: #f5f2fd; }
         .card-info-box p { margin: 0; font-size: 12px; color: var(--text-dim); line-height: 1.55; }
 
+        .ai-reading-card {
+            background: linear-gradient(145deg, rgba(62, 45, 99, 0.4) 0%, rgba(26, 18, 45, 0.8) 100%);
+            border: 1px solid rgba(189, 164, 248, 0.35);
+            border-radius: 20px;
+            padding: 18px;
+            margin-top: 16px;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            animation: fadeIn 0.4s ease;
+        }
+        .ai-reading-card h4 {
+            margin: 0 0 10px 0;
+            font-family: 'Cinzel', 'Noto Serif KR', serif;
+            font-size: 15px;
+            color: var(--gold-spark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ai-reading-body {
+            font-size: 13px;
+            color: #eee8f8;
+            line-height: 1.68;
+            word-break: keep-all;
+            white-space: pre-line;
+        }
+
         .copy-prompt-box {
             margin-top: 18px;
             padding: 16px;
@@ -488,7 +493,6 @@
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(255, 210, 125, 0.3);
         }
-        .copy-prompt-btn:active { transform: scale(0.97); }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(6px); }
@@ -499,7 +503,6 @@
 <body>
 
 <div class="app-container">
-    <!-- 헤더 -->
     <header>
         <div class="logo-area">
             <div class="celestial-moon">🌙</div>
@@ -513,11 +516,11 @@
         </div>
     </header>
 
-    <!-- 🔮 최상단: 데일리 운세 3카드 배너 -->
+    <!-- 데일리 운세 4카드 (대인관계 및 연애운 포함) -->
     <div class="daily-orbit-card">
         <div class="daily-text">
-            <h3>DAILY ORBIT 3</h3>
-            <p>아침 흐름 · 오후 집중도 · 밤의 안식<br>오늘 하루를 관통하는 3장의 천체 리딩</p>
+            <h3>DAILY ORBIT 4</h3>
+            <p>아침 흐름 · 오후 집중도 · 대인/연애운 · 밤의 안식<br>오늘 하루를 관통하는 4장의 천체 리딩</p>
         </div>
         <button class="daily-btn" onclick="startDailyReading()">운세 펼치기</button>
     </div>
@@ -525,7 +528,7 @@
     <div class="section-tag">CHOOSE A READING</div>
     <h2 class="section-heading">탐색할 스프레드</h2>
 
-    <!-- 1. GENERAL 카테고리 -->
+    <!-- 1. GENERAL -->
     <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
@@ -538,8 +541,8 @@
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'AI가 질문의 구조를 분석하여 최적의 자리와 카드 수를 설계합니다.', 0)">
-                <div><h4>질문 맞춤 AI 배열</h4><p>시험/투자/연애 등 키워드 기반 자동 스프레드 생성.</p></div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'AI가 질문 구조를 분석하여 최적의 자리와 카드 수를 설계합니다.', 0)">
+                <div><h4>질문 맞춤 AI 배열</h4><p>시험/투자/연애/인간관계 키워드 자동 스프레드 생성.</p></div>
                 <div class="card-count">AI 추천</div>
             </div>
             <div class="reading-item" onclick="openBottomSheet('GENERAL', 'YES / NO', '결정의 흐름을 명확한 상징으로 확인해요.', 3)">
@@ -565,14 +568,14 @@
         </div>
     </div>
 
-    <!-- 2. CAREER & EXAM 카테고리 (직업/이직/시험합격운/금전운 신설) -->
+    <!-- 2. CAREER & EXAM -->
     <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🏛️</div>
                 <div class="cat-text">
                     <h3>CAREER & EXAM</h3>
-                    <p>공시/관세직 합격운 · 이직 · 승진 · 금전운</p>
+                    <p>공시/관세직 합격운 · 직장 대인관계 · 이직 · 금전운</p>
                 </div>
             </div>
             <div class="toggle-btn">+</div>
@@ -580,6 +583,10 @@
         <div class="category-content" onclick="event.stopPropagation()">
             <div class="reading-item" onclick="openBottomSheet('CAREER', '시험 합격운', '학습 완성도, 시험장 변수, 합격 기운과 핵심 전략.', 4)">
                 <div><h4>시험 합격운</h4><p>공시/자격증 시험 합격 가능성 및 대비 전략.</p></div>
+                <div class="card-count">4</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '직장 내 대인관계 & 평판', '동료/상사와의 관계, 평판, 갈등 완화 조언.', 4)">
+                <div><h4>직장 내 대인관계 & 평판</h4><p>조직 내 역학 관계와 평판 흐름 점검.</p></div>
                 <div class="card-count">4</div>
             </div>
             <div class="reading-item" onclick="openBottomSheet('CAREER', '이직 & 커리어 전환', '현 직장 유지 vs 이직 시 결과 비교.', 5)">
@@ -593,14 +600,14 @@
         </div>
     </div>
 
-    <!-- 3. LOVE 카테고리 -->
+    <!-- 3. LOVE & RELATIONSHIP -->
     <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🌙</div>
                 <div class="cat-text">
                     <h3>LOVE & INNER HEART</h3>
-                    <p>속마음 · 연락운 · 재회운 · 속궁합</p>
+                    <p>속마음 · 인연운 · 연락 · 재회 · 속궁합</p>
                 </div>
             </div>
             <div class="toggle-btn">+</div>
@@ -609,6 +616,10 @@
             <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5)">
                 <div><h4>상대 속마음</h4><p>겉과 속, 감정의 방향을 나누어 봐요.</p></div>
                 <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '친구·지인 관계 & 주변 인연운', '현재 인간관계 에너지와 새로운 인연의 흐름.', 4)">
+                <div><h4>친구·지인 관계 & 주변 인연운</h4><p>대인관계 갈등 원인과 관계 발전 조언.</p></div>
+                <div class="card-count">4</div>
             </div>
             <div class="reading-item" onclick="openBottomSheet('LOVE', '연락운 & 시기', '연락 의향과 가까운 시간 흐름.', 5)">
                 <div><h4>연락운 & 시기</h4><p>먼저 연락 올 가능성과 시기 분석.</p></div>
@@ -625,7 +636,7 @@
         </div>
     </div>
 
-    <!-- 4. STOCK 카테고리 -->
+    <!-- 4. STOCK -->
     <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
@@ -654,7 +665,6 @@
     </div>
 </div>
 
-<!-- 하단 설정 팝업창 -->
 <div class="bottom-sheet" id="bottomSheet">
     <div class="bs-header">
         <div class="bs-subtitle">✦ SELECTED · <span id="bsCategory">GENERAL</span></div>
@@ -664,7 +674,7 @@
     
     <div class="input-group">
         <label>구체적인 질문 입력</label>
-        <textarea id="userQuestion" placeholder="예: 관세직 9급 올해 합격할 수 있을까? / 단타 진입 타점"></textarea>
+        <textarea id="userQuestion" placeholder="예: 친구와의 관계 회복 / 관세직 9급 합격운 / 단타 매수 타점"></textarea>
     </div>
 
     <div class="input-group">
@@ -682,24 +692,24 @@
     <button class="draw-btn" onclick="startReading()">✦ <span id="bsCardCountBtn">카드 펼치기</span></button>
 </div>
 
-<!-- 🔮 리딩 실행 및 결과 모달 -->
 <div class="spread-modal" id="spreadModal">
     <div class="modal-content">
         <button class="close-modal" onclick="closeModal()">×</button>
-        <div class="bs-subtitle" id="modalReadingType">DAILY ORBIT 3</div>
+        <div class="bs-subtitle" id="modalReadingType">DAILY ORBIT 4</div>
         <h3 style="font-family: 'Noto Serif KR'; font-size: 19px; margin: 4px 0 10px 0;" id="modalQuestionText">질문 분석 중...</h3>
         
         <div class="action-bar">
             <button class="act-btn" onclick="flipAllCards()">✦ 일괄 뒤집기</button>
-            <button class="act-btn" onclick="addOneCard()">+ 추가 카드 뽑기</button>
-            <button class="act-btn" onclick="retryReading()">↺ 새로 다시 뽑기</button>
-            <button class="act-btn" onclick="saveToArchive()">💾 기록함 저장</button>
+            <button class="act-btn" onclick="generateInstantAiAnalysis()">🔮 AI 종합해석</button>
+            <button class="act-btn" onclick="addOneCard()">+ 추가 카드</button>
+            <button class="act-btn" onclick="retryReading()">↺ 다시 뽑기</button>
+            <button class="act-btn" onclick="saveToArchive()">💾 저장</button>
         </div>
         
         <div class="cards-grid" id="cardsGrid"></div>
+        <div id="aiInstantAnalysis"></div>
         <div id="readingResults"></div>
 
-        <!-- 프롬프트 원클릭 복사 영역 -->
         <div class="copy-prompt-box">
             <p style="margin:0 0 10px 0; font-size:12px; color:var(--text-dim);">
                 25년 경력 타로 마스터 기준의 4원소·수비학·상징 통합 프롬프트와 카드가 복사됩니다.
@@ -710,7 +720,6 @@
 </div>
 
 <script>
-    // 22장 메이저 아르카나 (이미지 링크 완전 복원)
     const TAROT_DECK = [
         { name: "0. The Fool (바보)", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keyword: "새로운 시작, 순수한 모험, 무한한 잠재력, 자유로운 발걸음", element: "공기(Air)", num: 0 },
         { name: "I. The Magician (마법사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", keyword: "창조력, 주도권 장악, 현실화하는 기술과 자신감", element: "수성(Mercury)", num: 1 },
@@ -736,7 +745,7 @@
         { name: "XXI. The World (세계)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", keyword: "완전한 성취, 한 주기의 성공적 완성, 통합", element: "토성(Saturn)", num: 21 }
     ];
 
-    let currentCardCount = 3;
+    let currentCardCount = 4;
     let allowReversed = false;
     let currentSpreadTitle = "";
     let currentCategory = "GENERAL";
@@ -778,41 +787,21 @@
         allowReversed = isReversed;
     }
 
-    // 데일리 운세 3카드 즉시 실행
+    // 데일리 운세 4카드 (대인관계 및 연애운 추가)
     function startDailyReading() {
-        currentCategory = "GENERAL";
+        currentCategory = "DAILY";
         currentSpreadTitle = "DAILY ORBIT (오늘의 운세)";
         isAiCustom = false;
-        currentCardCount = 3;
+        currentCardCount = 4;
         currentPositions = [
-            "1. 아침/오전의 기운 (마인드셋 & 단타 집중도)",
-            "2. 낮/오후의 흐름 (수험 학습 효율 & 변수)",
-            "3. 밤/저녁의 결실 (회복과 내일의 준비)"
+            "1. 아침 흐름 (단타 마인드셋 & 기운)",
+            "2. 낮 흐름 (수험 학습 효율 & 집중력)",
+            "3. 대인관계 & 연애 기운 (타인과의 교류)",
+            "4. 밤의 결실 (회복과 내일의 준비)"
         ];
-        executeSpread("오늘 하루 나의 전반적인 에너지 흐름");
+        executeSpread("오늘 하루 나의 전반적인 에너지와 대인관계 흐름");
     }
-// 데일리 운세 카테고리 지정
-function startDailyReading() {
-    currentCategory = "DAILY";
-    currentSpreadTitle = "DAILY ORBIT (오늘의 운세)";
-    isAiCustom = false;
-    currentCardCount = 3;
-    currentPositions = [
-        "1. 아침/오전의 기운 (마인드셋 & 단타 집중도)",
-        "2. 낮/오후의 흐름 (수험 학습 효율 & 변수)",
-        "3. 밤/저녁의 결실 (회복과 내일의 준비)"
-    ];
-    executeSpread("오늘 하루 나의 전반적인 에너지 흐름");
-}
 
-// 뒷면 이미지 경로 분기
-let backImageSrc = "back_general.png";
-if (currentCategory === "DAILY") backImageSrc = "back_daily.png";
-else if (currentCategory === "LOVE") backImageSrc = "back_love.png";
-else if (currentCategory === "STOCK") backImageSrc = "back_stock.png";
-else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
-
-    // AI 스프레드 질문 분석 엔진
     function analyzeQuestionAndGenerateSpread(q) {
         const text = q.toLowerCase();
         if (text.includes("합격") || text.includes("공시") || text.includes("시험") || text.includes("관세") || text.includes("공부") || text.includes("점수")) {
@@ -827,10 +816,16 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
                 positions: ["1. 종목의 단기 수급 및 모멘텀", "2. 진입 시 주의해야 할 리스크", "3. 최적의 매수/매도 대응 전략"]
             };
         }
+        if (text.includes("인간관계") || text.includes("친구") || text.includes("동료") || text.includes("상사") || text.includes("갈등") || text.includes("싸움")) {
+            return {
+                type: "대인관계 & 관계 개선 4카드",
+                positions: ["1. 상대방과의 현재 에너지 상태", "2. 갈등 또는 오해의 숨겨진 원인", "3. 관계 개선을 위한 나의 태도", "4. 앞으로의 관계 전개 흐름"]
+            };
+        }
         if (text.includes("이직") || text.includes("취업") || text.includes("직장") || text.includes("퇴사")) {
             return {
                 type: "이직 & 커리어 전환 4카드",
-                positions: ["1. 현재 직장의 운과 정체 원인", "2. 이직 제안/새 환경의 잠재력", "3. 이동 시 득과 실", "4. 최적의 타이밍과 조언"]
+                positions: ["1. 현재 직장의 운과 정체 원인", "2. 새 환경의 잠재력", "3. 이동 시 득과 실", "4. 최적의 타이밍과 조언"]
             };
         }
         if (text.includes("연락") || text.includes("재회") || text.includes("헤어")) {
@@ -870,6 +865,20 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
             const aiSpread = analyzeQuestionAndGenerateSpread(qText || "종합 운세");
             currentPositions = aiSpread.positions;
             currentSpreadTitle = aiSpread.type;
+        } else if (currentSpreadTitle === '직장 내 대인관계 & 평판') {
+            currentPositions = [
+                "1. 직장 내 나의 현재 이미지 & 평판",
+                "2. 주변 동료/상사의 속마음",
+                "3. 주의해야 할 인간관계 변수",
+                "4. 원만한 관계 유지를 위한 조언"
+            ];
+        } else if (currentSpreadTitle === '친구·지인 관계 & 주변 인연운') {
+            currentPositions = [
+                "1. 현재 대인관계의 전반적 기운",
+                "2. 상대방 또는 주변의 감정선",
+                "3. 관계를 가로막는 장애물",
+                "4. 앞으로의 조화로운 발전 방향"
+            ];
         } else {
             currentPositions = [];
             for (let i = 1; i <= currentCardCount; i++) {
@@ -879,13 +888,32 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
         executeSpread(qText);
     }
 
+    function handleBackImageError(img, prefix) {
+        const attempts = [
+            `${prefix}.PNG`,
+            `${prefix}.png`,
+            `${prefix}.jpg`,
+            `${prefix}.jpeg`,
+            `${prefix}.JPG`
+        ];
+        let currentSrc = img.getAttribute('src');
+        let nextIdx = attempts.indexOf(currentSrc) + 1;
+        if (nextIdx < attempts.length) {
+            img.src = attempts[nextIdx];
+        } else {
+            img.style.display = 'none';
+        }
+    }
+
     function executeSpread(qText) {
         const modal = document.getElementById('spreadModal');
         const cardsGrid = document.getElementById('cardsGrid');
         const resultsContainer = document.getElementById('readingResults');
+        const aiInstantBox = document.getElementById('aiInstantAnalysis');
         
         cardsGrid.innerHTML = '';
         resultsContainer.innerHTML = '';
+        aiInstantBox.innerHTML = '';
         currentDrawnCards = [];
 
         document.getElementById('modalReadingType').innerText = currentSpreadTitle;
@@ -894,11 +922,11 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
         const shuffled = getCryptoShuffledDeck();
         const selected = shuffled.slice(0, currentPositions.length);
 
-        // 카테고리별 뒷면 이미지 파일 매핑
-        let backImageSrc = "back_general.png";
-        if (currentCategory === "LOVE") backImageSrc = "back_love.png";
-        else if (currentCategory === "STOCK") backImageSrc = "back_stock.png";
-        else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
+        let prefix = "back_general";
+        if (currentCategory === "DAILY") prefix = "back_daily";
+        else if (currentCategory === "LOVE") prefix = "back_love";
+        else if (currentCategory === "STOCK") prefix = "back_stock";
+        else if (currentCategory === "CAREER") prefix = "back_career";
 
         selected.forEach((card, index) => {
             const randArray = new Uint8Array(1);
@@ -914,7 +942,7 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
             cardWrapper.innerHTML = `
                 <div class="tarot-card ${isReversed ? 'reversed' : ''}" id="card-${index}">
                     <div class="card-back">
-                        <img src="${backImageSrc}" class="deck-back-img" onerror="this.style.display='none'">
+                        <img src="${prefix}.PNG" class="deck-back-img" onerror="handleBackImageError(this, '${prefix}')">
                         <div class="aurora-star">✦</div>
                         <div class="aurora-brand">LUNEA</div>
                     </div>
@@ -963,7 +991,40 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
         });
     }
 
-    // 1장 추가 뽑기
+    function generateInstantAiAnalysis() {
+        flipAllCards();
+        const box = document.getElementById('aiInstantAnalysis');
+        const q = document.getElementById('userQuestion').value.trim() || "현재 흐름";
+        
+        let cardSummary = currentDrawnCards.map(c => `• <b>${c.position}</b>: ${c.name} (${c.isReversed ? '역방향' : '정방향'}) → ${c.keyword}`).join('<br>');
+        
+        let synthesisText = "";
+        if (currentCategory === "DAILY") {
+            synthesisText = "오늘 하루는 과도한 외부 자극에 휘둘리기보다 본인의 중심을 지키는 것이 중요합니다. 단타 매매 시에는 뇌동매매를 삼가고, 수험 학습 시에는 정해진 분량을 차분히 소화하세요. 대인관계 및 연애운에서는 솔직하되 부드러운 화법으로 상대방을 배려할 때 오해 없는 조화로운 하루가 완성됩니다.";
+        } else if (currentCategory === "CAREER") {
+            synthesisText = "현재 직업 및 수험 환경에서는 감정적인 반응을 줄이고 명확한 원칙과 루틴을 유지하는 것이 핵심입니다. 조직 내 대인관계에서는 말을 아끼고 객관적인 성과로 신뢰를 쌓으세요.";
+        } else if (currentCategory === "STOCK") {
+            synthesisText = "성급한 추격 매수보다는 기준선 눌림목을 차분히 확인하는 분할 대응이 필수적인 흐름입니다. 손절/익절 기준을 명확히 고정하세요.";
+        } else if (currentCategory === "LOVE") {
+            synthesisText = "상대방의 겉으로 드러나는 반응 뒤에 숨은 심리적 방어기제를 인지해야 합니다. 서두르지 않고 담백하게 기다릴 때 유리한 흐름이 열립니다.";
+        } else {
+            synthesisText = "상황의 겉모습 너머에 있는 구조적 본질을 직시할 때입니다. 직관이 제시하는 방향을 신뢰하고 즉각적인 결단을 내리세요.";
+        }
+
+        box.innerHTML = `
+            <div class="ai-reading-card">
+                <h4>🔮 AI 마스터 통합 직관 리딩</h4>
+                <div class="ai-reading-body">
+                    <b>[질문]</b> "${q}"<br><br>
+                    <b>[카드별 상징 배치]</b><br>
+                    ${cardSummary}<br><br>
+                    <b>[종합 해석 및 전략 제언]</b><br>
+                    ${synthesisText}
+                </div>
+            </div>
+        `;
+    }
+
     function addOneCard() {
         const nextIdx = currentDrawnCards.length;
         const remaining = TAROT_DECK.filter(d => !currentDrawnCards.some(c => c.name === d.name));
@@ -1009,7 +1070,6 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
         executeSpread(q);
     }
 
-    // 선택 저장 기록함 로직 (LocalStorage)
     function saveToArchive() {
         const title = currentSpreadTitle;
         const q = document.getElementById('userQuestion').value.trim() || "데일리 리딩";
@@ -1037,7 +1097,6 @@ else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
         alert(msg);
     }
 
-    // 🔮 25년 경력 타로 마스터 프롬프트 복사 엔진
     function copyMasterAiPrompt() {
         const q = document.getElementById('userQuestion').value.trim() || "현재 나의 전반적인 흐름과 직관적 조언";
         let cardDetails = currentDrawnCards.map(c => `- ${c.position}: ${c.name} [${c.isReversed ? '역방향 (Shadow/Delay)' : '정방향 (Core Energy)'}] (원소: ${c.element}, 키워드: ${c.keyword})`).join('\n');
@@ -1056,7 +1115,7 @@ ${cardDetails}
 
 1. **상징 및 4원소 역학 분석**: 각 카드가 상징하는 원소 간의 상생·상극 흐름 및 메이저 아르카나의 영적 여정 단계 분석.
 2. **빛과 그림자 (Light & Shadow)**: 정방향/역방향의 깊은 심리적 기제와 드러나지 않은 무의식적 변수 해석.
-3. **상황별 구체적 맥락 해석**: 질문자의 현재 현실(수험/투자/연애/직업)에 즉각 대입 가능한 명확한 상황 진단.
+3. **상황별 구체적 맥락 해석**: 질문자의 현재 현실(수험/투자/연애/대인관계/직업)에 즉각 대입 가능한 명확한 상황 진단.
 4. **수비학 및 타이밍 통찰**: 카드 번호의 수비학적 주기와 전환점의 시기성 제시.
 5. **마스터의 최종 전략 조언**: 질문자가 주도권을 쥐고 운의 흐름을 유리하게 바꿀 수 있는 명확한 액션 플랜 3가지 제시.
 
