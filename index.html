@@ -791,6 +791,26 @@
         ];
         executeSpread("오늘 하루 나의 전반적인 에너지 흐름");
     }
+// 데일리 운세 카테고리 지정
+function startDailyReading() {
+    currentCategory = "DAILY";
+    currentSpreadTitle = "DAILY ORBIT (오늘의 운세)";
+    isAiCustom = false;
+    currentCardCount = 3;
+    currentPositions = [
+        "1. 아침/오전의 기운 (마인드셋 & 단타 집중도)",
+        "2. 낮/오후의 흐름 (수험 학습 효율 & 변수)",
+        "3. 밤/저녁의 결실 (회복과 내일의 준비)"
+    ];
+    executeSpread("오늘 하루 나의 전반적인 에너지 흐름");
+}
+
+// 뒷면 이미지 경로 분기
+let backImageSrc = "back_general.png";
+if (currentCategory === "DAILY") backImageSrc = "back_daily.png";
+else if (currentCategory === "LOVE") backImageSrc = "back_love.png";
+else if (currentCategory === "STOCK") backImageSrc = "back_stock.png";
+else if (currentCategory === "CAREER") backImageSrc = "back_career.png";
 
     // AI 스프레드 질문 분석 엔진
     function analyzeQuestionAndGenerateSpread(q) {
