@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LUNEA - Celestial Tarot Sanctuary</title>
-   <link rel="apple-touch-icon" href="apple-touch-icon.PNG">
- <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Noto+Serif+KR:wght@300;400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Noto+Serif+KR:wght@300;400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-deep: #0e0b16;
@@ -438,13 +438,52 @@
             border: 1px solid rgba(255,255,255,0.08);
             animation: fadeIn 0.35s ease;
         }
+        .pos-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
         .pos-badge {
             font-size: 11px;
             font-weight: 700;
             color: var(--moon-glow);
-            margin-bottom: 3px;
-            display: block;
         }
+        .single-add-btn {
+            background: rgba(189, 164, 248, 0.15);
+            border: 1px solid rgba(189, 164, 248, 0.3);
+            color: #dcd0ff;
+            padding: 4px 9px;
+            border-radius: 10px;
+            font-size: 10.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .single-add-btn:active { transform: scale(0.94); }
+        .single-add-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: rgba(255,255,255,0.1);
+        }
+
+        .sub-cards-container {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .sub-card-tag {
+            background: rgba(165, 130, 255, 0.08);
+            border-left: 2px solid var(--moon-glow);
+            padding: 6px 10px;
+            border-radius: 0 8px 8px 0;
+            font-size: 11.5px;
+            color: #e9e4f5;
+        }
+
         .card-info-box h4 { margin: 0 0 4px 0; font-size: 14px; color: #f5f2fd; }
         .card-info-box p { margin: 0; font-size: 12px; color: var(--text-dim); line-height: 1.55; }
 
@@ -517,7 +556,6 @@
         </div>
     </header>
 
-    <!-- 데일리 운세 4카드 (대인관계 및 연애운 포함) -->
     <div class="daily-orbit-card">
         <div class="daily-text">
             <h3>DAILY ORBIT 4</h3>
@@ -601,14 +639,14 @@
         </div>
     </div>
 
-    <!-- 3. LOVE & RELATIONSHIP -->
+    <!-- 3. LOVE & INNER HEART -->
     <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🌙</div>
                 <div class="cat-text">
                     <h3>LOVE & INNER HEART</h3>
-                    <p>속마음 · 인연운 · 연락 · 재회 · 속궁합</p>
+                    <p>속마음 · 속궁합 19+ · 인연운 · 연락 · 재회</p>
                 </div>
             </div>
             <div class="toggle-btn">+</div>
@@ -617,6 +655,10 @@
             <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5)">
                 <div><h4>상대 속마음</h4><p>겉과 속, 감정의 방향을 나누어 봐요.</p></div>
                 <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '밀착감, 압박감/타이트함, 템포, 지구력의 심층 신체 궁합.', 9)">
+                <div><h4>속궁합 · 19+</h4><p>신체적 텐션·밀착감·강도·지속성의 성인 전용 배열.</p></div>
+                <div class="card-count">9</div>
             </div>
             <div class="reading-item" onclick="openBottomSheet('LOVE', '친구·지인 관계 & 주변 인연운', '현재 인간관계 에너지와 새로운 인연의 흐름.', 4)">
                 <div><h4>친구·지인 관계 & 주변 인연운</h4><p>대인관계 갈등 원인과 관계 발전 조언.</p></div>
@@ -629,10 +671,6 @@
             <div class="reading-item" onclick="openBottomSheet('LOVE', '재회운', '재회의 장애물과 앞으로의 인연 흐름.', 7)">
                 <div><h4>재회운</h4><p>재회의 장애물과 앞으로의 흐름.</p></div>
                 <div class="card-count">7</div>
-            </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '성인 간 욕구·리듬·경계·친밀감의 조화.', 9)">
-                <div><h4>속궁합 · 19+</h4><p>성인 간 욕구·리듬·경계·친밀감의 조화.</p></div>
-                <div class="card-count">9</div>
             </div>
         </div>
     </div>
@@ -702,7 +740,6 @@
         <div class="action-bar">
             <button class="act-btn" onclick="flipAllCards()">✦ 일괄 뒤집기</button>
             <button class="act-btn" onclick="generateInstantAiAnalysis()">🔮 AI 종합해석</button>
-            <button class="act-btn" onclick="addOneCard()">+ 추가 카드</button>
             <button class="act-btn" onclick="retryReading()">↺ 다시 뽑기</button>
             <button class="act-btn" onclick="saveToArchive()">💾 저장</button>
         </div>
@@ -719,427 +756,3 @@
         </div>
     </div>
 </div>
-
-<script>
-    const TAROT_DECK = [
-        { name: "0. The Fool (바보)", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keyword: "새로운 시작, 순수한 모험, 무한한 잠재력, 자유로운 발걸음", element: "공기(Air)", num: 0 },
-        { name: "I. The Magician (마법사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", keyword: "창조력, 주도권 장악, 현실화하는 기술과 자신감", element: "수성(Mercury)", num: 1 },
-        { name: "II. The High Priestess (여사제)", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", keyword: "깊은 직관력, 비밀, 신비, 내면의 통찰, 침묵 속의 지혜", element: "달(Moon)", num: 2 },
-        { name: "III. The Empress (여황제)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", keyword: "풍요로운 결실, 매력, 따뜻한 수용, 자연스러운 번영", element: "금성(Venus)", num: 3 },
-        { name: "IV. The Emperor (황제)", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", keyword: "통제력, 안정성, 현실적 권위, 책임감과 규율", element: "양자리(Aries)", num: 4 },
-        { name: "V. The Hierophant (교황)", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", keyword: "신뢰할 수 있는 멘토, 합의, 도덕적 조언, 공인된 시스템", element: "황소자리(Taurus)", num: 5 },
-        { name: "VI. The Lovers (연인)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_06_Lovers.jpg", keyword: "운명적 끌림, 감정적 일치, 중요한 선택, 조화로운 결합", element: "쌍둥이자리(Gemini)", num: 6 },
-        { name: "VII. The Chariot (전차)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", keyword: "강한 추진력, 승리, 돌파구 마련, 적극적인 결단", element: "게자리(Cancer)", num: 7 },
-        { name: "VIII. Strength (힘)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", keyword: "부드러운 용기, 내면의 인내, 부드럽게 통제하는 지혜", element: "사자자리(Leo)", num: 8 },
-        { name: "IX. The Hermit (은둔자)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", keyword: "깊은 성찰, 신중한 탐색, 시간의 숙성, 고독 속의 답", element: "처녀자리(Virgo)", num: 9 },
-        { name: "X. Wheel of Fortune (운명의 수레바퀴)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg", keyword: "전환점, 타이밍의 일치, 예상치 못한 기회, 상승세", element: "목성(Jupiter)", num: 10 },
-        { name: "XI. Justice (정의)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", keyword: "냉철한 균형, 인과관계, 공정한 대가, 객관적 판단", element: "천칭자리(Libra)", num: 11 },
-        { name: "XII. The Hanged Man (매달린 사람)", img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", keyword: "관점의 전환, 자발적 정체, 더 큰 목표를 위한 기다림", element: "물(Water)", num: 12 },
-        { name: "XIII. Death (죽음)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", keyword: "과거의 완전한 마감, 피할 수 없는 탈바꿈, 새로운 시작", element: "전갈자리(Scorpio)", num: 13 },
-        { name: "XIV. Temperance (절제)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", keyword: "감정의 조율, 평온한 타협, 부드러운 순환과 균형", element: "사수자리(Sagittarius)", num: 14 },
-        { name: "XV. The Devil (악마)", img: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", keyword: "강렬한 집착, 본능적 얽힘, 벗어나기 힘든 유혹과 욕망", element: "염소자리(Capricorn)", num: 15 },
-        { name: "XVI. The Tower (탑)", img: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", keyword: "갑작스러운 각성, 환상의 붕괴, 피할 수 없는 급변", element: "화성(Mars)", num: 16 },
-        { name: "XVII. The Star (별)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", keyword: "희망의 빛, 영감, 순수한 치유, 긍정적인 기대와 회복", element: "물병자리(Aquarius)", num: 17 },
-        { name: "XVIII. The Moon (달)", img: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", keyword: "모호한 불안, 무의식의 착각, 안개 속을 걷는 신중함", element: "물고기자리(Pisces)", num: 18 },
-        { name: "XIX. The Sun (태양)", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", keyword: "명쾌한 확신, 기쁨과 생명력, 투명한 진실, 번영", element: "태양(Sun)", num: 19 },
-        { name: "XX. Judgement (심판)", img: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg", keyword: "결정적 소식, 부활, 오랜 노력에 대한 정당한 보상", element: "불(Fire)", num: 20 },
-        { name: "XXI. The World (세계)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", keyword: "완전한 성취, 한 주기의 성공적 완성, 통합", element: "토성(Saturn)", num: 21 }
-    ];
-
-    let currentCardCount = 4;
-    let allowReversed = false;
-    let currentSpreadTitle = "";
-    let currentCategory = "GENERAL";
-    let isAiCustom = false;
-    let currentDrawnCards = [];
-    let currentPositions = [];
-
-    function toggleCategory(element) {
-        document.querySelectorAll('.category-card').forEach(card => {
-            if (card !== element) card.classList.remove('active');
-        });
-        element.classList.toggle('active');
-        document.getElementById('bottomSheet').classList.remove('open');
-    }
-
-    function openBottomSheet(category, title, desc, count) {
-        currentCategory = category;
-        currentSpreadTitle = title;
-        document.getElementById('bsCategory').innerText = category;
-        document.getElementById('bsTitle').innerText = title;
-        document.getElementById('bsDesc').innerText = desc;
-        
-        if (count === 0 || title.includes('AI')) {
-            isAiCustom = true;
-            document.getElementById('bsCardCountBtn').innerText = "AI 질문 분석 & 카드 펼치기";
-        } else {
-            isAiCustom = false;
-            currentCardCount = count;
-            document.getElementById('bsCardCountBtn').innerText = `${count}장 카드 펼치기`;
-        }
-        
-        document.getElementById('bottomSheet').classList.add('open');
-    }
-
-    function selectRadio(element, isReversed) {
-        let siblings = element.parentElement.querySelectorAll('.radio-box');
-        siblings.forEach(sibling => sibling.classList.remove('selected'));
-        element.classList.add('selected');
-        allowReversed = isReversed;
-    }
-
-    // 데일리 운세 4카드 (대인관계 및 연애운 추가)
-    function startDailyReading() {
-        currentCategory = "DAILY";
-        currentSpreadTitle = "DAILY ORBIT (오늘의 운세)";
-        isAiCustom = false;
-        currentCardCount = 4;
-        currentPositions = [
-            "1. 아침 흐름 (단타 마인드셋 & 기운)",
-            "2. 낮 흐름 (수험 학습 효율 & 집중력)",
-            "3. 대인관계 & 연애 기운 (타인과의 교류)",
-            "4. 밤의 결실 (회복과 내일의 준비)"
-        ];
-        executeSpread("오늘 하루 나의 전반적인 에너지와 대인관계 흐름");
-    }
-
-    function analyzeQuestionAndGenerateSpread(q) {
-        const text = q.toLowerCase();
-        if (text.includes("합격") || text.includes("공시") || text.includes("시험") || text.includes("관세") || text.includes("공부") || text.includes("점수")) {
-            return {
-                type: "수험 & 시험 합격운 맞춤 4카드",
-                positions: ["1. 현재 학습 완성도 & 취약점", "2. 시험 당일 예상되는 변수", "3. 최종 합격운의 흐름", "4. 점수 극대화를 위한 핵심 전략"]
-            };
-        }
-        if (text.includes("주식") || text.includes("단타") || text.includes("매수") || text.includes("매도") || text.includes("코인") || text.includes("익절") || text.includes("손절")) {
-            return {
-                type: "투자 & 단타 매매 맞춤 3카드",
-                positions: ["1. 종목의 단기 수급 및 모멘텀", "2. 진입 시 주의해야 할 리스크", "3. 최적의 매수/매도 대응 전략"]
-            };
-        }
-        if (text.includes("인간관계") || text.includes("친구") || text.includes("동료") || text.includes("상사") || text.includes("갈등") || text.includes("싸움")) {
-            return {
-                type: "대인관계 & 관계 개선 4카드",
-                positions: ["1. 상대방과의 현재 에너지 상태", "2. 갈등 또는 오해의 숨겨진 원인", "3. 관계 개선을 위한 나의 태도", "4. 앞으로의 관계 전개 흐름"]
-            };
-        }
-        if (text.includes("이직") || text.includes("취업") || text.includes("직장") || text.includes("퇴사")) {
-            return {
-                type: "이직 & 커리어 전환 4카드",
-                positions: ["1. 현재 직장의 운과 정체 원인", "2. 새 환경의 잠재력", "3. 이동 시 득과 실", "4. 최적의 타이밍과 조언"]
-            };
-        }
-        if (text.includes("연락") || text.includes("재회") || text.includes("헤어")) {
-            return {
-                type: "연락 & 재회 심층 5카드",
-                positions: ["1. 상대방의 현재 속마음", "2. 연락을 가로막는 장애물", "3. 먼저 연락 올 가능성과 시기", "4. 내가 취해야 할 최선의 태도", "5. 최종적인 관계의 향방"]
-            };
-        }
-        if (text.includes("연애") || text.includes("썸") || text.includes("마음") || text.includes("좋아")) {
-            return {
-                type: "연애 & 관계 심리 4카드",
-                positions: ["1. 상대방이 보는 나의 매력", "2. 겉으로 드러내지 않는 속마음", "3. 두 사람 사이의 핵심 연결고리", "4. 앞으로의 관계 전개"]
-            };
-        }
-        return {
-            type: "직관적 맥락 탐색 3카드",
-            positions: ["1. 현재 상황의 본질", "2. 숨겨진 핵심 원인 & 변수", "3. 직관이 제시하는 해결의 열쇠"]
-        };
-    }
-
-    function getCryptoShuffledDeck() {
-        let deck = [...TAROT_DECK];
-        for (let i = deck.length - 1; i > 0; i--) {
-            const array = new Uint32Array(1);
-            window.crypto.getRandomValues(array);
-            const j = array[0] % (i + 1);
-            [deck[i], deck[j]] = [deck[j], deck[i]];
-        }
-        return deck;
-    }
-
-    function startReading() {
-        document.getElementById('bottomSheet').classList.remove('open');
-        const qText = document.getElementById('userQuestion').value.trim();
-        
-        if (isAiCustom) {
-            const aiSpread = analyzeQuestionAndGenerateSpread(qText || "종합 운세");
-            currentPositions = aiSpread.positions;
-            currentSpreadTitle = aiSpread.type;
-        } else if (currentSpreadTitle === '직장 내 대인관계 & 평판') {
-            currentPositions = [
-                "1. 직장 내 나의 현재 이미지 & 평판",
-                "2. 주변 동료/상사의 속마음",
-                "3. 주의해야 할 인간관계 변수",
-                "4. 원만한 관계 유지를 위한 조언"
-            ];
-        } else if (currentSpreadTitle === '친구·지인 관계 & 주변 인연운') {
-            currentPositions = [
-                "1. 현재 대인관계의 전반적 기운",
-                "2. 상대방 또는 주변의 감정선",
-                "3. 관계를 가로막는 장애물",
-                "4. 앞으로의 조화로운 발전 방향"
-            ];
-        } else {
-            currentPositions = [];
-            for (let i = 1; i <= currentCardCount; i++) {
-                currentPositions.push(`Position ${i}`);
-            }
-        }
-        executeSpread(qText);
-    }
-
-    function handleBackImageError(img, prefix) {
-        const attempts = [
-            `${prefix}.PNG`,
-            `${prefix}.png`,
-            `${prefix}.jpg`,
-            `${prefix}.jpeg`,
-            `${prefix}.JPG`
-        ];
-        let currentSrc = img.getAttribute('src');
-        let nextIdx = attempts.indexOf(currentSrc) + 1;
-        if (nextIdx < attempts.length) {
-            img.src = attempts[nextIdx];
-        } else {
-            img.style.display = 'none';
-        }
-    }
-
-    function executeSpread(qText) {
-        const modal = document.getElementById('spreadModal');
-        const cardsGrid = document.getElementById('cardsGrid');
-        const resultsContainer = document.getElementById('readingResults');
-        const aiInstantBox = document.getElementById('aiInstantAnalysis');
-        
-        cardsGrid.innerHTML = '';
-        resultsContainer.innerHTML = '';
-        aiInstantBox.innerHTML = '';
-        currentDrawnCards = [];
-
-        document.getElementById('modalReadingType').innerText = currentSpreadTitle;
-        document.getElementById('modalQuestionText').innerText = qText ? `"${qText}"` : "카드를 차례대로 터치하여 확인하세요";
-
-        const shuffled = getCryptoShuffledDeck();
-        const selected = shuffled.slice(0, currentPositions.length);
-
-        let prefix = "back_general";
-        if (currentCategory === "DAILY") prefix = "back_daily";
-        else if (currentCategory === "LOVE") prefix = "back_love";
-        else if (currentCategory === "STOCK") prefix = "back_stock";
-        else if (currentCategory === "CAREER") prefix = "back_career";
-
-        selected.forEach((card, index) => {
-            const randArray = new Uint8Array(1);
-            window.crypto.getRandomValues(randArray);
-            const isReversed = allowReversed && (randArray[0] % 2 === 1);
-
-            currentDrawnCards.push({ ...card, isReversed, position: currentPositions[index] });
-
-            const cardWrapper = document.createElement('div');
-            cardWrapper.className = 'tarot-card-wrapper';
-            cardWrapper.style.animationDelay = `${index * 0.08}s`;
-            
-            cardWrapper.innerHTML = `
-                <div class="tarot-card ${isReversed ? 'reversed' : ''}" id="card-${index}">
-                    <div class="card-back">
-                        <img src="${prefix}.PNG" class="deck-back-img" onerror="handleBackImageError(this, '${prefix}')">
-                        <div class="aurora-star">✦</div>
-                        <div class="aurora-brand">LUNEA</div>
-                    </div>
-                    <div class="card-front">
-                        <img src="${card.img}" alt="${card.name}">
-                    </div>
-                </div>
-            `;
-
-            cardWrapper.onclick = () => {
-                const cardElem = document.getElementById(`card-${index}`);
-                if (!cardElem.classList.contains('flipped')) {
-                    cardElem.classList.add('flipped');
-                    renderCardResult(index);
-                }
-            };
-
-            cardsGrid.appendChild(cardWrapper);
-        });
-
-        modal.classList.add('show');
-    }
-
-    function renderCardResult(index) {
-        const item = currentDrawnCards[index];
-        const container = document.getElementById('readingResults');
-        if (document.getElementById(`info-${index}`)) return;
-
-        const infoBox = document.createElement('div');
-        infoBox.className = 'card-info-box';
-        infoBox.id = `info-${index}`;
-        infoBox.innerHTML = `
-            <span class="pos-badge">${item.position}</span>
-            <h4>${item.name} ${item.isReversed ? '(역방향 ↺)' : '(정방향)'}</h4>
-            <p><strong>원소/상징:</strong> ${item.element} | ${item.keyword}</p>
-        `;
-        container.appendChild(infoBox);
-    }
-
-    function flipAllCards() {
-        document.querySelectorAll('.tarot-card').forEach((card, idx) => {
-            if (!card.classList.contains('flipped')) {
-                card.classList.add('flipped');
-                renderCardResult(idx);
-            }
-        });
-    }
-
-    function generateInstantAiAnalysis() {
-        flipAllCards();
-        const box = document.getElementById('aiInstantAnalysis');
-        const q = document.getElementById('userQuestion').value.trim() || "현재 흐름";
-        
-        let cardSummary = currentDrawnCards.map(c => `• <b>${c.position}</b>: ${c.name} (${c.isReversed ? '역방향' : '정방향'}) → ${c.keyword}`).join('<br>');
-        
-        let synthesisText = "";
-        if (currentCategory === "DAILY") {
-            synthesisText = "오늘 하루는 과도한 외부 자극에 휘둘리기보다 본인의 중심을 지키는 것이 중요합니다. 단타 매매 시에는 뇌동매매를 삼가고, 수험 학습 시에는 정해진 분량을 차분히 소화하세요. 대인관계 및 연애운에서는 솔직하되 부드러운 화법으로 상대방을 배려할 때 오해 없는 조화로운 하루가 완성됩니다.";
-        } else if (currentCategory === "CAREER") {
-            synthesisText = "현재 직업 및 수험 환경에서는 감정적인 반응을 줄이고 명확한 원칙과 루틴을 유지하는 것이 핵심입니다. 조직 내 대인관계에서는 말을 아끼고 객관적인 성과로 신뢰를 쌓으세요.";
-        } else if (currentCategory === "STOCK") {
-            synthesisText = "성급한 추격 매수보다는 기준선 눌림목을 차분히 확인하는 분할 대응이 필수적인 흐름입니다. 손절/익절 기준을 명확히 고정하세요.";
-        } else if (currentCategory === "LOVE") {
-            synthesisText = "상대방의 겉으로 드러나는 반응 뒤에 숨은 심리적 방어기제를 인지해야 합니다. 서두르지 않고 담백하게 기다릴 때 유리한 흐름이 열립니다.";
-        } else {
-            synthesisText = "상황의 겉모습 너머에 있는 구조적 본질을 직시할 때입니다. 직관이 제시하는 방향을 신뢰하고 즉각적인 결단을 내리세요.";
-        }
-
-        box.innerHTML = `
-            <div class="ai-reading-card">
-                <h4>🔮 AI 마스터 통합 직관 리딩</h4>
-                <div class="ai-reading-body">
-                    <b>[질문]</b> "${q}"<br><br>
-                    <b>[카드별 상징 배치]</b><br>
-                    ${cardSummary}<br><br>
-                    <b>[종합 해석 및 전략 제언]</b><br>
-                    ${synthesisText}
-                </div>
-            </div>
-        `;
-    }
-
-    function addOneCard() {
-        const nextIdx = currentDrawnCards.length;
-        const remaining = TAROT_DECK.filter(d => !currentDrawnCards.some(c => c.name === d.name));
-        if (remaining.length === 0) return alert("덱의 모든 카드를 소진했습니다.");
-
-        const randArray = new Uint32Array(1);
-        window.crypto.getRandomValues(randArray);
-        const card = remaining[randArray[0] % remaining.length];
-
-        const revArray = new Uint8Array(1);
-        window.crypto.getRandomValues(revArray);
-        const isReversed = allowReversed && (revArray[0] % 2 === 1);
-        const posName = `추가 조언 카드 (+${nextIdx + 1})`;
-
-        currentDrawnCards.push({ ...card, isReversed, position: posName });
-
-        const cardsGrid = document.getElementById('cardsGrid');
-        const cardWrapper = document.createElement('div');
-        cardWrapper.className = 'tarot-card-wrapper';
-        cardWrapper.innerHTML = `
-            <div class="tarot-card ${isReversed ? 'reversed' : ''}" id="card-${nextIdx}">
-                <div class="card-back">
-                    <div class="aurora-star">✦</div>
-                    <div class="aurora-brand">LUNEA</div>
-                </div>
-                <div class="card-front">
-                    <img src="${card.img}" alt="${card.name}">
-                </div>
-            </div>
-        `;
-        cardWrapper.onclick = () => {
-            const el = document.getElementById(`card-${nextIdx}`);
-            if (!el.classList.contains('flipped')) {
-                el.classList.add('flipped');
-                renderCardResult(nextIdx);
-            }
-        };
-        cardsGrid.appendChild(cardWrapper);
-    }
-
-    function retryReading() {
-        const q = document.getElementById('userQuestion').value.trim();
-        executeSpread(q);
-    }
-
-    function saveToArchive() {
-        const title = currentSpreadTitle;
-        const q = document.getElementById('userQuestion').value.trim() || "데일리 리딩";
-        const date = new Date().toLocaleString('ko-KR');
-        const archiveItem = {
-            id: Date.now(),
-            date, title, q,
-            cards: currentDrawnCards.map(c => `${c.position}: ${c.name} (${c.isReversed ? '역방향' : '정방향'})`)
-        };
-
-        let archive = JSON.parse(localStorage.getItem('LUNEA_ARCHIVE') || '[]');
-        archive.unshift(archiveItem);
-        localStorage.setItem('LUNEA_ARCHIVE', JSON.stringify(archive));
-        alert('✨ 현재 리딩이 기록함에 안전하게 저장되었습니다.');
-    }
-
-    function openArchiveModal() {
-        let archive = JSON.parse(localStorage.getItem('LUNEA_ARCHIVE') || '[]');
-        if (archive.length === 0) return alert('기록함에 저장된 리딩이 아직 없습니다.');
-
-        let msg = "📁 [LUNEA 저장된 직관 기록함]\n\n";
-        archive.slice(0, 5).forEach((item, i) => {
-            msg += `[${i + 1}] ${item.date}\n· 질문: ${item.q}\n· 스프레드: ${item.title}\n· 카드: ${item.cards.join(' / ')}\n\n`;
-        });
-        alert(msg);
-    }
-
-    function copyMasterAiPrompt() {
-        const q = document.getElementById('userQuestion').value.trim() || "현재 나의 전반적인 흐름과 직관적 조언";
-        let cardDetails = currentDrawnCards.map(c => `- ${c.position}: ${c.name} [${c.isReversed ? '역방향 (Shadow/Delay)' : '정방향 (Core Energy)'}] (원소: ${c.element}, 키워드: ${c.keyword})`).join('\n');
-
-        const masterPrompt = `[Role & Context]
-당신은 서양 정통 타로 아키타입, 점성학적 조응(Astrological Correspondence), 4원소(Fire·Water·Air·Earth)의 역학 및 수비학(Numerology), 카발라 생명의 나무(Tree of Life) 위계를 25년간 깊이 수련한 전문 타로 마스터이자 직관 분석가입니다.
-
-[User Question]
-"${q}"
-
-[Drawn Tarot Spread: ${currentSpreadTitle}]
-${cardDetails}
-
-[Analysis Instruction]
-위 질문과 뽑힌 카드들을 바탕으로 다음 5가지 원칙을 철저히 통합하여 객관적이면서도 깊이 있는 심층 리딩을 제공해 주십시오:
-
-1. **상징 및 4원소 역학 분석**: 각 카드가 상징하는 원소 간의 상생·상극 흐름 및 메이저 아르카나의 영적 여정 단계 분석.
-2. **빛과 그림자 (Light & Shadow)**: 정방향/역방향의 깊은 심리적 기제와 드러나지 않은 무의식적 변수 해석.
-3. **상황별 구체적 맥락 해석**: 질문자의 현재 현실(수험/투자/연애/대인관계/직업)에 즉각 대입 가능한 명확한 상황 진단.
-4. **수비학 및 타이밍 통찰**: 카드 번호의 수비학적 주기와 전환점의 시기성 제시.
-5. **마스터의 최종 전략 조언**: 질문자가 주도권을 쥐고 운의 흐름을 유리하게 바꿀 수 있는 명확한 액션 플랜 3가지 제시.
-
-군더더기 없는 고급스럽고 통찰력 넘치는 어조로 심층 리딩을 작성해 주십시오.`;
-
-        navigator.clipboard.writeText(masterPrompt).then(() => {
-            alert('✨ 25년 경력 타로 마스터 프롬프트가 복사되었습니다!\nChatGPT, Gemini, Claude 등에 그대로 붙여넣기 해보세요.');
-        }).catch(err => {
-            alert('복사에 실패했습니다. 권한을 확인해 주세요.');
-        });
-    }
-
-    function closeModal() {
-        document.getElementById('spreadModal').classList.remove('show');
-    }
-
-    document.addEventListener('click', function(e) {
-        const bs = document.getElementById('bottomSheet');
-        if (!bs.contains(e.target) && !e.target.closest('.reading-item') && bs.classList.contains('open')) {
-            bs.classList.remove('open');
-        }
-    });
-</script>
-
-</body>
-</html>
