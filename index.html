@@ -109,7 +109,7 @@
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
-            gap: 2px;
+            gap: 4px;
         }
 
         .profile-chip-bar {
@@ -262,34 +262,22 @@
             flex-shrink: 0;
         }
 
-        .input-group { margin-bottom: 12px; }
-        .input-group label { display: block; font-size: 11.5px; font-weight: 600; margin-bottom: 5px; color: #dfd8ee; }
+        .input-group { margin-bottom: 14px; }
+        .input-group label { display: block; font-size: 11.5px; font-weight: 600; margin-bottom: 6px; color: #dfd8ee; }
         textarea, input, select {
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 12px;
-            padding: 10px 12px;
+            padding: 12px 14px;
             color: #fff;
             font-family: inherit;
             font-size: 13px;
             outline: none;
         }
         select option { background: #1a1526; color: #fff; }
-        textarea { resize: none; height: 60px; }
+        textarea { resize: none; height: 70px; }
         textarea:focus, input:focus, select:focus { border-color: var(--moon-glow); }
-
-        .radio-box {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            padding: 10px 12px;
-            border-radius: 12px;
-            margin-bottom: 6px;
-            cursor: pointer;
-        }
-        .radio-box.selected { background: rgba(189, 164, 248, 0.14); border-color: var(--moon-glow); }
-        .radio-box h5 { margin: 0 0 2px 0; font-size: 12px; font-weight: 600; color: #fff; }
-        .radio-box p { margin: 0; font-size: 10px; color: var(--text-dim); }
 
         .draw-btn {
             width: 100%;
@@ -301,7 +289,7 @@
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 5px;
+            margin-top: 10px;
             box-shadow: 0 8px 24px rgba(126, 93, 196, 0.4);
             white-space: nowrap;
         }
@@ -323,7 +311,7 @@
             background: #140f21;
             border: 1px solid var(--glass-border);
             width: 100%; max-width: 440px; max-height: 90vh;
-            border-radius: 24px; padding: 20px 16px;
+            border-radius: 24px; padding: 22px 18px;
             overflow-y: auto; position: relative;
             box-shadow: 0 24px 60px rgba(0,0,0,0.7);
             text-align: left;
@@ -335,29 +323,19 @@
             color: var(--text-dim); cursor: pointer;
         }
 
-        .action-bar {
-            display: flex; gap: 5px; justify-content: center;
-            margin: 10px 0 12px 0; flex-wrap: wrap;
-        }
-        .act-btn {
-            background: rgba(189, 164, 248, 0.12);
-            border: 1px solid rgba(189, 164, 248, 0.25);
-            color: #d6c5ff; padding: 6px 10px;
-            border-radius: 12px; font-size: 10.5px;
-            font-weight: 600; cursor: pointer; white-space: nowrap;
-        }
-
         .cards-grid {
             display: flex; flex-wrap: wrap; justify-content: center;
-            gap: 7px; margin: 10px 0 14px 0; perspective: 1000px;
+            gap: 8px; margin: 16px 0; perspective: 1000px;
         }
         .tarot-card-wrapper {
             width: 78px; height: 128px; cursor: pointer;
             animation: cardSpawn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-            opacity: 0; transform: translateY(18px) scale(0.95);
         }
 
-        @keyframes cardSpawn { to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes cardSpawn { 
+            from { opacity: 0; transform: translateY(18px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); } 
+        }
 
         .tarot-card {
             width: 100%; height: 100%; position: relative;
@@ -366,92 +344,410 @@
             border-radius: 10px; box-shadow: 0 6px 16px rgba(0,0,0,0.5);
         }
         .tarot-card.flipped { transform: rotateY(180deg); }
-        .tarot-card.reversed .card-front img { transform: rotate(180deg); }
+        .tarot-card.reversed .card-front { transform: rotateY(180deg) rotate(180deg); }
 
         .card-back {
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; border-radius: 10px;
             background: linear-gradient(135deg, #2b1f47 0%, #150f26 100%);
             border: 1px solid rgba(218, 196, 255, 0.4);
-            box-shadow: inset 0 0 10px rgba(189, 164, 248, 0.3);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            overflow: hidden;
         }
-        .card-back img.deck-back-img {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            object-fit: cover; border-radius: 9px; display: block;
-        }
-        .card-back::before {
-            content: ''; position: absolute; width: 76%; height: 86%;
-            border: 1px solid rgba(255,255,255,0.25); border-radius: 6px;
-            pointer-events: none; z-index: 2;
-        }
-        .aurora-star {
-            font-size: 20px; color: #ffd27d;
-            text-shadow: 0 0 10px rgba(255, 210, 125, 0.8);
-            margin-bottom: 2px; z-index: 1;
-        }
-        .aurora-brand {
-            font-family: 'Cinzel', serif; font-size: 8px;
-            letter-spacing: 2px; font-weight: 700; color: #e3d7ff; z-index: 1;
-        }
-
         .card-front {
             position: absolute; width: 100%; height: 100%;
-            backface-visibility: hidden; border-radius: 10px; background: #fff;
-            transform: rotateY(180deg); border: 1.5px solid rgba(218, 196, 255, 0.6);
-            overflow: hidden;
+            backface-visibility: hidden; border-radius: 10px;
+            background: #251d38;
+            transform: rotateY(180deg);
+            border: 1.5px solid rgba(218, 196, 255, 0.6);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 6px; text-align: center; font-size: 11px;
         }
-        .card-front img { width: 100%; height: 100%; object-fit: cover; }
-
-        .card-info-box {
-            background: rgba(255, 255, 255, 0.04);
-            border-radius: 14px; padding: 12px 14px; margin-top: 8px;
-            text-align: left; border: 1px solid rgba(255,255,255,0.08);
-            animation: fadeIn 0.35s ease;
-        }
-        .pos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-        .pos-badge { font-size: 10.5px; font-weight: 700; color: var(--moon-glow); }
-        .single-add-btn {
-            background: rgba(189, 164, 248, 0.15); border: 1px solid rgba(189, 164, 248, 0.3);
-            color: #dcd0ff; padding: 3px 7px; border-radius: 8px;
-            font-size: 9.5px; font-weight: 600; cursor: pointer; white-space: nowrap;
-        }
-        .single-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-        .resonance-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, rgba(255, 210, 125, 0.2) 0%, rgba(189, 164, 248, 0.2) 100%);
-            border: 1px solid var(--gold-spark); color: var(--gold-spark);
-            padding: 3px 7px; border-radius: 7px; font-size: 9.5px;
-            font-weight: 700; margin-top: 4px;
-        }
-
-        .sub-cards-container {
-            margin-top: 6px; padding-top: 6px;
-            border-top: 1px dashed rgba(255,255,255,0.1);
-            display: flex; flex-direction: column; gap: 4px;
-        }
-        .sub-card-tag {
-            background: rgba(165, 130, 255, 0.08);
-            border-left: 2px solid var(--moon-glow);
-            padding: 4px 8px; border-radius: 0 7px 7px 0;
-            font-size: 10.5px; color: #e9e4f5;
-        }
-
-        .card-info-box h4 { margin: 0 0 2px 0; font-size: 13px; color: #f5f2fd; }
-        .card-info-box p { margin: 0; font-size: 11px; color: var(--text-dim); line-height: 1.45; }
 
         .ai-reading-card {
             background: linear-gradient(145deg, rgba(62, 45, 99, 0.45) 0%, rgba(26, 18, 45, 0.88) 100%);
             border: 1px solid rgba(189, 164, 248, 0.35);
-            border-radius: 16px; padding: 16px; margin-top: 12px;
+            border-radius: 16px; padding: 16px; margin-top: 14px;
             text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            animation: fadeIn 0.4s ease;
         }
         .ai-reading-card h4 {
             margin: 0 0 8px 0; font-family: 'Cinzel', 'Noto Serif KR', serif;
             font-size: 14.5px; color: var(--gold-spark); display: flex; align-items: center; gap: 6px;
             border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 7px;
         }
-        .ai-reading-body
+        .ai-reading-body {
+            font-size: 12.5px;
+            line-height: 1.65;
+            color: #ece6f6;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <div class="logo-area">
+            <div class="celestial-moon">🌙</div>
+            <div class="logo-text">
+                <h1>LUNEA</h1>
+                <p>CELESTIAL TAROT ARCHIVE</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" onclick="openModal('apiModal')">⚙️ API 설정</button>
+            <button class="icon-btn" onclick="openModal('profileModal')">👤 프로필</button>
+            <button class="icon-btn" onclick="openModal('historyModal')">📜 기록함</button>
+        </div>
+    </header>
+
+    <div class="profile-chip-bar" onclick="openModal('profileModal')">
+        <div class="profile-chip-info">
+            <span class="p-tag" id="chipDay">태국: 목요일 (Jupiter ♃)</span>
+            <span class="p-tag" id="chipStem">일간: 庚(경금)</span>
+            <span class="p-tag" id="chipZodiac">태양궁: Pisces</span>
+        </div>
+        <span style="color: var(--moon-glow); font-weight: 600;">수정 &gt;</span>
+    </div>
+
+    <div class="daily-orbit-card">
+        <div class="daily-text">
+            <h3>DAILY ORBIT 4</h3>
+            <p>아침 흐름 · 오후 집중도 · 대인/연애운 · 밤의 안식<br>78장 천체 덱으로 관통하는 4장의 정밀 리딩</p>
+        </div>
+        <button class="daily-btn" onclick="startSpread('Daily Orbit 4', 4)">운세 펼치기</button>
+    </div>
+
+    <div class="section-tag">CHOOSE A READING</div>
+    <h2 class="section-heading">탐색할 스프레드</h2>
+
+    <!-- 카테고리 1 -->
+    <div class="category-card" onclick="toggleCat(this)">
+        <div class="category-header">
+            <div class="cat-icon-title">
+                <div class="cat-icon">✨</div>
+                <div class="cat-text">
+                    <h3>GENERAL & AI CUSTOM</h3>
+                    <p>질문 맞춤 AI 실시간 설계 · 켈틱 크로스 · 타임라인</p>
+                </div>
+            </div>
+            <span class="toggle-btn">+</span>
+        </div>
+        <div class="category-content" onclick="event.stopPropagation()">
+            <div class="reading-item" onclick="startSpread('자유 질문 AI 정밀 분석', 3)">
+                <div>
+                    <h4>자유 질문 AI 정밀 분석</h4>
+                    <p>현재 고민에 맞는 심층 통찰</p>
+                </div>
+                <span class="card-count">3 Cards</span>
+            </div>
+            <div class="reading-item" onclick="startSpread('켈틱 크로스 (Celtic Cross)', 10)">
+                <div>
+                    <h4>켈틱 크로스 (Celtic Cross)</h4>
+                    <p>상황의 근원부터 미래 흐름까지 완벽 조망</p>
+                </div>
+                <span class="card-count">10 Cards</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리 2 -->
+    <div class="category-card" onclick="toggleCat(this)">
+        <div class="category-header">
+            <div class="cat-icon-title">
+                <div class="cat-icon">🏛️</div>
+                <div class="cat-text">
+                    <h3>CAREER & EXAM</h3>
+                    <p>공시/관세직 합격운 · 직장 대인관계 · 이직 · 금전운</p>
+                </div>
+            </div>
+            <span class="toggle-btn">+</span>
+        </div>
+        <div class="category-content" onclick="event.stopPropagation()">
+            <div class="reading-item" onclick="startSpread('공시 및 시험 합격운', 3)">
+                <div>
+                    <h4>합격 & 성취 에너지 점검</h4>
+                    <p>집중도, 방해 요인 및 합격 가능성</p>
+                </div>
+                <span class="card-count">3 Cards</span>
+            </div>
+            <div class="reading-item" onclick="startSpread('이직 및 커리어 방향', 3)">
+                <div>
+                    <h4>이직 & 커리어 타이밍</h4>
+                    <p>현 직장 유지 vs 이동에 대한 에너지 비교</p>
+                </div>
+                <span class="card-count">3 Cards</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리 3 -->
+    <div class="category-card" onclick="toggleCat(this)">
+        <div class="category-header">
+            <div class="cat-icon-title">
+                <div class="cat-icon">🌙</div>
+                <div class="cat-text">
+                    <h3>LOVE & INNER HEART</h3>
+                    <p>속마음 · 속궁합 19+ · 인연운 · 연락 · 재회</p>
+                </div>
+            </div>
+            <span class="toggle-btn">+</span>
+        </div>
+        <div class="category-content" onclick="event.stopPropagation()">
+            <div class="reading-item" onclick="startSpread('상대방의 속마음 & 무의식', 3)">
+                <div>
+                    <h4>상대방의 진심 리딩</h4>
+                    <p>겉으로 드러나는 태도와 숨겨진 본심</p>
+                </div>
+                <span class="card-count">3 Cards</span>
+            </div>
+            <div class="reading-item" onclick="startSpread('재회 및 연락 운', 3)">
+                <div>
+                    <h4>재회 가능성 & 타이밍</h4>
+                    <p>흐름을 전환시킬 핵심 열쇠</p>
+                </div>
+                <span class="card-count">3 Cards</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 카테고리 4 -->
+    <div class="category-card" onclick="toggleCat(this)">
+        <div class="category-header">
+            <div class="cat-icon-title">
+                <div class="cat-icon">📈</div>
+                <div class="cat-text">
+                    <h3>STOCK & TRADING</h3>
+                    <p>단타 매수 타점 · 익절/손절 · 종목 모멘텀</p>
+                </div>
+            </div>
+            <span class="toggle-btn">+</span>
+        </div>
+        <div class="category-content" onclick="event.stopPropagation()">
+            <div class="reading-item" onclick="startSpread('단타 진입 타점 & 심리 지표', 3)">
+                <div>
+                    <h4>진입 타점 & 심리 지표</h4>
+                    <p>상승 모멘텀과 시장 심리 점검</p>
+                </div>
+                <span class="card-count">3 Cards</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 리딩 모달 -->
+<div class="modal-layer" id="spreadModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('spreadModal')">×</button>
+        <h3 id="spreadTitle" style="font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold-spark);">SPREAD</h3>
+        <div class="input-group">
+            <label>구체적인 질문이나 현재 상황을 입력하세요</label>
+            <textarea id="userQuery" placeholder="질문을 입력하면 Gemini AI가 더욱 정밀하게 분석합니다."></textarea>
+        </div>
+        <button class="draw-btn" id="drawActionBtn" onclick="drawCards()">운명의 카드 뽑기</button>
+        
+        <div class="cards-grid" id="cardsContainer"></div>
+        <div id="aiReadingBox" class="ai-reading-card" style="display: none;">
+            <h4>✨ LUNEA CELESTIAL ORACLE</h4>
+            <div class="ai-reading-body" id="aiReadingText"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Gemini API 설정 모달 (제공해주신 이미지와 100% 동일한 구조) -->
+<div class="modal-layer" id="apiModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('apiModal')">×</button>
+        <div style="font-size: 10px; font-weight: 700; color: var(--moon-glow); letter-spacing: 1.5px; margin-bottom: 4px;">AI CONNECTION</div>
+        <h3 style="font-size: 18px; margin: 0 0 10px 0; color: #fff; font-weight: 700;">Gemini API 설정</h3>
+        <p style="font-size: 11.5px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.45;">Google AI Studio 무료 API Key를 입력하세요. 브라우저에 안전하게 보관됩니다.</p>
+        
+        <div class="input-group">
+            <label>Google Gemini API Key</label>
+            <input type="password" id="geminiApiKey" placeholder="AIzaSy...">
+        </div>
+        
+        <div class="input-group">
+            <label>리딩 모델</label>
+            <select id="geminiModel">
+                <option value="gemini-3.6-flash" selected>gemini-3.6-flash (무제한 안정 생성 · 공식 최신 모델)</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash (표준 플래시 모델)</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro (심층 추론 프로 모델)</option>
+            </select>
+        </div>
+        
+        <button class="draw-btn" onclick="saveGeminiSettings()">API 설정 저장</button>
+    </div>
+</div>
+
+<!-- 프로필 모달 -->
+<div class="modal-layer" id="profileModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('profileModal')">×</button>
+        <h3 style="font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold-spark);">MY CELESTIAL PROFILE</h3>
+        <div class="input-group">
+            <label>태어난 요일 (태국)</label>
+            <input type="text" id="profDay" value="목요일 (Jupiter ♃)">
+        </div>
+        <div class="input-group">
+            <label>사주 일간</label>
+            <input type="text" id="profStem" value="庚(경금)">
+        </div>
+        <div class="input-group">
+            <label>태양궁 (별자리)</label>
+            <input type="text" id="profZodiac" value="Pisces">
+        </div>
+        <button class="draw-btn" onclick="saveProfile()">프로필 적용</button>
+    </div>
+</div>
+
+<!-- 기록함 모달 -->
+<div class="modal-layer" id="historyModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeModal('historyModal')">×</button>
+        <h3 style="font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold-spark);">ARCHIVE</h3>
+        <div id="historyList" style="font-size: 12px; color: var(--text-dim);">저장된 최근 리딩 내역이 없습니다.</div>
+    </div>
+</div>
+
+<script>
+    const TAROT_DECK = [
+        "0. 바보 (The Fool)", "I. 마법사 (The Magician)", "II. 여사제 (The High Priestess)",
+        "III. 여황제 (The Empress)", "IV. 황제 (The Emperor)", "V. 교황 (The Hierophant)",
+        "VI. 연인 (The Lovers)", "VII. 전차 (The Chariot)", "VIII. 힘 (Strength)",
+        "IX. 은둔자 (The Hermit)", "X. 운명의 수레바퀴 (Wheel of Fortune)", "XI. 정의 (Justice)",
+        "XII. 매달린 사람 (The Hanged Man)", "XIII. 죽음 (Death)", "XIV. 절제 (Temperance)",
+        "XV. 악마 (The Devil)", "XVI. 탑 (The Tower)", "XVII. 별 (The Star)",
+        "XVIII. 달 (The Moon)", "XIX. 태양 (The Sun)", "XX. 심판 (Judgement)", "XXI. 세계 (The World)"
+    ];
+
+    let currentSpread = { title: '', count: 3 };
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const savedKey = localStorage.getItem('lunea_gemini_key');
+        const savedModel = localStorage.getItem('lunea_gemini_model');
+        if (savedKey) document.getElementById('geminiApiKey').value = savedKey;
+        if (savedModel) document.getElementById('geminiModel').value = savedModel;
+    });
+
+    function toggleCat(card) {
+        card.classList.toggle('active');
+    }
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('show');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('show');
+    }
+
+    function saveGeminiSettings() {
+        const key = document.getElementById('geminiApiKey').value.trim();
+        const model = document.getElementById('geminiModel').value;
+        localStorage.setItem('lunea_gemini_key', key);
+        localStorage.setItem('lunea_gemini_model', model);
+        alert('Gemini API 설정이 안전하게 저장되었습니다.');
+        closeModal('apiModal');
+    }
+
+    function saveProfile() {
+        const day = document.getElementById('profDay').value;
+        const stem = document.getElementById('profStem').value;
+        const zodiac = document.getElementById('profZodiac').value;
+        document.getElementById('chipDay').textContent = '태국: ' + day;
+        document.getElementById('chipStem').textContent = '일간: ' + stem;
+        document.getElementById('chipZodiac').textContent = '태양궁: ' + zodiac;
+        closeModal('profileModal');
+    }
+
+    function startSpread(title, count) {
+        currentSpread = { title, count };
+        document.getElementById('spreadTitle').textContent = title;
+        document.getElementById('cardsContainer').innerHTML = '';
+        document.getElementById('aiReadingBox').style.display = 'none';
+        document.getElementById('aiReadingText').textContent = '';
+        openModal('spreadModal');
+    }
+
+    function drawCards() {
+        const container = document.getElementById('cardsContainer');
+        container.innerHTML = '';
+        const drawn = [];
+        const deckCopy = [...TAROT_DECK];
+
+        for(let i = 0; i < currentSpread.count; i++) {
+            const randIdx = Math.floor(Math.random() * deckCopy.length);
+            const card = deckCopy.splice(randIdx, 1)[0];
+            const isReversed = Math.random() > 0.5;
+            drawn.push({ name: card, reversed: isReversed });
+
+            const cardEl = document.createElement('div');
+            cardEl.className = 'tarot-card-wrapper';
+            cardEl.innerHTML = `
+                <div class="tarot-card ${isReversed ? 'reversed' : ''}">
+                    <div class="card-back">🌙<br><span style="font-size: 8px;">LUNEA</span></div>
+                    <div class="card-front">
+                        <strong style="font-size: 10px;">${card}</strong>
+                        <span style="font-size: 9px; color: #ffd27d; margin-top: 4px;">${isReversed ? '(역방향)' : '(정방향)'}</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(cardEl);
+        }
+
+        setTimeout(() => {
+            document.querySelectorAll('.tarot-card').forEach(c => c.classList.add('flipped'));
+            requestGeminiReading(drawn);
+        }, 300);
+    }
+
+    async function requestGeminiReading(cards) {
+        const readingBox = document.getElementById('aiReadingBox');
+        const readingText = document.getElementById('aiReadingText');
+        readingBox.style.display = 'block';
+        readingText.textContent = '우주의 신비로운 별자리를 정렬하고 있습니다... (Gemini 해석 중)';
+
+        const apiKey = localStorage.getItem('lunea_gemini_key');
+        const model = localStorage.getItem('lunea_gemini_model') || 'gemini-3.6-flash';
+        const userQuery = document.getElementById('userQuery').value.trim() || '현재 전반적인 운의 흐름';
+        const profile = `${document.getElementById('chipDay').textContent}, ${document.getElementById('chipStem').textContent}, ${document.getElementById('chipZodiac').textContent}`;
+
+        const cardSummary = cards.map((c, i) => `카드 ${i+1}: ${c.name} (${c.reversed ? '역방향' : '정방향'})`).join(', ');
+
+        if (!apiKey) {
+            readingText.textContent = `[카드 뽑기 완료]\n${cardSummary}\n\n⚠️ Gemini API Key가 등록되지 않았습니다. 우측 상단의 '⚙️ API 설정'에서 키를 입력하시면 실시간 AI 심층 리딩을 받아보실 수 있습니다.`;
+            return;
+        }
+
+        const prompt = `당신은 천체 타로 아카이브 'LUNEA'의 신비롭고 예리한 수석 오라클 마스터입니다.
+내담자 프로필: ${profile}
+스프레드 주제: ${currentSpread.title}
+내담자 질문/상황: ${userQuery}
+뽑힌 타로 카드: ${cardSummary}
+
+각 카드가 상징하는 의미를 내담자의 사주/점성학적 기운 및 질문과 연결하여 품격 있고 통찰력 넘치는 어조로 해석해주세요. 결론에는 실질적인 행동 조언(Action Item)을 덧붙여주세요.`;
+
+        try {
+            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }]
+                })
+            });
+
+            if (!res.ok) {
+                const errData = await res.json();
+                throw new Error(errData.error?.message || 'API 호출 실패');
+            }
+
+            const data = await res.json();
+            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            readingText.textContent = reply || '해석을 불러오지 못했습니다.';
+        } catch (err) {
+            readingText.textContent = `[카드 결과]\n${cardSummary}\n\n❌ Gemini 연동 오류: ${err.message}\n(API 키 및 모델명을 확인해주세요.)`;
+        }
+    }
+</script>
+</body>
+</html>
