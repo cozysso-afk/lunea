@@ -556,7 +556,7 @@
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content">
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'Gemini AI가 질문을 실시간 분석해 최적의 스프레드(1~7장)와 카드 자리를 동적 설계합니다.', 0, event)">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'Gemini AI가 질문을 심층 분석하여 1~7장의 최적화된 스프레드 자리를 동적 설계합니다.', 0, event)">
                 <div><h4>질문 맞춤 AI 배열</h4><p>질문 맥락 기반 AI 실시간 동적 스프레드 생성 (1~7장).</p></div>
                 <div class="card-count">AI 맞춤</div>
             </div>
@@ -696,7 +696,7 @@
             <label>리딩 모델</label>
             <select id="selectModel">
                 <option value="gemini-2.5-flash">gemini-2.5-flash (안정적 추천 · 할당량 여유)</option>
-                <option value="gemini-3.6-flash">gemini-3.6-flash (최신 모델)</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash (표준 경량 모델)</option>
             </select>
         </div>
         <button class="draw-btn" onclick="saveApiKey()">API 설정 저장</button>
@@ -1071,45 +1071,107 @@
         executeSpread("오늘 하루 나의 전반적인 에너지와 대인관계 흐름");
     }
 
+    function generateDynamicFallbackSpread(question) {
+        const q = question.toLowerCase();
+        if (q.includes("속마음") || q.includes("좋아") || q.includes("연애") || q.includes("남친") || q.includes("여친") || q.includes("짝사랑")) {
+            return {
+                spreadTitle: "애정 심층 분석 스프레드 (5카드)",
+                positions: [
+                    "1. 질문자가 상대에게 느끼는 본심과 무의식",
+                    "2. 상대방이 겉으로 드러내는 표면적 반응",
+                    "3. 상대방의 가슴속 깊은 진심과 무의식",
+                    "4. 두 사람 사이를 가로막는 현실적/감정적 장벽",
+                    "5. 앞으로 마주할 관계의 전개 방향"
+                ]
+            };
+        } else if (q.includes("이직") || q.includes("회사") || q.includes("직장") || q.includes("퇴사") || q.includes("진로")) {
+            return {
+                spreadTitle: "커리어 & 이직 결정 스프레드 (5카드)",
+                positions: [
+                    "1. 현재 직장에서의 나의 입지와 에너지",
+                    "2. 이직 또는 변화를 추구했을 때의 실익",
+                    "3. 현재 자리를 유지했을 때의 중장기적 흐름",
+                    "4. 판단 과정에서 경계해야 할 위험 요소",
+                    "5. 나를 위한 최선의 커리어 결단 방향"
+                ]
+            };
+        } else if (q.includes("합격") || q.includes("시험") || q.includes("공시") || q.includes("자격증")) {
+            return {
+                spreadTitle: "시험 합격 & 성취 스프레드 (4카드)",
+                positions: [
+                    "1. 현재 나의 학습 완성도 및 실력",
+                    "2. 시험 당일 예상되는 변수와 멘탈",
+                    "3. 결과 기운 및 합격 가능성",
+                    "4. 득점을 극대화하기 위한 핵심 행동 지침"
+                ]
+            };
+        } else if (q.includes("매수") || q.includes("주식") || q.includes("코인") || q.includes("투자") || q.includes("매도")) {
+            return {
+                spreadTitle: "트레이딩 & 자금 흐름 스프레드 (4카드)",
+                positions: [
+                    "1. 진입하고자 하는 자산의 현재 수급 에너지",
+                    "2. 단기 변동성과 하방 리스크",
+                    "3. 수익 실현(익절) 기대치와 모멘텀",
+                    "4. 자금 관리 및 포지션 조언"
+                ]
+            };
+        } else if (q.includes("재회") || q.includes("다시") || q.includes("연락")) {
+            return {
+                spreadTitle: "재회 및 인연 흐름 스프레드 (6카드)",
+                positions: [
+                    "1. 이별의 본질적인 원인",
+                    "2. 상대방의 현재 미련과 후회 정도",
+                    "3. 현재 상대방에게 다른 인연의 유무",
+                    "4. 재회를 가로막는 현실적 장애물",
+                    "5. 먼저 연락이 올 가능성과 시기",
+                    "6. 재회 성사 시 관계의 지속 가능성"
+                ]
+            };
+        } else {
+            return {
+                spreadTitle: "질문 심층 직관 스프레드 (4카드)",
+                positions: [
+                    "1. 질문 상황의 근본적인 본질",
+                    "2. 표면 아래 숨겨진 핵심 변수",
+                    "3. 앞으로 전개될 사건의 흐름",
+                    "4. 성공적인 해결을 위한 결정적 열쇠"
+                ]
+            };
+        }
+    }
+
     async function requestAiSpreadDesign(questionText) {
         const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
         const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
         
         if (!apiKey) {
-            alert('AI 자동 맞춤 배열을 사용하려면 상단 [⚙️ API 설정]에서 Gemini API Key를 먼저 등록해 주세요.');
-            openApiModal();
-            return {
-                spreadTitle: "직관적 심층 4카드 배열",
-                positions: ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"]
-            };
+            return generateDynamicFallbackSpread(questionText);
         }
 
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const prompt = `당신은 세계 최고의 타로 마스터입니다.
-질문자가 던진 구체적인 질문을 분석하여, 질문의 핵심 요구사항을 1:1로 정확하게 짚어주는 맞춤형 타로 포지션(1~7개)을 생성하세요.
-절대로 일반적이고 진부한 '현재 상황, 핵심 변수, 미래' 같은 고정 템플릿을 쓰지 말고, 질문의 키워드에 딱 맞게 자리를 설계해야 합니다.
+        const prompt = `당신은 세계 최고 수준의 타로 마스터이자 스프레드 아키텍트입니다.
+질문자가 던진 구체적인 질문을 분석하여, 질문의 맥락과 세부 궁금증을 1:1로 관통하는 독창적인 타로 포지션(1장~7장 사이)을 설계하세요.
 
-예시: "상대가 생각하는 내 외적/내적 매력과 장점" ->
-- 1. 상대가 가장 강렬하게 기억하는 나의 외적 매력
-- 2. 상대의 마음을 흔들었던 나의 내적 성향 및 감성
-- 3. 이별 후에도 상대가 인정하는 나의 결정적 장점
+[규칙]
+1. 질문의 복잡도와 의도에 맞게 카드의 장수(1장~7장)를 자율적으로 결정하십시오. (간단한 질문은 1~3장, 심층적인 질문은 4~7장)
+2. '현재 상황, 변수, 미래' 같은 진부한 단어를 쓰지 말고, 질문의 핵심 단어와 디테일이 직접 반영된 생생한 포지션 명칭을 지으세요.
+3. 반드시 오직 유효한 JSON 형식만 응답하세요. 백틱(Markdown)이나 기타 설명을 붙이지 마세요.
 
-반드시 아래 JSON 형식만 반환하세요 (마크다운 없이 순수 JSON):
+JSON 규격:
 {
-  "spreadTitle": "질문 맞춤형 스프레드 제목",
+  "spreadTitle": "질문 맞춤 스프레드 이름",
   "positions": [
-    "1. 질문 핵심에 맞춘 구체적 자리 명칭",
-    "2. 질문 핵심에 맞춘 구체적 자리 명칭",
-    "3. 질문 핵심에 맞춘 구체적 자리 명칭"
+    "1. 구체적이고 생생한 자리 설명",
+    "2. 구체적이고 생생한 자리 설명",
+    "3. 구체적이고 생생한 자리 설명"
   ]
 }
 
-[사용자 질문]
-"${questionText}"`;
+질문: "${questionText}"`;
 
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000);
+            const timeoutId = setTimeout(() => controller.abort(), 18000);
 
             const res = await fetch(endpoint, {
                 method: "POST",
@@ -1117,33 +1179,36 @@
                 signal: controller.signal,
                 body: JSON.stringify({
                     contents: [{ parts: [{ text: prompt }] }],
-                    generationConfig: { responseMimeType: "application/json", temperature: 0.7 }
+                    generationConfig: {
+                        temperature: 0.8
+                    }
                 })
             });
             clearTimeout(timeoutId);
 
             const data = await res.json();
-            if (data.error) {
-                console.error("Gemini API Error:", data.error);
-                alert(`[AI 배열 생성 오류]\n${data.error.message}\n할당량이 초과되었거나 API Key가 유효하지 않습니다.`);
-            } else if (data.candidates && data.candidates[0].content) {
+            if (data.candidates && data.candidates[0].content) {
                 let rawText = data.candidates[0].content.parts[0].text.trim();
-                rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-                const parsed = JSON.parse(rawText);
-                if (parsed.positions && Array.isArray(parsed.positions) && parsed.positions.length > 0) {
-                    if (parsed.positions.length > 7) parsed.positions = parsed.positions.slice(0, 7);
-                    return parsed;
+                const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    const parsed = JSON.parse(jsonMatch[0]);
+                    if (parsed.positions && Array.isArray(parsed.positions) && parsed.positions.length > 0) {
+                        let finalPositions = parsed.positions.slice(0, 7);
+                        finalPositions = finalPositions.map((pos, idx) => {
+                            return pos.replace(/^\d+[\.\)]\s*/, `${idx + 1}. `);
+                        });
+                        return {
+                            spreadTitle: parsed.spreadTitle || "질문 맞춤 AI 동적 스프레드",
+                            positions: finalPositions
+                        };
+                    }
                 }
             }
         } catch (e) {
-            console.error("AI Spread Design Error:", e);
-            alert("네트워크 또는 API 오류로 인해 질문을 자동 분석하지 못했습니다.");
+            console.warn("AI Spread Design Fallback Activated:", e);
         }
 
-        return {
-            spreadTitle: "질문 기반 직관 배열",
-            positions: ["1. 질문의 핵심 본질", "2. 놓치기 쉬운 세부 요소", "3. 결과 및 실천 조언"]
-        };
+        return generateDynamicFallbackSpread(questionText);
     }
 
     async function startReading() {
@@ -1151,25 +1216,19 @@
         const drawBtn = document.getElementById('bsDrawBtn');
 
         if (isAiCustom) {
-            const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
-            if (!apiKey) {
-                alert('AI 자동 맞춤 배열을 사용하려면 상단 [⚙️ API 설정]에서 Gemini API Key를 먼저 등록해 주세요.');
-                openApiModal();
-                return;
-            }
-
             drawBtn.disabled = true;
-            drawBtn.innerText = "🔮 AI가 질문에 맞는 최적 배열(1~7장) 설계 중...";
+            drawBtn.innerText = "🔮 질문 맞춤 동적 배열(1~7장) 설계 중...";
             
             try {
-                const aiSpread = await requestAiSpreadDesign(qText || "종합 운세 흐름");
-                currentPositions = (aiSpread.positions && aiSpread.positions.length > 0) ? aiSpread.positions : ["1. 현재 상황", "2. 핵심 변수", "3. 해결책"];
-                currentSpreadTitle = aiSpread.spreadTitle || "질문 맞춤 AI 배열";
+                const aiSpread = await requestAiSpreadDesign(qText || "나의 전반적인 에너지 흐름");
+                currentPositions = aiSpread.positions;
+                currentSpreadTitle = aiSpread.spreadTitle;
                 currentCardCount = currentPositions.length;
             } catch (err) {
-                currentPositions = ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"];
-                currentSpreadTitle = "질문 맞춤 AI 배열";
-                currentCardCount = 4;
+                const fallback = generateDynamicFallbackSpread(qText || "운세");
+                currentPositions = fallback.positions;
+                currentSpreadTitle = fallback.spreadTitle;
+                currentCardCount = currentPositions.length;
             } finally {
                 drawBtn.disabled = false;
                 drawBtn.innerText = "✦ 카드 펼치기";
