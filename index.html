@@ -18,7 +18,7 @@
             --radius-box: 24px;
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; word-break: keep-all; }
 
         body {
             margin: 0;
@@ -34,7 +34,7 @@
         .app-container {
             width: 100%;
             max-width: 480px;
-            padding: 24px 18px 140px 18px;
+            padding: 24px 16px 140px 16px;
             position: relative;
         }
 
@@ -42,17 +42,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
+            gap: 8px;
         }
-        .logo-area { display: flex; align-items: center; gap: 14px; }
+        .logo-area { display: flex; align-items: center; gap: 10px; min-width: 0; }
         .celestial-moon {
-            width: 44px; height: 44px;
+            width: 40px; height: 40px;
+            min-width: 40px;
             background: linear-gradient(135deg, #e4d7ff 0%, #7e5dc4 60%, #3d2475 100%);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
+            font-size: 18px;
             box-shadow: 0 0 20px rgba(189, 164, 248, 0.45);
             border: 1px solid rgba(255, 255, 255, 0.4);
             animation: pulseGlow 4s infinite alternate ease-in-out;
@@ -66,87 +68,118 @@
         .logo-text h1 {
             margin: 0;
             font-family: 'Cinzel', serif;
-            font-size: 22px;
-            letter-spacing: 3px;
+            font-size: 20px;
+            letter-spacing: 2.5px;
             font-weight: 800;
             background: linear-gradient(135deg, #ffffff 0%, #dcd0ff 70%, #ffd27d 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            white-space: nowrap;
         }
         .logo-text p {
             margin: 0;
-            font-size: 10px;
+            font-size: 9.5px;
             color: var(--text-dim);
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             font-weight: 600;
+            white-space: nowrap;
         }
 
-        .header-actions { display: flex; gap: 8px; }
+        .header-actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
         .icon-btn {
             background: var(--glass-panel);
             border: 1px solid var(--glass-border);
-            padding: 8px 12px;
-            border-radius: 18px;
+            padding: 7px 11px;
+            border-radius: 16px;
             font-size: 11.5px;
+            font-weight: 600;
             color: var(--text-pure);
             cursor: pointer;
             backdrop-filter: blur(10px);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
         }
 
+        /* 프로필 요약 칩 바 - 가로 스크롤 및 비율 최적화 */
         .profile-chip-bar {
             background: rgba(189, 164, 248, 0.08);
             border: 1px solid rgba(189, 164, 248, 0.2);
             border-radius: 16px;
-            padding: 10px 14px;
-            margin-bottom: 20px;
+            padding: 9px 12px;
+            margin-bottom: 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 11.5px;
+            font-size: 11px;
             cursor: pointer;
+            gap: 6px;
         }
-        .profile-chip-info { display: flex; gap: 8px; flex-wrap: wrap; }
+        .profile-chip-info {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .profile-chip-info::-webkit-scrollbar { display: none; }
         .p-tag {
             background: rgba(255,255,255,0.08);
-            padding: 2px 8px;
+            padding: 3px 7px;
             border-radius: 8px;
             color: var(--gold-spark);
+            white-space: nowrap;
+            font-size: 10.5px;
         }
 
+        /* 데일리 운세 카드 - 텍스트 줄바꿈 방지 */
         .daily-orbit-card {
             background: linear-gradient(145deg, rgba(62, 45, 99, 0.45) 0%, rgba(20, 15, 33, 0.7) 100%);
             border: 1px solid rgba(218, 196, 255, 0.35);
             border-radius: var(--radius-box);
-            padding: 22px 20px;
-            margin-bottom: 24px;
+            padding: 18px 16px;
+            margin-bottom: 22px;
             box-shadow: 0 14px 36px rgba(0,0,0,0.35);
             backdrop-filter: blur(16px);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 12px;
+        }
+        .daily-text {
+            flex: 1;
+            min-width: 0;
         }
         .daily-text h3 {
-            margin: 0 0 6px 0;
+            margin: 0 0 4px 0;
             font-family: 'Cinzel', 'Noto Serif KR', serif;
-            font-size: 18px;
+            font-size: 16.5px;
             color: #f1ebff;
+            letter-spacing: 0.5px;
         }
         .daily-text p {
             margin: 0;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--text-dim);
             line-height: 1.45;
+            word-break: keep-all;
         }
         .daily-btn {
             background: linear-gradient(135deg, #a582ff 0%, #6842b8 100%);
             color: #fff;
             border: 1px solid rgba(255,255,255,0.4);
-            border-radius: 16px;
-            padding: 12px 18px;
-            font-size: 13px;
+            border-radius: 14px;
+            padding: 11px 14px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
             white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .section-tag {
@@ -159,60 +192,61 @@
         }
         .section-heading {
             font-family: 'Noto Serif KR', serif;
-            font-size: 21px;
-            margin: 0 0 18px 0;
+            font-size: 20px;
+            margin: 0 0 16px 0;
             font-weight: 600;
         }
 
         .category-card {
             background: var(--glass-panel);
             border-radius: var(--radius-box);
-            margin-bottom: 14px;
+            margin-bottom: 12px;
             border: 1px solid var(--glass-border);
             backdrop-filter: blur(14px);
             overflow: hidden;
             transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
         }
         .category-header {
-            padding: 18px 20px;
+            padding: 16px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             cursor: pointer;
         }
-        .cat-icon-title { display: flex; align-items: center; gap: 14px; }
+        .cat-icon-title { display: flex; align-items: center; gap: 12px; }
         .cat-icon {
-            width: 38px; height: 38px;
+            width: 36px; height: 36px;
             background: rgba(189, 164, 248, 0.12);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: var(--moon-glow);
-            font-size: 15px;
+            font-size: 14px;
             border: 1px solid rgba(189, 164, 248, 0.25);
+            flex-shrink: 0;
         }
         .cat-text h3 {
             margin: 0;
             font-family: 'Cinzel', 'Noto Serif KR', serif;
-            font-size: 16px;
-            letter-spacing: 1.2px;
+            font-size: 15px;
+            letter-spacing: 1px;
             font-weight: 700;
         }
         .cat-text p {
             margin: 3px 0 0 0;
-            font-size: 11.5px;
+            font-size: 11px;
             color: var(--text-dim);
         }
         .toggle-btn {
-            font-size: 22px;
+            font-size: 20px;
             color: var(--text-dim);
             transition: transform 0.3s ease;
             font-weight: 300;
         }
         .category-content {
             display: none;
-            padding: 0 20px 8px 20px;
+            padding: 0 18px 8px 18px;
         }
         .category-card.active .category-content { display: block; }
         .category-card.active .toggle-btn { transform: rotate(45deg); color: var(--moon-glow); }
@@ -221,20 +255,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 0;
+            padding: 13px 0;
             border-top: 1px solid rgba(255,255,255,0.06);
             cursor: pointer;
+            gap: 10px;
         }
-        .reading-item h4 { margin: 0 0 3px 0; font-size: 14px; font-weight: 600; color: #eee8f8; }
-        .reading-item p { margin: 0; font-size: 11.5px; color: var(--text-dim); }
+        .reading-item h4 { margin: 0 0 3px 0; font-size: 13.5px; font-weight: 600; color: #eee8f8; }
+        .reading-item p { margin: 0; font-size: 11px; color: var(--text-dim); }
         .card-count {
             background: rgba(189, 164, 248, 0.15);
             color: #d6c5ff;
             font-size: 11px;
             font-weight: 700;
-            padding: 4px 10px;
+            padding: 4px 9px;
             border-radius: 12px;
             border: 1px solid rgba(189, 164, 248, 0.3);
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         .bottom-sheet {
@@ -247,29 +284,29 @@
             background: rgba(18, 14, 28, 0.96);
             backdrop-filter: blur(24px);
             border-radius: 28px 28px 0 0;
-            padding: 26px 22px 34px 22px;
+            padding: 24px 20px 32px 20px;
             box-shadow: 0 -16px 50px rgba(0,0,0,0.6);
             transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 100;
             border: 1px solid var(--glass-border);
         }
         .bottom-sheet.open { bottom: 0; }
-        .bs-header { margin-bottom: 16px; }
+        .bs-header { margin-bottom: 14px; }
         .bs-subtitle { font-family: 'Cinzel', serif; font-size: 10px; font-weight: 700; color: var(--moon-glow); letter-spacing: 1.5px; }
-        .bs-title { font-family: 'Noto Serif KR', serif; font-size: 22px; margin: 4px 0; font-weight: 600; }
-        .bs-desc { font-size: 12px; color: var(--text-dim); margin: 0; }
+        .bs-title { font-family: 'Noto Serif KR', serif; font-size: 20px; margin: 4px 0; font-weight: 600; }
+        .bs-desc { font-size: 11.5px; color: var(--text-dim); margin: 0; }
 
         .input-group { margin-bottom: 14px; }
-        .input-group label { display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 7px; color: #dfd8ee; }
+        .input-group label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px; color: #dfd8ee; }
         textarea, input, select {
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 14px;
-            padding: 12px 14px;
+            padding: 11px 13px;
             color: #fff;
             font-family: inherit;
-            font-size: 14px;
+            font-size: 13.5px;
             outline: none;
         }
         select option { background: #1a1526; color: #fff; }
@@ -279,30 +316,31 @@
         .radio-box {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid rgba(255, 255, 255, 0.09);
-            padding: 12px 14px;
+            padding: 11px 13px;
             border-radius: 14px;
-            margin-bottom: 8px;
+            margin-bottom: 7px;
             cursor: pointer;
         }
         .radio-box.selected {
             background: rgba(189, 164, 248, 0.14);
             border-color: var(--moon-glow);
         }
-        .radio-box h5 { margin: 0 0 2px 0; font-size: 13px; font-weight: 600; color: #fff; }
-        .radio-box p { margin: 0; font-size: 11px; color: var(--text-dim); }
+        .radio-box h5 { margin: 0 0 2px 0; font-size: 12.5px; font-weight: 600; color: #fff; }
+        .radio-box p { margin: 0; font-size: 10.5px; color: var(--text-dim); }
 
         .draw-btn {
             width: 100%;
             background: linear-gradient(135deg, #a582ff 0%, #6842b8 100%);
             color: #ffffff;
             border: 1px solid rgba(255,255,255,0.3);
-            padding: 16px;
+            padding: 15px;
             border-radius: 16px;
-            font-size: 15px;
+            font-size: 14.5px;
             font-weight: 700;
             cursor: pointer;
             margin-top: 6px;
             box-shadow: 0 8px 24px rgba(126, 93, 196, 0.4);
+            white-space: nowrap;
         }
 
         .spread-modal {
@@ -323,8 +361,8 @@
             width: 100%;
             max-width: 440px;
             max-height: 94vh;
-            border-radius: 28px;
-            padding: 22px 16px;
+            border-radius: 26px;
+            padding: 20px 15px;
             overflow-y: auto;
             position: relative;
             box-shadow: 0 24px 60px rgba(0,0,0,0.7);
@@ -332,40 +370,41 @@
         }
         .close-modal {
             position: absolute;
-            top: 16px; right: 18px;
-            background: none; border: none; font-size: 26px;
+            top: 14px; right: 16px;
+            background: none; border: none; font-size: 24px;
             color: var(--text-dim); cursor: pointer;
         }
 
         .action-bar {
             display: flex;
-            gap: 8px;
+            gap: 6px;
             justify-content: center;
-            margin: 12px 0 16px 0;
+            margin: 12px 0 14px 0;
             flex-wrap: wrap;
         }
         .act-btn {
             background: rgba(189, 164, 248, 0.12);
             border: 1px solid rgba(189, 164, 248, 0.25);
             color: #d6c5ff;
-            padding: 7px 13px;
+            padding: 7px 11px;
             border-radius: 14px;
-            font-size: 11.5px;
+            font-size: 11px;
             font-weight: 600;
             cursor: pointer;
+            white-space: nowrap;
         }
 
         .cards-grid {
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
-            gap: 9px;
-            margin: 12px 0 18px 0;
+            gap: 8px;
+            margin: 10px 0 16px 0;
             perspective: 1000px;
         }
         .tarot-card-wrapper {
-            width: 86px;
-            height: 140px;
+            width: 82px;
+            height: 134px;
             cursor: pointer;
             animation: cardSpawn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
             opacity: 0;
@@ -419,7 +458,7 @@
             z-index: 2;
         }
         .aurora-star {
-            font-size: 24px;
+            font-size: 22px;
             color: #ffd27d;
             text-shadow: 0 0 10px rgba(255, 210, 125, 0.8);
             margin-bottom: 2px;
@@ -427,8 +466,8 @@
         }
         .aurora-brand {
             font-family: 'Cinzel', serif;
-            font-size: 9px;
-            letter-spacing: 2.5px;
+            font-size: 8.5px;
+            letter-spacing: 2px;
             font-weight: 700;
             color: #e3d7ff;
             z-index: 1;
@@ -452,8 +491,8 @@
         .card-info-box {
             background: rgba(255, 255, 255, 0.04);
             border-radius: 16px;
-            padding: 14px 16px;
-            margin-top: 10px;
+            padding: 13px 15px;
+            margin-top: 9px;
             text-align: left;
             border: 1px solid rgba(255,255,255,0.08);
             animation: fadeIn 0.35s ease;
@@ -473,11 +512,12 @@
             background: rgba(189, 164, 248, 0.15);
             border: 1px solid rgba(189, 164, 248, 0.3);
             color: #dcd0ff;
-            padding: 4px 9px;
+            padding: 4px 8px;
             border-radius: 10px;
-            font-size: 10.5px;
+            font-size: 10px;
             font-weight: 600;
             cursor: pointer;
+            white-space: nowrap;
         }
         .single-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
@@ -486,9 +526,9 @@
             background: linear-gradient(135deg, rgba(255, 210, 125, 0.2) 0%, rgba(189, 164, 248, 0.2) 100%);
             border: 1px solid var(--gold-spark);
             color: var(--gold-spark);
-            padding: 2px 8px;
+            padding: 3px 8px;
             border-radius: 8px;
-            font-size: 10.5px;
+            font-size: 10px;
             font-weight: 700;
             margin-top: 5px;
         }
@@ -499,50 +539,50 @@
             border-top: 1px dashed rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 5px;
         }
         .sub-card-tag {
             background: rgba(165, 130, 255, 0.08);
             border-left: 2px solid var(--moon-glow);
-            padding: 6px 10px;
+            padding: 5px 9px;
             border-radius: 0 8px 8px 0;
-            font-size: 11.5px;
+            font-size: 11px;
             color: #e9e4f5;
         }
 
-        .card-info-box h4 { margin: 0 0 4px 0; font-size: 14px; color: #f5f2fd; }
-        .card-info-box p { margin: 0; font-size: 12px; color: var(--text-dim); line-height: 1.55; }
+        .card-info-box h4 { margin: 0 0 3px 0; font-size: 13.5px; color: #f5f2fd; }
+        .card-info-box p { margin: 0; font-size: 11.5px; color: var(--text-dim); line-height: 1.5; }
 
         .ai-reading-card {
             background: linear-gradient(145deg, rgba(62, 45, 99, 0.4) 0%, rgba(26, 18, 45, 0.8) 100%);
             border: 1px solid rgba(189, 164, 248, 0.35);
-            border-radius: 20px;
-            padding: 18px;
-            margin-top: 16px;
+            border-radius: 18px;
+            padding: 16px;
+            margin-top: 14px;
             text-align: left;
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             animation: fadeIn 0.4s ease;
         }
         .ai-reading-card h4 {
-            margin: 0 0 10px 0;
+            margin: 0 0 8px 0;
             font-family: 'Cinzel', 'Noto Serif KR', serif;
-            font-size: 15px;
+            font-size: 14.5px;
             color: var(--gold-spark);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
         }
         .ai-reading-body {
-            font-size: 13px;
+            font-size: 12.5px;
             color: #eee8f8;
-            line-height: 1.68;
+            line-height: 1.65;
             word-break: keep-all;
             white-space: pre-line;
         }
 
         .copy-prompt-box {
-            margin-top: 18px;
-            padding: 16px;
+            margin-top: 16px;
+            padding: 14px;
             border-radius: 18px;
             background: linear-gradient(135deg, rgba(165, 130, 255, 0.12) 0%, rgba(104, 66, 184, 0.2) 100%);
             border: 1px solid rgba(189, 164, 248, 0.3);
@@ -552,12 +592,13 @@
             background: linear-gradient(135deg, #ffd27d 0%, #d49e37 100%);
             color: #1a1202;
             border: none;
-            padding: 14px;
-            border-radius: 14px;
-            font-size: 14px;
+            padding: 13px;
+            border-radius: 13px;
+            font-size: 13.5px;
             font-weight: 800;
             cursor: pointer;
             box-shadow: 0 6px 20px rgba(255, 210, 125, 0.3);
+            white-space: nowrap;
         }
 
         .profile-modal {
@@ -602,7 +643,7 @@
             <span class="p-tag" id="summarySaju">일간: 癸(계수)</span>
             <span class="p-tag" id="summaryZodiac">태양궁: 전갈자리</span>
         </div>
-        <span style="color:var(--moon-glow); font-weight:700;">수정 ›</span>
+        <span style="color:var(--moon-glow); font-weight:700; white-space:nowrap;">수정 ›</span>
     </div>
 
     <div class="daily-orbit-card">
@@ -848,7 +889,7 @@
     <div class="modal-content">
         <button class="close-modal" onclick="closeModal()">×</button>
         <div class="bs-subtitle" id="modalReadingType">DAILY ORBIT 4</div>
-        <h3 style="font-family: 'Noto Serif KR'; font-size: 19px; margin: 4px 0 10px 0;" id="modalQuestionText">질문 분석 중...</h3>
+        <h3 style="font-family: 'Noto Serif KR'; font-size: 18px; margin: 4px 0 10px 0;" id="modalQuestionText">질문 분석 중...</h3>
         
         <div class="action-bar">
             <button class="act-btn" onclick="flipAllCards()">✦ 일괄 뒤집기</button>
