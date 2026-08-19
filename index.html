@@ -106,7 +106,6 @@
             gap: 3px;
         }
 
-        /* 프로필 요약 칩 바 */
         .profile-chip-bar {
             background: rgba(189, 164, 248, 0.08);
             border: 1px solid rgba(189, 164, 248, 0.2);
@@ -137,7 +136,6 @@
             font-size: 10.5px;
         }
 
-        /* 데일리 운세 카드 */
         .daily-orbit-card {
             background: linear-gradient(145deg, rgba(62, 45, 99, 0.45) 0%, rgba(20, 15, 33, 0.7) 100%);
             border: 1px solid rgba(218, 196, 255, 0.35);
@@ -813,8 +811,7 @@
         <div class="input-group">
             <label>리딩 모델 선택</label>
             <select id="selectModel">
-                <option value="gemini-2.5-flash">gemini-2.5-flash (초고속 실시간 해석 · 기본 추천)</option>
-                <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (초고밀도 심층 해석)</option>
+                <option value="gemini-3.6-flash">gemini-3.6-flash (초고속 실시간 해석 · 최신 공식 모델)</option>
             </select>
         </div>
         <button class="draw-btn" onclick="saveApiKey()">API 설정 저장</button>
@@ -1006,7 +1003,7 @@
 
     function openApiModal() {
         document.getElementById('inputApiKey').value = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY') || '';
-        document.getElementById('selectModel').value = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+        document.getElementById('selectModel').value = 'gemini-3.6-flash';
         document.getElementById('apiModal').classList.add('show');
     }
     function closeApiModal() { document.getElementById('apiModal').classList.remove('show'); }
@@ -1442,7 +1439,7 @@
     async function generateInstantAiAnalysis() {
         flipAllCards();
         const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
-        const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+        const model = 'gemini-3.6-flash';
 
         if (!apiKey) {
             alert('상단 [⚙️ API 설정]에서 Gemini API 키를 먼저 등록해 주세요.');
