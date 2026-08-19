@@ -24,18 +24,12 @@
             word-break: keep-all;
         }
 
-        html {
-            width: 100%;
-            height: 100%;
-            background-color: #06040a;
-            overflow-x: hidden;
-        }
-
-        body {
+        html, body {
             margin: 0;
             padding: 0;
             width: 100%;
             min-height: 100vh;
+            background-color: #06040a;
             font-family: 'Pretendard', -apple-system, sans-serif;
             background: radial-gradient(circle at 50% 10%, #201738 0%, #0d0a17 60%, #06040a 100%);
             background-attachment: fixed;
@@ -268,25 +262,6 @@
             flex-shrink: 0;
         }
 
-        .bottom-sheet {
-            position: fixed;
-            bottom: -120%; left: 50%; transform: translateX(-50%);
-            width: 100%; max-width: 480px;
-            background: rgba(18, 14, 28, 0.98);
-            backdrop-filter: blur(28px);
-            border-radius: 26px 26px 0 0;
-            padding: 22px 18px 34px 18px;
-            box-shadow: 0 -16px 50px rgba(0,0,0,0.7);
-            transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 150;
-            border: 1px solid var(--glass-border);
-        }
-        .bottom-sheet.open { bottom: 0 !important; }
-        .bs-header { margin-bottom: 12px; }
-        .bs-subtitle { font-family: 'Cinzel', serif; font-size: 9.5px; font-weight: 700; color: var(--moon-glow); letter-spacing: 1.5px; }
-        .bs-title { font-family: 'Noto Serif KR', serif; font-size: 18px; margin: 3px 0; font-weight: 600; }
-        .bs-desc { font-size: 11px; color: var(--text-dim); margin: 0; }
-
         .input-group { margin-bottom: 12px; }
         .input-group label { display: block; font-size: 11.5px; font-weight: 600; margin-bottom: 5px; color: #dfd8ee; }
         textarea, input, select {
@@ -331,31 +306,32 @@
             white-space: nowrap;
         }
 
-        .spread-modal {
+        .spread-modal, .profile-modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(5, 3, 10, 0.94);
             backdrop-filter: blur(18px);
-            z-index: 200;
+            z-index: 300;
             display: none;
             justify-content: center;
             align-items: center;
-            padding: 12px;
+            padding: 14px;
         }
-        .spread-modal.show { display: flex; }
+        .spread-modal.show, .profile-modal.show { display: flex !important; }
+        
         .modal-content {
             background: #140f21;
             border: 1px solid var(--glass-border);
             width: 100%; max-width: 440px; max-height: 92vh;
-            border-radius: 24px; padding: 18px 14px;
+            border-radius: 24px; padding: 20px 16px;
             overflow-y: auto; position: relative;
             box-shadow: 0 24px 60px rgba(0,0,0,0.7);
-            text-align: center;
+            text-align: left;
         }
         .close-modal {
             position: absolute;
-            top: 12px; right: 14px;
-            background: none; border: none; font-size: 22px;
+            top: 14px; right: 16px;
+            background: none; border: none; font-size: 24px;
             color: var(--text-dim); cursor: pointer;
         }
 
@@ -495,13 +471,6 @@
             box-shadow: 0 6px 20px rgba(255, 210, 125, 0.3); white-space: nowrap;
         }
 
-        .profile-modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(5, 3, 10, 0.9); backdrop-filter: blur(16px);
-            z-index: 210; display: none; justify-content: center; align-items: center; padding: 14px;
-        }
-        .profile-modal.show { display: flex; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -544,7 +513,7 @@
     <h2 class="section-heading">탐색할 스프레드</h2>
 
     <!-- 1. GENERAL -->
-    <div class="category-card" onclick="toggleCategory(this, event)">
+    <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">✦</div>
@@ -556,27 +525,27 @@
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content">
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'Gemini AI가 질문을 실시간 분석해 최적의 스프레드와 카드 자리를 동적 설계합니다.', 0, event)">
+            <div class="reading-item" onclick="openSetupModal('GENERAL', '질문 맞춤 AI 배열', 'Gemini AI가 질문을 실시간 분석해 최적의 스프레드와 카드 자리를 동적 설계합니다.', 0)">
                 <div><h4>질문 맞춤 AI 배열</h4><p>질문 맥락 기반 AI 실시간 동적 스프레드 생성.</p></div>
                 <div class="card-count">AI 맞춤</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'YES / NO', '결정의 흐름을 명확한 상징으로 확인해요.', 3, event)">
+            <div class="reading-item" onclick="openSetupModal('GENERAL', 'YES / NO', '결정의 흐름을 명확한 상징으로 확인해요.', 3)">
                 <div><h4>YES / NO</h4><p>결정의 흐름을 고정 점수로 확인해요.</p></div>
                 <div class="card-count">3</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'ONE CARD', '지금 필요한 핵심 직관 메시지 한 장.', 1, event)">
+            <div class="reading-item" onclick="openSetupModal('GENERAL', 'ONE CARD', '지금 필요한 핵심 직관 메시지 한 장.', 1)">
                 <div><h4>ONE CARD</h4><p>지금 필요한 핵심 메시지 한 장.</p></div>
                 <div class="card-count">1</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'TIMELINE', '과거부터 미래까지의 흐름.', 3, event)">
+            <div class="reading-item" onclick="openSetupModal('GENERAL', 'TIMELINE', '과거부터 미래까지의 흐름.', 3)">
                 <div><h4>TIMELINE</h4><p>과거부터 미래까지의 흐름.</p></div>
                 <div class="card-count">3</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'CELTIC CROSS', '큰 흐름과 내·외부 변수를 보는 정통 10카드.', 10, event)">
+            <div class="reading-item" onclick="openSetupModal('GENERAL', 'CELTIC CROSS', '큰 흐름과 내·외부 변수를 보는 정통 10카드.', 10)">
                 <div><h4>CELTIC CROSS</h4><p>정통 심층 켈틱 크로스 배열.</p></div>
                 <div class="card-count">10</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'DEEP FLOW', '숨은 원인까지 깊게 읽는 심층 7카드.', 7, event)">
+            <div class="reading-item" onclick="openSetupModal('GENERAL', 'DEEP FLOW', '숨은 원인까지 깊게 읽는 심층 7카드.', 7)">
                 <div><h4>DEEP FLOW</h4><p>숨은 원인까지 깊게 읽는 배열.</p></div>
                 <div class="card-count">7</div>
             </div>
@@ -584,7 +553,7 @@
     </div>
 
     <!-- 2. CAREER & EXAM -->
-    <div class="category-card" onclick="toggleCategory(this, event)">
+    <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🏛️</div>
@@ -596,19 +565,19 @@
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content">
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '시험 합격운', '학습 완성도, 시험장 변수, 합격 기운과 핵심 전략.', 4, event)">
+            <div class="reading-item" onclick="openSetupModal('CAREER', '시험 합격운', '학습 완성도, 시험장 변수, 합격 기운과 핵심 전략.', 4)">
                 <div><h4>시험 합격운</h4><p>공시/자격증 시험 합격 가능성 및 대비 전략.</p></div>
                 <div class="card-count">4</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '직장 내 대인관계 & 평판', '동료/상사와의 관계, 평판, 갈등 완화 조언.', 4, event)">
+            <div class="reading-item" onclick="openSetupModal('CAREER', '직장 내 대인관계 & 평판', '동료/상사와의 관계, 평판, 갈등 완화 조언.', 4)">
                 <div><h4>직장 내 대인관계 & 평판</h4><p>조직 내 역학 관계와 평판 흐름 점검.</p></div>
                 <div class="card-count">4</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '이직 & 커리어 전환', '현 직장 유지 vs 이직 시 결과 비교.', 5, event)">
+            <div class="reading-item" onclick="openSetupModal('CAREER', '이직 & 커리어 전환', '현 직장 유지 vs 이직 시 결과 비교.', 5)">
                 <div><h4>이직 & 커리어 전환</h4><p>새로운 직장 운과 환경 변화의 득실 분석.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '일반 금전운 & 재물 흐름', '현재 재정 흐름, 지출 변수, 재물 유입 시기.', 4, event)">
+            <div class="reading-item" onclick="openSetupModal('CAREER', '일반 금전운 & 재물 흐름', '현재 재정 흐름, 지출 변수, 재물 유입 시기.', 4)">
                 <div><h4>일반 금전운 & 재물 흐름</h4><p>단기/중기 재물운과 금전 안정성 점검.</p></div>
                 <div class="card-count">4</div>
             </div>
@@ -616,7 +585,7 @@
     </div>
 
     <!-- 3. LOVE & INNER HEART -->
-    <div class="category-card" onclick="toggleCategory(this, event)">
+    <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🌙</div>
@@ -628,23 +597,23 @@
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content">
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5, event)">
+            <div class="reading-item" onclick="openSetupModal('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5)">
                 <div><h4>상대 속마음</h4><p>겉과 속, 감정의 방향을 나누어 봐요.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '밀착감, 압박감/타이트함, 템포, 지구력의 심층 신체 궁합.', 9, event)">
+            <div class="reading-item" onclick="openSetupModal('LOVE', '속궁합 · 19+', '밀착감, 압박감/타이트함, 템포, 지구력의 심층 신체 궁합.', 9)">
                 <div><h4>속궁합 · 19+</h4><p>신체적 텐션·밀착감·강도·지속성의 성인 전용 배열.</p></div>
                 <div class="card-count">9</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '친구·지인 관계 & 주변 인연운', '현재 인간관계 에너지와 새로운 인연의 흐름.', 4, event)">
+            <div class="reading-item" onclick="openSetupModal('LOVE', '친구·지인 관계 & 주변 인연운', '현재 인간관계 에너지와 새로운 인연의 흐름.', 4)">
                 <div><h4>친구·지인 관계 & 주변 인연운</h4><p>대인관계 갈등 원인과 관계 발전 조언.</p></div>
                 <div class="card-count">4</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '연락운 & 시기', '연락 의향과 가까운 시간 흐름.', 5, event)">
+            <div class="reading-item" onclick="openSetupModal('LOVE', '연락운 & 시기', '연락 의향과 가까운 시간 흐름.', 5)">
                 <div><h4>연락운 & 시기</h4><p>먼저 연락 올 가능성과 시기 분석.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '재회운', '재회의 장애물과 앞으로의 인연 흐름.', 7, event)">
+            <div class="reading-item" onclick="openSetupModal('LOVE', '재회운', '재회의 장애물과 앞으로의 인연 흐름.', 7)">
                 <div><h4>재회운</h4><p>재회의 장애물과 앞으로의 흐름.</p></div>
                 <div class="card-count">7</div>
             </div>
@@ -652,7 +621,7 @@
     </div>
 
     <!-- 4. STOCK -->
-    <div class="category-card" onclick="toggleCategory(this, event)">
+    <div class="category-card" onclick="toggleCategory(this)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">📈</div>
@@ -664,15 +633,15 @@
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content">
-            <div class="reading-item" onclick="openBottomSheet('STOCK', '매수 판단', '진입 흐름과 수급 리스크를 직관으로 봐요.', 3, event)">
+            <div class="reading-item" onclick="openSetupModal('STOCK', '매수 판단', '진입 흐름과 수급 리스크를 직관으로 봐요.', 3)">
                 <div><h4>매수 판단</h4><p>단기 진입 흐름과 위험 요인 상징 리딩.</p></div>
                 <div class="card-count">3</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('STOCK', '보유 / 익절', '보유와 수익 실현 흐름을 살펴봐요.', 5, event)">
+            <div class="reading-item" onclick="openSetupModal('STOCK', '보유 / 익절', '보유와 수익 실현 흐름을 살펴봐요.', 5)">
                 <div><h4>보유 / 익절</h4><p>보유와 수익 실현 흐름을 살펴봐요.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('STOCK', '매도 타이밍', '계속 보유와 지금 매도의 상징적 결과.', 5, event)">
+            <div class="reading-item" onclick="openSetupModal('STOCK', '매도 타이밍', '계속 보유와 지금 매도의 상징적 결과.', 5)">
                 <div><h4>매도 타이밍</h4><p>계속 보유와 지금 매도의 상징적 흐름.</p></div>
                 <div class="card-count">5</div>
             </div>
@@ -680,11 +649,40 @@
     </div>
 </div>
 
+<!-- 질문 입력 및 설정 모달 -->
+<div class="profile-modal" id="setupModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeSetupModal()">×</button>
+        <div style="font-family:'Cinzel'; font-size:10px; color:var(--moon-glow); font-weight:700; letter-spacing:1.5px;">✦ SELECTED · <span id="setupCategory">GENERAL</span></div>
+        <h3 style="font-family:'Noto Serif KR'; font-size:18px; margin:4px 0 2px 0;" id="setupTitle">질문 맞춤 AI 배열</h3>
+        <p style="font-size:11px; color:var(--text-dim); margin:0 0 14px 0;" id="setupDesc">질문 맥락 기반 AI 실시간 동적 스프레드 생성.</p>
+        
+        <div class="input-group">
+            <label>구체적인 질문 입력</label>
+            <textarea id="userQuestion" placeholder="예: 친구와의 관계 회복 / 관세직 9급 합격운 / 단타 매수 타점"></textarea>
+        </div>
+
+        <div class="input-group">
+            <label>방향성 옵션</label>
+            <div class="radio-box selected" onclick="selectRadio(this, false)">
+                <h5>정방향만</h5>
+                <p>모든 카드를 명확한 정방향으로 해석.</p>
+            </div>
+            <div class="radio-box" onclick="selectRadio(this, true)">
+                <h5>역방향 포함</h5>
+                <p>상황의 지연과 내면적 그림자까지 분석.</p>
+            </div>
+        </div>
+
+        <button class="draw-btn" id="btnExecuteDraw" onclick="startReading()">✦ <span id="setupCardCountBtn">카드 펼치기</span></button>
+    </div>
+</div>
+
 <!-- API 키 설정 모달 -->
 <div class="profile-modal" id="apiModal">
     <div class="modal-content">
         <button class="close-modal" onclick="closeApiModal()">×</button>
-        <div class="bs-subtitle">AI CONNECTION</div>
+        <div style="font-family:'Cinzel'; font-size:10px; color:var(--moon-glow); font-weight:700; letter-spacing:1.5px;">AI CONNECTION</div>
         <h3 style="font-family:'Noto Serif KR'; margin:4px 0 14px 0;">Gemini API 설정</h3>
         <p style="font-size:11.5px; color:var(--text-dim); margin-bottom:14px;">Google AI Studio 무료 API Key를 입력하세요. 브라우저에 안전하게 보관됩니다.</p>
         
@@ -706,7 +704,7 @@
 <div class="profile-modal" id="profileModal">
     <div class="modal-content">
         <button class="close-modal" onclick="closeProfileModal()">×</button>
-        <div class="bs-subtitle">CELESTIAL PROFILE</div>
+        <div style="font-family:'Cinzel'; font-size:10px; color:var(--moon-glow); font-weight:700; letter-spacing:1.5px;">CELESTIAL PROFILE</div>
         <h3 style="font-family:'Noto Serif KR'; margin:4px 0 14px 0;">나의 천체 & 명리 프로필</h3>
         
         <div class="input-group">
@@ -766,37 +764,11 @@
     </div>
 </div>
 
-<div class="bottom-sheet" id="bottomSheet">
-    <div class="bs-header">
-        <div class="bs-subtitle">✦ SELECTED · <span id="bsCategory">GENERAL</span></div>
-        <h2 class="bs-title" id="bsTitle">질문 맞춤 AI 배열</h2>
-        <p class="bs-desc" id="bsDesc">78장 정규 덱 기반 맞춤형 스프레드 자동 생성.</p>
-    </div>
-    
-    <div class="input-group">
-        <label>구체적인 질문 입력</label>
-        <textarea id="userQuestion" placeholder="예: 친구와의 관계 회복 / 관세직 9급 합격운 / 단타 매수 타점"></textarea>
-    </div>
-
-    <div class="input-group">
-        <label>방향성 옵션</label>
-        <div class="radio-box selected" onclick="selectRadio(this, false)">
-            <h5>정방향만</h5>
-            <p>모든 카드를 명확한 정방향으로 해석.</p>
-        </div>
-        <div class="radio-box" onclick="selectRadio(this, true)">
-            <h5>역방향 포함</h5>
-            <p>상황의 지연과 내면적 그림자까지 분석.</p>
-        </div>
-    </div>
-
-    <button class="draw-btn" id="bsDrawBtn" onclick="startReading()">✦ <span id="bsCardCountBtn">카드 펼치기</span></button>
-</div>
-
+<!-- 타로 결과 스프레드 모달 -->
 <div class="spread-modal" id="spreadModal">
     <div class="modal-content">
         <button class="close-modal" onclick="closeModal()">×</button>
-        <div class="bs-subtitle" id="modalReadingType">DAILY ORBIT 4</div>
+        <div style="font-family:'Cinzel'; font-size:10px; color:var(--moon-glow); font-weight:700; letter-spacing:1.5px;" id="modalReadingType">DAILY ORBIT 4</div>
         <h3 style="font-family: 'Noto Serif KR'; font-size: 17px; margin: 4px 0 10px 0;" id="modalQuestionText">질문 분석 중...</h3>
         
         <div class="action-bar">
@@ -1007,34 +979,33 @@
         alert('✨ 천체 & 명리 프로필이 성공적으로 저장되었습니다.');
     }
 
-    function toggleCategory(element, event) {
-        if (event) event.stopPropagation();
+    function toggleCategory(element) {
         document.querySelectorAll('.category-card').forEach(card => {
             if (card !== element) card.classList.remove('active');
         });
         element.classList.toggle('active');
     }
 
-    function openBottomSheet(category, title, desc, count, event) {
-        if (event) event.stopPropagation();
-        
+    function openSetupModal(category, title, desc, count) {
         currentCategory = category;
         currentSpreadTitle = title;
-        document.getElementById('bsCategory').innerText = category;
-        document.getElementById('bsTitle').innerText = title;
-        document.getElementById('bsDesc').innerText = desc;
+        document.getElementById('setupCategory').innerText = category;
+        document.getElementById('setupTitle').innerText = title;
+        document.getElementById('setupDesc').innerText = desc;
         
         if (count === 0 || title.includes('AI')) {
             isAiCustom = true;
-            document.getElementById('bsCardCountBtn').innerText = "AI 질문 분석 & 스프레드 생성";
+            document.getElementById('setupCardCountBtn').innerText = "AI 질문 분석 & 스프레드 생성";
         } else {
             isAiCustom = false;
             currentCardCount = count;
-            document.getElementById('bsCardCountBtn').innerText = `${count}장 카드 펼치기`;
+            document.getElementById('setupCardCountBtn').innerText = `${count}장 카드 펼치기`;
         }
         
-        const bs = document.getElementById('bottomSheet');
-        bs.classList.add('open');
+        document.getElementById('setupModal').classList.add('show');
+    }
+    function closeSetupModal() {
+        document.getElementById('setupModal').classList.remove('show');
     }
 
     function selectRadio(element, isReversed) {
@@ -1110,12 +1081,13 @@
 
     async function startReading() {
         const qText = document.getElementById('userQuestion').value.trim();
-        const drawBtn = document.getElementById('bsDrawBtn');
+        const drawBtn = document.getElementById('btnExecuteDraw');
 
         if (isAiCustom) {
             const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
             if (!apiKey) {
                 alert('AI 자동 맞춤 배열을 사용하려면 상단 [⚙️ API 설정]에서 Gemini API Key를 먼저 등록해 주세요.');
+                closeSetupModal();
                 openApiModal();
                 return;
             }
@@ -1169,7 +1141,7 @@
             }
         }
 
-        document.getElementById('bottomSheet').classList.remove('open');
+        closeSetupModal();
         executeSpread(qText);
     }
 
@@ -1525,13 +1497,6 @@ ${cardDetails}
     }
 
     function closeModal() { document.getElementById('spreadModal').classList.remove('show'); }
-
-    document.addEventListener('click', function(e) {
-        const bs = document.getElementById('bottomSheet');
-        if (bs && !bs.contains(e.target) && !e.target.closest('.reading-item') && bs.classList.contains('open')) {
-            bs.classList.remove('open');
-        }
-    });
 
     window.addEventListener('DOMContentLoaded', () => {
         syncProfileUI();
