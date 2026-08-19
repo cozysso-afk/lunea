@@ -622,16 +622,13 @@
                 <div class="cat-icon">🌙</div>
                 <div class="cat-text">
                     <h3>LOVE & INNER HEART</h3>
-                    <p>속마음 · 속궁합 19+ · 인연운 · 연락 · 재회</p>
+                    <p>외모/몸매 매력 · 속마음 · 속궁합 19+ · 연락 · 재회</p>
                 </div>
             </div>
             <div class="toggle-btn">+</div>
         </div>
         <div class="category-content">
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5, event)">
-                <div><h4>상대 속마음</h4><p>겉마음, 무의식 속마음, 관계에 대한 진심 분석.</p></div>
-                <div class="card-count">5</div>
-            </div>            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대방이 보는 내 외모', '얼굴 분위기, 첫인상, 상대가 꽂힌 외모 매력 포인트.', 4, event)">
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대방이 보는 내 외모', '얼굴 분위기, 첫인상, 상대가 꽂힌 외모 매력 포인트.', 4, event)">
                 <div><h4>상대방이 보는 내 외모</h4><p>상대가 느끼는 나의 얼굴 이미지와 외적 매력 포인트.</p></div>
                 <div class="card-count">4</div>
             </div>
@@ -639,7 +636,10 @@
                 <div><h4>상대방이 보는 내 몸매</h4><p>상대의 시선에서 본 피지컬 라인과 신체적 끌림.</p></div>
                 <div class="card-count">4</div>
             </div>
-
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5, event)">
+                <div><h4>상대 속마음</h4><p>겉마음, 무의식 속마음, 관계에 대한 진심 분석.</p></div>
+                <div class="card-count">5</div>
+            </div>
             <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '밀착감, 압박감/타이트함, 템포, 지구력의 심층 신체 궁합.', 9, event)">
                 <div><h4>속궁합 · 19+</h4><p>신체적 텐션·밀착감·강도·지속성의 성인 전용 배열.</p></div>
                 <div class="card-count">9</div>
@@ -831,89 +831,88 @@
 
 <script>
     const TAROT_DECK = [
-        { code: "Fool", name: "0. The Fool (바보)", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", primaryType: "Element", gdAttribution: "Air", classicalRuler: "—", keyword: "자유, 시작, 미지, 순수, 모험" },
-        { code: "Magician", name: "I. The Magician (마법사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", primaryType: "Planet", gdAttribution: "Mercury ☿", classicalRuler: "—", keyword: "기술, 의지, 창조력, 현실화, 주도권" },
-        { code: "High Priestess", name: "II. The High Priestess (여사제)", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", primaryType: "Planet", gdAttribution: "Moon ☽", classicalRuler: "—", keyword: "직관, 무의식, 통찰, 비밀, 수용성" },
-        { code: "Empress", name: "III. The Empress (여황제)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", primaryType: "Planet", gdAttribution: "Venus ♀", classicalRuler: "—", keyword: "풍요, 모성, 감각적 쾌락, 성장, 매력" },
-        { code: "Emperor", name: "IV. The Emperor (황제)", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", primaryType: "Zodiac", gdAttribution: "Aries ♈ (Fire)", classicalRuler: "Mars ♂", keyword: "권위, 통제력, 안정성, 규율, 추진" },
-        { code: "Hierophant", name: "V. The Hierophant (교황)", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", primaryType: "Zodiac", gdAttribution: "Taurus ♉ (Earth)", classicalRuler: "Venus ♀", keyword: "전통, 도덕, 제도, 가르침, 신뢰" },
-        { code: "Lovers", name: "VI. The Lovers (연인)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_06_Lovers.jpg", primaryType: "Zodiac", gdAttribution: "Gemini ♊ (Air)", classicalRuler: "Mercury ☿", keyword: "결합, 선택, 유대감, 조화, 가치관" },
-        { code: "Chariot", name: "VII. The Chariot (전차)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", primaryType: "Zodiac", gdAttribution: "Cancer ♋ (Water)", classicalRuler: "Moon ☽", keyword: "의지, 극복, 승리, 돌파, 통제된 감정" },
-        { code: "Strength", name: "VIII. Strength (힘)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", primaryType: "Zodiac", gdAttribution: "Leo ♌ (Fire)", classicalRuler: "Sun ☉", keyword: "내면의 힘, 인내, 부드러운 통제, 용기" },
-        { code: "Hermit", name: "IX. The Hermit (은둔자)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", primaryType: "Zodiac", gdAttribution: "Virgo ♍ (Earth)", classicalRuler: "Mercury ☿", keyword: "성찰, 탐구, 내적 지혜, 고독, 신중함" },
-        { code: "Wheel", name: "X. Wheel of Fortune (운명의 수레바퀴)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg", primaryType: "Planet", gdAttribution: "Jupiter ♃", classicalRuler: "—", keyword: "전환점, 주기, 행운, 변화, 운명적 흐름" },
-        { code: "Justice", name: "XI. Justice (정의)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", primaryType: "Zodiac", gdAttribution: "Libra ♎ (Air)", classicalRuler: "Venus ♀", keyword: "공정성, 인과율, 결단, 균형, 명확성" },
-        { code: "Hanged Man", name: "XII. The Hanged Man (매달린 사람)", img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", primaryType: "Element", gdAttribution: "Water", classicalRuler: "—", keyword: "관점 전환, 정체, 헌신, 자발적 수용" },
-        { code: "Death", name: "XIII. Death (죽음)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", primaryType: "Zodiac", gdAttribution: "Scorpio ♏ (Water)", classicalRuler: "Mars ♂", keyword: "종결, 변혁, 탈바꿈, 새로운 시작" },
-        { code: "Temperance", name: "XIV. Temperance (절제)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", primaryType: "Zodiac", gdAttribution: "Sagittarius ♐ (Fire)", classicalRuler: "Jupiter ♃", keyword: "조율, 융합, 균형, 중용, 인내심" },
-        { code: "Devil", name: "XV. The Devil (악마)", img: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", primaryType: "Zodiac", gdAttribution: "Capricorn ♑ (Earth)", classicalRuler: "Saturn ♄", keyword: "집착, 욕망, 속박, 물질주의, 그림자" },
-        { code: "Tower", name: "XVI. The Tower (탑)", img: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", primaryType: "Planet", gdAttribution: "Mars ♂", classicalRuler: "—", keyword: "충격, 급변, 각성, 파괴, 해방" },
-        { code: "Star", name: "XVII. The Star (별)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", primaryType: "Zodiac", gdAttribution: "Aquarius ♒ (Air)", classicalRuler: "Saturn ♄", keyword: "희망, 영감, 치유, 비전, 평온" },
-        { code: "Moon", name: "XVIII. The Moon (달)", img: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", primaryType: "Zodiac", gdAttribution: "Pisces ♓ (Water)", classicalRuler: "Jupiter ♃", keyword: "불안, 환상, 무의식, 모호함, 직관" },
-        { code: "Sun", name: "XIX. The Sun (태양)", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", primaryType: "Planet", gdAttribution: "Sun ☉", classicalRuler: "—", keyword: "성공, 명료함, 기쁨, 활력, 진실" },
-        { code: "Judgement", name: "XX. Judgement (심판)", img: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg", primaryType: "Spirit/Element", gdAttribution: "Fire / Spirit", classicalRuler: "—", keyword: "부활, 최종 결단, 각성, 소명" },
-        { code: "World", name: "XXI. The World (세계)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", primaryType: "Element+Planet", gdAttribution: "Earth / Saturn ♄", classicalRuler: "—", keyword: "완성, 성취, 통합, 새로운 주기" },
+        { code: "Fool", name: "0. The Fool (바보)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_00_Fool.jpg", primaryType: "Element", gdAttribution: "Air", classicalRuler: "—", keyword: "자유, 시작, 미지, 순수, 모험" },
+        { code: "Magician", name: "I. The Magician (마법사)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_01_Magician.jpg", primaryType: "Planet", gdAttribution: "Mercury ☿", classicalRuler: "—", keyword: "기술, 의지, 창조력, 현실화, 주도권" },
+        { code: "High Priestess", name: "II. The High Priestess (여사제)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_02_High_Priestess.jpg", primaryType: "Planet", gdAttribution: "Moon ☽", classicalRuler: "—", keyword: "직관, 무의식, 통찰, 비밀, 수용성" },
+        { code: "Empress", name: "III. The Empress (여황제)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_03_Empress.jpg", primaryType: "Planet", gdAttribution: "Venus ♀", classicalRuler: "—", keyword: "풍요, 모성, 감각적 쾌락, 성장, 매력" },
+        { code: "Emperor", name: "IV. The Emperor (황제)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_04_Emperor.jpg", primaryType: "Zodiac", gdAttribution: "Aries ♈ (Fire)", classicalRuler: "Mars ♂", keyword: "권위, 통제력, 안정성, 규율, 추진" },
+        { code: "Hierophant", name: "V. The Hierophant (교황)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_05_Hierophant.jpg", primaryType: "Zodiac", gdAttribution: "Taurus ♉ (Earth)", classicalRuler: "Venus ♀", keyword: "전통, 도덕, 제도, 가르침, 신뢰" },
+        { code: "Lovers", name: "VI. The Lovers (연인)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_06_Lovers.jpg", primaryType: "Zodiac", gdAttribution: "Gemini ♊ (Air)", classicalRuler: "Mercury ☿", keyword: "결합, 선택, 유대감, 조화, 가치관" },
+        { code: "Chariot", name: "VII. The Chariot (전차)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_07_Chariot.jpg", primaryType: "Zodiac", gdAttribution: "Cancer ♋ (Water)", classicalRuler: "Moon ☽", keyword: "의지, 극복, 승리, 돌파, 통제된 감정" },
+        { code: "Strength", name: "VIII. Strength (힘)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_08_Strength.jpg", primaryType: "Zodiac", gdAttribution: "Leo ♌ (Fire)", classicalRuler: "Sun ☉", keyword: "내면의 힘, 인내, 부드러운 통제, 용기" },
+        { code: "Hermit", name: "IX. The Hermit (은둔자)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_09_Hermit.jpg", primaryType: "Zodiac", gdAttribution: "Virgo ♍ (Earth)", classicalRuler: "Mercury ☿", keyword: "성찰, 탐구, 내적 지혜, 고독, 신중함" },
+        { code: "Wheel", name: "X. Wheel of Fortune (운명의 수레바퀴)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_10_Wheel_of_Fortune.jpg", primaryType: "Planet", gdAttribution: "Jupiter ♃", classicalRuler: "—", keyword: "전환점, 주기, 행운, 변화, 운명적 흐름" },
+        { code: "Justice", name: "XI. Justice (정의)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_11_Justice.jpg", primaryType: "Zodiac", gdAttribution: "Libra ♎ (Air)", classicalRuler: "Venus ♀", keyword: "공정성, 인과율, 결단, 균형, 명확성" },
+        { code: "Hanged Man", name: "XII. The Hanged Man (매달린 사람)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_12_Hanged_Man.jpg", primaryType: "Element", gdAttribution: "Water", classicalRuler: "—", keyword: "관점 전환, 정체, 헌신, 자발적 수용" },
+        { code: "Death", name: "XIII. Death (죽음)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_13_Death.jpg", primaryType: "Zodiac", gdAttribution: "Scorpio ♏ (Water)", classicalRuler: "Mars ♂", keyword: "종결, 변혁, 탈바꿈, 새로운 시작" },
+        { code: "Temperance", name: "XIV. Temperance (절제)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_14_Temperance.jpg", primaryType: "Zodiac", gdAttribution: "Sagittarius ♐ (Fire)", classicalRuler: "Jupiter ♃", keyword: "조율, 융합, 균형, 중용, 인내심" },
+        { code: "Devil", name: "XV. The Devil (악마)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_15_Devil.jpg", primaryType: "Zodiac", gdAttribution: "Capricorn ♑ (Earth)", classicalRuler: "Saturn ♄", keyword: "집착, 욕망, 속박, 물질주의, 그림자" },
+        { code: "Tower", name: "XVI. The Tower (탑)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_16_Tower.jpg", primaryType: "Planet", gdAttribution: "Mars ♂", classicalRuler: "—", keyword: "충격, 급변, 각성, 파괴, 해방" },
+        { code: "Star", name: "XVII. The Star (별)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_17_Star.jpg", primaryType: "Zodiac", gdAttribution: "Aquarius ♒ (Air)", classicalRuler: "Saturn ♄", keyword: "희망, 영감, 치유, 비전, 평온" },
+        { code: "Moon", name: "XVIII. The Moon (달)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_18_Moon.jpg", primaryType: "Zodiac", gdAttribution: "Pisces ♓ (Water)", classicalRuler: "Jupiter ♃", keyword: "불안, 환상, 무의식, 모호함, 직관" },
+        { code: "Sun", name: "XIX. The Sun (태양)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_19_Sun.jpg", primaryType: "Planet", gdAttribution: "Sun ☉", classicalRuler: "—", keyword: "성공, 명료함, 기쁨, 활력, 진실" },
+        { code: "Judgement", name: "XX. Judgement (심판)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_20_Judgement.jpg", primaryType: "Spirit/Element", gdAttribution: "Fire / Spirit", classicalRuler: "—", keyword: "부활, 최종 결단, 각성, 소명" },
+        { code: "World", name: "XXI. The World (세계)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_21_World.jpg", primaryType: "Element+Planet", gdAttribution: "Earth / Saturn ♄", classicalRuler: "—", keyword: "완성, 성취, 통합, 새로운 주기" },
 
-        { code: "Wands01", name: "Ace of Wands (완드 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/1/11/Wands01.jpg", primaryType: "Minor", gdAttribution: "Root of Fire", classicalRuler: "Fire", keyword: "열정의 시작, 영감, 새로운 도전, 원초적 에너지" },
-        { code: "Wands02", name: "Two of Wands (완드 2)", img: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Wands02.jpg", primaryType: "Minor", gdAttribution: "Mars in Aries ♈", classicalRuler: "Mars ♂", keyword: "계획, 미래 구상, 영역 확장, 결단" },
-        { code: "Wands03", name: "Three of Wands (완드 3)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Wands03.jpg", primaryType: "Minor", gdAttribution: "Sun in Aries ♈", classicalRuler: "Sun ☉", keyword: "확장, 진전, 무역/이동, 기회의 발견" },
-        { code: "Wands04", name: "Four of Wands (완드 4)", img: "https://upload.wikimedia.org/wikipedia/commons/a/a4/Wands04.jpg", primaryType: "Minor", gdAttribution: "Venus in Aries ♈", classicalRuler: "Venus ♀", keyword: "축하, 안정, 안식처, 결실, 조화" },
-        { code: "Wands05", name: "Five of Wands (완드 5)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9d/Wands05.jpg", primaryType: "Minor", gdAttribution: "Saturn in Leo ♌", classicalRuler: "Saturn ♄", keyword: "경쟁, 의견 대립, 주도권 다툼, 긴장" },
-        { code: "Wands06", name: "Six of Wands (완드 6)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3b/Wands06.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Leo ♌", classicalRuler: "Jupiter ♃", keyword: "승리, 인정, 대중적 성공, 자신감" },
-        { code: "Wands07", name: "Seven of Wands (완드 7)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wands07.jpg", primaryType: "Minor", gdAttribution: "Mars in Leo ♌", classicalRuler: "Mars ♂", keyword: "방어, 위치 고수, 끈기, 극복" },
-        { code: "Wands08", name: "Eight of Wands (완드 8)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6b/Wands08.jpg", primaryType: "Minor", gdAttribution: "Mercury in Sagittarius ♐", classicalRuler: "Mercury ☿", keyword: "급속한 진전, 빠른 연락, 가속화, 이동" },
+        { code: "Wands01", name: "Ace of Wands (완드 에이스)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands01.jpg", primaryType: "Minor", gdAttribution: "Root of Fire", classicalRuler: "Fire", keyword: "열정의 시작, 영감, 새로운 도전, 원초적 에너지" },
+        { code: "Wands02", name: "Two of Wands (완드 2)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands02.jpg", primaryType: "Minor", gdAttribution: "Mars in Aries ♈", classicalRuler: "Mars ♂", keyword: "계획, 미래 구상, 영역 확장, 결단" },
+        { code: "Wands03", name: "Three of Wands (완드 3)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands03.jpg", primaryType: "Minor", gdAttribution: "Sun in Aries ♈", classicalRuler: "Sun ☉", keyword: "확장, 진전, 무역/이동, 기회의 발견" },
+        { code: "Wands04", name: "Four of Wands (완드 4)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands04.jpg", primaryType: "Minor", gdAttribution: "Venus in Aries ♈", classicalRuler: "Venus ♀", keyword: "축하, 안정, 안식처, 결실, 조화" },
+        { code: "Wands05", name: "Five of Wands (완드 5)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands05.jpg", primaryType: "Minor", gdAttribution: "Saturn in Leo ♌", classicalRuler: "Saturn ♄", keyword: "경쟁, 의견 대립, 주도권 다툼, 긴장" },
+        { code: "Wands06", name: "Six of Wands (완드 6)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands06.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Leo ♌", classicalRuler: "Jupiter ♃", keyword: "승리, 인정, 대중적 성공, 자신감" },
+        { code: "Wands07", name: "Seven of Wands (완드 7)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands07.jpg", primaryType: "Minor", gdAttribution: "Mars in Leo ♌", classicalRuler: "Mars ♂", keyword: "방어, 위치 고수, 끈기, 극복" },
+        { code: "Wands08", name: "Eight of Wands (완드 8)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands08.jpg", primaryType: "Minor", gdAttribution: "Mercury in Sagittarius ♐", classicalRuler: "Mercury ☿", keyword: "급속한 진전, 빠른 연락, 가속화, 이동" },
         { code: "Wands09", name: "Nine of Wands (완드 9)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands09.jpg", primaryType: "Minor", gdAttribution: "Moon in Sagittarius ♐", classicalRuler: "Moon ☽", keyword: "경계심, 방어 태세, 지친 끈기, 최종 관문" },
-}
-        { code: "Wands10", name: "Ten of Wands (완드 10)", img: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Wands10.jpg", primaryType: "Minor", gdAttribution: "Saturn in Sagittarius ♐", classicalRuler: "Saturn ♄", keyword: "과중한 부담, 압박감, 책임, 한계점" },
-        { code: "Wands11", name: "Page of Wands (완드 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6a/Wands11.jpg", primaryType: "Court", gdAttribution: "Earth of Fire", classicalRuler: "Fire", keyword: "새로운 소식, 탐구심, 호기심, 열정의 싹" },
-        { code: "Wands12", name: "Knight of Wands (완드 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/1/16/Wands12.jpg", primaryType: "Court", gdAttribution: "Air of Fire", classicalRuler: "Fire", keyword: "돌진력, 행동파, 급한 추진, 매력과 충동" },
-        { code: "Wands13", name: "Queen of Wands (완드 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Wands13.jpg", primaryType: "Court", gdAttribution: "Water of Fire", classicalRuler: "Fire", keyword: "당당한 매력, 카리스마, 사교성, 활력" },
-        { code: "Wands14", name: "King of Wands (완드 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Wands14.jpg", primaryType: "Court", gdAttribution: "Fire of Fire", classicalRuler: "Fire", keyword: "리더십, 결단력, 비전, 지휘권" },
+        { code: "Wands10", name: "Ten of Wands (완드 10)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands10.jpg", primaryType: "Minor", gdAttribution: "Saturn in Sagittarius ♐", classicalRuler: "Saturn ♄", keyword: "과중한 부담, 압박감, 책임, 한계점" },
+        { code: "Wands11", name: "Page of Wands (완드 시종)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands11.jpg", primaryType: "Court", gdAttribution: "Earth of Fire", classicalRuler: "Fire", keyword: "새로운 소식, 탐구심, 호기심, 열정의 싹" },
+        { code: "Wands12", name: "Knight of Wands (완드 기사)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands12.jpg", primaryType: "Court", gdAttribution: "Air of Fire", classicalRuler: "Fire", keyword: "돌진력, 행동파, 급한 추진, 매력과 충동" },
+        { code: "Wands13", name: "Queen of Wands (완드 퀸)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands13.jpg", primaryType: "Court", gdAttribution: "Water of Fire", classicalRuler: "Fire", keyword: "당당한 매력, 카리스마, 사교성, 활력" },
+        { code: "Wands14", name: "King of Wands (완드 킹)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Wands14.jpg", primaryType: "Court", gdAttribution: "Fire of Fire", classicalRuler: "Fire", keyword: "리더십, 결단력, 비전, 지휘권" },
 
-        { code: "Cups01", name: "Ace of Cups (컵 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/3/36/Cups01.jpg", primaryType: "Minor", gdAttribution: "Root of Water", classicalRuler: "Water", keyword: "감정의 범람, 사랑의 시작, 직관, 교감" },
-        { code: "Cups02", name: "Two of Cups (컵 2)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Cups02.jpg", primaryType: "Minor", gdAttribution: "Venus in Cancer ♋", classicalRuler: "Venus ♀", keyword: "상호 교감, 파트너십, 끌림, 진솔한 소통" },
-        { code: "Cups03", name: "Three of Cups (컵 3)", img: "https://upload.wikimedia.org/wikipedia/commons/7/7a/Cups03.jpg", primaryType: "Minor", gdAttribution: "Mercury in Cancer ♋", classicalRuler: "Mercury ☿", keyword: "우정, 축하, 모임, 즐거움, 유대" },
-        { code: "Cups04", name: "Four of Cups (컵 4)", img: "https://upload.wikimedia.org/wikipedia/commons/3/35/Cups04.jpg", primaryType: "Minor", gdAttribution: "Moon in Cancer ♋", classicalRuler: "Moon ☽", keyword: "권태, 무관심, 불만족, 제안 거부" },
-        { code: "Cups05", name: "Five of Cups (컵 5)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Cups05.jpg", primaryType: "Minor", gdAttribution: "Mars in Scorpio ♏", classicalRuler: "Mars ♂", keyword: "상실감, 후회, 슬픔, 남아있는 기회" },
-        { code: "Cups06", name: "Six of Cups (컵 6)", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/Cups06.jpg", primaryType: "Minor", gdAttribution: "Sun in Scorpio ♏", classicalRuler: "Sun ☉", keyword: "추억, 옛 인연, 순수함, 그리움" },
-        { code: "Cups07", name: "Seven of Cups (컵 7)", img: "https://upload.wikimedia.org/wikipedia/commons/a/ae/Cups07.jpg", primaryType: "Minor", gdAttribution: "Venus in Scorpio ♏", classicalRuler: "Venus ♀", keyword: "환상, 다채로운 선택지, 착각, 욕망" },
-        { code: "Cups08", name: "Eight of Cups (컵 8)", img: "https://upload.wikimedia.org/wikipedia/commons/6/60/Cups08.jpg", primaryType: "Minor", gdAttribution: "Saturn in Pisces ♓", classicalRuler: "Saturn ♄", keyword: "떠남, 미련의 정리, 새로운 의미 추구" },
-        { code: "Cups09", name: "Nine of Cups (컵 9)", img: "https://upload.wikimedia.org/wikipedia/commons/2/24/Cups09.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Pisces ♓", classicalRuler: "Jupiter ♃", keyword: "만족, 소원 성취, 물질적/감정적 풍요" },
-        { code: "Cups10", name: "Ten of Cups (컵 10)", img: "https://upload.wikimedia.org/wikipedia/commons/8/84/Cups10.jpg", primaryType: "Minor", gdAttribution: "Mars in Pisces ♓", classicalRuler: "Mars ♂", keyword: "완전한 행복, 가족적 평화, 조화로운 결합" },
-        { code: "Cups11", name: "Page of Cups (컵 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/a/ad/Cups11.jpg", primaryType: "Court", gdAttribution: "Earth of Water", classicalRuler: "Water", keyword: "감성적 메시지, 호감의 표현, 순수한 직관" },
-        { code: "Cups12", name: "Knight of Cups (컵 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Cups12.jpg", primaryType: "Court", gdAttribution: "Air of Water", classicalRuler: "Water", keyword: "로맨틱한 제안, 마음의 전달, 유혹, 다정함" },
-        { code: "Cups13", name: "Queen of Cups (컵 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/6/62/Cups13.jpg", primaryType: "Court", gdAttribution: "Water of Water", classicalRuler: "Water", keyword: "깊은 공감, 감수성, 포용력, 치유" },
-        { code: "Cups14", name: "King of Cups (컵 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/0/04/Cups14.jpg", primaryType: "Court", gdAttribution: "Fire of Water", classicalRuler: "Water", keyword: "감정의 안정, 절제력, 너그러움, 조언자" },
+        { code: "Cups01", name: "Ace of Cups (컵 에이스)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups01.jpg", primaryType: "Minor", gdAttribution: "Root of Water", classicalRuler: "Water", keyword: "감정의 범람, 사랑의 시작, 직관, 교감" },
+        { code: "Cups02", name: "Two of Cups (컵 2)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups02.jpg", primaryType: "Minor", gdAttribution: "Venus in Cancer ♋", classicalRuler: "Venus ♀", keyword: "상호 교감, 파트너십, 끌림, 진솔한 소통" },
+        { code: "Cups03", name: "Three of Cups (컵 3)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups03.jpg", primaryType: "Minor", gdAttribution: "Mercury in Cancer ♋", classicalRuler: "Mercury ☿", keyword: "우정, 축하, 모임, 즐거움, 유대" },
+        { code: "Cups04", name: "Four of Cups (컵 4)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups04.jpg", primaryType: "Minor", gdAttribution: "Moon in Cancer ♋", classicalRuler: "Moon ☽", keyword: "권태, 무관심, 불만족, 제안 거부" },
+        { code: "Cups05", name: "Five of Cups (컵 5)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups05.jpg", primaryType: "Minor", gdAttribution: "Mars in Scorpio ♏", classicalRuler: "Mars ♂", keyword: "상실감, 후회, 슬픔, 남아있는 기회" },
+        { code: "Cups06", name: "Six of Cups (컵 6)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups06.jpg", primaryType: "Minor", gdAttribution: "Sun in Scorpio ♏", classicalRuler: "Sun ☉", keyword: "추억, 옛 인연, 순수함, 그리움" },
+        { code: "Cups07", name: "Seven of Cups (컵 7)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups07.jpg", primaryType: "Minor", gdAttribution: "Venus in Scorpio ♏", classicalRuler: "Venus ♀", keyword: "환상, 다채로운 선택지, 착각, 욕망" },
+        { code: "Cups08", name: "Eight of Cups (컵 8)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups08.jpg", primaryType: "Minor", gdAttribution: "Saturn in Pisces ♓", classicalRuler: "Saturn ♄", keyword: "떠남, 미련의 정리, 새로운 의미 추구" },
+        { code: "Cups09", name: "Nine of Cups (컵 9)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups09.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Pisces ♓", classicalRuler: "Jupiter ♃", keyword: "만족, 소원 성취, 물질적/감정적 풍요" },
+        { code: "Cups10", name: "Ten of Cups (컵 10)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups10.jpg", primaryType: "Minor", gdAttribution: "Mars in Pisces ♓", classicalRuler: "Mars ♂", keyword: "완전한 행복, 가족적 평화, 조화로운 결합" },
+        { code: "Cups11", name: "Page of Cups (컵 시종)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups11.jpg", primaryType: "Court", gdAttribution: "Earth of Water", classicalRuler: "Water", keyword: "감성적 메시지, 호감의 표현, 순수한 직관" },
+        { code: "Cups12", name: "Knight of Cups (컵 기사)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups12.jpg", primaryType: "Court", gdAttribution: "Air of Water", classicalRuler: "Water", keyword: "로맨틱한 제안, 마음의 전달, 유혹, 다정함" },
+        { code: "Cups13", name: "Queen of Cups (컵 퀸)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups13.jpg", primaryType: "Court", gdAttribution: "Water of Water", classicalRuler: "Water", keyword: "깊은 공감, 감수성, 포용력, 치유" },
+        { code: "Cups14", name: "King of Cups (컵 킹)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Cups14.jpg", primaryType: "Court", gdAttribution: "Fire of Water", classicalRuler: "Water", keyword: "감정의 안정, 절제력, 너그러움, 조언자" },
 
-        { code: "Swords01", name: "Ace of Swords (검 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/1/1a/Swords01.jpg", primaryType: "Minor", gdAttribution: "Root of Air", classicalRuler: "Air", keyword: "명확한 결단, 이성적 진실, 돌파력, 승리" },
-        { code: "Swords02", name: "Two of Swords (검 2)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Swords02.jpg", primaryType: "Minor", gdAttribution: "Moon in Libra ♎", classicalRuler: "Moon ☽", keyword: "교착 상태, 선택의 회피, 억압된 감정" },
-        { code: "Swords03", name: "Three of Swords (검 3)", img: "https://upload.wikimedia.org/wikipedia/commons/0/02/Swords03.jpg", primaryType: "Minor", gdAttribution: "Saturn in Libra ♎", classicalRuler: "Saturn ♄", keyword: "상처, 가슴 아픈 진실, 삼각관계, 이별" },
-        { code: "Swords04", name: "Four of Swords (검 4)", img: "https://upload.wikimedia.org/wikipedia/commons/b/bf/Swords04.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Libra ♎", classicalRuler: "Jupiter ♃", keyword: "휴식, 재충전, 일시적 정지, 회복" },
-        { code: "Swords05", name: "Five of Swords (검 5)", img: "https://upload.wikimedia.org/wikipedia/commons/2/23/Swords05.jpg", primaryType: "Minor", gdAttribution: "Venus in Aquarius ♒", classicalRuler: "Venus ♀", keyword: "패배감, 상처뿐인 승리, 갈등, 배신" },
-        { code: "Swords06", name: "Six of Swords (검 6)", img: "https://upload.wikimedia.org/wikipedia/commons/2/29/Swords06.jpg", primaryType: "Minor", gdAttribution: "Mercury in Aquarius ♒", classicalRuler: "Mercury ☿", keyword: "어려움으로부터의 이동, 점진적 회복" },
-        { code: "Swords07", name: "Seven of Swords (검 7)", img: "https://upload.wikimedia.org/wikipedia/commons/3/34/Swords07.jpg", primaryType: "Minor", gdAttribution: "Moon in Aquarius ♒", classicalRuler: "Moon ☽", keyword: "은밀한 행동, 기만, 전략적 우회, 도피" },
-        { code: "Swords08", name: "Eight of Swords (검 8)", img: "https://upload.wikimedia.org/wikipedia/commons/a/a7/Swords08.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Gemini ♊", classicalRuler: "Jupiter ♃", keyword: "자기 제한, 고립감, 갇힌 사고, 불안" },
-        { code: "Swords09", name: "Nine of Swords (검 9)", img: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Swords09.jpg", primaryType: "Minor", gdAttribution: "Mars in Gemini ♊", classicalRuler: "Mars ♂", keyword: "악몽, 불면, 극심한 스트레스, 자책" },
-        { code: "Swords10", name: "Ten of Swords (검 10)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Swords10.jpg", primaryType: "Minor", gdAttribution: "Sun in Gemini ♊", classicalRuler: "Sun ☉", keyword: "바닥을 친 파국, 완전한 끝, 재기의 시작" },
-        { code: "Swords11", name: "Page of Swords (검 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Swords11.jpg", primaryType: "Court", gdAttribution: "Earth of Air", classicalRuler: "Air", keyword: "정보 수집, 날카로운 경계, 기민함" },
-        { code: "Swords12", name: "Knight of Swords (검 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/b/b0/Swords12.jpg", primaryType: "Court", gdAttribution: "Air of Air", classicalRuler: "Air", keyword: "돌진, 거침없는 비판, 빠른 추진, 직설적 태도" },
-        { code: "Swords13", name: "Queen of Swords (검 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Swords13.jpg", primaryType: "Court", gdAttribution: "Water of Air", classicalRuler: "Air", keyword: "냉철한 판단, 독립성, 명료함, 경계심" },
-        { code: "Swords14", name: "King of Swords (검 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/3/33/Swords14.jpg", primaryType: "Court", gdAttribution: "Fire of Air", classicalRuler: "Air", keyword: "지성적 권위, 객관적 공정성, 통솔력" },
+        { code: "Swords01", name: "Ace of Swords (검 에이스)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords01.jpg", primaryType: "Minor", gdAttribution: "Root of Air", classicalRuler: "Air", keyword: "명확한 결단, 이성적 진실, 돌파력, 승리" },
+        { code: "Swords02", name: "Two of Swords (검 2)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords02.jpg", primaryType: "Minor", gdAttribution: "Moon in Libra ♎", classicalRuler: "Moon ☽", keyword: "교착 상태, 선택의 회피, 억압된 감정" },
+        { code: "Swords03", name: "Three of Swords (검 3)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords03.jpg", primaryType: "Minor", gdAttribution: "Saturn in Libra ♎", classicalRuler: "Saturn ♄", keyword: "상처, 가슴 아픈 진실, 삼각관계, 이별" },
+        { code: "Swords04", name: "Four of Swords (검 4)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords04.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Libra ♎", classicalRuler: "Jupiter ♃", keyword: "휴식, 재충전, 일시적 정지, 회복" },
+        { code: "Swords05", name: "Five of Swords (검 5)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords05.jpg", primaryType: "Minor", gdAttribution: "Venus in Aquarius ♒", classicalRuler: "Venus ♀", keyword: "패배감, 상처뿐인 승리, 갈등, 배신" },
+        { code: "Swords06", name: "Six of Swords (검 6)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords06.jpg", primaryType: "Minor", gdAttribution: "Mercury in Aquarius ♒", classicalRuler: "Mercury ☿", keyword: "어려움으로부터의 이동, 점진적 회복" },
+        { code: "Swords07", name: "Seven of Swords (검 7)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords07.jpg", primaryType: "Minor", gdAttribution: "Moon in Aquarius ♒", classicalRuler: "Moon ☽", keyword: "은밀한 행동, 기만, 전략적 우회, 도피" },
+        { code: "Swords08", name: "Eight of Swords (검 8)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords08.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Gemini ♊", classicalRuler: "Jupiter ♃", keyword: "자기 제한, 고립감, 갇힌 사고, 불안" },
+        { code: "Swords09", name: "Nine of Swords (검 9)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords09.jpg", primaryType: "Minor", gdAttribution: "Mars in Gemini ♊", classicalRuler: "Mars ♂", keyword: "악몽, 불면, 극심한 스트레스, 자책" },
+        { code: "Swords10", name: "Ten of Swords (검 10)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords10.jpg", primaryType: "Minor", gdAttribution: "Sun in Gemini ♊", classicalRuler: "Sun ☉", keyword: "바닥을 친 파국, 완전한 끝, 재기의 시작" },
+        { code: "Swords11", name: "Page of Swords (검 시종)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords11.jpg", primaryType: "Court", gdAttribution: "Earth of Air", classicalRuler: "Air", keyword: "정보 수집, 날카로운 경계, 기민함" },
+        { code: "Swords12", name: "Knight of Swords (검 기사)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords12.jpg", primaryType: "Court", gdAttribution: "Air of Air", classicalRuler: "Air", keyword: "돌진, 거침없는 비판, 빠른 추진, 직설적 태도" },
+        { code: "Swords13", name: "Queen of Swords (검 퀸)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords13.jpg", primaryType: "Court", gdAttribution: "Water of Air", classicalRuler: "Air", keyword: "냉철한 판단, 독립성, 명료함, 경계심" },
+        { code: "Swords14", name: "King of Swords (검 킹)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Swords14.jpg", primaryType: "Court", gdAttribution: "Fire of Air", classicalRuler: "Air", keyword: "지성적 권위, 객관적 공정성, 통솔력" },
 
-        { code: "Pents01", name: "Ace of Pentacles (펜타클 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/f/fd/Pents01.jpg", primaryType: "Minor", gdAttribution: "Root of Earth", classicalRuler: "Earth", keyword: "물질적 기회, 실질적 시작, 재물, 안정" },
-        { code: "Pents02", name: "Two of Pentacles (펜타클 2)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Pents02.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Capricorn ♑", classicalRuler: "Jupiter ♃", keyword: "유연한 조율, 균형 잡기, 자금 순환, 변동성" },
-        { code: "Pents03", name: "Three of Pentacles (펜타클 3)", img: "https://upload.wikimedia.org/wikipedia/commons/4/42/Pents03.jpg", primaryType: "Minor", gdAttribution: "Mars in Capricorn ♑", classicalRuler: "Mars ♂", keyword: "전문성 인정, 협업, 팀워크, 기술 향상" },
-        { code: "Pents04", name: "Four of Pentacles (펜타클 4)", img: "https://upload.wikimedia.org/wikipedia/commons/3/35/Pents04.jpg", primaryType: "Minor", gdAttribution: "Sun in Capricorn ♑", classicalRuler: "Sun ☉", keyword: "소유욕, 보수적 태도, 통제, 안정을 향한 집착" },
-        { code: "Pents05", name: "Five of Pentacles (펜타클 5)", img: "https://upload.wikimedia.org/wikipedia/commons/9/96/Pents05.jpg", primaryType: "Minor", gdAttribution: "Mercury in Taurus ♉", classicalRuler: "Mercury ☿", keyword: "물질적 결핍, 소외감, 시련 속의 연대" },
-        { code: "Pents06", name: "Six of Pentacles (펜타클 6)", img: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Pents06.jpg", primaryType: "Minor", gdAttribution: "Moon in Taurus ♉", classicalRuler: "Moon ☽", keyword: "베풂과 받음, 자원의 공정한 배분, 보상" },
-        { code: "Pents07", name: "Seven of Pentacles (펜타클 7)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6a/Pents07.jpg", primaryType: "Minor", gdAttribution: "Saturn in Taurus ♉", classicalRuler: "Saturn ♄", keyword: "중간 점검, 성과 평가, 인내, 기다림" },
-        { code: "Pents08", name: "Eight of Pentacles (펜타클 8)", img: "https://upload.wikimedia.org/wikipedia/commons/4/49/Pents08.jpg", primaryType: "Minor", gdAttribution: "Sun in Virgo ♍", classicalRuler: "Sun ☉", keyword: "장인정신, 반복 숙련, 성실한 노력, 집중" },
-        { code: "Pents09", name: "Nine of Pentacles (펜타클 9)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Pents09.jpg", primaryType: "Minor", gdAttribution: "Venus in Virgo ♍", classicalRuler: "Venus ♀", keyword: "자립적 풍요, 물질적 여유, 품격, 결실" },
-        { code: "Pents10", name: "Ten of Pentacles (펜타클 10)", img: "https://upload.wikimedia.org/wikipedia/commons/4/42/Pents10.jpg", primaryType: "Minor", gdAttribution: "Mercury in Virgo ♍", classicalRuler: "Mercury ☿", keyword: "가문/조직의 유산, 확고한 기반, 장기적 안정" },
-        { code: "Pents11", name: "Page of Pentacles (펜타클 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Pents11.jpg", primaryType: "Court", gdAttribution: "Earth of Earth", classicalRuler: "Earth", keyword: "학습 태도, 실용적 기회, 현실적 계획" },
-        { code: "Pents12", name: "Knight of Pentacles (펜타클 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d5/Pents12.jpg", primaryType: "Court", gdAttribution: "Air of Earth", classicalRuler: "Earth", keyword: "꾸준한 실행, 신뢰성, 묵묵한 전진, 책임감" },
-        { code: "Pents13", name: "Queen of Pentacles (펜타클 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/Pents13.jpg", primaryType: "Court", gdAttribution: "Water of Earth", classicalRuler: "Earth", keyword: "실용적 보살핌, 현실적 풍요, 든든한 지원" },
-        { code: "Pents14", name: "King of Pentacles (펜타클 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/1/1c/Pents14.jpg", primaryType: "Court", gdAttribution: "Fire of Earth", classicalRuler: "Earth", keyword: "사업적 수완, 물질적 지배력, 확고한 성취" }
+        { code: "Pents01", name: "Ace of Pentacles (펜타클 에이스)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents01.jpg", primaryType: "Minor", gdAttribution: "Root of Earth", classicalRuler: "Earth", keyword: "물질적 기회, 실질적 시작, 재물, 안정" },
+        { code: "Pents02", name: "Two of Pentacles (펜타클 2)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents02.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Capricorn ♑", classicalRuler: "Jupiter ♃", keyword: "유연한 조율, 균형 잡기, 자금 순환, 변동성" },
+        { code: "Pents03", name: "Three of Pentacles (펜타클 3)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents03.jpg", primaryType: "Minor", gdAttribution: "Mars in Capricorn ♑", classicalRuler: "Mars ♂", keyword: "전문성 인정, 협업, 팀워크, 기술 향상" },
+        { code: "Pents04", name: "Four of Pentacles (펜타클 4)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents04.jpg", primaryType: "Minor", gdAttribution: "Sun in Capricorn ♑", classicalRuler: "Sun ☉", keyword: "소유욕, 보수적 태도, 통제, 안정을 향한 집착" },
+        { code: "Pents05", name: "Five of Pentacles (펜타클 5)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents05.jpg", primaryType: "Minor", gdAttribution: "Mercury in Taurus ♉", classicalRuler: "Mercury ☿", keyword: "물질적 결핍, 소외감, 시련 속의 연대" },
+        { code: "Pents06", name: "Six of Pentacles (펜타클 6)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents06.jpg", primaryType: "Minor", gdAttribution: "Moon in Taurus ♉", classicalRuler: "Moon ☽", keyword: "베풂과 받음, 자원의 공정한 배분, 보상" },
+        { code: "Pents07", name: "Seven of Pentacles (펜타클 7)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents07.jpg", primaryType: "Minor", gdAttribution: "Saturn in Taurus ♉", classicalRuler: "Saturn ♄", keyword: "중간 점검, 성과 평가, 인내, 기다림" },
+        { code: "Pents08", name: "Eight of Pentacles (펜타클 8)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents08.jpg", primaryType: "Minor", gdAttribution: "Sun in Virgo ♍", classicalRuler: "Sun ☉", keyword: "장인정신, 반복 숙련, 성실한 노력, 집중" },
+        { code: "Pents09", name: "Nine of Pentacles (펜타클 9)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents09.jpg", primaryType: "Minor", gdAttribution: "Venus in Virgo ♍", classicalRuler: "Venus ♀", keyword: "자립적 풍요, 물질적 여유, 품격, 결실" },
+        { code: "Pents10", name: "Ten of Pentacles (펜타클 10)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents10.jpg", primaryType: "Minor", gdAttribution: "Mercury in Virgo ♍", classicalRuler: "Mercury ☿", keyword: "가문/조직의 유산, 확고한 기반, 장기적 안정" },
+        { code: "Pents11", name: "Page of Pentacles (펜타클 시종)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents11.jpg", primaryType: "Court", gdAttribution: "Earth of Earth", classicalRuler: "Earth", keyword: "학습 태도, 실용적 기회, 현실적 계획" },
+        { code: "Pents12", name: "Knight of Pentacles (펜타클 기사)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents12.jpg", primaryType: "Court", gdAttribution: "Air of Earth", classicalRuler: "Earth", keyword: "꾸준한 실행, 신뢰성, 묵묵한 전진, 책임감" },
+        { code: "Pents13", name: "Queen of Pentacles (펜타클 퀸)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents13.jpg", primaryType: "Court", gdAttribution: "Water of Earth", classicalRuler: "Earth", keyword: "실용적 보살핌, 현실적 풍요, 든든한 지원" },
+        { code: "Pents14", name: "King of Pentacles (펜타클 킹)", img: "https://commons.wikimedia.org/wiki/Special:FilePath/Pents14.jpg", primaryType: "Court", gdAttribution: "Fire of Earth", classicalRuler: "Earth", keyword: "사업적 수완, 물질적 지배력, 확고한 성취" }
     ];
 
     let currentCardCount = 4;
@@ -1082,7 +1081,27 @@
 
     function generateDynamicFallbackSpread(question) {
         const q = question.toLowerCase();
-        if (q.includes("속마음") || q.includes("좋아") || q.includes("연애") || q.includes("남친") || q.includes("여친") || q.includes("짝사랑")) {
+        if (q.includes("외모") || q.includes("얼굴") || q.includes("첫인상") || q.includes("이목구비")) {
+            return {
+                spreadTitle: "상대방이 보는 내 외모 (4카드)",
+                positions: [
+                    "1. 상대가 느끼는 나의 첫인상과 전반적 아우라",
+                    "2. 상대의 시선이 가장 먼저 머무는 외모 포인트(이목구비)",
+                    "3. 상대가 내 외모에서 가장 매력적이거나 설렌다고 느끼는 부분",
+                    "4. 상대의 이상형 기준과 나의 외모 부합도"
+                ]
+            };
+        } else if (q.includes("몸매") || q.includes("피지컬") || q.includes("체형") || q.includes("실루엣")) {
+            return {
+                spreadTitle: "상대방이 보는 내 몸매 (4카드)",
+                positions: [
+                    "1. 상대의 눈에 비친 나의 전체적인 체형 실루엣",
+                    "2. 상대가 유독 시선이 꽂히는 특정 신체 라인",
+                    "3. 스킨십/밀착 시 상대가 느끼는 신체적 텐션과 반응",
+                    "4. 상대의 취향(체형 판타지)과 나의 피지컬 싱크로율"
+                ]
+            };
+        } else if (q.includes("속마음") || q.includes("좋아") || q.includes("연애") || q.includes("남친") || q.includes("여친") || q.includes("짝사랑")) {
             return {
                 spreadTitle: "애정 심층 분석 스프레드 (5카드)",
                 positions: [
@@ -1296,6 +1315,20 @@ JSON 규격:
                     "3. 새로운 수익 유입 기회",
                     "4. 자산 증식을 위한 조언"
                 ];
+            } else if (currentSpreadTitle === '상대방이 보는 내 외모') {
+                currentPositions = [
+                    "1. 상대가 느끼는 나의 첫인상과 전반적 아우라",
+                    "2. 상대의 시선이 가장 먼저 머무는 외모 포인트(이목구비)",
+                    "3. 상대가 내 외모에서 가장 매력적이거나 설렌다고 느끼는 부분",
+                    "4. 상대의 이상형 기준과 나의 외모 부합도"
+                ];
+            } else if (currentSpreadTitle === '상대방이 보는 내 몸매') {
+                currentPositions = [
+                    "1. 상대의 눈에 비친 나의 전체적인 체형 실루엣",
+                    "2. 상대가 유독 시선이 꽂히는 특정 신체 라인",
+                    "3. 스킨십/밀착 시 상대가 느끼는 신체적 텐션과 반응",
+                    "4. 상대의 취향(체형 판타지)과 나의 피지컬 싱크로율"
+                ];
             } else if (currentSpreadTitle === '상대 속마음') {
                 currentPositions = [
                     "1. 나를 대하는 겉모습 및 표현",
@@ -1308,8 +1341,8 @@ JSON 규격:
                 currentPositions = [
                     "1. 상대의 본능적 욕구 & 리드 성향",
                     "2. 나의 신체적 감각 & 수용 상태",
-                    "3. 에너지 굵기 & 물리적 압박감",
-                    "4. 신체적 밀착감 & 타이트함(밀도)",
+                    "3. 상대방의 물리적 신체부위 굵기 & 물리적 압박감",
+                    "4. 신체적 밀착감 & 상대가 느끼는 타이트함(밀도)",
                     "5. 속도감 & 완급 조절(템포)",
                     "6. 체력 & 지구력(지속성)",
                     "7. 숨겨진 성적 판타지 & 페티시",
