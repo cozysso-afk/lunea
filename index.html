@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LUNEA - Celestial Tarot Sanctuary</title>
-    <!-- 아이폰 홈 화면 추가용 앱 아이콘 링크 복구 완료 -->
-    <link rel="apple-touch-icon" href="apple-touch-icon.PNG">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Noto+Serif+KR:wght@300;400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -736,6 +735,7 @@
         
         <div class="action-bar">
             <button class="act-btn" onclick="flipAllCards()">✦ 일괄 뒤집기</button>
+            <button class="act-btn" onclick="addGlobalExtraCard()">+ 카드 추가 뽑기</button>
             <button class="act-btn" onclick="generateInstantAiAnalysis()">🔮 AI 종합해석</button>
             <button class="act-btn" onclick="retryReading()">↺ 다시 뽑기</button>
             <button class="act-btn" onclick="saveToArchive()">💾 저장</button>
@@ -753,6 +753,7 @@
         </div>
     </div>
 </div>
+
 <script>
     const TAROT_DECK = [
         { name: "0. The Fool (바보)", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keyword: "새로운 시작, 순수한 모험, 무한한 잠재력, 자유로운 발걸음", element: "공기(Air)", num: 0 },
@@ -1088,6 +1089,55 @@
             btn.disabled = true;
             btn.innerText = `보조 카드 완료 (3/3)`;
         }
+    }
+
+    // ✨ 전체 덱에서 중복 없이 무작위 카드 1장 더 추가하는 전역 버튼 로직
+    function addGlobalExtraCard() {
+        const nextIdx = currentDrawnCards.length;
+        const available = TAROT_DECK.filter(d => !usedCardNames.has(d.name));
+        if (available.length === 0) return alert("덱의 모든 카드를 소진했습니다.");
+
+        const randArray = new Uint32Array(1);
+        window.crypto.getRandomValues(randArray);
+        const card = available[randArray[0] % available.length];
+        usedCardNames.add(card.name);
+
+        const revArray = new Uint8Array(1);
+        window.crypto.getRandomValues(revArray);
+        const isReversed = allowReversed && (revArray[0] % 2 === 1);
+        const posName = `전체 추가 카드 (+${nextIdx + 1})`;
+
+        currentDrawnCards.push({ ...card, isReversed, position: posName, subCards: [] });
+
+        let prefix = "back_general";
+        if (currentCategory === "DAILY") prefix = "back_daily";
+        else if (currentCategory === "LOVE") prefix = "back_love";
+        else if (currentCategory === "STOCK") prefix = "back_stock";
+        else if (currentCategory === "CAREER") prefix = "back_career";
+
+        const cardsGrid = document.getElementById('cardsGrid');
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'tarot-card-wrapper';
+        cardWrapper.innerHTML = `
+            <div class="tarot-card ${isReversed ? 'reversed' : ''}" id="card-${nextIdx}">
+                <div class="card-back">
+                    <img src="${prefix}.PNG" class="deck-back-img" onerror="handleBackImageError(this, '${prefix}')">
+                    <div class="aurora-star">✦</div>
+                    <div class="aurora-brand">LUNEA</div>
+                </div>
+                <div class="card-front">
+                    <img src="${card.img}" alt="${card.name}">
+                </div>
+            </div>
+        `;
+        cardWrapper.onclick = () => {
+            const el = document.getElementById(`card-${nextIdx}`);
+            if (!el.classList.contains('flipped')) {
+                el.classList.add('flipped');
+                renderCardResult(nextIdx);
+            }
+        };
+        cardsGrid.appendChild(cardWrapper);
     }
 
     function flipAllCards() {
