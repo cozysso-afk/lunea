@@ -1065,16 +1065,16 @@
         }
 
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
-        const prompt = `당신은 숙련된 타로 마스터입니다. 사용자의 질문을 분석하여 가장 최적화된 맞춤형 타로 스프레드(3장~6장)를 설계해 주세요.
-반드시 아래와 같은 JSON 형식으로만 응답해야 합니다. 다른 서론이나 설명은 일절 포함하지 마십시오.
+        const prompt = `당신은 타로 마스터입니다. 사용자의 질문을 분석하여 가장 알맞은 맞춤형 타로 스프레드(3~6장)를 설계해 주세요.
+반드시 아래 JSON 포맷으로만 응답해야 합니다. 마크다운 따옴표나 기타 텍스트 없이 순수 JSON만 반환하십시오.
 
 {
-  "spreadTitle": "스프레드 이름 (예: 이직 및 연봉 협상 4카드 배열)",
+  "spreadTitle": "질문 맞춤 스프레드 이름",
   "positions": [
-    "1. 자리 이름 (설명)",
-    "2. 자리 이름 (설명)",
-    "3. 자리 이름 (설명)",
-    "4. 자리 이름 (설명)"
+    "1. 포지션 이름 (설명)",
+    "2. 포지션 이름 (설명)",
+    "3. 포지션 이름 (설명)",
+    "4. 포지션 이름 (설명)"
   ]
 }
 
@@ -1092,10 +1092,11 @@
             });
             const data = await res.json();
             if (data.candidates && data.candidates[0].content) {
-                return JSON.parse(data.candidates[0].content.parts[0].text);
+                const rawText = data.candidates[0].content.parts[0].text.trim();
+                return JSON.parse(rawText);
             }
         } catch (e) {
-            console.error("AI Spread Design Error:", e);
+            console.error("AI Spread Error, using fallback:", e);
         }
 
         return {
@@ -1109,16 +1110,29 @@
         const drawBtn = document.getElementById('bsDrawBtn');
 
         if (isAiCustom) {
-            drawBtn.disabled = true;
-            drawBtn.innerText = "🔮 AI가 질문에 맞는 배열을 설계 중...";
-            
-            const aiSpread = await requestAiSpreadDesign(qText || "종합 운세");
-            currentPositions = aiSpread.positions;
-            currentSpreadTitle = aiSpread.spreadTitle || "질문 맞춤 AI 배열";
-            currentCardCount = currentPositions.length;
+            const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
+            if (!apiKey) {
+                alert('AI 자동 맞춤 배열을 사용하려면 상단 [⚙️ API 설정]에서 Gemini API Key를 먼저 등록해 주세요.');
+                openApiModal();
+                return;
+            }
 
-            drawBtn.disabled = false;
-            drawBtn.innerText = "✦ 카드 펼치기";
+            drawBtn.disabled = true;
+            drawBtn.innerText = "🔮 AI가 질문에 맞는 최적 배열 설계 중...";
+            
+            try {
+                const aiSpread = await requestAiSpreadDesign(qText || "종합 운세");
+                currentPositions = aiSpread.positions && aiSpread.positions.length > 0 ? aiSpread.positions : ["1. 현재 상황", "2. 핵심 변수", "3. 해결책"];
+                currentSpreadTitle = aiSpread.spreadTitle || "질문 맞춤 AI 배열";
+                currentCardCount = currentPositions.length;
+            } catch (err) {
+                currentPositions = ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"];
+                currentSpreadTitle = "질문 맞춤 AI 배열";
+                currentCardCount = 4;
+            } finally {
+                drawBtn.disabled = false;
+                drawBtn.innerText = "✦ 카드 펼치기";
+            }
         } else if (currentSpreadTitle.includes('속궁합')) {
             currentPositions = [
                 "1. 상대의 본능적 욕구 & 리드 성향",
