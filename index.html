@@ -24,12 +24,18 @@
             word-break: keep-all;
         }
 
-        html, body {
+        html {
+            width: 100%;
+            height: 100%;
+            background-color: #06040a;
+            overflow-x: hidden;
+        }
+
+        body {
             margin: 0;
             padding: 0;
             width: 100%;
             min-height: 100vh;
-            background-color: #06040a;
             font-family: 'Pretendard', -apple-system, sans-serif;
             background: radial-gradient(circle at 50% 10%, #201738 0%, #0d0a17 60%, #06040a 100%);
             background-attachment: fixed;
@@ -109,7 +115,7 @@
             white-space: nowrap;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 2px;
         }
 
         .profile-chip-bar {
@@ -262,22 +268,53 @@
             flex-shrink: 0;
         }
 
-        .input-group { margin-bottom: 14px; }
-        .input-group label { display: block; font-size: 11.5px; font-weight: 600; margin-bottom: 6px; color: #dfd8ee; }
+        .bottom-sheet {
+            position: fixed;
+            bottom: -120%; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 480px;
+            background: rgba(18, 14, 28, 0.98);
+            backdrop-filter: blur(28px);
+            border-radius: 26px 26px 0 0;
+            padding: 22px 18px 34px 18px;
+            box-shadow: 0 -16px 50px rgba(0,0,0,0.7);
+            transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 150;
+            border: 1px solid var(--glass-border);
+        }
+        .bottom-sheet.open { bottom: 0 !important; }
+        .bs-header { margin-bottom: 12px; }
+        .bs-subtitle { font-family: 'Cinzel', serif; font-size: 9.5px; font-weight: 700; color: var(--moon-glow); letter-spacing: 1.5px; }
+        .bs-title { font-family: 'Noto Serif KR', serif; font-size: 18px; margin: 3px 0; font-weight: 600; }
+        .bs-desc { font-size: 11px; color: var(--text-dim); margin: 0; }
+
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 11.5px; font-weight: 600; margin-bottom: 5px; color: #dfd8ee; }
         textarea, input, select {
             width: 100%;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.12);
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 10px 12px;
             color: #fff;
             font-family: inherit;
             font-size: 13px;
             outline: none;
         }
         select option { background: #1a1526; color: #fff; }
-        textarea { resize: none; height: 70px; }
+        textarea { resize: none; height: 60px; }
         textarea:focus, input:focus, select:focus { border-color: var(--moon-glow); }
+
+        .radio-box {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            padding: 10px 12px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+        .radio-box.selected { background: rgba(189, 164, 248, 0.14); border-color: var(--moon-glow); }
+        .radio-box h5 { margin: 0 0 2px 0; font-size: 12px; font-weight: 600; color: #fff; }
+        .radio-box p { margin: 0; font-size: 10px; color: var(--text-dim); }
 
         .draw-btn {
             width: 100%;
@@ -289,53 +326,62 @@
             font-size: 14px;
             font-weight: 700;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 5px;
             box-shadow: 0 8px 24px rgba(126, 93, 196, 0.4);
             white-space: nowrap;
         }
 
-        .modal-layer {
+        .spread-modal {
             position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(5, 3, 10, 0.92);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 3, 10, 0.94);
             backdrop-filter: blur(18px);
-            z-index: 500;
+            z-index: 200;
             display: none;
             justify-content: center;
             align-items: center;
-            padding: 14px;
+            padding: 12px;
         }
-        .modal-layer.show { display: flex !important; }
-        
+        .spread-modal.show { display: flex; }
         .modal-content {
             background: #140f21;
             border: 1px solid var(--glass-border);
-            width: 100%; max-width: 440px; max-height: 90vh;
-            border-radius: 24px; padding: 22px 18px;
+            width: 100%; max-width: 440px; max-height: 92vh;
+            border-radius: 24px; padding: 18px 14px;
             overflow-y: auto; position: relative;
             box-shadow: 0 24px 60px rgba(0,0,0,0.7);
-            text-align: left;
+            text-align: center;
         }
         .close-modal {
             position: absolute;
-            top: 14px; right: 16px;
-            background: none; border: none; font-size: 24px;
+            top: 12px; right: 14px;
+            background: none; border: none; font-size: 22px;
             color: var(--text-dim); cursor: pointer;
+        }
+
+        .action-bar {
+            display: flex; gap: 5px; justify-content: center;
+            margin: 10px 0 12px 0; flex-wrap: wrap;
+        }
+        .act-btn {
+            background: rgba(189, 164, 248, 0.12);
+            border: 1px solid rgba(189, 164, 248, 0.25);
+            color: #d6c5ff; padding: 6px 10px;
+            border-radius: 12px; font-size: 10.5px;
+            font-weight: 600; cursor: pointer; white-space: nowrap;
         }
 
         .cards-grid {
             display: flex; flex-wrap: wrap; justify-content: center;
-            gap: 8px; margin: 16px 0; perspective: 1000px;
+            gap: 7px; margin: 10px 0 14px 0; perspective: 1000px;
         }
         .tarot-card-wrapper {
             width: 78px; height: 128px; cursor: pointer;
             animation: cardSpawn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            opacity: 0; transform: translateY(18px) scale(0.95);
         }
 
-        @keyframes cardSpawn { 
-            from { opacity: 0; transform: translateY(18px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); } 
-        }
+        @keyframes cardSpawn { to { opacity: 1; transform: translateY(0) scale(1); } }
 
         .tarot-card {
             width: 100%; height: 100%; position: relative;
@@ -344,30 +390,88 @@
             border-radius: 10px; box-shadow: 0 6px 16px rgba(0,0,0,0.5);
         }
         .tarot-card.flipped { transform: rotateY(180deg); }
-        .tarot-card.reversed .card-front { transform: rotateY(180deg) rotate(180deg); }
+        .tarot-card.reversed .card-front img { transform: rotate(180deg); }
 
         .card-back {
             position: absolute; width: 100%; height: 100%;
             backface-visibility: hidden; border-radius: 10px;
             background: linear-gradient(135deg, #2b1f47 0%, #150f26 100%);
             border: 1px solid rgba(218, 196, 255, 0.4);
+            box-shadow: inset 0 0 10px rgba(189, 164, 248, 0.3);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
         }
+        .card-back img.deck-back-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; border-radius: 9px; display: block;
+        }
+        .card-back::before {
+            content: ''; position: absolute; width: 76%; height: 86%;
+            border: 1px solid rgba(255,255,255,0.25); border-radius: 6px;
+            pointer-events: none; z-index: 2;
+        }
+        .aurora-star {
+            font-size: 20px; color: #ffd27d;
+            text-shadow: 0 0 10px rgba(255, 210, 125, 0.8);
+            margin-bottom: 2px; z-index: 1;
+        }
+        .aurora-brand {
+            font-family: 'Cinzel', serif; font-size: 8px;
+            letter-spacing: 2px; font-weight: 700; color: #e3d7ff; z-index: 1;
+        }
+
         .card-front {
             position: absolute; width: 100%; height: 100%;
-            backface-visibility: hidden; border-radius: 10px;
-            background: #251d38;
-            transform: rotateY(180deg);
-            border: 1.5px solid rgba(218, 196, 255, 0.6);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            padding: 6px; text-align: center; font-size: 11px;
+            backface-visibility: hidden; border-radius: 10px; background: #fff;
+            transform: rotateY(180deg); border: 1.5px solid rgba(218, 196, 255, 0.6);
+            overflow: hidden;
         }
+        .card-front img { width: 100%; height: 100%; object-fit: cover; }
+
+        .card-info-box {
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 14px; padding: 12px 14px; margin-top: 8px;
+            text-align: left; border: 1px solid rgba(255,255,255,0.08);
+            animation: fadeIn 0.35s ease;
+        }
+        .pos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+        .pos-badge { font-size: 10.5px; font-weight: 700; color: var(--moon-glow); }
+        .single-add-btn {
+            background: rgba(189, 164, 248, 0.15); border: 1px solid rgba(189, 164, 248, 0.3);
+            color: #dcd0ff; padding: 3px 7px; border-radius: 8px;
+            font-size: 9.5px; font-weight: 600; cursor: pointer; white-space: nowrap;
+        }
+        .single-add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .resonance-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, rgba(255, 210, 125, 0.2) 0%, rgba(189, 164, 248, 0.2) 100%);
+            border: 1px solid var(--gold-spark); color: var(--gold-spark);
+            padding: 3px 7px; border-radius: 7px; font-size: 9.5px;
+            font-weight: 700; margin-top: 4px;
+        }
+
+        .sub-cards-container {
+            margin-top: 6px; padding-top: 6px;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .sub-card-tag {
+            background: rgba(165, 130, 255, 0.08);
+            border-left: 2px solid var(--moon-glow);
+            padding: 4px 8px; border-radius: 0 7px 7px 0;
+            font-size: 10.5px; color: #e9e4f5;
+        }
+
+        .card-info-box h4 { margin: 0 0 2px 0; font-size: 13px; color: #f5f2fd; }
+        .card-info-box p { margin: 0; font-size: 11px; color: var(--text-dim); line-height: 1.45; }
 
         .ai-reading-card {
             background: linear-gradient(145deg, rgba(62, 45, 99, 0.45) 0%, rgba(26, 18, 45, 0.88) 100%);
             border: 1px solid rgba(189, 164, 248, 0.35);
-            border-radius: 16px; padding: 16px; margin-top: 14px;
+            border-radius: 16px; padding: 16px; margin-top: 12px;
             text-align: left; box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            animation: fadeIn 0.4s ease;
         }
         .ai-reading-card h4 {
             margin: 0 0 8px 0; font-family: 'Cinzel', 'Noto Serif KR', serif;
@@ -375,11 +479,30 @@
             border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 7px;
         }
         .ai-reading-body {
-            font-size: 12.5px;
-            line-height: 1.65;
-            color: #ece6f6;
-            white-space: pre-wrap;
+            font-family: 'Noto Serif KR', serif; font-size: 13px;
+            color: #f7f3ff; line-height: 1.85; word-break: keep-all; white-space: pre-wrap;
         }
+
+        .copy-prompt-box {
+            margin-top: 14px; padding: 12px; border-radius: 16px;
+            background: linear-gradient(135deg, rgba(165, 130, 255, 0.12) 0%, rgba(104, 66, 184, 0.2) 100%);
+            border: 1px solid rgba(189, 164, 248, 0.3);
+        }
+        .copy-prompt-btn {
+            width: 100%; background: linear-gradient(135deg, #ffd27d 0%, #d49e37 100%);
+            color: #1a1202; border: none; padding: 12px; border-radius: 12px;
+            font-size: 13px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 6px 20px rgba(255, 210, 125, 0.3); white-space: nowrap;
+        }
+
+        .profile-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 3, 10, 0.9); backdrop-filter: blur(16px);
+            z-index: 210; display: none; justify-content: center; align-items: center; padding: 14px;
+        }
+        .profile-modal.show { display: flex; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -394,19 +517,19 @@
             </div>
         </div>
         <div class="header-actions">
-            <button class="icon-btn" onclick="openModal('apiModal')">⚙️ API 설정</button>
-            <button class="icon-btn" onclick="openModal('profileModal')">👤 프로필</button>
-            <button class="icon-btn" onclick="openModal('historyModal')">📜 기록함</button>
+            <button class="icon-btn" onclick="openApiModal()">⚙️ API 설정</button>
+            <button class="icon-btn" onclick="openProfileModal()">👤 프로필</button>
+            <button class="icon-btn" onclick="openArchiveModal()">↶ 기록함</button>
         </div>
     </header>
 
-    <div class="profile-chip-bar" onclick="openModal('profileModal')">
+    <div class="profile-chip-bar" onclick="openProfileModal()">
         <div class="profile-chip-info">
-            <span class="p-tag" id="chipDay">태국: 목요일 (Jupiter ♃)</span>
-            <span class="p-tag" id="chipStem">일간: 庚(경금)</span>
-            <span class="p-tag" id="chipZodiac">태양궁: Pisces</span>
+            <span class="p-tag" id="summaryThai">태국: 화요일 (Mars ♂)</span>
+            <span class="p-tag" id="summarySaju">일간: 癸(계수)</span>
+            <span class="p-tag" id="summaryZodiac">태양궁: 전갈자리</span>
         </div>
-        <span style="color: var(--moon-glow); font-weight: 600;">수정 &gt;</span>
+        <span style="color:var(--moon-glow); font-weight:700; white-space:nowrap;">수정 ›</span>
     </div>
 
     <div class="daily-orbit-card">
@@ -414,44 +537,54 @@
             <h3>DAILY ORBIT 4</h3>
             <p>아침 흐름 · 오후 집중도 · 대인/연애운 · 밤의 안식<br>78장 천체 덱으로 관통하는 4장의 정밀 리딩</p>
         </div>
-        <button class="daily-btn" onclick="startSpread('Daily Orbit 4', 4)">운세 펼치기</button>
+        <button class="daily-btn" onclick="startDailyReading()">운세 펼치기</button>
     </div>
 
     <div class="section-tag">CHOOSE A READING</div>
     <h2 class="section-heading">탐색할 스프레드</h2>
 
-    <!-- 카테고리 1 -->
-    <div class="category-card" onclick="toggleCat(this)">
+    <!-- 1. GENERAL -->
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
-                <div class="cat-icon">✨</div>
+                <div class="cat-icon">✦</div>
                 <div class="cat-text">
                     <h3>GENERAL & AI CUSTOM</h3>
                     <p>질문 맞춤 AI 실시간 설계 · 켈틱 크로스 · 타임라인</p>
                 </div>
             </div>
-            <span class="toggle-btn">+</span>
+            <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="startSpread('자유 질문 AI 정밀 분석', 3)">
-                <div>
-                    <h4>자유 질문 AI 정밀 분석</h4>
-                    <p>현재 고민에 맞는 심층 통찰</p>
-                </div>
-                <span class="card-count">3 Cards</span>
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'Gemini AI가 질문을 실시간 분석해 최적의 스프레드(1~7장)와 카드 자리를 동적 설계합니다.', 0, event)">
+                <div><h4>질문 맞춤 AI 배열</h4><p>질문 맥락 기반 AI 실시간 동적 스프레드 생성 (1~7장).</p></div>
+                <div class="card-count">AI 맞춤</div>
             </div>
-            <div class="reading-item" onclick="startSpread('켈틱 크로스 (Celtic Cross)', 10)">
-                <div>
-                    <h4>켈틱 크로스 (Celtic Cross)</h4>
-                    <p>상황의 근원부터 미래 흐름까지 완벽 조망</p>
-                </div>
-                <span class="card-count">10 Cards</span>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'YES / NO', '결정의 흐름을 명확한 상징으로 확인해요.', 3, event)">
+                <div><h4>YES / NO</h4><p>긍정/부정의 에너지 흐름과 핵심 조언 점검.</p></div>
+                <div class="card-count">3</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'ONE CARD', '지금 필요한 핵심 직관 메시지 한 장.', 1, event)">
+                <div><h4>ONE CARD</h4><p>지금 필요한 핵심 메시지 한 장.</p></div>
+                <div class="card-count">1</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'TIMELINE', '과거부터 미래까지의 흐름.', 3, event)">
+                <div><h4>TIMELINE</h4><p>과거의 원인, 현재 상황, 미래의 결과.</p></div>
+                <div class="card-count">3</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'CELTIC CROSS', '큰 흐름과 내·외부 변수를 보는 정통 10카드.', 10, event)">
+                <div><h4>CELTIC CROSS</h4><p>정통 심층 켈틱 크로스 배열.</p></div>
+                <div class="card-count">10</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'DEEP FLOW', '숨은 원인까지 깊게 읽는 심층 7카드.', 7, event)">
+                <div><h4>DEEP FLOW</h4><p>숨은 원인부터 최종 열쇠까지 깊게 읽는 배열.</p></div>
+                <div class="card-count">7</div>
             </div>
         </div>
     </div>
 
-    <!-- 카테고리 2 -->
-    <div class="category-card" onclick="toggleCat(this)">
+    <!-- 2. CAREER & EXAM -->
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🏛️</div>
@@ -460,28 +593,30 @@
                     <p>공시/관세직 합격운 · 직장 대인관계 · 이직 · 금전운</p>
                 </div>
             </div>
-            <span class="toggle-btn">+</span>
+            <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="startSpread('공시 및 시험 합격운', 3)">
-                <div>
-                    <h4>합격 & 성취 에너지 점검</h4>
-                    <p>집중도, 방해 요인 및 합격 가능성</p>
-                </div>
-                <span class="card-count">3 Cards</span>
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '시험 합격운', '학습 완성도, 시험장 변수, 합격 기운과 핵심 전략.', 4, event)">
+                <div><h4>시험 합격운</h4><p>공시/자격증 시험 합격 가능성 및 대비 전략.</p></div>
+                <div class="card-count">4</div>
             </div>
-            <div class="reading-item" onclick="startSpread('이직 및 커리어 방향', 3)">
-                <div>
-                    <h4>이직 & 커리어 타이밍</h4>
-                    <p>현 직장 유지 vs 이동에 대한 에너지 비교</p>
-                </div>
-                <span class="card-count">3 Cards</span>
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '직장 내 대인관계 & 평판', '동료/상사와의 관계, 평판, 갈등 완화 조언.', 4, event)">
+                <div><h4>직장 내 대인관계 & 평판</h4><p>조직 내 역학 관계와 평판 흐름 점검.</p></div>
+                <div class="card-count">4</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '이직 & 커리어 전환', '현 직장 유지 vs 이직 시 결과 비교.', 5, event)">
+                <div><h4>이직 & 커리어 전환</h4><p>새로운 직장 운과 환경 변화의 득실 분석.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '일반 금전운 & 재물 흐름', '현재 재정 흐름, 지출 변수, 재물 유입 시기.', 4, event)">
+                <div><h4>일반 금전운 & 재물 흐름</h4><p>단기/중기 재물운과 금전 안정성 점검.</p></div>
+                <div class="card-count">4</div>
             </div>
         </div>
     </div>
 
-    <!-- 카테고리 3 -->
-    <div class="category-card" onclick="toggleCat(this)">
+    <!-- 3. LOVE & INNER HEART -->
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🌙</div>
@@ -490,28 +625,34 @@
                     <p>속마음 · 속궁합 19+ · 인연운 · 연락 · 재회</p>
                 </div>
             </div>
-            <span class="toggle-btn">+</span>
+            <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="startSpread('상대방의 속마음 & 무의식', 3)">
-                <div>
-                    <h4>상대방의 진심 리딩</h4>
-                    <p>겉으로 드러나는 태도와 숨겨진 본심</p>
-                </div>
-                <span class="card-count">3 Cards</span>
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5, event)">
+                <div><h4>상대 속마음</h4><p>겉마음, 무의식 속마음, 관계에 대한 진심 분석.</p></div>
+                <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="startSpread('재회 및 연락 운', 3)">
-                <div>
-                    <h4>재회 가능성 & 타이밍</h4>
-                    <p>흐름을 전환시킬 핵심 열쇠</p>
-                </div>
-                <span class="card-count">3 Cards</span>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '밀착감, 압박감/타이트함, 템포, 지구력의 심층 신체 궁합.', 9, event)">
+                <div><h4>속궁합 · 19+</h4><p>신체적 텐션·밀착감·강도·지속성의 성인 전용 배열.</p></div>
+                <div class="card-count">9</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '친구·지인 관계 & 주변 인연운', '현재 인간관계 에너지와 새로운 인연의 흐름.', 4, event)">
+                <div><h4>친구·지인 관계 & 주변 인연운</h4><p>대인관계 갈등 원인과 관계 발전 조언.</p></div>
+                <div class="card-count">4</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '연락운 & 시기', '연락 의향과 가까운 시간 흐름.', 5, event)">
+                <div><h4>연락운 & 시기</h4><p>먼저 연락 올 가능성과 시기 분석.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '재회운', '재회의 장애물과 앞으로의 인연 흐름.', 7, event)">
+                <div><h4>재회운</h4><p>재회의 장애물과 앞으로의 흐름.</p></div>
+                <div class="card-count">7</div>
             </div>
         </div>
     </div>
 
-    <!-- 카테고리 4 -->
-    <div class="category-card" onclick="toggleCat(this)">
+    <!-- 4. STOCK -->
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">📈</div>
@@ -520,234 +661,1005 @@
                     <p>단타 매수 타점 · 익절/손절 · 종목 모멘텀</p>
                 </div>
             </div>
-            <span class="toggle-btn">+</span>
+            <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="startSpread('단타 진입 타점 & 심리 지표', 3)">
-                <div>
-                    <h4>진입 타점 & 심리 지표</h4>
-                    <p>상승 모멘텀과 시장 심리 점검</p>
-                </div>
-                <span class="card-count">3 Cards</span>
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '매수 판단', '진입 흐름과 수급 리스크를 직관으로 봐요.', 3, event)">
+                <div><h4>매수 판단</h4><p>단기 진입 흐름과 위험 요인 상징 리딩.</p></div>
+                <div class="card-count">3</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '보유 / 익절', '보유와 수익 실현 흐름을 살펴봐요.', 5, event)">
+                <div><h4>보유 / 익절</h4><p>보유 시 심리적 압박과 익절 타이밍 점검.</p></div>
+                <div class="card-count">5</div>
+            </div>
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '매도 타이밍', '계속 보유와 지금 매도의 상징적 결과.', 5, event)">
+                <div><h4>매도 타이밍</h4><p>계속 보유와 지금 매도의 상징적 흐름 비교.</p></div>
+                <div class="card-count">5</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 리딩 모달 -->
-<div class="modal-layer" id="spreadModal">
+<!-- API 키 설정 모달 -->
+<div class="profile-modal" id="apiModal">
     <div class="modal-content">
-        <button class="close-modal" onclick="closeModal('spreadModal')">×</button>
-        <h3 id="spreadTitle" style="font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold-spark);">SPREAD</h3>
-        <div class="input-group">
-            <label>구체적인 질문이나 현재 상황을 입력하세요</label>
-            <textarea id="userQuery" placeholder="질문을 입력하면 Gemini AI가 더욱 정밀하게 분석합니다."></textarea>
-        </div>
-        <button class="draw-btn" id="drawActionBtn" onclick="drawCards()">운명의 카드 뽑기</button>
-        
-        <div class="cards-grid" id="cardsContainer"></div>
-        <div id="aiReadingBox" class="ai-reading-card" style="display: none;">
-            <h4>✨ LUNEA CELESTIAL ORACLE</h4>
-            <div class="ai-reading-body" id="aiReadingText"></div>
-        </div>
-    </div>
-</div>
-
-<!-- Gemini API 설정 모달 (제공해주신 이미지와 100% 동일한 구조) -->
-<div class="modal-layer" id="apiModal">
-    <div class="modal-content">
-        <button class="close-modal" onclick="closeModal('apiModal')">×</button>
-        <div style="font-size: 10px; font-weight: 700; color: var(--moon-glow); letter-spacing: 1.5px; margin-bottom: 4px;">AI CONNECTION</div>
-        <h3 style="font-size: 18px; margin: 0 0 10px 0; color: #fff; font-weight: 700;">Gemini API 설정</h3>
-        <p style="font-size: 11.5px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.45;">Google AI Studio 무료 API Key를 입력하세요. 브라우저에 안전하게 보관됩니다.</p>
+        <button class="close-modal" onclick="closeApiModal()">×</button>
+        <div class="bs-subtitle">AI CONNECTION</div>
+        <h3 style="font-family:'Noto Serif KR'; margin:4px 0 14px 0;">Gemini API 설정</h3>
+        <p style="font-size:11.5px; color:var(--text-dim); margin-bottom:14px;">Google AI Studio 무료 API Key를 입력하세요. 브라우저에 안전하게 보관됩니다.</p>
         
         <div class="input-group">
             <label>Google Gemini API Key</label>
-            <input type="password" id="geminiApiKey" placeholder="AIzaSy...">
+            <input type="password" id="inputApiKey" placeholder="AIzaSy...">
         </div>
-        
         <div class="input-group">
             <label>리딩 모델</label>
-            <select id="geminiModel">
-                <option value="gemini-3.6-flash" selected>gemini-3.6-flash (무제한 안정 생성 · 공식 최신 모델)</option>
-                <option value="gemini-1.5-flash">gemini-1.5-flash (표준 플래시 모델)</option>
-                <option value="gemini-1.5-pro">gemini-1.5-pro (심층 추론 프로 모델)</option>
+            <select id="selectModel">
+                <option value="gemini-2.5-flash">gemini-2.5-flash (공식 표준 권장 모델)</option>
+                <option value="gemini-3.6-flash">gemini-3.6-flash (최신 모델)</option>
             </select>
         </div>
+        <button class="draw-btn" onclick="saveApiKey()">API 설정 저장</button>
+    </div>
+</div>
+
+<!-- 프로필 설정 모달 -->
+<div class="profile-modal" id="profileModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeProfileModal()">×</button>
+        <div class="bs-subtitle">CELESTIAL PROFILE</div>
+        <h3 style="font-family:'Noto Serif KR'; margin:4px 0 14px 0;">나의 천체 & 명리 프로필</h3>
         
-        <button class="draw-btn" onclick="saveGeminiSettings()">API 설정 저장</button>
+        <div class="input-group">
+            <label>생년월일 (양력)</label>
+            <input type="date" id="inputBirthDate" onchange="autoCalculateProfile()">
+        </div>
+        
+        <div class="input-group">
+            <label>태국 출생 요일 섹터 (8구역)</label>
+            <select id="selectThaiDay">
+                <option value="일요일|Sun ☉|XIX. The Sun|VIII. Strength">일요일 (Sun ☉ - Phra Athit)</option>
+                <option value="월요일|Moon ☽|II. The High Priestess|VII. The Chariot">월요일 (Moon ☽ - Phra Chan)</option>
+                <option value="화요일|Mars ♂|XVI. The Tower|IV. The Emperor, XIII. Death" selected>화요일 (Mars ♂ - Phra Angkhan)</option>
+                <option value="수요일 낮|Mercury ☿|I. The Magician|VI. The Lovers, IX. The Hermit">수요일 낮 (Mercury ☿ - Phra Phut)</option>
+                <option value="수요일 밤|Rahu|None|None">수요일 밤 (Rahu - Phra Rahu)</option>
+                <option value="목요일|Jupiter ♃|X. Wheel of Fortune|XIV. Temperance, XVIII. The Moon">목요일 (Jupiter ♃ - Phra Phruehat)</option>
+                <option value="금요일|Venus ♀|III. The Empress|V. The Hierophant, XI. Justice">금요일 (Venus ♀ - Phra Suk)</option>
+                <option value="토요일|Saturn ♄|XXI. The World|XV. The Devil, XVII. The Star">토요일 (Saturn ♄ - Phra Sao)</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>사주 일간 (Day Master)</label>
+            <select id="selectSaju">
+                <option value="甲(갑목)">甲(갑목) - 큰 나무, 추진력, 리더십</option>
+                <option value="乙(을목)">乙(을목) - 화초, 유연함, 적응력</option>
+                <option value="丙(병화)">丙(병화) - 태양, 열정, 확장성</option>
+                <option value="丁(정화)">丁(정화) - 촛불, 집중력, 통찰력</option>
+                <option value="戊(무토)">戊(무토) - 큰 산, 포용력, 신중함</option>
+                <option value="己(기토)">己(기토) - 옥토, 수용성, 섬세함</option>
+                <option value="庚(경금)">庚(경금) - 원석, 결단력, 의리</option>
+                <option value="辛(신금)">辛(신금) - 보석, 예리함, 완벽주의</option>
+                <option value="壬(임수)">壬(임수) - 바다, 지혜, 유동성</option>
+                <option value="癸(계수)" selected>癸(계수) - 시냇물, 깊은 직관, 유연한 내면</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <label>서양 점성술 태양궁 (Sun Sign)</label>
+            <select id="selectZodiac">
+                <option value="Aries ♈ (양자리)">양자리 (Aries ♈)</option>
+                <option value="Taurus ♉ (황소자리)">황소자리 (Taurus ♉)</option>
+                <option value="Gemini ♊ (쌍둥이자리)">쌍둥이자리 (Gemini ♊)</option>
+                <option value="Cancer ♋ (게자리)">게자리 (Cancer ♋)</option>
+                <option value="Leo ♌ (사자자리)">사자자리 (Leo ♌)</option>
+                <option value="Virgo ♍ (처녀자리)">처녀자리 (Virgo ♍)</option>
+                <option value="Libra ♎ (천칭자리)">천칭자리 (Libra ♎)</option>
+                <option value="Scorpio ♏ (전갈자리)" selected>전갈자리 (Scorpio ♏)</option>
+                <option value="Sagittarius ♐ (사수자리)">사수자리 (Sagittarius ♐)</option>
+                <option value="Capricorn ♑ (염소자리)">염소자리 (Capricorn ♑)</option>
+                <option value="Aquarius ♒ (물병자리)">물병자리 (Aquarius ♒)</option>
+                <option value="Pisces ♓ (물고기자리)">물고기자리 (Pisces ♓)</option>
+            </select>
+        </div>
+
+        <button class="draw-btn" onclick="saveProfile()">프로필 저장 & 동기화</button>
     </div>
 </div>
 
-<!-- 프로필 모달 -->
-<div class="modal-layer" id="profileModal">
-    <div class="modal-content">
-        <button class="close-modal" onclick="closeModal('profileModal')">×</button>
-        <h3 style="font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold-spark);">MY CELESTIAL PROFILE</h3>
-        <div class="input-group">
-            <label>태어난 요일 (태국)</label>
-            <input type="text" id="profDay" value="목요일 (Jupiter ♃)">
-        </div>
-        <div class="input-group">
-            <label>사주 일간</label>
-            <input type="text" id="profStem" value="庚(경금)">
-        </div>
-        <div class="input-group">
-            <label>태양궁 (별자리)</label>
-            <input type="text" id="profZodiac" value="Pisces">
-        </div>
-        <button class="draw-btn" onclick="saveProfile()">프로필 적용</button>
+<div class="bottom-sheet" id="bottomSheet">
+    <div class="bs-header">
+        <div class="bs-subtitle">✦ SELECTED · <span id="bsCategory">GENERAL</span></div>
+        <h2 class="bs-title" id="bsTitle">질문 맞춤 AI 배열</h2>
+        <p class="bs-desc" id="bsDesc">78장 정규 덱 기반 맞춤형 스프레드 자동 생성.</p>
     </div>
+    
+    <div class="input-group">
+        <label>구체적인 질문 입력</label>
+        <textarea id="userQuestion" placeholder="예: 친구와의 관계 회복 / 관세직 9급 합격운 / 단타 매수 타점"></textarea>
+    </div>
+
+    <div class="input-group">
+        <label>방향성 옵션</label>
+        <div class="radio-box selected" onclick="selectRadio(this, false)">
+            <h5>정방향만</h5>
+            <p>모든 카드를 명확한 정방향으로 해석.</p>
+        </div>
+        <div class="radio-box" onclick="selectRadio(this, true)">
+            <h5>역방향 포함</h5>
+            <p>상황의 지연과 내면적 그림자까지 분석.</p>
+        </div>
+    </div>
+
+    <button class="draw-btn" id="bsDrawBtn" onclick="startReading()">✦ <span id="bsCardCountBtn">카드 펼치기</span></button>
 </div>
 
-<!-- 기록함 모달 -->
-<div class="modal-layer" id="historyModal">
+<div class="spread-modal" id="spreadModal">
     <div class="modal-content">
-        <button class="close-modal" onclick="closeModal('historyModal')">×</button>
-        <h3 style="font-family: 'Cinzel', serif; margin-top: 0; color: var(--gold-spark);">ARCHIVE</h3>
-        <div id="historyList" style="font-size: 12px; color: var(--text-dim);">저장된 최근 리딩 내역이 없습니다.</div>
+        <button class="close-modal" onclick="closeModal()">×</button>
+        <div class="bs-subtitle" id="modalReadingType">DAILY ORBIT 4</div>
+        <h3 style="font-family: 'Noto Serif KR'; font-size: 17px; margin: 4px 0 10px 0;" id="modalQuestionText">질문 분석 중...</h3>
+        
+        <div class="action-bar">
+            <button class="act-btn" onclick="flipAllCards()">✦ 일괄 뒤집기</button>
+            <button class="act-btn" onclick="addGlobalExtraCard()">+ 카드 추가 뽑기</button>
+            <button class="act-btn" id="btnAiReading" onclick="generateInstantAiAnalysis()">🔮 AI 실시간 해석</button>
+            <button class="act-btn" onclick="retryReading()">↺ 다시 뽑기</button>
+            <button class="act-btn" onclick="saveToArchive()">💾 저장</button>
+        </div>
+        
+        <div class="cards-grid" id="cardsGrid"></div>
+        <div id="aiInstantAnalysis"></div>
+        <div id="readingResults"></div>
+
+        <div class="copy-prompt-box">
+            <p style="margin:0 0 10px 0; font-size:11.5px; color:var(--text-dim);">
+                정통 골든던·태국 8요일·사주 일간 통합 분석 마스터 프롬프트가 복사됩니다.
+            </p>
+            <button class="copy-prompt-btn" onclick="copyMasterAiPrompt()">📋 마스터 리딩 프롬프트 복사</button>
+        </div>
     </div>
 </div>
 
 <script>
     const TAROT_DECK = [
-        "0. 바보 (The Fool)", "I. 마법사 (The Magician)", "II. 여사제 (The High Priestess)",
-        "III. 여황제 (The Empress)", "IV. 황제 (The Emperor)", "V. 교황 (The Hierophant)",
-        "VI. 연인 (The Lovers)", "VII. 전차 (The Chariot)", "VIII. 힘 (Strength)",
-        "IX. 은둔자 (The Hermit)", "X. 운명의 수레바퀴 (Wheel of Fortune)", "XI. 정의 (Justice)",
-        "XII. 매달린 사람 (The Hanged Man)", "XIII. 죽음 (Death)", "XIV. 절제 (Temperance)",
-        "XV. 악마 (The Devil)", "XVI. 탑 (The Tower)", "XVII. 별 (The Star)",
-        "XVIII. 달 (The Moon)", "XIX. 태양 (The Sun)", "XX. 심판 (Judgement)", "XXI. 세계 (The World)"
+        { code: "Fool", name: "0. The Fool (바보)", img: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", primaryType: "Element", gdAttribution: "Air", classicalRuler: "—", keyword: "자유, 시작, 미지, 순수, 모험" },
+        { code: "Magician", name: "I. The Magician (마법사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", primaryType: "Planet", gdAttribution: "Mercury ☿", classicalRuler: "—", keyword: "기술, 의지, 창조력, 현실화, 주도권" },
+        { code: "High Priestess", name: "II. The High Priestess (여사제)", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", primaryType: "Planet", gdAttribution: "Moon ☽", classicalRuler: "—", keyword: "직관, 무의식, 통찰, 비밀, 수용성" },
+        { code: "Empress", name: "III. The Empress (여황제)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d2/RWS_Tarot_03_Empress.jpg", primaryType: "Planet", gdAttribution: "Venus ♀", classicalRuler: "—", keyword: "풍요, 모성, 감각적 쾌락, 성장, 매력" },
+        { code: "Emperor", name: "IV. The Emperor (황제)", img: "https://upload.wikimedia.org/wikipedia/commons/c/c3/RWS_Tarot_04_Emperor.jpg", primaryType: "Zodiac", gdAttribution: "Aries ♈ (Fire)", classicalRuler: "Mars ♂", keyword: "권위, 통제력, 안정성, 규율, 추진" },
+        { code: "Hierophant", name: "V. The Hierophant (교황)", img: "https://upload.wikimedia.org/wikipedia/commons/8/8d/RWS_Tarot_05_Hierophant.jpg", primaryType: "Zodiac", gdAttribution: "Taurus ♉ (Earth)", classicalRuler: "Venus ♀", keyword: "전통, 도덕, 제도, 가르침, 신뢰" },
+        { code: "Lovers", name: "VI. The Lovers (연인)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_06_Lovers.jpg", primaryType: "Zodiac", gdAttribution: "Gemini ♊ (Air)", classicalRuler: "Mercury ☿", keyword: "결합, 선택, 유대감, 조화, 가치관" },
+        { code: "Chariot", name: "VII. The Chariot (전차)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9b/RWS_Tarot_07_Chariot.jpg", primaryType: "Zodiac", gdAttribution: "Cancer ♋ (Water)", classicalRuler: "Moon ☽", keyword: "의지, 극복, 승리, 돌파, 통제된 감정" },
+        { code: "Strength", name: "VIII. Strength (힘)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f5/RWS_Tarot_08_Strength.jpg", primaryType: "Zodiac", gdAttribution: "Leo ♌ (Fire)", classicalRuler: "Sun ☉", keyword: "내면의 힘, 인내, 부드러운 통제, 용기" },
+        { code: "Hermit", name: "IX. The Hermit (은둔자)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/RWS_Tarot_09_Hermit.jpg", primaryType: "Zodiac", gdAttribution: "Virgo ♍ (Earth)", classicalRuler: "Mercury ☿", keyword: "성찰, 탐구, 내적 지혜, 고독, 신중함" },
+        { code: "Wheel", name: "X. Wheel of Fortune (운명의 수레바퀴)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3c/RWS_Tarot_10_Wheel_of_Fortune.jpg", primaryType: "Planet", gdAttribution: "Jupiter ♃", classicalRuler: "—", keyword: "전환점, 주기, 행운, 변화, 운명적 흐름" },
+        { code: "Justice", name: "XI. Justice (정의)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e0/RWS_Tarot_11_Justice.jpg", primaryType: "Zodiac", gdAttribution: "Libra ♎ (Air)", classicalRuler: "Venus ♀", keyword: "공정성, 인과율, 결단, 균형, 명확성" },
+        { code: "Hanged Man", name: "XII. The Hanged Man (매달린 사람)", img: "https://upload.wikimedia.org/wikipedia/commons/2/2b/RWS_Tarot_12_Hanged_Man.jpg", primaryType: "Element", gdAttribution: "Water", classicalRuler: "—", keyword: "관점 전환, 정체, 헌신, 자발적 수용" },
+        { code: "Death", name: "XIII. Death (죽음)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/RWS_Tarot_13_Death.jpg", primaryType: "Zodiac", gdAttribution: "Scorpio ♏ (Water)", classicalRuler: "Mars ♂", keyword: "종결, 변혁, 탈바꿈, 새로운 시작" },
+        { code: "Temperance", name: "XIV. Temperance (절제)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/RWS_Tarot_14_Temperance.jpg", primaryType: "Zodiac", gdAttribution: "Sagittarius ♐ (Fire)", classicalRuler: "Jupiter ♃", keyword: "조율, 융합, 균형, 중용, 인내심" },
+        { code: "Devil", name: "XV. The Devil (악마)", img: "https://upload.wikimedia.org/wikipedia/commons/5/55/RWS_Tarot_15_Devil.jpg", primaryType: "Zodiac", gdAttribution: "Capricorn ♑ (Earth)", classicalRuler: "Saturn ♄", keyword: "집착, 욕망, 속박, 물질주의, 그림자" },
+        { code: "Tower", name: "XVI. The Tower (탑)", img: "https://upload.wikimedia.org/wikipedia/commons/5/53/RWS_Tarot_16_Tower.jpg", primaryType: "Planet", gdAttribution: "Mars ♂", classicalRuler: "—", keyword: "충격, 급변, 각성, 파괴, 해방" },
+        { code: "Star", name: "XVII. The Star (별)", img: "https://upload.wikimedia.org/wikipedia/commons/d/db/RWS_Tarot_17_Star.jpg", primaryType: "Zodiac", gdAttribution: "Aquarius ♒ (Air)", classicalRuler: "Saturn ♄", keyword: "희망, 영감, 치유, 비전, 평온" },
+        { code: "Moon", name: "XVIII. The Moon (달)", img: "https://upload.wikimedia.org/wikipedia/commons/7/7f/RWS_Tarot_18_Moon.jpg", primaryType: "Zodiac", gdAttribution: "Pisces ♓ (Water)", classicalRuler: "Jupiter ♃", keyword: "불안, 환상, 무의식, 모호함, 직관" },
+        { code: "Sun", name: "XIX. The Sun (태양)", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/RWS_Tarot_19_Sun.jpg", primaryType: "Planet", gdAttribution: "Sun ☉", classicalRuler: "—", keyword: "성공, 명료함, 기쁨, 활력, 진실" },
+        { code: "Judgement", name: "XX. Judgement (심판)", img: "https://upload.wikimedia.org/wikipedia/commons/d/dd/RWS_Tarot_20_Judgement.jpg", primaryType: "Spirit/Element", gdAttribution: "Fire / Spirit", classicalRuler: "—", keyword: "부활, 최종 결단, 각성, 소명" },
+        { code: "World", name: "XXI. The World (세계)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/RWS_Tarot_21_World.jpg", primaryType: "Element+Planet", gdAttribution: "Earth / Saturn ♄", classicalRuler: "—", keyword: "완성, 성취, 통합, 새로운 주기" },
+
+        { code: "Wands01", name: "Ace of Wands (완드 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/1/11/Wands01.jpg", primaryType: "Minor", gdAttribution: "Root of Fire", classicalRuler: "Fire", keyword: "열정의 시작, 영감, 새로운 도전, 원초적 에너지" },
+        { code: "Wands02", name: "Two of Wands (완드 2)", img: "https://upload.wikimedia.org/wikipedia/commons/0/0f/Wands02.jpg", primaryType: "Minor", gdAttribution: "Mars in Aries ♈", classicalRuler: "Mars ♂", keyword: "계획, 미래 구상, 영역 확장, 결단" },
+        { code: "Wands03", name: "Three of Wands (완드 3)", img: "https://upload.wikimedia.org/wikipedia/commons/f/ff/Wands03.jpg", primaryType: "Minor", gdAttribution: "Sun in Aries ♈", classicalRuler: "Sun ☉", keyword: "확장, 진전, 무역/이동, 기회의 발견" },
+        { code: "Wands04", name: "Four of Wands (완드 4)", img: "https://upload.wikimedia.org/wikipedia/commons/a/a4/Wands04.jpg", primaryType: "Minor", gdAttribution: "Venus in Aries ♈", classicalRuler: "Venus ♀", keyword: "축하, 안정, 안식처, 결실, 조화" },
+        { code: "Wands05", name: "Five of Wands (완드 5)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9d/Wands05.jpg", primaryType: "Minor", gdAttribution: "Saturn in Leo ♌", classicalRuler: "Saturn ♄", keyword: "경쟁, 의견 대립, 주도권 다툼, 긴장" },
+        { code: "Wands06", name: "Six of Wands (완드 6)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3b/Wands06.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Leo ♌", classicalRuler: "Jupiter ♃", keyword: "승리, 인정, 대중적 성공, 자신감" },
+        { code: "Wands07", name: "Seven of Wands (완드 7)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wands07.jpg", primaryType: "Minor", gdAttribution: "Mars in Leo ♌", classicalRuler: "Mars ♂", keyword: "방어, 위치 고수, 끈기, 극복" },
+        { code: "Wands08", name: "Eight of Wands (완드 8)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6b/Wands08.jpg", primaryType: "Minor", gdAttribution: "Mercury in Sagittarius ♐", classicalRuler: "Mercury ☿", keyword: "급속한 진전, 빠른 연락, 가속화, 이동" },
+        { code: "Wands09", name: "Nine of Wands (완드 9)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/Tarot_Nine_of_Wands.jpg", primaryType: "Minor", gdAttribution: "Moon in Sagittarius ♐", classicalRuler: "Moon ☽", keyword: "경계심, 방어 태세, 지친 끈기, 최종 관문" },
+        { code: "Wands10", name: "Ten of Wands (완드 10)", img: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Wands10.jpg", primaryType: "Minor", gdAttribution: "Saturn in Sagittarius ♐", classicalRuler: "Saturn ♄", keyword: "과중한 부담, 압박감, 책임, 한계점" },
+        { code: "Wands11", name: "Page of Wands (완드 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6a/Wands11.jpg", primaryType: "Court", gdAttribution: "Earth of Fire", classicalRuler: "Fire", keyword: "새로운 소식, 탐구심, 호기심, 열정의 싹" },
+        { code: "Wands12", name: "Knight of Wands (완드 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/1/16/Wands12.jpg", primaryType: "Court", gdAttribution: "Air of Fire", classicalRuler: "Fire", keyword: "돌진력, 행동파, 급한 추진, 매력과 충동" },
+        { code: "Wands13", name: "Queen of Wands (완드 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/0/0d/Wands13.jpg", primaryType: "Court", gdAttribution: "Water of Fire", classicalRuler: "Fire", keyword: "당당한 매력, 카리스마, 사교성, 활력" },
+        { code: "Wands14", name: "King of Wands (완드 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/c/ce/Wands14.jpg", primaryType: "Court", gdAttribution: "Fire of Fire", classicalRuler: "Fire", keyword: "리더십, 결단력, 비전, 지휘권" },
+
+        { code: "Cups01", name: "Ace of Cups (컵 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/3/36/Cups01.jpg", primaryType: "Minor", gdAttribution: "Root of Water", classicalRuler: "Water", keyword: "감정의 범람, 사랑의 시작, 직관, 교감" },
+        { code: "Cups02", name: "Two of Cups (컵 2)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Cups02.jpg", primaryType: "Minor", gdAttribution: "Venus in Cancer ♋", classicalRuler: "Venus ♀", keyword: "상호 교감, 파트너십, 끌림, 진솔한 소통" },
+        { code: "Cups03", name: "Three of Cups (컵 3)", img: "https://upload.wikimedia.org/wikipedia/commons/7/7a/Cups03.jpg", primaryType: "Minor", gdAttribution: "Mercury in Cancer ♋", classicalRuler: "Mercury ☿", keyword: "우정, 축하, 모임, 즐거움, 유대" },
+        { code: "Cups04", name: "Four of Cups (컵 4)", img: "https://upload.wikimedia.org/wikipedia/commons/3/35/Cups04.jpg", primaryType: "Minor", gdAttribution: "Moon in Cancer ♋", classicalRuler: "Moon ☽", keyword: "권태, 무관심, 불만족, 제안 거부" },
+        { code: "Cups05", name: "Five of Cups (컵 5)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d7/Cups05.jpg", primaryType: "Minor", gdAttribution: "Mars in Scorpio ♏", classicalRuler: "Mars ♂", keyword: "상실감, 후회, 슬픔, 남아있는 기회" },
+        { code: "Cups06", name: "Six of Cups (컵 6)", img: "https://upload.wikimedia.org/wikipedia/commons/1/17/Cups06.jpg", primaryType: "Minor", gdAttribution: "Sun in Scorpio ♏", classicalRuler: "Sun ☉", keyword: "추억, 옛 인연, 순수함, 그리움" },
+        { code: "Cups07", name: "Seven of Cups (컵 7)", img: "https://upload.wikimedia.org/wikipedia/commons/a/ae/Cups07.jpg", primaryType: "Minor", gdAttribution: "Venus in Scorpio ♏", classicalRuler: "Venus ♀", keyword: "환상, 다채로운 선택지, 착각, 욕망" },
+        { code: "Cups08", name: "Eight of Cups (컵 8)", img: "https://upload.wikimedia.org/wikipedia/commons/6/60/Cups08.jpg", primaryType: "Minor", gdAttribution: "Saturn in Pisces ♓", classicalRuler: "Saturn ♄", keyword: "떠남, 미련의 정리, 새로운 의미 추구" },
+        { code: "Cups09", name: "Nine of Cups (컵 9)", img: "https://upload.wikimedia.org/wikipedia/commons/2/24/Cups09.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Pisces ♓", classicalRuler: "Jupiter ♃", keyword: "만족, 소원 성취, 물질적/감정적 풍요" },
+        { code: "Cups10", name: "Ten of Cups (컵 10)", img: "https://upload.wikimedia.org/wikipedia/commons/8/84/Cups10.jpg", primaryType: "Minor", gdAttribution: "Mars in Pisces ♓", classicalRuler: "Mars ♂", keyword: "완전한 행복, 가족적 평화, 조화로운 결합" },
+        { code: "Cups11", name: "Page of Cups (컵 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/a/ad/Cups11.jpg", primaryType: "Court", gdAttribution: "Earth of Water", classicalRuler: "Water", keyword: "감성적 메시지, 호감의 표현, 순수한 직관" },
+        { code: "Cups12", name: "Knight of Cups (컵 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/f/fa/Cups12.jpg", primaryType: "Court", gdAttribution: "Air of Water", classicalRuler: "Water", keyword: "로맨틱한 제안, 마음의 전달, 유혹, 다정함" },
+        { code: "Cups13", name: "Queen of Cups (컵 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/6/62/Cups13.jpg", primaryType: "Court", gdAttribution: "Water of Water", classicalRuler: "Water", keyword: "깊은 공감, 감수성, 포용력, 치유" },
+        { code: "Cups14", name: "King of Cups (컵 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/0/04/Cups14.jpg", primaryType: "Court", gdAttribution: "Fire of Water", classicalRuler: "Water", keyword: "감정의 안정, 절제력, 너그러움, 조언자" },
+
+        { code: "Swords01", name: "Ace of Swords (검 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/1/1a/Swords01.jpg", primaryType: "Minor", gdAttribution: "Root of Air", classicalRuler: "Air", keyword: "명확한 결단, 이성적 진실, 돌파력, 승리" },
+        { code: "Swords02", name: "Two of Swords (검 2)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9e/Swords02.jpg", primaryType: "Minor", gdAttribution: "Moon in Libra ♎", classicalRuler: "Moon ☽", keyword: "교착 상태, 선택의 회피, 억압된 감정" },
+        { code: "Swords03", name: "Three of Swords (검 3)", img: "https://upload.wikimedia.org/wikipedia/commons/0/02/Swords03.jpg", primaryType: "Minor", gdAttribution: "Saturn in Libra ♎", classicalRuler: "Saturn ♄", keyword: "상처, 가슴 아픈 진실, 삼각관계, 이별" },
+        { code: "Swords04", name: "Four of Swords (검 4)", img: "https://upload.wikimedia.org/wikipedia/commons/b/bf/Swords04.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Libra ♎", classicalRuler: "Jupiter ♃", keyword: "휴식, 재충전, 일시적 정지, 회복" },
+        { code: "Swords05", name: "Five of Swords (검 5)", img: "https://upload.wikimedia.org/wikipedia/commons/2/23/Swords05.jpg", primaryType: "Minor", gdAttribution: "Venus in Aquarius ♒", classicalRuler: "Venus ♀", keyword: "패배감, 상처뿐인 승리, 갈등, 배신" },
+        { code: "Swords06", name: "Six of Swords (검 6)", img: "https://upload.wikimedia.org/wikipedia/commons/2/29/Swords06.jpg", primaryType: "Minor", gdAttribution: "Mercury in Aquarius ♒", classicalRuler: "Mercury ☿", keyword: "어려움으로부터의 이동, 점진적 회복" },
+        { code: "Swords07", name: "Seven of Swords (검 7)", img: "https://upload.wikimedia.org/wikipedia/commons/3/34/Swords07.jpg", primaryType: "Minor", gdAttribution: "Moon in Aquarius ♒", classicalRuler: "Moon ☽", keyword: "은밀한 행동, 기만, 전략적 우회, 도피" },
+        { code: "Swords08", name: "Eight of Swords (검 8)", img: "https://upload.wikimedia.org/wikipedia/commons/a/a7/Swords08.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Gemini ♊", classicalRuler: "Jupiter ♃", keyword: "자기 제한, 고립감, 갇힌 사고, 불안" },
+        { code: "Swords09", name: "Nine of Swords (검 9)", img: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Swords09.jpg", primaryType: "Minor", gdAttribution: "Mars in Gemini ♊", classicalRuler: "Mars ♂", keyword: "악몽, 불면, 극심한 스트레스, 자책" },
+        { code: "Swords10", name: "Ten of Swords (검 10)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Swords10.jpg", primaryType: "Minor", gdAttribution: "Sun in Gemini ♊", classicalRuler: "Sun ☉", keyword: "바닥을 친 파국, 완전한 끝, 재기의 시작" },
+        { code: "Swords11", name: "Page of Swords (검 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4c/Swords11.jpg", primaryType: "Court", gdAttribution: "Earth of Air", classicalRuler: "Air", keyword: "정보 수집, 날카로운 경계, 기민함" },
+        { code: "Swords12", name: "Knight of Swords (검 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/b/b0/Swords12.jpg", primaryType: "Court", gdAttribution: "Air of Air", classicalRuler: "Air", keyword: "돌진, 거침없는 비판, 빠른 추진, 직설적 태도" },
+        { code: "Swords13", name: "Queen of Swords (검 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d4/Swords13.jpg", primaryType: "Court", gdAttribution: "Water of Air", classicalRuler: "Air", keyword: "냉철한 판단, 독립성, 명료함, 경계심" },
+        { code: "Swords14", name: "King of Swords (검 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/3/33/Swords14.jpg", primaryType: "Court", gdAttribution: "Fire of Air", classicalRuler: "Air", keyword: "지성적 권위, 객관적 공정성, 통솔력" },
+
+        { code: "Pents01", name: "Ace of Pentacles (펜타클 에이스)", img: "https://upload.wikimedia.org/wikipedia/commons/f/fd/Pents01.jpg", primaryType: "Minor", gdAttribution: "Root of Earth", classicalRuler: "Earth", keyword: "물질적 기회, 실질적 시작, 재물, 안정" },
+        { code: "Pents02", name: "Two of Pentacles (펜타클 2)", img: "https://upload.wikimedia.org/wikipedia/commons/9/9f/Pents02.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Capricorn ♑", classicalRuler: "Jupiter ♃", keyword: "유연한 조율, 균형 잡기, 자금 순환, 변동성" },
+        { code: "Pents03", name: "Three of Pentacles (펜타클 3)", img: "https://upload.wikimedia.org/wikipedia/commons/4/42/Pents03.jpg", primaryType: "Minor", gdAttribution: "Mars in Capricorn ♑", classicalRuler: "Mars ♂", keyword: "전문성 인정, 협업, 팀워크, 기술 향상" },
+        { code: "Pents04", name: "Four of Pentacles (펜타클 4)", img: "https://upload.wikimedia.org/wikipedia/commons/3/35/Pents04.jpg", primaryType: "Minor", gdAttribution: "Sun in Capricorn ♑", classicalRuler: "Sun ☉", keyword: "소유욕, 보수적 태도, 통제, 안정을 향한 집착" },
+        { code: "Pents05", name: "Five of Pentacles (펜타클 5)", img: "https://upload.wikimedia.org/wikipedia/commons/9/96/Pents05.jpg", primaryType: "Minor", gdAttribution: "Mercury in Taurus ♉", classicalRuler: "Mercury ☿", keyword: "물질적 결핍, 소외감, 시련 속의 연대" },
+        { code: "Pents06", name: "Six of Pentacles (펜타클 6)", img: "https://upload.wikimedia.org/wikipedia/commons/a/a6/Pents06.jpg", primaryType: "Minor", gdAttribution: "Moon in Taurus ♉", classicalRuler: "Moon ☽", keyword: "베풂과 받음, 자원의 공정한 배분, 보상" },
+        { code: "Pents07", name: "Seven of Pentacles (펜타클 7)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6a/Pents07.jpg", primaryType: "Minor", gdAttribution: "Saturn in Taurus ♉", classicalRuler: "Saturn ♄", keyword: "중간 점검, 성과 평가, 인내, 기다림" },
+        { code: "Pents08", name: "Eight of Pentacles (펜타클 8)", img: "https://upload.wikimedia.org/wikipedia/commons/4/49/Pents08.jpg", primaryType: "Minor", gdAttribution: "Sun in Virgo ♍", classicalRuler: "Sun ☉", keyword: "장인정신, 반복 숙련, 성실한 노력, 집중" },
+        { code: "Pents09", name: "Nine of Pentacles (펜타클 9)", img: "https://upload.wikimedia.org/wikipedia/commons/f/f0/Pents09.jpg", primaryType: "Minor", gdAttribution: "Venus in Virgo ♍", classicalRuler: "Venus ♀", keyword: "자립적 풍요, 물질적 여유, 품격, 결실" },
+        { code: "Pents10", name: "Ten of Pentacles (펜타클 10)", img: "https://upload.wikimedia.org/wikipedia/commons/4/42/Pents10.jpg", primaryType: "Minor", gdAttribution: "Mercury in Virgo ♍", classicalRuler: "Mercury ☿", keyword: "가문/조직의 유산, 확고한 기반, 장기적 안정" },
+        { code: "Pents11", name: "Page of Pentacles (펜타클 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Pents11.jpg", primaryType: "Court", gdAttribution: "Earth of Earth", classicalRuler: "Earth", keyword: "학습 태도, 실용적 기회, 현실적 계획" },
+        { code: "Pents12", name: "Knight of Pentacles (펜타클 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/d/d5/Pents12.jpg", primaryType: "Court", gdAttribution: "Air of Earth", classicalRuler: "Earth", keyword: "꾸준한 실행, 신뢰성, 묵묵한 전진, 책임감" },
+        { code: "Pents13", name: "Queen of Pentacles (펜타클 퀸)", img: "https://upload.wikimedia.org/wikipedia/commons/8/88/Pents13.jpg", primaryType: "Court", gdAttribution: "Water of Earth", classicalRuler: "Earth", keyword: "실용적 보살핌, 현실적 풍요, 든든한 지원" },
+        { code: "Pents14", name: "King of Pentacles (펜타클 킹)", img: "https://upload.wikimedia.org/wikipedia/commons/1/1c/Pents14.jpg", primaryType: "Court", gdAttribution: "Fire of Earth", classicalRuler: "Earth", keyword: "사업적 수완, 물질적 지배력, 확고한 성취" }
     ];
 
-    let currentSpread = { title: '', count: 3 };
+    let currentCardCount = 4;
+    let allowReversed = false;
+    let currentSpreadTitle = "";
+    let currentCategory = "GENERAL";
+    let isAiCustom = false;
+    let currentDrawnCards = [];
+    let currentPositions = [];
+    let usedCardNames = new Set();
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const savedKey = localStorage.getItem('lunea_gemini_key');
-        const savedModel = localStorage.getItem('lunea_gemini_model');
-        if (savedKey) document.getElementById('geminiApiKey').value = savedKey;
-        if (savedModel) document.getElementById('geminiModel').value = savedModel;
-    });
+    let userProfile = {
+        thaiDay: "화요일",
+        thaiRuler: "Mars ♂",
+        thaiDirectCards: "XVI. The Tower",
+        thaiRuledCards: "IV. The Emperor, XIII. Death",
+        sajuDayMaster: "癸(계수)",
+        sunSign: "Scorpio ♏ (전갈자리)"
+    };
 
-    function toggleCat(card) {
-        card.classList.toggle('active');
+    try {
+        const saved = localStorage.getItem('LUNEA_USER_PROFILE');
+        if (saved) userProfile = Object.assign(userProfile, JSON.parse(saved));
+    } catch(e) { console.error("Profile load error", e); }
+
+    function getCryptoShuffledDeck() {
+        let deck = [...TAROT_DECK];
+        for (let i = deck.length - 1; i > 0; i--) {
+            const randArray = new Uint32Array(1);
+            window.crypto.getRandomValues(randArray);
+            const j = randArray[0] % (i + 1);
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        return deck;
     }
 
-    function openModal(id) {
-        document.getElementById(id).classList.add('show');
+    function syncProfileUI() {
+        const sThai = document.getElementById('summaryThai');
+        const sSaju = document.getElementById('summarySaju');
+        const sZodiac = document.getElementById('summaryZodiac');
+        if (sThai) sThai.innerText = `태국: ${userProfile.thaiDay} (${userProfile.thaiRuler})`;
+        if (sSaju) sSaju.innerText = `일간: ${userProfile.sajuDayMaster}`;
+        if (sZodiac) sZodiac.innerText = `태양궁: ${userProfile.sunSign.split(' ')[0]}`;
     }
 
-    function closeModal(id) {
-        document.getElementById(id).classList.remove('show');
+    function openProfileModal() { document.getElementById('profileModal').classList.add('show'); }
+    function closeProfileModal() { document.getElementById('profileModal').classList.remove('show'); }
+
+    function openApiModal() {
+        document.getElementById('inputApiKey').value = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY') || '';
+        document.getElementById('selectModel').value = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+        document.getElementById('apiModal').classList.add('show');
+    }
+    function closeApiModal() { document.getElementById('apiModal').classList.remove('show'); }
+
+    function saveApiKey() {
+        const key = document.getElementById('inputApiKey').value.trim();
+        const model = document.getElementById('selectModel').value;
+        if (!key) return alert('API Key를 입력해주세요.');
+        localStorage.setItem('LUNEA_API_KEY', key);
+        localStorage.setItem('LUNEA_MODEL', model);
+        closeApiModal();
+        alert('✨ Gemini API 설정이 저장되었습니다.');
     }
 
-    function saveGeminiSettings() {
-        const key = document.getElementById('geminiApiKey').value.trim();
-        const model = document.getElementById('geminiModel').value;
-        localStorage.setItem('lunea_gemini_key', key);
-        localStorage.setItem('lunea_gemini_model', model);
-        alert('Gemini API 설정이 안전하게 저장되었습니다.');
-        closeModal('apiModal');
+    function autoCalculateProfile() {
+        const val = document.getElementById('inputBirthDate').value;
+        if (!val) return;
+        const d = new Date(val);
+        const dayIdx = d.getDay();
+        const thaiSelect = document.getElementById('selectThaiDay');
+        if (thaiSelect) {
+            thaiSelect.selectedIndex = dayIdx === 3 ? 3 : (dayIdx === 0 ? 0 : dayIdx);
+        }
+
+        const m = d.getMonth() + 1;
+        const date = d.getDate();
+        let zIdx = 0;
+        if ((m==3 && date>=21)||(m==4 && date<=19)) zIdx = 0;
+        else if ((m==4 && date>=20)||(m==5 && date<=20)) zIdx = 1;
+        else if ((m==5 && date>=21)||(m==6 && date<=21)) zIdx = 2;
+        else if ((m==6 && date>=22)||(m==7 && date<=22)) zIdx = 3;
+        else if ((m==7 && date>=23)||(m==8 && date<=22)) zIdx = 4;
+        else if ((m==8 && date>=23)||(m==9 && date<=22)) zIdx = 5;
+        else if ((m==9 && date>=23)||(m==10 && date<=22)) zIdx = 6;
+        else if ((m==10 && date>=23)||(m==11 && date<=22)) zIdx = 7;
+        else if ((m==11 && date>=23)||(m==12 && date<=21)) zIdx = 8;
+        else if ((m==12 && date>=22)||(m==1 && date<=19)) zIdx = 9;
+        else if ((m==1 && date>=20)||(m==2 && date<=18)) zIdx = 10;
+        else zIdx = 11;
+        
+        const zSelect = document.getElementById('selectZodiac');
+        if (zSelect) zSelect.selectedIndex = zIdx;
     }
 
     function saveProfile() {
-        const day = document.getElementById('profDay').value;
-        const stem = document.getElementById('profStem').value;
-        const zodiac = document.getElementById('profZodiac').value;
-        document.getElementById('chipDay').textContent = '태국: ' + day;
-        document.getElementById('chipStem').textContent = '일간: ' + stem;
-        document.getElementById('chipZodiac').textContent = '태양궁: ' + zodiac;
-        closeModal('profileModal');
+        const thaiEl = document.getElementById('selectThaiDay');
+        const sajuEl = document.getElementById('selectSaju');
+        const zEl = document.getElementById('selectZodiac');
+        
+        const thaiVal = thaiEl ? thaiEl.value.split('|') : ["화요일", "Mars ♂", "XVI. The Tower", "IV. The Emperor, XIII. Death"];
+        userProfile = {
+            thaiDay: thaiVal[0] || "화요일",
+            thaiRuler: thaiVal[1] || "Mars ♂",
+            thaiDirectCards: thaiVal[2] || "XVI. The Tower",
+            thaiRuledCards: thaiVal[3] || "IV. The Emperor, XIII. Death",
+            sajuDayMaster: sajuEl ? sajuEl.value : "癸(계수)",
+            sunSign: zEl ? zEl.value : "Scorpio ♏ (전갈자리)"
+        };
+        localStorage.setItem('LUNEA_USER_PROFILE', JSON.stringify(userProfile));
+        syncProfileUI();
+        closeProfileModal();
+        alert('✨ 천체 & 명리 프로필이 성공적으로 저장되었습니다.');
     }
 
-    function startSpread(title, count) {
-        currentSpread = { title, count };
-        document.getElementById('spreadTitle').textContent = title;
-        document.getElementById('cardsContainer').innerHTML = '';
-        document.getElementById('aiReadingBox').style.display = 'none';
-        document.getElementById('aiReadingText').textContent = '';
-        openModal('spreadModal');
+    function toggleCategory(element, event) {
+        if (event) event.stopPropagation();
+        document.querySelectorAll('.category-card').forEach(card => {
+            if (card !== element) card.classList.remove('active');
+        });
+        element.classList.toggle('active');
     }
 
-    function drawCards() {
-        const container = document.getElementById('cardsContainer');
-        container.innerHTML = '';
-        const drawn = [];
-        const deckCopy = [...TAROT_DECK];
+    function openBottomSheet(category, title, desc, count, event) {
+        if (event) event.stopPropagation();
+        
+        currentCategory = category;
+        currentSpreadTitle = title;
+        document.getElementById('bsCategory').innerText = category;
+        document.getElementById('bsTitle').innerText = title;
+        document.getElementById('bsDesc').innerText = desc;
+        
+        if (count === 0 || title.includes('AI')) {
+            isAiCustom = true;
+            document.getElementById('bsCardCountBtn').innerText = "AI 질문 분석 & 스프레드 생성 (1~7장)";
+        } else {
+            isAiCustom = false;
+            currentCardCount = count;
+            document.getElementById('bsCardCountBtn').innerText = `${count}장 카드 펼치기`;
+        }
+        
+        const bs = document.getElementById('bottomSheet');
+        bs.classList.add('open');
+    }
 
-        for(let i = 0; i < currentSpread.count; i++) {
-            const randIdx = Math.floor(Math.random() * deckCopy.length);
-            const card = deckCopy.splice(randIdx, 1)[0];
-            const isReversed = Math.random() > 0.5;
-            drawn.push({ name: card, reversed: isReversed });
+    function selectRadio(element, isReversed) {
+        let siblings = element.parentElement.querySelectorAll('.radio-box');
+        siblings.forEach(sibling => sibling.classList.remove('selected'));
+        element.classList.add('selected');
+        allowReversed = isReversed;
+    }
 
-            const cardEl = document.createElement('div');
-            cardEl.className = 'tarot-card-wrapper';
-            cardEl.innerHTML = `
-                <div class="tarot-card ${isReversed ? 'reversed' : ''}">
-                    <div class="card-back">🌙<br><span style="font-size: 8px;">LUNEA</span></div>
+    function startDailyReading() {
+        currentCategory = "DAILY";
+        currentSpreadTitle = "DAILY ORBIT 4";
+        isAiCustom = false;
+        currentCardCount = 4;
+        currentPositions = [
+            "1. 아침 흐름 (단타 마인드셋 & 기운)",
+            "2. 낮 흐름 (수험 학습 효율 & 집중력)",
+            "3. 대인관계 & 연애 기운 (타인과의 교류)",
+            "4. 밤의 결실 (회복과 내일의 준비)"
+        ];
+        executeSpread("오늘 하루 나의 전반적인 에너지와 대인관계 흐름");
+    }
+
+    async function requestAiSpreadDesign(questionText) {
+        const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
+        const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+        
+        if (!apiKey) {
+            return {
+                spreadTitle: "직관적 심층 4카드 배열",
+                positions: ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"]
+            };
+        }
+
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        const prompt = `당신은 세계 최고 수준의 타로 마스터입니다.
+질문자의 질문을 분석하여 질문의 맥락, 복잡도, 핵심 쟁점에 최적화된 스프레드를 '1장에서 최대 7장 사이'로 자유롭게 설계하세요.
+간단한 결정은 1~3장, 심층 분석이나 인과관계는 4~7장 등 질문에 맞춰 가장 예리한 포지션을 구성하세요.
+
+반드시 아래 형식의 유효한 JSON으로만 응답해야 합니다. 마크다운이나 다른 텍스트는 절대 포함하지 마세요.
+{
+  "spreadTitle": "질문 맞춤 스프레드 이름",
+  "positions": [
+    "1. 포지션 명칭 (역할 설명)",
+    "2. 포지션 명칭 (역할 설명)"
+  ]
+}
+
+[사용자 질문]
+"${questionText}"`;
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                signal: controller.signal,
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { responseMimeType: "application/json", temperature: 0.7 }
+                })
+            });
+            clearTimeout(timeoutId);
+
+            const data = await res.json();
+            if (data.candidates && data.candidates[0].content) {
+                let rawText = data.candidates[0].content.parts[0].text.trim();
+                rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
+                const parsed = JSON.parse(rawText);
+                if (parsed.positions && Array.isArray(parsed.positions) && parsed.positions.length > 0) {
+                    if (parsed.positions.length > 7) parsed.positions = parsed.positions.slice(0, 7);
+                    return parsed;
+                }
+            }
+        } catch (e) {
+            console.error("AI Spread Design Error:", e);
+        }
+
+        return {
+            spreadTitle: "직관적 심층 4카드 배열",
+            positions: ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"]
+        };
+    }
+
+    async function startReading() {
+        const qText = document.getElementById('userQuestion').value.trim();
+        const drawBtn = document.getElementById('bsDrawBtn');
+
+        if (isAiCustom) {
+            const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
+            if (!apiKey) {
+                alert('AI 자동 맞춤 배열을 사용하려면 상단 [⚙️ API 설정]에서 Gemini API Key를 먼저 등록해 주세요.');
+                openApiModal();
+                return;
+            }
+
+            drawBtn.disabled = true;
+            drawBtn.innerText = "🔮 AI가 질문에 맞는 최적 배열(1~7장) 설계 중...";
+            
+            try {
+                const aiSpread = await requestAiSpreadDesign(qText || "종합 운세 흐름");
+                currentPositions = (aiSpread.positions && aiSpread.positions.length > 0) ? aiSpread.positions : ["1. 현재 상황", "2. 핵심 변수", "3. 해결책"];
+                currentSpreadTitle = aiSpread.spreadTitle || "질문 맞춤 AI 배열";
+                currentCardCount = currentPositions.length;
+            } catch (err) {
+                currentPositions = ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"];
+                currentSpreadTitle = "질문 맞춤 AI 배열";
+                currentCardCount = 4;
+            } finally {
+                drawBtn.disabled = false;
+                drawBtn.innerText = "✦ 카드 펼치기";
+            }
+        } else {
+            // 정규 배열 매핑
+            if (currentSpreadTitle === 'YES / NO') {
+                currentPositions = ["1. 긍정적 에너지 요인", "2. 방해 및 주의 요인", "3. 최종 상징 결론"];
+            } else if (currentSpreadTitle === 'ONE CARD') {
+                currentPositions = ["1. 지금 필요한 핵심 직관 메시지"];
+            } else if (currentSpreadTitle === 'TIMELINE') {
+                currentPositions = ["1. 과거의 원인 & 축적된 기운", "2. 현재 당면한 상황", "3. 미래의 전개 결과"];
+            } else if (currentSpreadTitle === 'CELTIC CROSS') {
+                currentPositions = [
+                    "1. 현재 상황 (현재의 핵심 에너지)",
+                    "2. 장애물 / 도전 과제 (즉각적인 방해 요인)",
+                    "3. 의식적 목표 / 이상 (바라는 점)",
+                    "4. 무의식적 뿌리 / 과거 원인 (숨겨진 기반)",
+                    "5. 지나간 과거 (영향을 주는 과거)",
+                    "6. 다가올 미래 (곧 마주할 흐름)",
+                    "7. 질문자의 태도 및 자아 (내면 상태)",
+                    "8. 주변 환경 및 타인의 시선 (외부 요인)",
+                    "9. 희망 또는 두려움 (내적 갈등)",
+                    "10. 최종 결과 (스프레드의 최종 결론)"
+                ];
+            } else if (currentSpreadTitle === 'DEEP FLOW') {
+                currentPositions = [
+                    "1. 본질적 현 상태", "2. 숨겨진 근본 원인", "3. 현재의 갈등 요소", 
+                    "4. 보이지 않는 영향력", "5. 극복해야 할 과제", "6. 가까운 미래의 흐름", "7. 최종 조언과 결실"
+                ];
+            } else if (currentSpreadTitle === '시험 합격운') {
+                currentPositions = [
+                    "1. 현재 학습 완성도 & 실력",
+                    "2. 시험 당일 예상 변수 & 멘탈",
+                    "3. 합격 가능성 & 결과 기운",
+                    "4. 득점을 위한 핵심 전략 조언"
+                ];
+            } else if (currentSpreadTitle === '직장 내 대인관계 & 평판') {
+                currentPositions = [
+                    "1. 직장 내 나의 현재 이미지 & 평판",
+                    "2. 주변 동료/상사의 속마음",
+                    "3. 주의해야 할 인간관계 변수",
+                    "4. 원만한 관계 유지를 위한 조언"
+                ];
+            } else if (currentSpreadTitle === '이직 & 커리어 전환') {
+                currentPositions = [
+                    "1. 현재 직장에 남았을 때의 흐름",
+                    "2. 이직/새로운 도전 시의 기회",
+                    "3. 전환 과정에서의 위험 요소",
+                    "4. 재정 및 대우의 변화",
+                    "5. 커리어 최적의 선택 가이드"
+                ];
+            } else if (currentSpreadTitle === '일반 금전운 & 재물 흐름') {
+                currentPositions = [
+                    "1. 현재 재정 상태와 자금 흐름",
+                    "2. 예상치 못한 지출/손실 위험",
+                    "3. 새로운 수익 유입 기회",
+                    "4. 자산 증식을 위한 조언"
+                ];
+            } else if (currentSpreadTitle === '상대 속마음') {
+                currentPositions = [
+                    "1. 나를 대하는 겉모습 및 표현",
+                    "2. 감추고 있는 무의식 속마음",
+                    "3. 나에 대한 현재 호감도/끌림",
+                    "4. 관계에 대해 망설이는 이유",
+                    "5. 상대가 궁극적으로 바라는 관계"
+                ];
+            } else if (currentSpreadTitle.includes('속궁합')) {
+                currentPositions = [
+                    "1. 상대의 본능적 욕구 & 리드 성향",
+                    "2. 나의 신체적 감각 & 수용 상태",
+                    "3. 에너지 굵기 & 물리적 압박감",
+                    "4. 신체적 밀착감 & 타이트함(밀도)",
+                    "5. 속도감 & 완급 조절(템포)",
+                    "6. 체력 & 지구력(지속성)",
+                    "7. 숨겨진 성적 판타지 & 페티시",
+                    "8. 절정 도달 & 신체적 만족도",
+                    "9. 행위 후의 여운 & 정서적 교감"
+                ];
+            } else if (currentSpreadTitle === '친구·지인 관계 & 주변 인연운') {
+                currentPositions = [
+                    "1. 현재 대인관계의 전반적 기운",
+                    "2. 상대방 또는 주변의 감정선",
+                    "3. 관계를 가로막는 장애물",
+                    "4. 앞으로의 조화로운 발전 방향"
+                ];
+            } else if (currentSpreadTitle === '연락운 & 시기') {
+                currentPositions = [
+                    "1. 현재 상대방의 연락 의향",
+                    "2. 연락을 가로막는 심리적 장벽",
+                    "3. 먼저 연락했을 때의 반응",
+                    "4. 상대방에게서 먼저 올 가능성",
+                    "5. 가장 유력한 타이밍과 흐름"
+                ];
+            } else if (currentSpreadTitle === '재회운') {
+                currentPositions = [
+                    "1. 이별 당시의 본질적 이유",
+                    "2. 현재 상대의 미련과 후회 정도",
+                    "3. 재회를 가로막는 현실적 장애",
+                    "4. 상대에게 다른 이성의 존재 여부",
+                    "5. 재회 가능성 및 접근 타이밍",
+                    "6. 재회 시 반복될 수 있는 문제",
+                    "7. 최종 인연의 결말"
+                ];
+            } else if (currentSpreadTitle === '매수 판단') {
+                currentPositions = [
+                    "1. 현재 종목/자산의 진입 에너지",
+                    "2. 단기 변동성 및 리스크 요인",
+                    "3. 진입 시 기대 수익 흐름"
+                ];
+            } else if (currentSpreadTitle === '보유 / 익절') {
+                currentPositions = [
+                    "1. 현재 포지션의 상승 여력",
+                    "2. 차익 실현(익절) 최적 시그널",
+                    "3. 추가 보유 시의 위험 요인",
+                    "4. 시장 수급 및 세력의 심리",
+                    "5. 최종 포지션 대응 가이드"
+                ];
+            } else if (currentSpreadTitle === '매도 타이밍') {
+                currentPositions = [
+                    "1. 지금 즉시 매도했을 때의 결과",
+                    "2. 더 끌고 갔을 때의 예상 시나리오",
+                    "3. 숨겨진 악재 또는 하방 압력",
+                    "4. 손실 방어 및 멘탈 관리 조언",
+                    "5. 최종 매도 전략"
+                ];
+            } else {
+                currentPositions = [];
+                for (let i = 1; i <= currentCardCount; i++) {
+                    currentPositions.push(`Position ${i}`);
+                }
+            }
+            currentCardCount = currentPositions.length;
+        }
+
+        document.getElementById('bottomSheet').classList.remove('open');
+        executeSpread(qText);
+    }
+
+    function handleBackImageError(img, prefix) {
+        const attempts = [`${prefix}.PNG`, `${prefix}.png`, `${prefix}.jpg`, `${prefix}.jpeg`, `${prefix}.JPG`];
+        let currentSrc = img.getAttribute('src');
+        let nextIdx = attempts.indexOf(currentSrc) + 1;
+        if (nextIdx < attempts.length) {
+            img.src = attempts[nextIdx];
+        } else {
+            img.style.display = 'none';
+        }
+    }
+
+    function executeSpread(qText) {
+        const modal = document.getElementById('spreadModal');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const resultsContainer = document.getElementById('readingResults');
+        const aiInstantBox = document.getElementById('aiInstantAnalysis');
+        
+        cardsGrid.innerHTML = '';
+        resultsContainer.innerHTML = '';
+        aiInstantBox.innerHTML = '';
+        currentDrawnCards = [];
+        usedCardNames.clear();
+
+        document.getElementById('modalReadingType').innerText = currentSpreadTitle;
+        document.getElementById('modalQuestionText').innerText = qText ? `"${qText}"` : "카드를 차례대로 터치하여 확인하세요";
+
+        const shuffled = getCryptoShuffledDeck();
+        const selected = shuffled.slice(0, currentPositions.length);
+
+        let prefix = "back_general";
+        if (currentCategory === "DAILY") prefix = "back_daily";
+        else if (currentCategory === "LOVE") prefix = "back_love";
+        else if (currentCategory === "STOCK") prefix = "back_stock";
+        else if (currentCategory === "CAREER") prefix = "back_career";
+
+        selected.forEach((card, index) => {
+            const randArray = new Uint8Array(1);
+            window.crypto.getRandomValues(randArray);
+            const isReversed = allowReversed && (randArray[0] % 2 === 1);
+
+            usedCardNames.add(card.name);
+            currentDrawnCards.push({
+                ...card,
+                isReversed,
+                position: currentPositions[index],
+                subCards: []
+            });
+
+            const cardWrapper = document.createElement('div');
+            cardWrapper.className = 'tarot-card-wrapper';
+            cardWrapper.style.animationDelay = `${index * 0.08}s`;
+            
+            cardWrapper.innerHTML = `
+                <div class="tarot-card ${isReversed ? 'reversed' : ''}" id="card-${index}">
+                    <div class="card-back">
+                        <img src="${prefix}.PNG" class="deck-back-img" onerror="handleBackImageError(this, '${prefix}')">
+                        <div class="aurora-star">✦</div>
+                        <div class="aurora-brand">LUNEA</div>
+                    </div>
                     <div class="card-front">
-                        <strong style="font-size: 10px;">${card}</strong>
-                        <span style="font-size: 9px; color: #ffd27d; margin-top: 4px;">${isReversed ? '(역방향)' : '(정방향)'}</span>
+                        <img src="${card.img}" alt="${card.name}">
                     </div>
                 </div>
             `;
-            container.appendChild(cardEl);
-        }
 
-        setTimeout(() => {
-            document.querySelectorAll('.tarot-card').forEach(c => c.classList.add('flipped'));
-            requestGeminiReading(drawn);
-        }, 300);
+            cardWrapper.onclick = () => {
+                const cardElem = document.getElementById(`card-${index}`);
+                if (!cardElem.classList.contains('flipped')) {
+                    cardElem.classList.add('flipped');
+                    renderCardResult(index);
+                }
+            };
+
+            cardsGrid.appendChild(cardWrapper);
+        });
+
+        modal.classList.add('show');
     }
 
-    async function requestGeminiReading(cards) {
-        const readingBox = document.getElementById('aiReadingBox');
-        const readingText = document.getElementById('aiReadingText');
-        readingBox.style.display = 'block';
-        readingText.textContent = '우주의 신비로운 별자리를 정렬하고 있습니다... (Gemini 해석 중)';
+    function renderCardResult(index) {
+        const item = currentDrawnCards[index];
+        const container = document.getElementById('readingResults');
+        if (document.getElementById(`info-${index}`)) return;
 
-        const apiKey = localStorage.getItem('lunea_gemini_key');
-        const model = localStorage.getItem('lunea_gemini_model') || 'gemini-3.6-flash';
-        const userQuery = document.getElementById('userQuery').value.trim() || '현재 전반적인 운의 흐름';
-        const profile = `${document.getElementById('chipDay').textContent}, ${document.getElementById('chipStem').textContent}, ${document.getElementById('chipZodiac').textContent}`;
+        let resonanceBadgeHTML = "";
+        if (userProfile.thaiDirectCards && userProfile.thaiDirectCards.includes(item.code)) {
+            resonanceBadgeHTML = `<div class="resonance-badge">✦ 출생 요일(${userProfile.thaiDay}) 1차 직접 수호성 조응 카드 (Grade A)</div>`;
+        } else if (userProfile.thaiRuledCards && userProfile.thaiRuledCards.includes(item.code)) {
+            resonanceBadgeHTML = `<div class="resonance-badge">✦ 출생 수호성(${userProfile.thaiRuler}) 지배궁 2차 연계 카드 (Grade B)</div>`;
+        }
 
-        const cardSummary = cards.map((c, i) => `카드 ${i+1}: ${c.name} (${c.reversed ? '역방향' : '정방향'})`).join(', ');
+        const infoBox = document.createElement('div');
+        infoBox.className = 'card-info-box';
+        infoBox.id = `info-${index}`;
+        infoBox.innerHTML = `
+            <div class="pos-header">
+                <span class="pos-badge">${item.position}</span>
+                <button class="single-add-btn" id="btn-add-${index}" onclick="addCardToPosition(${index})">+ 보조 카드 (0/3)</button>
+            </div>
+            <h4>${item.name} ${item.isReversed ? '(역방향 ↺)' : '(정방향)'}</h4>
+            <p><strong>골든던 조응:</strong> ${item.gdAttribution} [${item.primaryType}] ${item.classicalRuler !== '—' ? `| 지배성: ${item.classicalRuler}` : ''}</p>
+            <p style="margin-top:2px;"><strong>상징 키워드:</strong> ${item.keyword}</p>
+            ${resonanceBadgeHTML}
+            <div class="sub-cards-container" id="sub-container-${index}" style="display:none;"></div>
+        `;
+        container.appendChild(infoBox);
+    }
+
+    function addCardToPosition(index) {
+        const item = currentDrawnCards[index];
+        if (item.subCards.length >= 3) return;
+
+        const available = TAROT_DECK.filter(d => !usedCardNames.has(d.name));
+        if (available.length === 0) return alert("덱의 모든 카드를 소진했습니다.");
+
+        const randArray = new Uint32Array(1);
+        window.crypto.getRandomValues(randArray);
+        const nextCard = available[randArray[0] % available.length];
+        usedCardNames.add(nextCard.name);
+
+        const revArray = new Uint8Array(1);
+        window.crypto.getRandomValues(revArray);
+        const isReversed = allowReversed && (revArray[0] % 2 === 1);
+
+        const subCardObj = { ...nextCard, isReversed };
+        item.subCards.push(subCardObj);
+
+        const subContainer = document.getElementById(`sub-container-${index}`);
+        subContainer.style.display = 'flex';
+
+        const subTag = document.createElement('div');
+        subTag.className = 'sub-card-tag';
+        subTag.innerHTML = `↳ <b>보조 #${item.subCards.length}:</b> ${subCardObj.name} (${isReversed ? '역방향 ↺' : '정방향'}) - <span style="opacity:0.8;">${subCardObj.gdAttribution} | ${subCardObj.keyword}</span>`;
+        subContainer.appendChild(subTag);
+
+        const btn = document.getElementById(`btn-add-${index}`);
+        btn.innerText = `+ 보조 카드 (${item.subCards.length}/3)`;
+        if (item.subCards.length >= 3) {
+            btn.disabled = true;
+            btn.innerText = `보조 카드 완료 (3/3)`;
+        }
+    }
+
+    function addGlobalExtraCard() {
+        const nextIdx = currentDrawnCards.length;
+        const available = TAROT_DECK.filter(d => !usedCardNames.has(d.name));
+        if (available.length === 0) return alert("덱의 모든 카드를 소진했습니다.");
+
+        const randArray = new Uint32Array(1);
+        window.crypto.getRandomValues(randArray);
+        const card = available[randArray[0] % available.length];
+        usedCardNames.add(card.name);
+
+        const revArray = new Uint8Array(1);
+        window.crypto.getRandomValues(revArray);
+        const isReversed = allowReversed && (revArray[0] % 2 === 1);
+        const posName = `전체 추가 카드 (+${nextIdx + 1})`;
+
+        currentDrawnCards.push({ ...card, isReversed, position: posName, subCards: [] });
+
+        let prefix = "back_general";
+        if (currentCategory === "DAILY") prefix = "back_daily";
+        else if (currentCategory === "LOVE") prefix = "back_love";
+        else if (currentCategory === "STOCK") prefix = "back_stock";
+        else if (currentCategory === "CAREER") prefix = "back_career";
+
+        const cardsGrid = document.getElementById('cardsGrid');
+        const cardWrapper = document.createElement('div');
+        cardWrapper.className = 'tarot-card-wrapper';
+        cardWrapper.innerHTML = `
+            <div class="tarot-card ${isReversed ? 'reversed' : ''}" id="card-${nextIdx}">
+                <div class="card-back">
+                    <img src="${prefix}.PNG" class="deck-back-img" onerror="handleBackImageError(this, '${prefix}')">
+                    <div class="aurora-star">✦</div>
+                    <div class="aurora-brand">LUNEA</div>
+                </div>
+                <div class="card-front">
+                    <img src="${card.img}" alt="${card.name}">
+                </div>
+            </div>
+        `;
+        cardWrapper.onclick = () => {
+            const el = document.getElementById(`card-${nextIdx}`);
+            if (!el.classList.contains('flipped')) {
+                el.classList.add('flipped');
+                renderCardResult(nextIdx);
+            }
+        };
+        cardsGrid.appendChild(cardWrapper);
+    }
+
+    function flipAllCards() {
+        document.querySelectorAll('.tarot-card').forEach((card, idx) => {
+            if (!card.classList.contains('flipped')) {
+                card.classList.add('flipped');
+                renderCardResult(idx);
+            }
+        });
+    }
+
+    async function generateInstantAiAnalysis() {
+        flipAllCards();
+        const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
+        const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
 
         if (!apiKey) {
-            readingText.textContent = `[카드 뽑기 완료]\n${cardSummary}\n\n⚠️ Gemini API Key가 등록되지 않았습니다. 우측 상단의 '⚙️ API 설정'에서 키를 입력하시면 실시간 AI 심층 리딩을 받아보실 수 있습니다.`;
+            alert('상단 [⚙️ API 설정]에서 Gemini API 키를 먼저 등록해 주세요.');
+            openApiModal();
             return;
         }
 
-        const prompt = `당신은 천체 타로 아카이브 'LUNEA'의 신비롭고 예리한 수석 오라클 마스터입니다.
-내담자 프로필: ${profile}
-스프레드 주제: ${currentSpread.title}
-내담자 질문/상황: ${userQuery}
-뽑힌 타로 카드: ${cardSummary}
+        const box = document.getElementById('aiInstantAnalysis');
+        const btn = document.getElementById('btnAiReading');
+        const q = document.getElementById('userQuestion').value.trim() || "현재 나의 전반적인 흐름과 직관적 조언";
 
-각 카드가 상징하는 의미를 내담자의 사주/점성학적 기운 및 질문과 연결하여 품격 있고 통찰력 넘치는 어조로 해석해주세요. 결론에는 실질적인 행동 조언(Action Item)을 덧붙여주세요.`;
+        btn.disabled = true;
+        btn.innerText = "🔮 AI 분석 중...";
+        box.innerHTML = `
+            <div class="ai-reading-card">
+                <h4>🔮 AI 마스터 실시간 심층 리딩</h4>
+                <div class="ai-reading-body" id="aiDynamicText">78장 정규 덱 배치와 명리/천체 에너지를 결합해 심층 분석하고 있습니다...</div>
+            </div>
+        `;
+
+        const promptText = buildMasterPromptString(q);
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: {
+                temperature: 0.85,
+                topP: 0.95
+            }
+        };
 
         try {
-            const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    contents: [{ parts: [{ text: prompt }] }]
-                })
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             });
 
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error?.message || 'API 호출 실패');
-            }
-
             const data = await res.json();
-            const reply = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            readingText.textContent = reply || '해석을 불러오지 못했습니다.';
+            const textElem = document.getElementById('aiDynamicText');
+
+            if (data.error) {
+                textElem.innerText = `[API 오류]\n${data.error.message}`;
+            } else if (data.candidates && data.candidates[0].content) {
+                textElem.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                textElem.innerText = "응답이 생성되지 않았습니다. API 설정을 다시 확인해 주세요.";
+            }
         } catch (err) {
-            readingText.textContent = `[카드 결과]\n${cardSummary}\n\n❌ Gemini 연동 오류: ${err.message}\n(API 키 및 모델명을 확인해주세요.)`;
+            document.getElementById('aiDynamicText').innerText = `[통신 오류]\n${err.message}`;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "🔮 AI 실시간 해석";
+            box.scrollIntoView({ behavior: 'smooth' });
         }
     }
+
+    function retryReading() {
+        const q = document.getElementById('userQuestion').value.trim();
+        executeSpread(q);
+    }
+
+    function saveToArchive() {
+        const title = currentSpreadTitle;
+        const q = document.getElementById('userQuestion').value.trim() || "데일리 리딩";
+        const date = new Date().toLocaleString('ko-KR');
+        
+        const cardStrings = currentDrawnCards.map(c => {
+            let str = `${c.position}: ${c.name} (${c.isReversed ? '역' : '정'}) [GD: ${c.gdAttribution}]`;
+            if (c.subCards && c.subCards.length > 0) {
+                str += ` [보조: ${c.subCards.map(s => `${s.name}(${s.isReversed ? '역' : '정'})`).join(', ')}]`;
+            }
+            return str;
+        });
+
+        const archiveItem = {
+            id: Date.now(),
+            date, title, q,
+            cards: cardStrings
+        };
+
+        let archive = JSON.parse(localStorage.getItem('LUNEA_ARCHIVE') || '[]');
+        archive.unshift(archiveItem);
+        localStorage.setItem('LUNEA_ARCHIVE', JSON.stringify(archive));
+        alert('✨ 78장 리딩과 보조 카드 정보가 기록함에 안전하게 저장되었습니다.');
+    }
+
+    function openArchiveModal() {
+        let archive = JSON.parse(localStorage.getItem('LUNEA_ARCHIVE') || '[]');
+        if (archive.length === 0) return alert('기록함에 저장된 리딩이 아직 없습니다.');
+
+        let msg = "📁 [LUNEA 저장된 직관 기록함]\n\n";
+        archive.slice(0, 5).forEach((item, i) => {
+            msg += `[${i + 1}] ${item.date}\n· 질문: ${item.q}\n· 스프레드: ${item.title}\n· 카드:\n${item.cards.join('\n')}\n\n`;
+        });
+        alert(msg);
+    }
+
+    function buildMasterPromptString(q) {
+        let cardDetails = currentDrawnCards.map((c, idx) => {
+            let text = `${idx + 1}. [${c.position}]
+- Card: ${c.name}
+- Orientation: ${c.isReversed ? 'Reversed (역방향)' : 'Upright (정방향)'}
+- Golden Dawn Attribution: ${c.gdAttribution} [${c.primaryType}]
+- Classical Ruler: ${c.classicalRuler}
+- Keyword: ${c.keyword}`;
+            
+            if (c.subCards && c.subCards.length > 0) {
+                c.subCards.forEach((s, sIdx) => {
+                    text += `\n  ↳ [포지션 보조 #${sIdx+1}]: ${s.name} (${s.isReversed ? '역' : '정'}) - GD: ${s.gdAttribution}`;
+                });
+            }
+            return text;
+        }).join('\n\n');
+
+        return `당신은 서양 점성술, 태국 8요일 수호성, 사주명리, Golden Dawn 78장 Full Tarot 체계를 아우르는 숙련된 상징 리딩 마스터입니다.
+질문자의 프로필과 현재 78장 정규 덱에서 뽑힌 타로 스프레드를 분석하여 신뢰도 높은 맞춤형 심층 해석을 제공하십시오.
+
+[질문 내용]
+"${q}"
+
+[사용자 기본 데이터]
+1. 태국 요일신: ${userProfile.thaiDay} (${userProfile.thaiRuler})
+2. 사주 일간: ${userProfile.sajuDayMaster}
+3. 서양 태양궁: ${userProfile.sunSign}
+
+[오늘의 Tarot 스프레드: ${currentSpreadTitle}]
+${cardDetails}
+
+[해석 가이드라인]
+1. 핵심 상황 분석: 메이저(인생의 큰 흐름/영적 테마)와 마이너(현실적 사건/원소 에너지 흐름)를 유기적으로 연결하여 날카롭게 짚어줄 것.
+2. 천체 & 명리 조응: 사용자의 수호성/일간 에너지와 오늘 나온 카드의 원소(화/수/풍/지) 상호작용을 연결할 것.
+3. 명확한 실전 전략: 두루뭉술한 말 대신 질문자가 즉시 실천할 수 있는 구체적인 2~3가지 행동 지침을 제시할 것.
+4. 품격 있고 따뜻하며 신뢰감 넘치는 어조로 작성할 것.`;
+    }
+
+    function copyMasterAiPrompt() {
+        const q = document.getElementById('userQuestion').value.trim() || "현재 나의 전반적인 흐름과 직관적 조언";
+        const masterPrompt = buildMasterPromptString(q);
+
+        navigator.clipboard.writeText(masterPrompt).then(() => {
+            alert('✨ 78장 체계 마스터 프롬프트가 복사되었습니다!\n외부 AI에도 바로 붙여넣어 활용할 수 있습니다.');
+        }).catch(err => {
+            alert('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
+        });
+    }
+
+    function closeModal() { document.getElementById('spreadModal').classList.remove('show'); }
+
+    document.addEventListener('click', function(e) {
+        const bs = document.getElementById('bottomSheet');
+        if (bs && !bs.contains(e.target) && !e.target.closest('.reading-item') && bs.classList.contains('open')) {
+            bs.classList.remove('open');
+        }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+        syncProfileUI();
+    });
 </script>
 </body>
 </html>
