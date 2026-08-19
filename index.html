@@ -695,7 +695,7 @@
         <div class="input-group">
             <label>리딩 모델</label>
             <select id="selectModel">
-                <option value="gemini-2.5-flash">gemini-2.5-flash (공식 표준 권장 모델)</option>
+                <option value="gemini-2.5-flash">gemini-2.5-flash (안정적 추천 · 할당량 여유)</option>
                 <option value="gemini-3.6-flash">gemini-3.6-flash (최신 모델)</option>
             </select>
         </div>
@@ -854,7 +854,7 @@
         { code: "Wands06", name: "Six of Wands (완드 6)", img: "https://upload.wikimedia.org/wikipedia/commons/3/3b/Wands06.jpg", primaryType: "Minor", gdAttribution: "Jupiter in Leo ♌", classicalRuler: "Jupiter ♃", keyword: "승리, 인정, 대중적 성공, 자신감" },
         { code: "Wands07", name: "Seven of Wands (완드 7)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e4/Wands07.jpg", primaryType: "Minor", gdAttribution: "Mars in Leo ♌", classicalRuler: "Mars ♂", keyword: "방어, 위치 고수, 끈기, 극복" },
         { code: "Wands08", name: "Eight of Wands (완드 8)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6b/Wands08.jpg", primaryType: "Minor", gdAttribution: "Mercury in Sagittarius ♐", classicalRuler: "Mercury ☿", keyword: "급속한 진전, 빠른 연락, 가속화, 이동" },
-        { code: "Wands09", name: "Nine of Wands (완드 9)", img: "https://upload.wikimedia.org/wikipedia/commons/4/4d/Tarot_Nine_of_Wands.jpg", primaryType: "Minor", gdAttribution: "Moon in Sagittarius ♐", classicalRuler: "Moon ☽", keyword: "경계심, 방어 태세, 지친 끈기, 최종 관문" },
+        { code: "Wands09", name: "Nine of Wands (완드 9)", img: "https://upload.wikimedia.org/wikipedia/commons/e/e3/Wands09.jpg", primaryType: "Minor", gdAttribution: "Moon in Sagittarius ♐", classicalRuler: "Moon ☽", keyword: "경계심, 방어 태세, 지친 끈기, 최종 관문" },
         { code: "Wands10", name: "Ten of Wands (완드 10)", img: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Wands10.jpg", primaryType: "Minor", gdAttribution: "Saturn in Sagittarius ♐", classicalRuler: "Saturn ♄", keyword: "과중한 부담, 압박감, 책임, 한계점" },
         { code: "Wands11", name: "Page of Wands (완드 시종)", img: "https://upload.wikimedia.org/wikipedia/commons/6/6a/Wands11.jpg", primaryType: "Court", gdAttribution: "Earth of Fire", classicalRuler: "Fire", keyword: "새로운 소식, 탐구심, 호기심, 열정의 싹" },
         { code: "Wands12", name: "Knight of Wands (완드 기사)", img: "https://upload.wikimedia.org/wikipedia/commons/1/16/Wands12.jpg", primaryType: "Court", gdAttribution: "Air of Fire", classicalRuler: "Fire", keyword: "돌진력, 행동파, 급한 추진, 매력과 충동" },
@@ -1076,6 +1076,8 @@
         const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
         
         if (!apiKey) {
+            alert('AI 자동 맞춤 배열을 사용하려면 상단 [⚙️ API 설정]에서 Gemini API Key를 먼저 등록해 주세요.');
+            openApiModal();
             return {
                 spreadTitle: "직관적 심층 4카드 배열",
                 positions: ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"]
@@ -1083,16 +1085,22 @@
         }
 
         const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-        const prompt = `당신은 세계 최고 수준의 타로 마스터입니다.
-질문자의 질문을 분석하여 질문의 맥락, 복잡도, 핵심 쟁점에 최적화된 스프레드를 '1장에서 최대 7장 사이'로 자유롭게 설계하세요.
-간단한 결정은 1~3장, 심층 분석이나 인과관계는 4~7장 등 질문에 맞춰 가장 예리한 포지션을 구성하세요.
+        const prompt = `당신은 세계 최고의 타로 마스터입니다.
+질문자가 던진 구체적인 질문을 분석하여, 질문의 핵심 요구사항을 1:1로 정확하게 짚어주는 맞춤형 타로 포지션(1~7개)을 생성하세요.
+절대로 일반적이고 진부한 '현재 상황, 핵심 변수, 미래' 같은 고정 템플릿을 쓰지 말고, 질문의 키워드에 딱 맞게 자리를 설계해야 합니다.
 
-반드시 아래 형식의 유효한 JSON으로만 응답해야 합니다. 마크다운이나 다른 텍스트는 절대 포함하지 마세요.
+예시: "상대가 생각하는 내 외적/내적 매력과 장점" ->
+- 1. 상대가 가장 강렬하게 기억하는 나의 외적 매력
+- 2. 상대의 마음을 흔들었던 나의 내적 성향 및 감성
+- 3. 이별 후에도 상대가 인정하는 나의 결정적 장점
+
+반드시 아래 JSON 형식만 반환하세요 (마크다운 없이 순수 JSON):
 {
-  "spreadTitle": "질문 맞춤 스프레드 이름",
+  "spreadTitle": "질문 맞춤형 스프레드 제목",
   "positions": [
-    "1. 포지션 명칭 (역할 설명)",
-    "2. 포지션 명칭 (역할 설명)"
+    "1. 질문 핵심에 맞춘 구체적 자리 명칭",
+    "2. 질문 핵심에 맞춘 구체적 자리 명칭",
+    "3. 질문 핵심에 맞춘 구체적 자리 명칭"
   ]
 }
 
@@ -1101,7 +1109,7 @@
 
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 9000);
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
 
             const res = await fetch(endpoint, {
                 method: "POST",
@@ -1115,7 +1123,10 @@
             clearTimeout(timeoutId);
 
             const data = await res.json();
-            if (data.candidates && data.candidates[0].content) {
+            if (data.error) {
+                console.error("Gemini API Error:", data.error);
+                alert(`[AI 배열 생성 오류]\n${data.error.message}\n할당량이 초과되었거나 API Key가 유효하지 않습니다.`);
+            } else if (data.candidates && data.candidates[0].content) {
                 let rawText = data.candidates[0].content.parts[0].text.trim();
                 rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
                 const parsed = JSON.parse(rawText);
@@ -1126,11 +1137,12 @@
             }
         } catch (e) {
             console.error("AI Spread Design Error:", e);
+            alert("네트워크 또는 API 오류로 인해 질문을 자동 분석하지 못했습니다.");
         }
 
         return {
-            spreadTitle: "직관적 심층 4카드 배열",
-            positions: ["1. 현재 상황의 본질", "2. 드러나지 않은 핵심 변수", "3. 앞으로의 전개 흐름", "4. 현실적 해결의 열쇠"]
+            spreadTitle: "질문 기반 직관 배열",
+            positions: ["1. 질문의 핵심 본질", "2. 놓치기 쉬운 세부 요소", "3. 결과 및 실천 조언"]
         };
     }
 
@@ -1163,7 +1175,6 @@
                 drawBtn.innerText = "✦ 카드 펼치기";
             }
         } else {
-            // 정규 배열 매핑
             if (currentSpreadTitle === 'YES / NO') {
                 currentPositions = ["1. 긍정적 에너지 요인", "2. 방해 및 주의 요인", "3. 최종 상징 결론"];
             } else if (currentSpreadTitle === 'ONE CARD') {
