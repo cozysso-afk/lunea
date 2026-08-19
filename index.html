@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>LUNEA loading…</title>
+  <style>
+    html,body{margin:0;min-height:100%;background:#06040a;color:#f9f7fd;font-family:-apple-system,BlinkMacSystemFont,"Pretendard",sans-serif}
+    .boot{min-height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;box-sizing:border-box}
+    .boot b{display:block;font-size:20px;margin-bottom:8px}.boot span{color:#a69cb8;font-size:13px;line-height:1.6}
+  </style>
+</head>
+<body>
+<div class="boot"><div><b>🌙 LUNEA</b><span>터치 안정화 + 새 기록함을 불러오는 중…</span></div></div>
+<script>
+(async function bootLunea(){
+  const SOURCE = 'https://raw.githubusercontent.com/cozysso-afk/lunea/5d8cb16a3be4a13329aa167b51a197ed62987ecf/index.html';
+
+  const FIX_CSS = String.raw`
+<style id="lunea-v2-fix-css">
+  html, body { overscroll-behavior-y: none; }
+  button, .icon-btn, .daily-btn, .draw-btn, .act-btn, .reading-item, .radio-box,
+  .category-header, .tarot-card-wrapper, .single-add-btn { touch-action: manipulation; }
+  .tarot-card-wrapper { position: relative; z-index: 1; -webkit-user-select:none; user-select:none; }
+  .tarot-card, .card-front, .card-back {
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+  .tarot-card-wrapper img, .tarot-card img {
+    pointer-events: none !important;
+    -webkit-user-drag: none;
+    user-select: none;
+  }
+  .bottom-sheet:not(.open) { pointer-events: none !important; }
+  .bottom-sheet.open { pointer-events: auto !important; }
+  .spread-modal:not(.show), .profile-modal:not(.show) {
+    pointer-events: none !important;
+    visibility: hidden;
+  }
+  .spread-modal.show, .profile-modal.show {
+    pointer-events: auto !important;
+    visibility: visible;
+  }
+  .modal-content { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+
+  .lunea-archive-modal {
+    position:fixed; inset:0; z-index:500; display:none; align-items:center; justify-content:center;
+    padding:14px; background:rgba(5,3,10,.94); backdrop-filter:blur(16px);
+  }
+  .lunea-archive-modal.show { display:flex; }
+  .archive-shell {
+    width:100%; max-width:440px; max-height:88vh; overflow:hidden; display:flex; flex-direction:column;
+    background:#140f21; border:1px solid rgba(197,178,250,.26); border-radius:24px;
+    box-shadow:0 24px 60px rgba(0,0,0,.72);
+  }
+  .archive-head { padding:17px 16px 12px; border-bottom:1px solid rgba(255,255,255,.08); }
+  .archive-title-row { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .archive-title-row h3 { margin:0; font-family:'Noto Serif KR',serif; font-size:17px; }
+  .archive-x { border:0; background:transparent; color:#b9afc8; font-size:25px; padding:2px 5px; }
+  .archive-toolbar { display:flex; gap:7px; margin-top:11px; }
+  .archive-toolbar input { flex:1; min-width:0; }
+  .archive-mini-btn {
+    border:1px solid rgba(189,164,248,.28); background:rgba(189,164,248,.10); color:#ddd2ff;
+    border-radius:10px; padding:8px 10px; font:600 10.5px 'Pretendard',sans-serif; white-space:nowrap;
+  }
+  .archive-list { padding:12px; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .archive-empty { padding:30px 10px; text-align:center; color:#a69cb8; font-size:12px; line-height:1.65; }
+  .archive-item {
+    border:1px solid rgba(189,164,248,.18); background:rgba(255,255,255,.035); border-radius:15px;
+    padding:12px; margin-bottom:9px; text-align:left;
+  }
+  .archive-item-top { display:flex; justify-content:space-between; align-items:flex-start; gap:9px; }
+  .archive-item h4 { margin:0; color:#f6f2ff; font-size:13px; line-height:1.4; }
+  .archive-date { color:#8f859f; font-size:9.5px; white-space:nowrap; }
+  .archive-q { color:#d9d2e6; font-size:11px; line-height:1.55; margin:7px 0; }
+  .archive-cards { color:#aaa0ba; font-size:10px; line-height:1.55; white-space:pre-wrap; }
+  .archive-ai { margin-top:8px; padding:9px; border-radius:10px; background:rgba(189,164,248,.07); color:#eae4f5; font:11px/1.65 'Noto Serif KR',serif; white-space:pre-wrap; }
+  .archive-actions { display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; }
+  .archive-actions button {
+    border:1px solid rgba(189,164,248,.22); background:rgba(189,164,248,.08); color:#d9cefa;
+    border-radius:9px; padding:6px 9px; font-size:10px; font-weight:600;
+  }
+  .archive-actions button.danger { border-color:rgba(255,120,140,.24); color:#ffb4c0; background:rgba(255,100,120,.06); }
+  .archive-count { margin-top:5px; color:#8f859f; font-size:10px; }
+</style>`;
+
+  const ARCHIVE_HTML = String.raw`
+<div class="lunea-archive-modal" id="luneaArchiveModal" aria-hidden="true">
+  <div class="archive-shell">
+    <div class="archive-head">
+      <div class="archive-title-row">
+        <div>
+          <div class="bs-subtitle">LUNEA READING LIBRARY</div>
+          <h3>📚 나의 타로 기록함</h3>
+        </div>
+        <button class="archive-x" type="button" onclick="closeArchiveModal()">×</button>
+      </div>
+      <div class="archive-toolbar">
+        <input id="archiveSearch" type="search" placeholder="질문·스프레드·카드 검색" oninput="renderArchiveList()">
+        <button class="archive-mini-btn" type="button" onclick="copyAllArchive()">전체 복사</button>
+        <button class="archive-mini-btn" type="button" onclick="clearArchive()">비우기</button>
+      </div>
+      <div class="archive-count" id="archiveCount"></div>
+    </div>
+    <div class="archive-list" id="archiveList"></div>
+  </div>
+</div>`;
+
+  const PATCH_JS = String.raw`
+(function installLuneaV2Fix(){
+  if (window.__LUNEA_V2_FIXED__) return;
+  window.__LUNEA_V2_FIXED__ = true;
+
+  const ARCHIVE_KEY = 'LUNEA_ARCHIVE_V2';
+  const OLD_ARCHIVE_KEY = 'LUNEA_ARCHIVE';
+
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>\"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#39;'}[ch]));
+  }
+
+  function getArchive() {
+    try {
+      let v2 = JSON.parse(localStorage.getItem(ARCHIVE_KEY) || '[]');
+      if (!Array.isArray(v2)) v2 = [];
+      if (!v2.length) {
+        const old = JSON.parse(localStorage.getItem(OLD_ARCHIVE_KEY) || '[]');
+        if (Array.isArray(old) && old.length) {
+          v2 = old.map(item => ({...item, ai:item.ai || '', savedAt:item.savedAt || item.date || ''}));
+          localStorage.setItem(ARCHIVE_KEY, JSON.stringify(v2));
+        }
+      }
+      return v2;
+    } catch (e) {
+      console.warn('archive read failed', e);
+      return [];
+    }
+  }
+
+  function setArchive(items) {
+    try { localStorage.setItem(ARCHIVE_KEY, JSON.stringify(items.slice(0,100))); }
+    catch(e) { alert('기록 저장 공간이 부족해요. 오래된 기록을 일부 삭제해 주세요.'); }
+  }
+
+  function safeCardsForCurrent() {
+    if (typeof currentDrawnCards === 'undefined' || !Array.isArray(currentDrawnCards)) return [];
+    return currentDrawnCards.map(c => {
+      let str = (c.position || 'Position') + ': ' + (c.name || '') + ' (' + (c.isReversed ? '역' : '정') + ')';
+      if (c.gdAttribution) str += ' [GD: ' + c.gdAttribution + ']';
+      if (Array.isArray(c.subCards) && c.subCards.length) {
+        str += ' [보조: ' + c.subCards.map(s => (s.name || '') + '(' + (s.isReversed ? '역' : '정') + ')').join(', ') + ']';
+      }
+      return str;
+    });
+  }
+
+  window.saveToArchive = function saveToArchiveV2() {
+    const qEl = document.getElementById('userQuestion');
+    const aiEl = document.getElementById('aiDynamicText');
+    const cards = safeCardsForCurrent();
+    if (!cards.length) return alert('저장할 카드가 아직 없어요. 먼저 카드를 뽑아 주세요.');
+
+    const item = {
+      id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2)),
+      savedAt: new Date().toISOString(),
+      date: new Date().toLocaleString('ko-KR'),
+      title: (typeof currentSpreadTitle !== 'undefined' ? currentSpreadTitle : '') || 'Tarot Reading',
+      category: (typeof currentCategory !== 'undefined' ? currentCategory : '') || 'GENERAL',
+      q: (qEl && qEl.value.trim()) || '데일리 리딩',
+      cards,
+      ai: aiEl ? aiEl.innerText.trim() : '',
+      profile: (typeof userProfile !== 'undefined' && userProfile) ? {...userProfile} : null
+    };
+    const archive = getArchive();
+    archive.unshift(item);
+    setArchive(archive);
+    alert('✨ 카드 · 보조카드' + (item.ai ? ' · AI 해석까지' : '') + ' 기록함에 저장했어.');
+  };
+
+  window.openArchiveModal = function openArchiveModalV2() {
+    const modal = document.getElementById('luneaArchiveModal');
+    if (!modal) return;
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden','false');
+    renderArchiveList();
+  };
+
+  window.closeArchiveModal = function closeArchiveModalV2() {
+    const modal = document.getElementById('luneaArchiveModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+  };
+
+  window.renderArchiveList = function renderArchiveListV2() {
+    const list = document.getElementById('archiveList');
+    const count = document.getElementById('archiveCount');
+    const search = (document.getElementById('archiveSearch')?.value || '').trim().toLowerCase();
+    if (!list) return;
+    const archive = getArchive();
+    const filtered = archive.filter(item => {
+      const blob = [item.title,item.q,(item.cards||[]).join(' '),item.ai].join(' ').toLowerCase();
+      return !search || blob.includes(search);
+    });
+    if (count) count.textContent = '저장 ' + archive.length + '개' + (search ? ' · 검색 결과 ' + filtered.length + '개' : '');
+    if (!filtered.length) {
+      list.innerHTML = '<div class="archive-empty">' + (archive.length ? '검색 결과가 없어.' : '아직 저장된 리딩이 없어.<br>리딩 화면의 💾 저장 버튼을 누르면 여기에 쌓여.') + '</div>';
+      return;
+    }
+    list.innerHTML = filtered.map(item => {
+      const cardsText = (item.cards || []).join('\n');
+      const ai = item.ai || '';
+      return '<article class="archive-item">' +
+        '<div class="archive-item-top"><h4>' + esc(item.title || 'Tarot Reading') + '</h4><span class="archive-date">' + esc(item.date || '') + '</span></div>' +
+        '<div class="archive-q">Q. ' + esc(item.q || '') + '</div>' +
+        '<details><summary style="font-size:10.5px;color:#bda4f8;cursor:pointer;">카드 펼쳐보기</summary><div class="archive-cards">' + esc(cardsText) + '</div></details>' +
+        (ai ? '<details style="margin-top:6px;"><summary style="font-size:10.5px;color:#ffd27d;cursor:pointer;">AI 해석 펼쳐보기</summary><div class="archive-ai">' + esc(ai) + '</div></details>' : '') +
+        '<div class="archive-actions"><button onclick="copyArchiveItem(\'' + item.id + '\')">복사</button><button class="danger" onclick="deleteArchiveItem(\'' + item.id + '\')">삭제</button></div>' +
+        '</article>';
+    }).join('');
+  };
+
+  window.copyArchiveItem = function(id) {
+    const item = getArchive().find(x => String(x.id) === String(id));
+    if (!item) return;
+    const text = '[' + (item.title || 'Tarot Reading') + ']\n' + (item.date || '') + '\nQ. ' + (item.q || '') + '\n\n' + (item.cards || []).join('\n') + (item.ai ? '\n\n[AI 해석]\n' + item.ai : '');
+    navigator.clipboard.writeText(text).then(() => alert('📋 기록을 복사했어.'));
+  };
+
+  window.copyAllArchive = function() {
+    const archive = getArchive();
+    if (!archive.length) return alert('복사할 기록이 없어.');
+    const text = archive.map(item => '[' + (item.title || 'Tarot Reading') + ']\n' + (item.date || '') + '\nQ. ' + (item.q || '') + '\n' + (item.cards || []).join('\n') + (item.ai ? '\n[AI 해석]\n' + item.ai : '')).join('\n\n────────\n\n');
+    navigator.clipboard.writeText(text).then(() => alert('📋 기록함 전체를 복사했어.'));
+  };
+
+  window.deleteArchiveItem = function(id) {
+    const archive = getArchive();
+    const item = archive.find(x => String(x.id) === String(id));
+    if (!item) return;
+    if (!confirm('이 리딩 기록을 삭제할까?')) return;
+    setArchive(archive.filter(x => String(x.id) !== String(id)));
+    renderArchiveList();
+  };
+
+  window.clearArchive = function() {
+    if (!getArchive().length) return;
+    if (!confirm('저장된 타로 기록을 전부 삭제할까? 이 작업은 되돌릴 수 없어.')) return;
+    setArchive([]);
+    renderArchiveList();
+  };
+
+  function flipFromPointer(wrapper) {
+    if (!wrapper) return;
+    const card = wrapper.querySelector('.tarot-card');
+    if (!card || card.classList.contains('flipped')) return;
+    const match = String(card.id || '').match(/card-(\d+)/);
+    if (!match) return;
+    const idx = Number(match[1]);
+    card.classList.add('flipped');
+    if (typeof window.renderCardResult === 'function') window.renderCardResult(idx);
+  }
+
+  function installGridDelegate() {
+    const grid = document.getElementById('cardsGrid');
+    if (!grid || grid.dataset.luneaPointerFix === '1') return;
+    grid.dataset.luneaPointerFix = '1';
+    const eventName = window.PointerEvent ? 'pointerup' : 'touchend';
+    grid.addEventListener(eventName, function(e) {
+      const wrapper = e.target.closest && e.target.closest('.tarot-card-wrapper');
+      if (!wrapper) return;
+      flipFromPointer(wrapper);
+    }, { passive: true });
+  }
+
+  installGridDelegate();
+
+  const originalExecuteSpread = window.executeSpread;
+  if (typeof originalExecuteSpread === 'function') {
+    window.executeSpread = function(qText) {
+      const bs = document.getElementById('bottomSheet');
+      if (bs) bs.classList.remove('open');
+      const modal = document.getElementById('spreadModal');
+      if (modal) {
+        modal.style.display = 'flex';
+        modal.style.pointerEvents = 'auto';
+        modal.setAttribute('aria-hidden','false');
+      }
+      originalExecuteSpread(qText);
+      const content = modal && modal.querySelector('.modal-content');
+      if (content) content.scrollTop = 0;
+      requestAnimationFrame(installGridDelegate);
+    };
+  }
+
+  window.closeModal = function closeModalV2() {
+    const modal = document.getElementById('spreadModal');
+    if (!modal) return;
+    modal.classList.remove('show');
+    modal.setAttribute('aria-hidden','true');
+    modal.style.pointerEvents = 'none';
+    const content = modal.querySelector('.modal-content');
+    if (content) content.scrollTop = 0;
+    if (document.activeElement && typeof document.activeElement.blur === 'function') document.activeElement.blur();
+    requestAnimationFrame(() => { if (!modal.classList.contains('show')) modal.style.display = 'none'; });
+  };
+
+  document.addEventListener('click', function(e) {
+    const archiveModal = document.getElementById('luneaArchiveModal');
+    if (archiveModal && e.target === archiveModal) closeArchiveModal();
+  });
+
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) installGridDelegate();
+  });
+})();`;
+
+  try {
+    const res = await fetch(SOURCE, { cache: 'no-store' });
+    if (!res.ok) throw new Error('원본 로드 실패: HTTP ' + res.status);
+    let html = await res.text();
+    html = html.replace('</head>', FIX_CSS + '\n</head>');
+    html = html.replace('</body>', ARCHIVE_HTML + '\n<script>' + PATCH_JS + '<' + '/script>\n</body>');
+    document.open();
+    document.write(html);
+    document.close();
+  } catch (err) {
+    document.body.innerHTML = '<div class="boot"><div><b>⚠️ LUNEA 로드 실패</b><span>' + String(err.message || err) + '<br><br>네트워크 연결 후 다시 열어줘.</span></div></div>';
+  }
+})();
+</script>
+</body>
+</html>
