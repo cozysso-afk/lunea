@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>LUNEA - Celestial Tarot Sanctuary</title>
-    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.PNG">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Noto+Serif+KR:wght@300;400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -106,7 +106,7 @@
             gap: 3px;
         }
 
-        /* 프로필 요약 칩 바 - 가로 스크롤 및 비율 최적화 */
+        /* 프로필 요약 칩 바 */
         .profile-chip-bar {
             background: rgba(189, 164, 248, 0.08);
             border: 1px solid rgba(189, 164, 248, 0.2);
@@ -137,7 +137,7 @@
             font-size: 10.5px;
         }
 
-        /* 데일리 운세 카드 - 텍스트 줄바꿈 방지 */
+        /* 데일리 운세 카드 */
         .daily-orbit-card {
             background: linear-gradient(145deg, rgba(62, 45, 99, 0.45) 0%, rgba(20, 15, 33, 0.7) 100%);
             border: 1px solid rgba(218, 196, 255, 0.35);
@@ -554,30 +554,33 @@
         .card-info-box p { margin: 0; font-size: 11.5px; color: var(--text-dim); line-height: 1.5; }
 
         .ai-reading-card {
-            background: linear-gradient(145deg, rgba(62, 45, 99, 0.4) 0%, rgba(26, 18, 45, 0.8) 100%);
+            background: linear-gradient(145deg, rgba(62, 45, 99, 0.45) 0%, rgba(26, 18, 45, 0.88) 100%);
             border: 1px solid rgba(189, 164, 248, 0.35);
             border-radius: 18px;
-            padding: 16px;
+            padding: 18px;
             margin-top: 14px;
             text-align: left;
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
             animation: fadeIn 0.4s ease;
         }
         .ai-reading-card h4 {
-            margin: 0 0 8px 0;
+            margin: 0 0 10px 0;
             font-family: 'Cinzel', 'Noto Serif KR', serif;
-            font-size: 14.5px;
+            font-size: 15px;
             color: var(--gold-spark);
             display: flex;
             align-items: center;
             gap: 7px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            padding-bottom: 8px;
         }
         .ai-reading-body {
-            font-size: 12.5px;
-            color: #eee8f8;
-            line-height: 1.65;
+            font-family: 'Noto Serif KR', serif;
+            font-size: 13.5px;
+            color: #f7f3ff;
+            line-height: 1.85;
             word-break: keep-all;
-            white-space: pre-line;
+            white-space: pre-wrap;
         }
 
         .copy-prompt-box {
@@ -632,7 +635,8 @@
             </div>
         </div>
         <div class="header-actions">
-            <button class="icon-btn" onclick="openProfileModal()">⚙️ 프로필</button>
+            <button class="icon-btn" onclick="openApiModal()">⚙️ API 설정</button>
+            <button class="icon-btn" onclick="openProfileModal()">👤 프로필</button>
             <button class="icon-btn" onclick="openArchiveModal()">↶ 기록함</button>
         </div>
     </header>
@@ -794,6 +798,29 @@
     </div>
 </div>
 
+<!-- API 키 설정 모달 -->
+<div class="profile-modal" id="apiModal">
+    <div class="modal-content">
+        <button class="close-modal" onclick="closeApiModal()">×</button>
+        <div class="bs-subtitle">AI CONNECTION</div>
+        <h3 style="font-family:'Noto Serif KR'; margin:4px 0 14px 0;">Gemini API 설정</h3>
+        <p style="font-size:11.5px; color:var(--text-dim); margin-bottom:14px;">Google AI Studio 무료 API Key를 입력하세요. 브라우저에 안전하게 보관됩니다.</p>
+        
+        <div class="input-group">
+            <label>Google Gemini API Key</label>
+            <input type="password" id="inputApiKey" placeholder="AIzaSy...">
+        </div>
+        <div class="input-group">
+            <label>리딩 모델 선택</label>
+            <select id="selectModel">
+                <option value="gemini-2.5-flash">gemini-2.5-flash (초고속 실시간 해석 · 기본 추천)</option>
+                <option value="gemini-3.1-pro-preview">gemini-3.1-pro-preview (초고밀도 심층 해석)</option>
+            </select>
+        </div>
+        <button class="draw-btn" onclick="saveApiKey()">API 설정 저장</button>
+    </div>
+</div>
+
 <!-- 프로필 설정 모달 -->
 <div class="profile-modal" id="profileModal">
     <div class="modal-content">
@@ -894,7 +921,7 @@
         <div class="action-bar">
             <button class="act-btn" onclick="flipAllCards()">✦ 일괄 뒤집기</button>
             <button class="act-btn" onclick="addGlobalExtraCard()">+ 카드 추가 뽑기</button>
-            <button class="act-btn" onclick="generateInstantAiAnalysis()">🔮 AI 종합해석</button>
+            <button class="act-btn" id="btnAiReading" onclick="generateInstantAiAnalysis()">🔮 AI 실시간 해석</button>
             <button class="act-btn" onclick="retryReading()">↺ 다시 뽑기</button>
             <button class="act-btn" onclick="saveToArchive()">💾 저장</button>
         </div>
@@ -976,6 +1003,23 @@
 
     function openProfileModal() { document.getElementById('profileModal').classList.add('show'); }
     function closeProfileModal() { document.getElementById('profileModal').classList.remove('show'); }
+
+    function openApiModal() {
+        document.getElementById('inputApiKey').value = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY') || '';
+        document.getElementById('selectModel').value = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+        document.getElementById('apiModal').classList.add('show');
+    }
+    function closeApiModal() { document.getElementById('apiModal').classList.remove('show'); }
+
+    function saveApiKey() {
+        const key = document.getElementById('inputApiKey').value.trim();
+        const model = document.getElementById('selectModel').value;
+        if (!key) return alert('API Key를 입력해주세요.');
+        localStorage.setItem('LUNEA_API_KEY', key);
+        localStorage.setItem('LUNEA_MODEL', model);
+        closeApiModal();
+        alert('✨ Gemini API 설정이 저장되었습니다.');
+    }
 
     function autoCalculateProfile() {
         const val = document.getElementById('inputBirthDate').value;
@@ -1395,48 +1439,65 @@
         });
     }
 
-    function generateInstantAiAnalysis() {
+    async function generateInstantAiAnalysis() {
         flipAllCards();
-        const box = document.getElementById('aiInstantAnalysis');
-        const q = document.getElementById('userQuestion').value.trim() || "현재 흐름";
-        
-        let cardSummary = currentDrawnCards.map(c => {
-            let line = `• <b>${c.position}</b>: ${c.name} (${c.isReversed ? '역방향' : '정방향'}) [GD: ${c.gdAttribution}]`;
-            if (c.subCards && c.subCards.length > 0) {
-                c.subCards.forEach((s, i) => {
-                    line += `<br>&nbsp;&nbsp;↳ <i>[보조 #${i+1}]</i> ${s.name} (${s.isReversed ? '역' : '정'}) - ${s.gdAttribution}`;
-                });
-            }
-            return line;
-        }).join('<br>');
-        
-        let synthesisText = "";
-        if (currentSpreadTitle.includes('속궁합')) {
-            synthesisText = "상대방과 나의 신체적 에너지 밀도와 템포 조율이 핵심입니다. 3·4번 자리에 나타난 물리적 압박감과 밀착감의 텐션을 직시하고, 상호 간의 완급 조절(5번)을 통해 정서적 교감(9번)까지 확장해 나가는 흐름이 이상적입니다.";
-        } else if (currentCategory === "DAILY") {
-            synthesisText = `오늘 하루는 출생 수호성(${userProfile.thaiRuler})의 본질적 기운과 일간(${userProfile.sajuDayMaster})의 페이스를 유지하는 것이 최선입니다. 단타 매매 시에는 뇌동매매를 삼가고, 수험 학습 시에는 정해진 분량을 차분히 소화하세요. 대인관계 및 연애운에서는 솔직하되 부드러운 화법으로 상대방을 배려할 때 조화로운 하루가 완성됩니다.`;
-        } else if (currentCategory === "CAREER") {
-            synthesisText = "현재 직업 및 수험 환경에서는 감정적인 반응을 줄이고 명확한 원칙과 루틴을 유지하는 것이 핵심입니다. 조직 내 대인관계에서는 말을 아끼고 객관적인 성과로 신뢰를 쌓으세요.";
-        } else if (currentCategory === "STOCK") {
-            synthesisText = "성급한 추격 매수보다는 기준선 눌림목을 차분히 확인하는 분할 대응이 필수적인 흐름입니다. 손절/익절 기준을 명확히 고정하세요.";
-        } else if (currentCategory === "LOVE") {
-            synthesisText = "상대방의 겉으로 드러나는 반응 뒤에 숨은 심리적 방어기제를 인지해야 합니다. 서두르지 않고 담백하게 기다릴 때 유리한 흐름이 열립니다.";
-        } else {
-            synthesisText = "상황의 겉모습 너머에 있는 구조적 본질을 직시할 때입니다. 직관이 제시하는 방향을 신뢰하고 즉각적인 결단을 내리세요.";
+        const apiKey = localStorage.getItem('LUNEA_API_KEY') || localStorage.getItem('VELOUR_API_KEY');
+        const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+
+        if (!apiKey) {
+            alert('상단 [⚙️ API 설정]에서 Gemini API 키를 먼저 등록해 주세요.');
+            openApiModal();
+            return;
         }
 
+        const box = document.getElementById('aiInstantAnalysis');
+        const btn = document.getElementById('btnAiReading');
+        const q = document.getElementById('userQuestion').value.trim() || "현재 나의 전반적인 흐름과 직관적 조언";
+
+        btn.disabled = true;
+        btn.innerText = "🔮 AI 분석 중...";
         box.innerHTML = `
             <div class="ai-reading-card">
-                <h4>🔮 AI 마스터 통합 직관 리딩</h4>
-                <div class="ai-reading-body">
-                    <b>[질문]</b> "${q}"<br><br>
-                    <b>[카드 및 골든던 천체 배치]</b><br>
-                    ${cardSummary}<br><br>
-                    <b>[종합 해석 및 전략 제언]</b><br>
-                    ${synthesisText}
-                </div>
+                <h4>🔮 AI 마스터 실시간 심층 리딩</h4>
+                <div class="ai-reading-body" id="aiDynamicText">천체 배치와 명리 에너지를 종합하여 카드를 심층 분석하고 있습니다...</div>
             </div>
         `;
+
+        const promptText = buildMasterPromptString(q);
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const payload = {
+            contents: [{ parts: [{ text: promptText }] }],
+            generationConfig: {
+                temperature: 0.85,
+                topP: 0.95
+            }
+        };
+
+        try {
+            const res = await fetch(endpoint, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            const textElem = document.getElementById('aiDynamicText');
+
+            if (data.error) {
+                textElem.innerText = `[API 오류]\n${data.error.message}`;
+            } else if (data.candidates && data.candidates[0].content) {
+                textElem.innerText = data.candidates[0].content.parts[0].text;
+            } else {
+                textElem.innerText = "응답이 생성되지 않았습니다. API 설정을 다시 확인해 주세요.";
+            }
+        } catch (err) {
+            document.getElementById('aiDynamicText').innerText = `[통신 오류]\n${err.message}`;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "🔮 AI 실시간 해석";
+            box.scrollIntoView({ behavior: 'smooth' });
+        }
     }
 
     function retryReading() {
@@ -1480,74 +1541,50 @@
         alert(msg);
     }
 
-    function copyMasterAiPrompt() {
-        const q = document.getElementById('userQuestion').value.trim() || "현재 나의 전반적인 흐름과 직관적 조언";
-        
+    function buildMasterPromptString(q) {
         let cardDetails = currentDrawnCards.map((c, idx) => {
             let text = `${idx + 1}. [${c.position}]
 - Card: ${c.name}
 - Orientation: ${c.isReversed ? 'Reversed (역방향)' : 'Upright (정방향)'}
-- Golden Dawn Primary Attribution: ${c.gdAttribution} [${c.primaryType}] (Grade A)
+- Golden Dawn Primary Attribution: ${c.gdAttribution} [${c.primaryType}]
 - Classical Ruler: ${c.classicalRuler}
-- Modern Ruler / Attribution: ${c.modernRuler !== '—' ? c.modernRuler : c.modernTarotAttribution}
-- LUNEA Modern Reversal Layer: ${c.isReversed ? '활성화 (C2: 현대적 그림자/지연/내면화 가능성 검토, 단일 의미로 단정 금지)' : '해당 없음'}`;
+- Keyword: ${c.keyword}`;
             
             if (c.subCards && c.subCards.length > 0) {
                 c.subCards.forEach((s, sIdx) => {
-                    text += `\n  ↳ [포지션 보조 #${sIdx+1}]: ${s.name} (${s.isReversed ? '역' : '정'}) - GD: ${s.gdAttribution} [${s.primaryType}]`;
+                    text += `\n  ↳ [포지션 보조 #${sIdx+1}]: ${s.name} (${s.isReversed ? '역' : '정'}) - GD: ${s.gdAttribution}`;
                 });
             }
             return text;
         }).join('\n\n');
 
-        const masterPrompt = `당신은 서양 점성술, 태국 weekday-birth planetary tradition, 사주명리, Golden Dawn Tarot의 각 체계를 구분해서 해석하는 숙련된 상징 분석가입니다.
-각 전통을 임의로 하나의 역사적 체계인 것처럼 섞지 말고, 각 정보의 출처 층위를 구분한 뒤 마지막 단계에서만 비교·통합 해석을 수행하십시오.
+        return `당신은 서양 점성술, 태국 8요일 수호성, 사주명리, Golden Dawn Tarot 체계를 아우르는 숙련된 상징 리딩 마스터입니다.
+질문자의 프로필과 현재 뽑힌 타로 스프레드를 분석하여 신뢰도 높은 맞춤형 심층 해석을 제공하십시오.
 
 [질문 내용]
 "${q}"
 
-[해석 데이터 등급 체계]
-- A (Canonical): Golden Dawn 직접 조응, 고전 별자리 지배성, 태국 요일-행성신 대응 (Wednesday Night = Rahu)
-- B (Rule-derived): A급 데이터를 명시적 규칙(행성 가교)으로 연결한 파생 관계
-- C1 (Modern Astrological Rulership): Scorpio=Pluto, Aquarius=Uranus, Pisces=Neptune
-- C2 (Modern Interpretive Analogy): 서로 다른 전통 간의 상징적 비교 유추, 현대적 타로 역방향 해석 등
-
 [사용자 기본 데이터]
-1. Thai weekday-birth tradition
-- Day-sector: ${userProfile.thaiDay}
-- Deity / Planetary Ruler: ${userProfile.thaiRuler}
-* 전통적으로 Rahu는 미혹, 도취, 집착과 관련된 상징을 가집니다. '변칙성', '강한 욕망' 등은 현대적 확장 해석(C2)임을 구분하십시오.
-* Rahu에는 Golden Dawn Tarot의 직접 대응 카드가 없으므로, 타로 카드와의 관계는 반드시 '현대적 비교 해석(C2)'으로만 취급하십시오.
-
-2. Four Pillars / 사주명리
-- Day Master: ${userProfile.sajuDayMaster}
-- Available data: day-master-only (전체 사주팔자 데이터 아님)
-* 일간의 기본 오행 상징만 사용하며, 신강/신약, 용신/기신, 격국, 대운/세운, 전체 성격을 확정적으로 추론하지 마십시오.
-
-3. Western Astrology
-- Sun Sign: ${userProfile.sunSign}
-- Available data: sun-sign-only
-* 태양궁 외의 문사인, 하우스, 아스펙트를 자의적으로 꾸며내지 마십시오.
+1. 태국 요일신: ${userProfile.thaiDay} (${userProfile.thaiRuler})
+2. 사주 일간: ${userProfile.sajuDayMaster}
+3. 서양 태양궁: ${userProfile.sunSign}
 
 [오늘의 Tarot 스프레드: ${currentSpreadTitle}]
 ${cardDetails}
 
-* 역방향 해석 원칙 (Golden Dawn vs LUNEA Reversal):
-Golden Dawn 전통에서는 카드의 inversion 자체가 카드의 본질적 의미와 힘을 반대로 바꾸는 것으로 취급되지 않습니다. 따라서 '골든던 본래 상징(A)'을 우선 분석한 후, 'LUNEA 현대 역방향 레이어(C2)'를 보조적 가능성(내면화, 지연 등)으로만 분리 적용하십시오.
+[해석 가이드라인]
+1. 핵심 상황 분석: 자리별 카드가 상징하는 바와 현재 질문자의 상황을 날카롭게 짚어줄 것.
+2. 천체 & 명리 조응: 사용자의 수호성/일간 에너지와 오늘 나온 카드의 상호작용(순풍인지, 주의해야 할 충돌인지)을 연결할 것.
+3. 명확한 실전 전략: 두루뭉술한 말 대신 질문자가 오늘 실천할 수 있는 구체적인 2~3가지 핵심 행동 지침을 제시할 것.
+4. 품격 있고 따뜻하며 신뢰감 넘치는 어조로 작성할 것.`;
+    }
 
-[분석 방법 및 순서]
-① 현재 상황: 스프레드의 핵심 카드를 중심으로 상황의 본질과 변수를 해석합니다.
-② 태생적 상징과의 교차점: 사용자의 태국 요일신(${userProfile.thaiRuler}), 사주 일간(${userProfile.sajuDayMaster}), 서양 태양궁(${userProfile.sunSign})과 오늘 뽑힌 카드 간의 공통점과 긴장 관계(충돌)를 구분하여 분석합니다. (억지로 모든 요소가 같은 말을 하도록 왜곡하지 마십시오)
-③ 현실적 행동 지침: 추상적인 신비주의 용어를 배제하고, 질문자가 현실에서 실천할 수 있는 구체적인 2~4가지 행동 원칙을 제시하십시오.
-④ 최종 한 줄 요약: 지금 질문자가 취해야 할 가장 중요한 현실적 태도 하나를 정리하십시오.
-
-[해석 원칙]
-- 운명을 확정적으로 예언하거나 공포를 조장하지 마십시오.
-- 데이터가 부족하면 부족하다고 솔직히 명시하십시오.
-- 전통 조응(A), 파생 규칙(B), 현대 유추(C1/C2)를 엄격히 분리하여 서술하십시오.`;
+    function copyMasterAiPrompt() {
+        const q = document.getElementById('userQuestion').value.trim() || "현재 나의 전반적인 흐름과 직관적 조언";
+        const masterPrompt = buildMasterPromptString(q);
 
         navigator.clipboard.writeText(masterPrompt).then(() => {
-            alert('✨ 학술적 A/B/C 등급이 적용된 마스터 프롬프트가 복사되었습니다!\nChatGPT, Gemini, Claude 등에 그대로 붙여넣어 보세요.');
+            alert('✨ 학술적 마스터 프롬프트가 복사되었습니다!\nChatGPT, Gemini, Claude 등에 그대로 붙여넣어 보세요.');
         }).catch(err => {
             alert('복사에 실패했습니다. 브라우저 권한을 확인해 주세요.');
         });
