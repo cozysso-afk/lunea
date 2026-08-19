@@ -272,16 +272,16 @@
             position: fixed;
             bottom: -120%; left: 50%; transform: translateX(-50%);
             width: 100%; max-width: 480px;
-            background: rgba(18, 14, 28, 0.96);
-            backdrop-filter: blur(24px);
+            background: rgba(18, 14, 28, 0.98);
+            backdrop-filter: blur(28px);
             border-radius: 26px 26px 0 0;
-            padding: 22px 18px 30px 18px;
-            box-shadow: 0 -16px 50px rgba(0,0,0,0.6);
+            padding: 22px 18px 34px 18px;
+            box-shadow: 0 -16px 50px rgba(0,0,0,0.7);
             transition: bottom 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 100;
+            z-index: 150;
             border: 1px solid var(--glass-border);
         }
-        .bottom-sheet.open { bottom: 0; }
+        .bottom-sheet.open { bottom: 0 !important; }
         .bs-header { margin-bottom: 12px; }
         .bs-subtitle { font-family: 'Cinzel', serif; font-size: 9.5px; font-weight: 700; color: var(--moon-glow); letter-spacing: 1.5px; }
         .bs-title { font-family: 'Noto Serif KR', serif; font-size: 18px; margin: 3px 0; font-weight: 600; }
@@ -544,7 +544,7 @@
     <h2 class="section-heading">탐색할 스프레드</h2>
 
     <!-- 1. GENERAL -->
-    <div class="category-card" onclick="toggleCategory(this)">
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">✦</div>
@@ -555,28 +555,28 @@
             </div>
             <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'Gemini AI가 질문을 실시간 분석해 최적의 스프레드와 카드 자리를 동적 설계합니다.', 0)">
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', '질문 맞춤 AI 배열', 'Gemini AI가 질문을 실시간 분석해 최적의 스프레드와 카드 자리를 동적 설계합니다.', 0, event)">
                 <div><h4>질문 맞춤 AI 배열</h4><p>질문 맥락 기반 AI 실시간 동적 스프레드 생성.</p></div>
                 <div class="card-count">AI 맞춤</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'YES / NO', '결정의 흐름을 명확한 상징으로 확인해요.', 3)">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'YES / NO', '결정의 흐름을 명확한 상징으로 확인해요.', 3, event)">
                 <div><h4>YES / NO</h4><p>결정의 흐름을 고정 점수로 확인해요.</p></div>
                 <div class="card-count">3</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'ONE CARD', '지금 필요한 핵심 직관 메시지 한 장.', 1)">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'ONE CARD', '지금 필요한 핵심 직관 메시지 한 장.', 1, event)">
                 <div><h4>ONE CARD</h4><p>지금 필요한 핵심 메시지 한 장.</p></div>
                 <div class="card-count">1</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'TIMELINE', '과거부터 미래까지의 흐름.', 3)">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'TIMELINE', '과거부터 미래까지의 흐름.', 3, event)">
                 <div><h4>TIMELINE</h4><p>과거부터 미래까지의 흐름.</p></div>
                 <div class="card-count">3</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'CELTIC CROSS', '큰 흐름과 내·외부 변수를 보는 정통 10카드.', 10)">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'CELTIC CROSS', '큰 흐름과 내·외부 변수를 보는 정통 10카드.', 10, event)">
                 <div><h4>CELTIC CROSS</h4><p>정통 심층 켈틱 크로스 배열.</p></div>
                 <div class="card-count">10</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'DEEP FLOW', '숨은 원인까지 깊게 읽는 심층 7카드.', 7)">
+            <div class="reading-item" onclick="openBottomSheet('GENERAL', 'DEEP FLOW', '숨은 원인까지 깊게 읽는 심층 7카드.', 7, event)">
                 <div><h4>DEEP FLOW</h4><p>숨은 원인까지 깊게 읽는 배열.</p></div>
                 <div class="card-count">7</div>
             </div>
@@ -584,7 +584,7 @@
     </div>
 
     <!-- 2. CAREER & EXAM -->
-    <div class="category-card" onclick="toggleCategory(this)">
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🏛️</div>
@@ -595,20 +595,20 @@
             </div>
             <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '시험 합격운', '학습 완성도, 시험장 변수, 합격 기운과 핵심 전략.', 4)">
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '시험 합격운', '학습 완성도, 시험장 변수, 합격 기운과 핵심 전략.', 4, event)">
                 <div><h4>시험 합격운</h4><p>공시/자격증 시험 합격 가능성 및 대비 전략.</p></div>
                 <div class="card-count">4</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '직장 내 대인관계 & 평판', '동료/상사와의 관계, 평판, 갈등 완화 조언.', 4)">
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '직장 내 대인관계 & 평판', '동료/상사와의 관계, 평판, 갈등 완화 조언.', 4, event)">
                 <div><h4>직장 내 대인관계 & 평판</h4><p>조직 내 역학 관계와 평판 흐름 점검.</p></div>
                 <div class="card-count">4</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '이직 & 커리어 전환', '현 직장 유지 vs 이직 시 결과 비교.', 5)">
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '이직 & 커리어 전환', '현 직장 유지 vs 이직 시 결과 비교.', 5, event)">
                 <div><h4>이직 & 커리어 전환</h4><p>새로운 직장 운과 환경 변화의 득실 분석.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('CAREER', '일반 금전운 & 재물 흐름', '현재 재정 흐름, 지출 변수, 재물 유입 시기.', 4)">
+            <div class="reading-item" onclick="openBottomSheet('CAREER', '일반 금전운 & 재물 흐름', '현재 재정 흐름, 지출 변수, 재물 유입 시기.', 4, event)">
                 <div><h4>일반 금전운 & 재물 흐름</h4><p>단기/중기 재물운과 금전 안정성 점검.</p></div>
                 <div class="card-count">4</div>
             </div>
@@ -616,7 +616,7 @@
     </div>
 
     <!-- 3. LOVE & INNER HEART -->
-    <div class="category-card" onclick="toggleCategory(this)">
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">🌙</div>
@@ -627,24 +627,24 @@
             </div>
             <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5)">
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '상대 속마음', '겉과 속, 감정의 방향을 나누어 봐요.', 5, event)">
                 <div><h4>상대 속마음</h4><p>겉과 속, 감정의 방향을 나누어 봐요.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '밀착감, 압박감/타이트함, 템포, 지구력의 심층 신체 궁합.', 9)">
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '속궁합 · 19+', '밀착감, 압박감/타이트함, 템포, 지구력의 심층 신체 궁합.', 9, event)">
                 <div><h4>속궁합 · 19+</h4><p>신체적 텐션·밀착감·강도·지속성의 성인 전용 배열.</p></div>
                 <div class="card-count">9</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '친구·지인 관계 & 주변 인연운', '현재 인간관계 에너지와 새로운 인연의 흐름.', 4)">
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '친구·지인 관계 & 주변 인연운', '현재 인간관계 에너지와 새로운 인연의 흐름.', 4, event)">
                 <div><h4>친구·지인 관계 & 주변 인연운</h4><p>대인관계 갈등 원인과 관계 발전 조언.</p></div>
                 <div class="card-count">4</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '연락운 & 시기', '연락 의향과 가까운 시간 흐름.', 5)">
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '연락운 & 시기', '연락 의향과 가까운 시간 흐름.', 5, event)">
                 <div><h4>연락운 & 시기</h4><p>먼저 연락 올 가능성과 시기 분석.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('LOVE', '재회운', '재회의 장애물과 앞으로의 인연 흐름.', 7)">
+            <div class="reading-item" onclick="openBottomSheet('LOVE', '재회운', '재회의 장애물과 앞으로의 인연 흐름.', 7, event)">
                 <div><h4>재회운</h4><p>재회의 장애물과 앞으로의 흐름.</p></div>
                 <div class="card-count">7</div>
             </div>
@@ -652,7 +652,7 @@
     </div>
 
     <!-- 4. STOCK -->
-    <div class="category-card" onclick="toggleCategory(this)">
+    <div class="category-card" onclick="toggleCategory(this, event)">
         <div class="category-header">
             <div class="cat-icon-title">
                 <div class="cat-icon">📈</div>
@@ -663,16 +663,16 @@
             </div>
             <div class="toggle-btn">+</div>
         </div>
-        <div class="category-content" onclick="event.stopPropagation()">
-            <div class="reading-item" onclick="openBottomSheet('STOCK', '매수 판단', '진입 흐름과 수급 리스크를 직관으로 봐요.', 3)">
+        <div class="category-content">
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '매수 판단', '진입 흐름과 수급 리스크를 직관으로 봐요.', 3, event)">
                 <div><h4>매수 판단</h4><p>단기 진입 흐름과 위험 요인 상징 리딩.</p></div>
                 <div class="card-count">3</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('STOCK', '보유 / 익절', '보유와 수익 실현 흐름을 살펴봐요.', 5)">
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '보유 / 익절', '보유와 수익 실현 흐름을 살펴봐요.', 5, event)">
                 <div><h4>보유 / 익절</h4><p>보유와 수익 실현 흐름을 살펴봐요.</p></div>
                 <div class="card-count">5</div>
             </div>
-            <div class="reading-item" onclick="openBottomSheet('STOCK', '매도 타이밍', '계속 보유와 지금 매도의 상징적 결과.', 5)">
+            <div class="reading-item" onclick="openBottomSheet('STOCK', '매도 타이밍', '계속 보유와 지금 매도의 상징적 결과.', 5, event)">
                 <div><h4>매도 타이밍</h4><p>계속 보유와 지금 매도의 상징적 흐름.</p></div>
                 <div class="card-count">5</div>
             </div>
@@ -1007,15 +1007,17 @@
         alert('✨ 천체 & 명리 프로필이 성공적으로 저장되었습니다.');
     }
 
-    function toggleCategory(element) {
+    function toggleCategory(element, event) {
+        if (event) event.stopPropagation();
         document.querySelectorAll('.category-card').forEach(card => {
             if (card !== element) card.classList.remove('active');
         });
         element.classList.toggle('active');
-        document.getElementById('bottomSheet').classList.remove('open');
     }
 
-    function openBottomSheet(category, title, desc, count) {
+    function openBottomSheet(category, title, desc, count, event) {
+        if (event) event.stopPropagation();
+        
         currentCategory = category;
         currentSpreadTitle = title;
         document.getElementById('bsCategory').innerText = category;
@@ -1031,7 +1033,8 @@
             document.getElementById('bsCardCountBtn').innerText = `${count}장 카드 펼치기`;
         }
         
-        document.getElementById('bottomSheet').classList.add('open');
+        const bs = document.getElementById('bottomSheet');
+        bs.classList.add('open');
     }
 
     function selectRadio(element, isReversed) {
