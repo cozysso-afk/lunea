@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0e0b16">
+<title>LUNEA V7.2</title>
+<link rel="apple-touch-icon" href="./apple-touch-icon.PNG">
+<style>
+html,body{margin:0;width:100%;height:100%;background:#06040a;overflow:hidden}iframe{display:block;width:100%;height:100dvh;border:0;background:#06040a}
+#status{position:fixed;z-index:9;left:50%;top:10px;transform:translateX(-50%);padding:6px 10px;border-radius:999px;background:rgba(14,11,22,.88);color:#d8caff;border:1px solid rgba(189,164,248,.3);font:600 11px -apple-system,BlinkMacSystemFont,sans-serif;backdrop-filter:blur(10px);transition:.3s;pointer-events:none;white-space:nowrap}
+#status.ok{opacity:0;transform:translate(-50%,-8px)}
+</style>
+</head>
+<body>
+<div id="status">Spread V7.2 적용 중…</div>
+<iframe id="lunea" src="./index.html" title="LUNEA"></iframe>
+<script>
+const f=document.getElementById('lunea'),status=document.getElementById('status');
+f.addEventListener('load',()=>{
+  try{
+    const d=f.contentDocument;
+    const base=d.createElement('script');
+    base.src='./spread-engine-v7.js?v=72';
+    base.onload=()=>{
+      const add=d.createElement('script');
+      add.src='./spread-engine-v7.2-addon.js?v=72';
+      add.onload=()=>{status.textContent='V7.2 적용 완료';status.classList.add('ok')};
+      add.onerror=()=>{status.textContent='V7.2 추가 엔진 로드 실패'};
+      d.body.appendChild(add);
+    };
+    base.onerror=()=>{status.textContent='V7 기본 엔진 로드 실패'};
+    d.body.appendChild(base);
+  }catch(e){status.textContent='V7.2 적용 실패: '+e.message}
+});
+</script>
+</body>
+</html>
