@@ -24,7 +24,13 @@
   function apiUrl(){return String(localStorage.getItem(API_KEY)||'').trim().replace(/\/+$/,'')}
   function question(){let q='';try{q=state?.question||''}catch{}return String(q||'').trim()}
   function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-  function fmt(iso,time=true){if(!iso)return '—';return new Intl.DateTimeFormat('ko-KR',time?{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}:{year:'numeric',month:'numeric',day:'numeric'}).format(new Date(iso))}
+  function fmt(iso,time=true){
+    if(!iso)return '—';
+    const opt=time
+      ? {year:'numeric',month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}
+      : {year:'numeric',month:'numeric',day:'numeric'};
+    return new Intl.DateTimeFormat('ko-KR',opt).format(new Date(iso));
+  }
 
   function autoBodies(q){
     const s=String(q||'');
@@ -60,7 +66,7 @@
       <button class="close" id="astroReturnClose">×</button>
       <div class="sub">LUNEA · PLANETARY CYCLES</div>
       <h3 class="modal-h">↻ Return Context</h3>
-      <p class="astro-transit-help">Return(리턴·회귀)은 각 행성이 네 출생차트의 같은 경도로 돌아오는 주기야. 단기 사건 확정일이 아니라 질문의 배경 주기로 사용해.</p>
+      <p class="astro-transit-help">Return(리턴·회귀)은 각 행성이 네 출생차트의 같은 경도로 돌아오는 주기야. 이전·다음 회귀는 연도까지 표시하고, 단기 사건 확정일이 아니라 질문의 배경 주기로 사용해.</p>
       <div class="field"><label>현재 질문</label><textarea id="astroReturnQuestion" readonly></textarea></div>
       <div class="return-checks" id="astroReturnChecks"></div>
       <div class="field"><label>리턴 차트 위치</label><input id="astroReturnPlace" placeholder="예: 여수"></div>
