@@ -461,7 +461,7 @@ function fixedPositions(title,count){const M={
 '일반 금전운 & 재물 흐름':['현재 자금 흐름','예상 못한 지출 위험','새 수익 기회','재정 안정성을 높일 행동'],
 '상대방이 보는 내 외모':['첫인상과 전체 아우라','상대의 시선이 먼저 머무는 포인트','상대가 매력적으로 느끼는 부분','상대 취향과의 부합도'],
 '상대방이 보는 내 몸매':['상대가 보는 전체 체형과 실루엣','가장 먼저 시선이 가는 신체 포인트','상대가 느끼는 신체적 텐션과 매력','상대 취향과의 피지컬 부합도'],
-'속궁합 · 19+':['상대의 본능적 욕구 & 리드 성향','나의 신체적 감각 & 수용 상태','에너지 굵기 & 물리적 압박감','신체적 밀착감 & 타이트함(밀도)','속도감 & 완급 조절(템포)','체력 & 지구력(지속성)','숨겨진 성적 판타지 & 페티시','절정 도달 & 신체적 만족도','행위 후의 여운 & 정서적 교감'],
+'속궁합 · 19+':['상대의 본능적 욕구 & 리드 성향','나의 신체적 감각 & 수용 상태','상대방의 성기 굵기 & 물리적 압박감','내 성기의 타이트함(밀도) & 나와의 밀착감','속도감 & 완급 조절(템포)','체력 & 지구력(지속성)','숨겨진 성적 판타지 & 페티시','절정 도달 & 신체적 만족도','행위 후의 여운 & 정서적 교감'],
 '친구·지인 관계 & 주변 인연운':['현재 대인관계의 전반적 기운','갈등이나 거리감을 만드는 핵심 원인','새롭게 들어올 인연 또는 관계 변화','관계를 건강하게 발전시키는 조언'],
 '상대 속마음':['겉으로 보이는 태도','스스로 인정하는 감정','인정하지 않는 무의식','망설이는 이유','실제로 원하는 관계'],
 '연락운 & 시기':['현재 연락 의향','행동을 막는 장벽','연락 전에 나타날 전조','행동으로 넘어가는 조건','첫 접촉 후의 흐름'],
@@ -522,6 +522,8 @@ $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{c
 // Initial memory + iOS resume robustness
 window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.setAttribute('aria-hidden','true'));syncProfile()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
-</script><script src="./spread-engine-v7.4.js?v=74"></script><script src="./timing-oracle-v1.js?v=101"></script>
+</script><script src="./spread-engine-v7.4.js?v=74"></script>
+  <script src="./timing-oracle-v1.js?v=101"></script>
+  <script src="./general-5-6-v1.js?v=101"></script>
 </body>
 </html>
