@@ -522,6 +522,6 @@ $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{c
 // Initial memory + iOS resume robustness
 window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.setAttribute('aria-hidden','true'));syncProfile()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
-</script><script src="./spread-engine-v7.4.js?v=74"></script>
+</script><script src="./spread-engine-v7.4.js?v=74"></script><script src="./timing-oracle-v1.js?v=101"></script>
 </body>
 </html>
