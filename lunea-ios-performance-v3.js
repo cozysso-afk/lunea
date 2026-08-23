@@ -1,19 +1,19 @@
 'use strict';
 
 /*
-  LUNEA iOS Performance V3
-  Goal
-  - Keep the original 3D tarot flip animation alive.
-  - Reduce iPhone/iPad Safari lag by lowering image decode / paint cost.
-  - Do NOT replace flip logic with display swap.
-  - Do NOT disable preserve-3d / rotateY / transition.
+  LUNEA iOS Performance V3 — repaint/hit-test recovery
+  ----------------------------------------------------
+  Keeps the original 3D tarot flip.
+  Removes the iOS paint-containment combination that can leave a card's
+  flipped class updated without repainting until pageshow/visibilitychange.
+  Also avoids sticky+backdrop-filter hit-testing glitches in CELESTIAL PROFILE.
 
-  Safe scope
-  - iOS only
-  - RWS RNG / secure shuffle / spread logic untouched
-  - astrology / archive / prompts untouched
+  Does NOT touch:
+  - RNG / secure shuffle / card selection
+  - Spread routing / question analysis
+  - Timing Oracle / astrology calculations
+  - archive / interpretation prompts
 */
-
 (() => {
   if (window.__LUNEA_IOS_PERFORMANCE_V3__) return;
   window.__LUNEA_IOS_PERFORMANCE_V3__ = true;
@@ -33,72 +33,99 @@
 
   document.documentElement.classList.add('lunea-ios-performance-v3');
 
-  // ------------------------------------------------------------------
-  // 1) Light CSS tuning only
-  //    Keep 3D. Reduce expensive iOS paint/compositing pressure.
-  // ------------------------------------------------------------------
   const style = document.createElement('style');
   style.id = 'luneaIOSPerformanceV3Style';
   style.textContent = `
     html.lunea-ios-performance-v3 body{
-      background-attachment: scroll !important;
+      background-attachment:scroll!important;
     }
 
-    /* Keep the spread modal mood, but lower blur cost a bit on iOS */
+    /* Spread: keep 3D, drop expensive full-screen blur. */
     html.lunea-ios-performance-v3 #spreadOverlay{
-      background: rgba(5,3,10,.92) !important;
-      -webkit-backdrop-filter: blur(8px) !important;
-      backdrop-filter: blur(8px) !important;
+      background:rgba(5,3,10,.96)!important;
+      -webkit-backdrop-filter:none!important;
+      backdrop-filter:none!important;
     }
 
-    /* Preserve original 3D behavior */
     html.lunea-ios-performance-v3 #spreadOverlay .cards{
-      perspective: 1000px !important;
-      -webkit-perspective: 1000px !important;
+      perspective:1000px!important;
+      -webkit-perspective:1000px!important;
     }
 
     html.lunea-ios-performance-v3 #spreadOverlay .tarot-card{
-      transform-style: preserve-3d !important;
-      -webkit-transform-style: preserve-3d !important;
-      -webkit-backface-visibility: hidden !important;
-      backface-visibility: hidden !important;
-      transition: transform .68s cubic-bezier(.3,.8,.2,1) !important;
-      will-change: transform;
+      transform-style:preserve-3d!important;
+      -webkit-transform-style:preserve-3d!important;
+      -webkit-backface-visibility:hidden!important;
+      backface-visibility:hidden!important;
+      transition:transform .68s cubic-bezier(.3,.8,.2,1)!important;
+      will-change:transform;
     }
 
     html.lunea-ios-performance-v3 #spreadOverlay .back,
     html.lunea-ios-performance-v3 #spreadOverlay .front{
-      -webkit-backface-visibility: hidden !important;
-      backface-visibility: hidden !important;
+      -webkit-backface-visibility:hidden!important;
+      backface-visibility:hidden!important;
     }
 
-    /* Make card paint regions a bit cheaper without killing animation */
+    /*
+      Critical fix:
+      do NOT paint-contain the wrapper around a nested preserve-3d transform.
+      On iOS Safari this can defer the visible repaint until app resume.
+    */
     html.lunea-ios-performance-v3 #spreadOverlay .tarot-card-wrapper{
-      contain: layout paint;
+      contain:none!important;
     }
 
     html.lunea-ios-performance-v3 #spreadOverlay .front img,
     html.lunea-ios-performance-v3 #spreadOverlay .back img{
-      image-rendering: auto;
-      -webkit-user-drag: none;
+      image-rendering:auto;
+      -webkit-user-drag:none;
     }
 
-    /* Respect reduced motion if user/device asks for it */
-    @media (prefers-reduced-motion: reduce){
+    /*
+      CELESTIAL PROFILE:
+      sticky + backdrop-filter inside the scrolling modal can create delayed
+      hit-testing and awkward tab transitions on iOS Safari.
+    */
+    html.lunea-ios-performance-v3 #profileOverlay{
+      background:rgba(5,3,10,.97)!important;
+      -webkit-backdrop-filter:none!important;
+      backdrop-filter:none!important;
+    }
+
+    html.lunea-ios-performance-v3 #profileOverlay .cpv3-tabs{
+      position:relative!important;
+      top:auto!important;
+      -webkit-backdrop-filter:none!important;
+      backdrop-filter:none!important;
+      -webkit-transform:none!important;
+      transform:none!important;
+    }
+
+    html.lunea-ios-performance-v3 #profileOverlay .cpv3-tab{
+      pointer-events:auto!important;
+      touch-action:manipulation!important;
+    }
+
+    /*
+      Use the normal overflow scroller rather than forcing the legacy
+      momentum-scrolling compositor inside this already complex modal.
+    */
+    html.lunea-ios-performance-v3 #profileOverlay .modal{
+      -webkit-overflow-scrolling:auto!important;
+    }
+
+    @media (prefers-reduced-motion:reduce){
       html.lunea-ios-performance-v3 #spreadOverlay .tarot-card{
-        transition-duration: .01ms !important;
+        transition-duration:.01ms!important;
       }
       html.lunea-ios-performance-v3 #spreadOverlay .tarot-card-wrapper{
-        animation-duration: .01ms !important;
+        animation-duration:.01ms!important;
       }
     }
   `;
   document.head.appendChild(style);
 
-  // ------------------------------------------------------------------
-  // 2) Thumbnail URL conversion
-  //    Main performance win: do NOT decode giant Wikimedia images on iPhone
-  // ------------------------------------------------------------------
   function thumbURL(url, width = 360) {
     const raw = String(url || '');
     if (!raw) return raw;
@@ -128,10 +155,10 @@
     } catch {}
   }
 
-  // ------------------------------------------------------------------
-  // 3) Patch only makeCardWrapper
-  //    Important: keep original flipAt() and original 3D class toggling.
-  // ------------------------------------------------------------------
+  /*
+    Keep original flipAt(). Only retain the existing thumbnail optimization
+    in makeCardWrapper.
+  */
   const oldMakeCardWrapper = W.makeCardWrapper;
 
   if (typeof oldMakeCardWrapper === 'function') {
@@ -159,7 +186,7 @@
       tuneImg(backImg);
       backImg.addEventListener('error', () => {
         backImg.style.display = 'none';
-      }, { once: true });
+      }, {once:true});
       back.appendChild(backImg);
 
       const front = document.createElement('div');
@@ -171,7 +198,7 @@
       tuneImg(frontImg);
       frontImg.addEventListener('error', () => {
         frontImg.style.opacity = '.15';
-      }, { once: true });
+      }, {once:true});
       front.appendChild(frontImg);
 
       tarot.appendChild(back);
@@ -186,12 +213,30 @@
     console.warn('[LUNEA iOS Performance V3] makeCardWrapper not found');
   }
 
-  // ------------------------------------------------------------------
-  // 4) Small resilience fix on pageshow
-  // ------------------------------------------------------------------
+  /*
+    After CELESTIAL PROFILE changes tabs, reset that modal to the top.
+    This avoids inheriting Western's deep scroll offset when opening Saju/Thai.
+    No click is cancelled and no existing tab handler is replaced.
+  */
+  document.addEventListener('click', event => {
+    const tab = event.target?.closest?.('#profileOverlay [data-cpv3-tab]');
+    if (!tab) return;
+
+    requestAnimationFrame(() => {
+      const modal = document.querySelector('#profileOverlay .modal');
+      if (modal) {
+        try {
+          modal.scrollTo({top:0, left:0, behavior:'auto'});
+        } catch {
+          modal.scrollTop = 0;
+        }
+      }
+    });
+  }, {passive:true});
+
+  /* Resume resilience: image attributes only; never force flip/display state. */
   window.addEventListener('pageshow', () => {
-    const cards = document.querySelectorAll('#cards .tarot-card img');
-    cards.forEach(tuneImg);
+    document.querySelectorAll('#cards .tarot-card img').forEach(tuneImg);
   });
 
   console.info('✦ LUNEA iOS Performance V3 loaded');
