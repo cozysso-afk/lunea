@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA iOS Performance V3 — consolidated interaction recovery V305
+  LUNEA iOS Performance V3 — consolidated interaction recovery V306
   ---------------------------------------------------------------
   Fixes the current known iPhone/PWA "tap does nothing" classes in one pass:
   - card flip repaint delay
@@ -28,6 +28,25 @@
   const isiOS =
     /iPad|iPhone|iPod/.test(ua) ||
     (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+  /*
+    Structural Routing V2 is platform-independent.
+    Load it before the iOS-only early return so desktop/Safari share the same router.
+    Failure is non-fatal: existing V7.4 remains active.
+  */
+  function loadStructuralRoutingV2() {
+    if (document.querySelector('script[data-lunea-structural-routing-v2]')) return;
+    const s = document.createElement('script');
+    s.src = './lunea-structural-routing-v2.js?v=201';
+    s.async = false;
+    s.dataset.luneaStructuralRoutingV2 = '1';
+    s.addEventListener('error', () => {
+      console.warn('[LUNEA] Structural Routing V2 failed to load; V7.4 remains active');
+    }, {once:true});
+    document.head.appendChild(s);
+  }
+
+  loadStructuralRoutingV2();
 
   if (!isiOS) {
     console.info('✦ LUNEA iOS Performance V3 skipped (non-iOS)');
@@ -212,7 +231,7 @@
       overlay.setAttribute('aria-hidden', shown ? 'false' : 'true');
 
       /*
-        Critical V305 change:
+        Critical V305/V306 change:
         never leave pointer-events as an inline value.
         The app's .overlay / .overlay.show CSS remains the single source of truth.
       */
@@ -589,5 +608,6 @@
 
   installRequestWatchdog();
   repairOverlayState();
-  console.info('✦ LUNEA iOS Performance V3 loaded · consolidated V305 active');
+  console.info('✦ LUNEA iOS Performance V3 loaded · consolidated V306 active');
+
 })();
