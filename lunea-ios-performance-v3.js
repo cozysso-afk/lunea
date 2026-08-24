@@ -1,12 +1,14 @@
 'use strict';
 
 /*
-  LUNEA iOS Performance V3 — re-entry + repaint recovery
-  ------------------------------------------------------
-  Fixes:
-  - iOS Safari card flip repaint delay
-  - CELESTIAL PROFILE second-open / stale modal lock
-  - hidden overlay pointer-event residue
+  LUNEA iOS Performance V3 — consolidated interaction recovery V305
+  ---------------------------------------------------------------
+  Fixes the current known iPhone/PWA "tap does nothing" classes in one pass:
+  - card flip repaint delay
+  - profile second-open failure
+  - archive pre-render stall
+  - stale overlay/body pointer lock
+  - API/Gemini requests that can leave buttons waiting indefinitely
 
   Preserves:
   - original 3D rotateY flip
@@ -39,6 +41,22 @@
   style.textContent = `
     html.lunea-ios-performance-v3 body{
       background-attachment:scroll!important;
+    }
+
+    /*
+      One overlay rule for the whole app.
+      This prevents stale inline pointer state from making Profile / Archive /
+      API / Timing / Transit / Return / Thai look open but untouchable.
+    */
+    html.lunea-ios-performance-v3 .overlay{
+      -webkit-backdrop-filter:none!important;
+      backdrop-filter:none!important;
+    }
+    html.lunea-ios-performance-v3 .overlay.show{
+      pointer-events:auto!important;
+    }
+    html.lunea-ios-performance-v3 .overlay:not(.show){
+      pointer-events:none!important;
     }
 
     html.lunea-ios-performance-v3 #spreadOverlay{
@@ -192,7 +210,13 @@
       anyShown ||= shown;
 
       overlay.setAttribute('aria-hidden', shown ? 'false' : 'true');
-      overlay.style.pointerEvents = shown ? 'auto' : 'none';
+
+      /*
+        Critical V305 change:
+        never leave pointer-events as an inline value.
+        The app's .overlay / .overlay.show CSS remains the single source of truth.
+      */
+      overlay.style.removeProperty('pointer-events');
     });
 
     if (anyShown) {
@@ -229,7 +253,6 @@
 
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden', 'false');
-    overlay.style.pointerEvents = 'auto';
     document.body.classList.add('modal-open');
 
     const modal = overlay.querySelector('.modal');
@@ -243,8 +266,7 @@
       } finally {
         overlay.classList.add('show');
         overlay.setAttribute('aria-hidden', 'false');
-        overlay.style.pointerEvents = 'auto';
-        document.body.classList.add('modal-open');
+            document.body.classList.add('modal-open');
         openingProfile = false;
       }
     });
@@ -275,6 +297,287 @@
     requestAnimationFrame(repairOverlayState);
   }, {passive:true});
 
+
+  /*
+    ARCHIVE recovery:
+    Base index calls renderArchive() before showOverlay('archiveOverlay').
+    With many saved readings, building every full detail text synchronously can
+    block iOS long enough that the tap looks dead. Open first, then render rows
+    in small frame batches. Detail text is created lazily only when expanded.
+  */
+  let archiveRenderEpoch = 0;
+
+  function readArchive() {
+    try {
+      const raw = JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3') || '[]');
+      return Array.isArray(raw) ? raw : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function writeArchive(rows) {
+    try {
+      localStorage.setItem('LUNEA_ARCHIVE_V3', JSON.stringify((rows || []).slice(0, 100)));
+    } catch (err) {
+      console.error('[LUNEA Archive] save failed', err);
+    }
+  }
+
+  function archiveTextLocal(item) {
+    const cards = (item?.cards || []).map(c =>
+      c?.text ||
+      `${c?.position || ''}: ${c?.name || ''} (${c?.isReversed ? '역' : '정'})` +
+      (c?.subCards?.length ? ' / 보조 ' + c.subCards.map(s => s?.name || '').join(', ') : '')
+    ).join('\n');
+
+    return `${item?.date || ''}\n${item?.title || ''}\n${item?.q || ''}\n\n${cards}` +
+      (item?.ai ? `\n\n[AI 해석]\n${item.ai}` : '');
+  }
+
+  function makeArchiveRow(item) {
+    const el = document.createElement('div');
+    el.className = 'archive-item';
+
+    const meta = document.createElement('div');
+    meta.className = 'archive-meta';
+    meta.textContent = item?.date || (item?.createdAt ? new Date(item.createdAt).toLocaleString('ko-KR') : '');
+
+    const title = document.createElement('div');
+    title.className = 'archive-title';
+    title.textContent = item?.title || '';
+
+    const q = document.createElement('div');
+    q.className = 'archive-q';
+    q.textContent = item?.q || '';
+
+    const actions = document.createElement('div');
+    actions.className = 'archive-actions';
+
+    const detailBtn = document.createElement('button');
+    detailBtn.className = 'mini';
+    detailBtn.type = 'button';
+    detailBtn.textContent = '카드/해석 펼치기';
+
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'mini';
+    copyBtn.type = 'button';
+    copyBtn.textContent = '복사';
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'mini danger';
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = '삭제';
+
+    actions.append(detailBtn, copyBtn, deleteBtn);
+
+    const detail = document.createElement('div');
+    detail.className = 'archive-detail';
+
+    detailBtn.addEventListener('click', () => {
+      const opening = !detail.classList.contains('open');
+      if (opening && !detail.dataset.loaded) {
+        detail.textContent = archiveTextLocal(item);
+        detail.dataset.loaded = '1';
+      }
+      detail.classList.toggle('open', opening);
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(archiveTextLocal(item));
+        alert('복사했어.');
+      } catch {
+        alert('복사 권한을 확인해줘.');
+      }
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      if (!confirm('이 기록을 삭제할까?')) return;
+      const next = readArchive().filter(x => x?.id !== item?.id);
+      writeArchive(next);
+      renderArchiveSafely();
+    });
+
+    el.append(meta, title, q, actions, detail);
+    return el;
+  }
+
+  function renderArchiveSafely() {
+    const list = document.getElementById('archiveList');
+    const count = document.getElementById('archiveCount');
+    const search = document.getElementById('archiveSearch');
+    if (!list || !count) return;
+
+    const epoch = ++archiveRenderEpoch;
+    const all = readArchive();
+    const query = String(search?.value || '').trim().toLowerCase();
+
+    const rows = all.filter(item => {
+      if (!query) return true;
+      return [item?.title, item?.q, item?.ai]
+        .join(' ')
+        .toLowerCase()
+        .includes(query);
+    });
+
+    count.textContent = `${all.length}개`;
+    list.replaceChildren();
+
+    if (!rows.length) {
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.textContent = '저장된 리딩이 없거나 검색 결과가 없어.';
+      list.appendChild(empty);
+      return;
+    }
+
+    let index = 0;
+    const CHUNK = 6;
+
+    function appendChunk() {
+      if (epoch !== archiveRenderEpoch) return;
+
+      const frag = document.createDocumentFragment();
+      const end = Math.min(index + CHUNK, rows.length);
+
+      for (; index < end; index += 1) {
+        frag.appendChild(makeArchiveRow(rows[index]));
+      }
+      list.appendChild(frag);
+
+      if (index < rows.length) requestAnimationFrame(appendChunk);
+    }
+
+    requestAnimationFrame(appendChunk);
+  }
+
+  function openArchiveSafely() {
+    repairOverlayState();
+
+    const overlay = document.getElementById('archiveOverlay');
+    if (!overlay) return;
+
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('modal-open');
+
+    const modal = overlay.querySelector('.modal');
+    if (modal) modal.scrollTop = 0;
+
+    requestAnimationFrame(renderArchiveSafely);
+  }
+
+  const archiveBtn = document.getElementById('archiveBtn');
+  if (archiveBtn) archiveBtn.onclick = openArchiveSafely;
+
+  const archiveSearch = document.getElementById('archiveSearch');
+  if (archiveSearch) {
+    let archiveSearchFrame = 0;
+    archiveSearch.oninput = () => {
+      cancelAnimationFrame(archiveSearchFrame);
+      archiveSearchFrame = requestAnimationFrame(renderArchiveSafely);
+    };
+  }
+
+  const clearArchive = document.getElementById('clearArchive');
+  if (clearArchive) {
+    clearArchive.onclick = () => {
+      if (!confirm('기록함 전체를 비울까? 되돌릴 수 없어.')) return;
+      writeArchive([]);
+      renderArchiveSafely();
+    };
+  }
+
+  const copyAllArchive = document.getElementById('copyAllArchive');
+  if (copyAllArchive) {
+    copyAllArchive.onclick = async () => {
+      const rows = readArchive();
+      if (!rows.length) return alert('기록이 없어.');
+      try {
+        await navigator.clipboard.writeText(rows.map(archiveTextLocal).join('\n\n────────────\n\n'));
+        alert('전체 기록 복사 완료');
+      } catch {
+        alert('복사 권한을 확인해줘.');
+      }
+    };
+  }
+
+
+  /*
+    Remote request watchdog.
+    Every current async calculation already uses try/catch/finally. The missing
+    piece was a bounded wait. If a provider hangs, this wrapper rejects so the
+    existing finally block can re-enable the button instead of looking frozen.
+
+    It does NOT change request bodies/results and does NOT wrap unrelated fetches.
+  */
+  function installRequestWatchdog() {
+    if (W.__LUNEA_REQUEST_WATCHDOG_V305__ || typeof W.fetch !== 'function') return;
+    W.__LUNEA_REQUEST_WATCHDOG_V305__ = true;
+
+    const previousFetch = W.fetch.bind(W);
+
+    W.fetch = function(input, init) {
+      let url = '';
+      try {
+        url = typeof input === 'string' ? input : String(input?.url || '');
+      } catch {}
+
+      const isGemini = /generativelanguage\.googleapis\.com/i.test(url);
+      const isAstro = /\/v1\/(?:natal|transits\/scan|returns\/context|thai\/taksa)(?:$|\?)/i.test(url);
+
+      if (!isGemini && !isAstro) return previousFetch(input, init);
+
+      const timeoutMs = isGemini ? 40000 : 60000;
+
+      return new Promise((resolve, reject) => {
+        let settled = false;
+
+        const timer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          reject(new Error(
+            isGemini
+              ? 'AI 요청 시간이 너무 길어 중단했어. 다시 눌러줘.'
+              : '점성술 계산 서버 응답 시간이 너무 길어 중단했어. 다시 눌러줘.'
+          ));
+        }, timeoutMs);
+
+        Promise.resolve()
+          .then(() => previousFetch(input, init))
+          .then(
+            value => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timer);
+              resolve(value);
+            },
+            error => {
+              if (settled) return;
+              settled = true;
+              clearTimeout(timer);
+              reject(error);
+            }
+          );
+      });
+    };
+  }
+
+
+  /*
+    Last-resort UI recovery. We do not swallow errors; we only repair stale
+    modal locks one frame later so one module error cannot leave the whole app
+    untouchable.
+  */
+  window.addEventListener('error', () => {
+    requestAnimationFrame(repairOverlayState);
+  });
+
+  window.addEventListener('unhandledrejection', () => {
+    requestAnimationFrame(repairOverlayState);
+  });
+
   window.addEventListener('pageshow', () => {
     document.querySelectorAll('#cards .tarot-card img').forEach(tuneImg);
     repairOverlayState();
@@ -284,6 +587,7 @@
     if (!document.hidden) requestAnimationFrame(repairOverlayState);
   });
 
+  installRequestWatchdog();
   repairOverlayState();
-  console.info('✦ LUNEA iOS Performance V3 loaded · re-entry repair active');
+  console.info('✦ LUNEA iOS Performance V3 loaded · consolidated V305 active');
 })();
