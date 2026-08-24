@@ -1,18 +1,19 @@
 'use strict';
 
 /*
-  LUNEA iOS Performance V3 — repaint/hit-test recovery
-  ----------------------------------------------------
-  Keeps the original 3D tarot flip.
-  Removes the iOS paint-containment combination that can leave a card's
-  flipped class updated without repainting until pageshow/visibilitychange.
-  Also avoids sticky+backdrop-filter hit-testing glitches in CELESTIAL PROFILE.
+  LUNEA iOS Performance V3 — re-entry + repaint recovery
+  ------------------------------------------------------
+  Fixes:
+  - iOS Safari card flip repaint delay
+  - CELESTIAL PROFILE second-open / stale modal lock
+  - hidden overlay pointer-event residue
 
-  Does NOT touch:
-  - RNG / secure shuffle / card selection
-  - Spread routing / question analysis
-  - Timing Oracle / astrology calculations
-  - archive / interpretation prompts
+  Preserves:
+  - original 3D rotateY flip
+  - RNG / card draw
+  - spread routing
+  - Timing / Natal / Transit / Return calculations
+  - archive / prompts
 */
 (() => {
   if (window.__LUNEA_IOS_PERFORMANCE_V3__) return;
@@ -40,7 +41,6 @@
       background-attachment:scroll!important;
     }
 
-    /* Spread: keep 3D, drop expensive full-screen blur. */
     html.lunea-ios-performance-v3 #spreadOverlay{
       background:rgba(5,3,10,.96)!important;
       -webkit-backdrop-filter:none!important;
@@ -67,11 +67,7 @@
       backface-visibility:hidden!important;
     }
 
-    /*
-      Critical fix:
-      do NOT paint-contain the wrapper around a nested preserve-3d transform.
-      On iOS Safari this can defer the visible repaint until app resume.
-    */
+    /* Critical: nested 3D must not sit inside paint containment on iOS. */
     html.lunea-ios-performance-v3 #spreadOverlay .tarot-card-wrapper{
       contain:none!important;
     }
@@ -82,37 +78,11 @@
       -webkit-user-drag:none;
     }
 
-    /*
-      CELESTIAL PROFILE:
-      sticky + backdrop-filter inside the scrolling modal can create delayed
-      hit-testing and awkward tab transitions on iOS Safari.
-    */
-    html.lunea-ios-performance-v3 #profileOverlay{
-      background:rgba(5,3,10,.97)!important;
-      -webkit-backdrop-filter:none!important;
-      backdrop-filter:none!important;
-    }
-
-    html.lunea-ios-performance-v3 #profileOverlay .cpv3-tabs{
-      position:relative!important;
-      top:auto!important;
-      -webkit-backdrop-filter:none!important;
-      backdrop-filter:none!important;
-      -webkit-transform:none!important;
-      transform:none!important;
-    }
-
-    html.lunea-ios-performance-v3 #profileOverlay .cpv3-tab{
-      pointer-events:auto!important;
+    /* Keep profile hit targets explicit, but do not alter its scroll/compositor layout. */
+    html.lunea-ios-performance-v3 #profileBtn,
+    html.lunea-ios-performance-v3 #profileStrip,
+    html.lunea-ios-performance-v3 #profileOverlay button{
       touch-action:manipulation!important;
-    }
-
-    /*
-      Use the normal overflow scroller rather than forcing the legacy
-      momentum-scrolling compositor inside this already complex modal.
-    */
-    html.lunea-ios-performance-v3 #profileOverlay .modal{
-      -webkit-overflow-scrolling:auto!important;
     }
 
     @media (prefers-reduced-motion:reduce){
@@ -141,7 +111,6 @@
         return raw + (raw.includes('?') ? '&' : '?') + 'width=' + width;
       }
     }
-
     return raw;
   }
 
@@ -156,11 +125,10 @@
   }
 
   /*
-    Keep original flipAt(). Only retain the existing thumbnail optimization
-    in makeCardWrapper.
+    Keep the original flipAt(). Only replace card construction so iPhone
+    decodes smaller Wikimedia images.
   */
   const oldMakeCardWrapper = W.makeCardWrapper;
-
   if (typeof oldMakeCardWrapper === 'function') {
     W.makeCardWrapper = function(i, card, isReversed) {
       const wrapper = document.createElement('div');
@@ -204,40 +172,118 @@
       tarot.appendChild(back);
       tarot.appendChild(front);
       wrapper.appendChild(tarot);
-
       return wrapper;
     };
 
     console.info('✦ LUNEA iOS Performance V3 patched makeCardWrapper');
-  } else {
-    console.warn('[LUNEA iOS Performance V3] makeCardWrapper not found');
   }
 
   /*
-    After CELESTIAL PROFILE changes tabs, reset that modal to the top.
-    This avoids inheriting Western's deep scroll offset when opening Saju/Thai.
-    No click is cancelled and no existing tab handler is replaced.
+    Generic stale-lock repair.
+    The base app's hideOverlay removes modal-open, but iOS resume/re-entry can
+    leave inline pointer state or a body lock out of sync with .show.
   */
-  document.addEventListener('click', event => {
-    const tab = event.target?.closest?.('#profileOverlay [data-cpv3-tab]');
-    if (!tab) return;
+  function repairOverlayState() {
+    const overlays = [...document.querySelectorAll('.overlay')];
+    let anyShown = false;
+
+    overlays.forEach(overlay => {
+      const shown = overlay.classList.contains('show');
+      anyShown ||= shown;
+
+      overlay.setAttribute('aria-hidden', shown ? 'false' : 'true');
+      overlay.style.pointerEvents = shown ? 'auto' : 'none';
+    });
+
+    if (anyShown) {
+      document.body.classList.add('modal-open');
+    } else {
+      document.body.classList.remove('modal-open');
+      document.body.style.removeProperty('pointer-events');
+      document.body.style.removeProperty('touch-action');
+      document.body.style.removeProperty('overflow');
+      document.documentElement.style.removeProperty('overflow');
+    }
+  }
+
+  /*
+    IMPORTANT re-entry fix:
+    Main index originally does:
+      loadProfileForm(); showOverlay('profileOverlay')
+    If any profile wrapper throws on a later open, showOverlay is never reached.
+    On iOS we reverse that order: make the modal interactive first, then refresh
+    its form inside try/catch. A profile refresh error can no longer freeze
+    access to the modal.
+  */
+  let openingProfile = false;
+
+  function openProfileSafely() {
+    if (openingProfile) return;
+    openingProfile = true;
+
+    const overlay = document.getElementById('profileOverlay');
+    if (!overlay) {
+      openingProfile = false;
+      return;
+    }
+
+    overlay.classList.add('show');
+    overlay.setAttribute('aria-hidden', 'false');
+    overlay.style.pointerEvents = 'auto';
+    document.body.classList.add('modal-open');
+
+    const modal = overlay.querySelector('.modal');
+    if (modal) modal.scrollTop = 0;
 
     requestAnimationFrame(() => {
-      const modal = document.querySelector('#profileOverlay .modal');
-      if (modal) {
-        try {
-          modal.scrollTo({top:0, left:0, behavior:'auto'});
-        } catch {
-          modal.scrollTop = 0;
-        }
+      try {
+        if (typeof W.loadProfileForm === 'function') W.loadProfileForm();
+      } catch (err) {
+        console.error('[LUNEA Profile re-entry] loadProfileForm failed but modal kept open', err);
+      } finally {
+        overlay.classList.add('show');
+        overlay.setAttribute('aria-hidden', 'false');
+        overlay.style.pointerEvents = 'auto';
+        document.body.classList.add('modal-open');
+        openingProfile = false;
       }
     });
+  }
+
+  const profileBtn = document.getElementById('profileBtn');
+  const profileStrip = document.getElementById('profileStrip');
+
+  if (profileBtn) profileBtn.onclick = openProfileSafely;
+  if (profileStrip) profileStrip.onclick = openProfileSafely;
+
+  /*
+    After the existing close handler runs, normalize body/overlay locks.
+    We don't replace the close handler.
+  */
+  document.addEventListener('click', event => {
+    if (!event.target?.closest?.('[data-close="profile"]')) return;
+    requestAnimationFrame(repairOverlayState);
   }, {passive:true});
 
-  /* Resume resilience: image attributes only; never force flip/display state. */
+  /*
+    If the user taps the dimmed profile backdrop to close, base index closes
+    it on pointerup. Normalize locks one frame later.
+  */
+  const profileOverlay = document.getElementById('profileOverlay');
+  profileOverlay?.addEventListener('pointerup', event => {
+    if (event.target !== profileOverlay) return;
+    requestAnimationFrame(repairOverlayState);
+  }, {passive:true});
+
   window.addEventListener('pageshow', () => {
     document.querySelectorAll('#cards .tarot-card img').forEach(tuneImg);
+    repairOverlayState();
   });
 
-  console.info('✦ LUNEA iOS Performance V3 loaded');
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) requestAnimationFrame(repairOverlayState);
+  });
+
+  repairOverlayState();
+  console.info('✦ LUNEA iOS Performance V3 loaded · re-entry repair active');
 })();
