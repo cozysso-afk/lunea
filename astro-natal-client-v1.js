@@ -1,30 +1,30 @@
 'use strict';
 
 /*
-  LUNEA ASTRO NATAL CLIENT V1
-  Load AFTER celestial-profile-v3.js and BEFORE interpretation-gloss-v1.js.
+  LUNEA ASTRO NATAL CLIENT V1.1
+  ------------------------------
+  One-tap cold-start recovery for Render-hosted Astro Core.
 
-  - Fixes iOS birth date/time grid overlap.
-  - Uses the deployed LUNEA Astro Core service by default.
-  - Still allows the URL to be edited and persisted in localStorage.
-  - Adds Natal automatic calculation button.
-  - Saves deterministic calculation output to LUNEA_ASTRO_NATAL_V3.
+  Scope:
+  - only Natal connection lifecycle
+  - no global fetch monkeypatch
+  - no MutationObserver
+  - no layout/compositor CSS changes
+  - no Transit/Return/Thai calculation changes
+
+  Flow:
+  1) GET /health to wake/verify server
+  2) POST /v1/natal
+  3) retry POST once only for network/5xx transient failures
 */
 (() => {
-  if (window.__LUNEA_ASTRO_NATAL_CLIENT_V1__) return;
+  if (window.__LUNEA_ASTRO_NATAL_CLIENT_V11__) return;
+  window.__LUNEA_ASTRO_NATAL_CLIENT_V11__ = true;
   window.__LUNEA_ASTRO_NATAL_CLIENT_V1__ = true;
 
   const API_KEY = 'LUNEA_ASTRO_API_URL';
   const NATAL_KEY = 'LUNEA_ASTRO_NATAL_V3';
-
-  /*
-    render.yaml service name is "lunea-astro-api".
-    Render's standard service hostname is therefore this URL.
-    If a custom/different Render hostname is ever used, the field below
-    remains editable and the edited URL is saved.
-  */
   const DEFAULT_API_URL = 'https://lunea-astro-api.onrender.com';
-
   const $ = id => document.getElementById(id);
 
   function addStyles() {
@@ -54,7 +54,7 @@
         color:#f8f5ff;border-radius:12px;padding:11px;font-size:11px;font-weight:800;
         cursor:pointer;touch-action:manipulation
       }
-      .lunea-astro-btn:disabled{opacity:.45;cursor:wait}
+      .lunea-astro-btn:disabled{opacity:.55;cursor:wait}
       .lunea-astro-status{margin-top:7px;font-size:9.5px;line-height:1.5;color:var(--dim)}
       .lunea-astro-status.ok{color:#bfe7d2}
       .lunea-astro-status.err{color:#ffc0ca}
@@ -70,6 +70,95 @@
     const saved = normalizeApiUrl(localStorage.getItem(API_KEY));
     if (saved && !/your-astro-api\.example\.com/i.test(saved)) return saved;
     return DEFAULT_API_URL;
+  }
+
+  function setStatus(message, kind='') {
+    const el = $('luneaAstroStatus');
+    if (!el) return;
+    el.textContent = message;
+    el.className = `lunea-astro-status ${kind}`.trim();
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async function fetchWithTimeout(url, options={}, timeoutMs=90000) {
+    const controller = new AbortController();
+    const upstream = options.signal;
+
+    if (upstream?.aborted) controller.abort(upstream.reason);
+
+    let relay = null;
+    if (upstream && !upstream.aborted) {
+      relay = () => controller.abort(upstream.reason);
+      upstream.addEventListener('abort', relay, {once:true});
+    }
+
+    const timer = setTimeout(() => {
+      try { controller.abort('lunea-astro-timeout'); } catch { controller.abort(); }
+    }, timeoutMs);
+
+    try {
+      return await fetch(url, {...options, signal:controller.signal});
+    } finally {
+      clearTimeout(timer);
+      if (upstream && relay) upstream.removeEventListener('abort', relay);
+    }
+  }
+
+  async function warmAstroCore(api) {
+    setStatus('Astro Core 서버 준비 확인 중… 처음 접속이면 서버를 깨우는 데 시간이 걸릴 수 있어.');
+
+    const res = await fetchWithTimeout(`${api}/health`, {
+      method:'GET',
+      cache:'no-store',
+      headers:{'Accept':'application/json'}
+    }, 90000);
+
+    if (!res.ok) throw new Error(`서버 준비 확인 실패: HTTP ${res.status}`);
+
+    let data = null;
+    try { data = await res.json(); } catch {}
+
+    if (data && data.ok === false) throw new Error('Astro Core health 응답이 정상 상태가 아니야.');
+    return data;
+  }
+
+  function shouldRetry(err, status) {
+    if (status && [500,502,503,504].includes(status)) return true;
+    const msg = String(err?.message || err || '');
+    return /fetch|network|load failed|abort|timeout|시간/i.test(msg);
+  }
+
+  async function postNatal(api, payload) {
+    const res = await fetchWithTimeout(`${api}/v1/natal`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    }, 50000);
+
+    let data = null;
+    try { data = await res.json(); } catch {}
+
+    if (!res.ok) {
+      const e = new Error(data?.detail || `${res.status} ${res.statusText}`);
+      e.httpStatus = res.status;
+      throw e;
+    }
+    return data;
+  }
+
+  async function postNatalWithSingleRetry(api, payload) {
+    try {
+      return await postNatal(api, payload);
+    } catch (err) {
+      if (!shouldRetry(err, err?.httpStatus)) throw err;
+
+      setStatus('서버는 연결됐지만 첫 계산 응답이 불안정해. 자동으로 한 번만 다시 계산 중…');
+      await sleep(1200);
+      return await postNatal(api, payload);
+    }
   }
 
   function installUI() {
@@ -88,7 +177,7 @@
         ✦ Natal(네이탈·출생차트) 자동 계산
       </button>
       <div class="lunea-astro-status" id="luneaAstroStatus">
-        LUNEA Astro Core 서버를 사용해 출생정보로 행성·ASC·MC·Whole Sign·Placidus를 자동 계산해.
+        한 번 누르면 서버 준비 확인 → Natal 계산까지 이어서 처리해.
       </div>
     `;
     natalSection.appendChild(box);
@@ -96,34 +185,28 @@
     const input = $('luneaAstroApiUrl');
     input.value = currentApiUrl();
 
-    /* Persist the working/default URL immediately so Transit/Return/Thai share it. */
     if (!localStorage.getItem(API_KEY)) {
       localStorage.setItem(API_KEY, input.value);
     }
 
     input.addEventListener('change', () => {
       const url = normalizeApiUrl(input.value);
-      if (url) localStorage.setItem(API_KEY, url);
-      else {
-        input.value = DEFAULT_API_URL;
-        localStorage.setItem(API_KEY, DEFAULT_API_URL);
-      }
+      input.value = url || DEFAULT_API_URL;
+      localStorage.setItem(API_KEY, input.value);
     });
 
     $('luneaNatalCalcBtn').addEventListener('click', calculateNatal);
   }
 
-  function setStatus(message, kind='') {
-    const el = $('luneaAstroStatus');
-    if (!el) return;
-    el.textContent = message;
-    el.className = `lunea-astro-status ${kind}`.trim();
-  }
+  let calculating = false;
 
   async function calculateNatal() {
+    if (calculating) return;
+
     const btn = $('luneaNatalCalcBtn');
     const input = $('luneaAstroApiUrl');
     const api = normalizeApiUrl(input?.value || currentApiUrl()) || DEFAULT_API_URL;
+
     const birthDate = $('birthDate')?.value || '';
     const birthTime = $('birthTime')?.value || '';
     const birthPlace = $('birthPlace')?.value.trim() || '';
@@ -136,35 +219,36 @@
     if (input) input.value = api;
     localStorage.setItem(API_KEY, api);
 
+    calculating = true;
     btn.disabled = true;
-    setStatus('Astro Core 연결 중… 무료 서버가 잠들어 있었다면 첫 계산은 조금 더 걸릴 수 있어.');
+    btn.setAttribute('aria-busy','true');
+    btn.textContent = '✦ 서버 준비 중…';
+
+    const payload = {
+      birth_date:birthDate,
+      birth_time:birthTime,
+      place:birthPlace,
+      timezone:'Asia/Seoul'
+    };
 
     try {
-      const res = await fetch(`${api}/v1/natal`, {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({
-          birth_date: birthDate,
-          birth_time: birthTime,
-          place: birthPlace,
-          timezone: 'Asia/Seoul'
-        })
-      });
+      await warmAstroCore(api);
 
-      let data = null;
-      try { data = await res.json(); } catch {}
+      btn.textContent = '✦ Natal 계산 중…';
+      setStatus('서버 준비 완료 · 출생차트를 계산 중…');
 
-      if (!res.ok) {
-        const detail = data?.detail || `${res.status} ${res.statusText}`;
-        throw new Error(detail);
-      }
+      const data = await postNatalWithSingleRetry(api, payload);
+
       if (!data?.planets?.Sun || !data?.angles?.ASC) {
         throw new Error('Natal 응답 형식이 예상과 달라.');
       }
 
       localStorage.setItem(NATAL_KEY, JSON.stringify(data));
 
-      if (typeof loadProfileForm === 'function') loadProfileForm();
+      if (typeof loadProfileForm === 'function') {
+        try { loadProfileForm(); }
+        catch (e) { console.warn('[LUNEA Natal] profile refresh skipped', e); }
+      }
 
       setStatus(
         `계산 완료 · ${data.meta?.ephemeris || 'ephemeris'} · ` +
@@ -174,22 +258,19 @@
       );
     } catch (err) {
       const msg = String(err?.message || err);
-      setStatus(
-        `계산 실패: ${msg}` +
-        (/fetch|network|load failed/i.test(msg)
-          ? ' · 서버가 배포 중이거나 잠든 상태일 수 있어. 잠시 후 한 번 더 눌러줘.'
-          : ''),
-        'err'
-      );
+      setStatus(`계산 실패: ${msg}`, 'err');
     } finally {
+      calculating = false;
       btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      btn.textContent = '✦ Natal(네이탈·출생차트) 자동 계산';
     }
   }
 
   function boot() {
     addStyles();
     installUI();
-    console.info('✦ LUNEA ASTRO NATAL CLIENT V1 loaded');
+    console.info('✦ LUNEA ASTRO NATAL CLIENT V1.1 loaded · one-tap cold-start recovery');
   }
 
   if (document.readyState === 'loading') {
