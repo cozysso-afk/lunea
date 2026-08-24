@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA STRUCTURAL ROUTING V4
+  LUNEA STRUCTURAL ROUTING V4.1
   ===========================
   Structure-first router with narrow scope and regression boundaries.
 
@@ -535,6 +535,22 @@
 - spread coverage: 100%
 - 라우터가 이미 보존한 질문 축을 다른 주제로 축소하거나 바꾸지 않는다.`;
 
+      let overallExtraCount = 0;
+      try {
+        overallExtraCount = Math.max(0, (state?.drawn?.length || 0) - (state?.positions?.length || 0));
+      } catch {}
+
+      if (overallExtraCount > 0) {
+        prompt += `
+
+[STRUCTURAL V4 · 전체 추가 카드 규칙]
+- 전체 추가 카드 수: ${overallExtraCount}
+- 이 카드들은 원래 대칭축/후보축 바깥의 '리딩 전체 보정 카드'다.
+- A/B 비교에서는 어느 한쪽 사람에게 귀속시키거나 A/B 카드 수에 포함하지 않는다.
+- 기존 축의 결론을 마음대로 뒤집는 새 질문 카드가 아니라, 전체 흐름의 공통 보정·반증·강조 신호로만 사용한다.
+- 각 포지션에 붙는 '+ 보조' 카드는 해당 포지션 전용이고, '전체 추가 카드'와 역할이 다르다.`;
+      }
+
       return prompt;
     };
 
@@ -551,10 +567,12 @@
     const resultsEl = document.getElementById('results');
     const flipAllBtn = document.getElementById('flipAll');
     const extraCardBtn = document.getElementById('extraCard');
+    const aiReadBtn = document.getElementById('aiRead');
 
     const originalFlipAll = flipAllBtn?.onclick || null;
     const originalExtra = extraCardBtn?.onclick || null;
     const originalExtraDisplay = extraCardBtn?.style?.display || '';
+    const originalExtraText = extraCardBtn?.textContent || '+ 추가 카드';
 
     function ensurePager() {
       let pager = document.getElementById('luneaStructuralV4Pager');
@@ -626,6 +644,7 @@
         extraCardBtn.onclick = originalExtra;
         extraCardBtn.disabled = false;
         extraCardBtn.style.display = originalExtraDisplay;
+        extraCardBtn.textContent = originalExtraText;
       }
 
       try { delete state.__luneaStructuralV4Page; } catch {}
@@ -717,6 +736,83 @@
       }
     }
 
+    function drawUnusedForStructuralExtra() {
+      try {
+        if (typeof W.drawUnused === 'function') return W.drawUnused();
+      } catch {}
+
+      const avail = TAROT_DECK.filter(c => !state.used.has(c.code));
+      if (!avail.length) return null;
+
+      const pick = avail[secureRandomInt(avail.length)];
+      state.used.add(pick.code);
+      return pick;
+    }
+
+    function overallExtraCount() {
+      return Math.max(0, (state?.drawn?.length || 0) - (state?.positions?.length || 0));
+    }
+
+    function updateExtraButton() {
+      if (!extraCardBtn) return;
+      const n = overallExtraCount();
+      extraCardBtn.disabled = false;
+      extraCardBtn.style.display = originalExtraDisplay;
+      extraCardBtn.textContent = n
+        ? `+ 전체 추가 카드 (${n})`
+        : '+ 전체 추가 카드';
+    }
+
+    function getOrCreateOverallExtraPage(pg) {
+      let page = [...pg.pages].reverse()
+        .find(p => p?.kind === 'overall-extra' && p.indices.length < 10);
+
+      if (page) return page;
+
+      const seq = pg.pages.filter(p => p?.kind === 'overall-extra').length + 1;
+      page = {
+        label: seq === 1 ? '전체 추가 카드' : `전체 추가 카드 ${seq}`,
+        kind: 'overall-extra',
+        indices: []
+      };
+      pg.pages.push(page);
+      return page;
+    }
+
+    function addOverallExtraCard() {
+      const pg = state?.__luneaStructuralV4Page;
+      if (!pg) {
+        if (typeof originalExtra === 'function') return originalExtra.call(extraCardBtn);
+        return;
+      }
+
+      const c = drawUnusedForStructuralExtra();
+      if (!c) {
+        alert('덱을 모두 사용했어.');
+        return;
+      }
+
+      const rev = state.allowReversed && secureBool();
+      const i = state.drawn.length;
+      const n = overallExtraCount() + 1;
+
+      state.drawn.push({
+        ...c,
+        isReversed: rev,
+        position: `전체 추가 카드 #${n}`,
+        subCards: []
+      });
+
+      const page = getOrCreateOverallExtraPage(pg);
+      page.indices.push(i);
+
+      updateExtraButton();
+
+      // Do not append the card to A or B. Switch to a dedicated overall page.
+      const pageIndex = pg.pages.indexOf(page);
+      renderPage(pageIndex);
+    }
+
     function startPaged(question, positions, title, rationale, last) {
       const pages = last.result?._luneaStructuralV4?.pages;
       if (!Array.isArray(pages) || !pages.length) {
@@ -759,18 +855,24 @@
         });
       });
 
+      // Clone route pages. Extra-card pages must be reading-local so Retry does
+      // not inherit stale extra-card indices from the previous draw.
+      const runtimePages = pages.map(p => ({
+        ...p,
+        indices: Array.isArray(p.indices) ? [...p.indices] : []
+      }));
+
       state.__luneaStructuralV4Page = {
         page:0,
-        pages,
+        pages:runtimePages,
         flipped:new Set()
       };
 
       ensurePager()?.classList.add('show');
 
-      // Extra cards on a multi-page structural reading create ambiguous parentage.
       if (extraCardBtn) {
-        extraCardBtn.disabled = true;
-        extraCardBtn.style.display = 'none';
+        extraCardBtn.onclick = addOverallExtraCard;
+        updateExtraButton();
       }
 
       if (flipAllBtn) {
@@ -832,10 +934,18 @@
       }, {passive:true});
     }
 
+    aiReadBtn?.addEventListener('click', () => {
+      const pg = state?.__luneaStructuralV4Page;
+      if (!pg) return;
+
+      state.drawn.forEach((_, i) => pg.flipped.add(i));
+      requestAnimationFrame(updatePager);
+    }, {capture:true, passive:true});
+
     const badge = document.querySelector('.engine-strip span:last-child');
     if (badge) {
       badge.innerHTML =
-        '<b>Secure Draw + Spread V7.4 + Structural V4</b> · 구조 우선 · 혼합 인연장 · A/B 대칭 · 월별 커버리지';
+        '<b>Secure Draw + Spread V7.4 + Structural V4</b> · 구조 우선 · 혼합 인연장 · A/B 대칭 · 전체 추가카드 유지';
     }
 
     W.LUNEA_STRUCTURAL_ROUTING_V4 = {
@@ -847,7 +957,7 @@
       getLast:()=>ROUTE.last
     };
 
-    console.info('🌙 LUNEA Structural Routing V4 loaded');
+    console.info('🌙 LUNEA Structural Routing V4.1 loaded');
     return true;
   }
 
