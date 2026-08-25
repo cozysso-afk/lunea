@@ -275,6 +275,7 @@
         <div class="horary-result" id="astroHoraryResult"></div>
         <div class="horary-actions" id="astroHoraryActions">
           <button class="mini" id="astroHoraryAI">🔮 호라리 AI 해석</button>
+          <button class="mini" id="astroHoraryCopy">📋 결과 전체 복사</button>
           <button class="mini" id="astroHorarySave">💾 기록</button>
         </div>
         <div class="horary-ai" id="astroHoraryAIText"></div>
@@ -298,6 +299,7 @@
     };
     $('astroHoraryRun').onclick = runHorary;
     $('astroHoraryAI').onclick = runAI;
+    $('astroHoraryCopy').onclick = copyHoraryResult;
     $('astroHorarySave').onclick = saveStandalone;
   }
 
@@ -605,6 +607,56 @@ ${horaryPromptBlock(stateHorary.result)}
     const p = j.perfection || {};
     const c = j.primary_connection;
     return `${conclusionText(data)} · ${c ? `${c.aspect_ko} ${c.phase_ko} orb ${c.orb}°` : '주 연결각 별도 판정 없음'}${p.exact_local ? ` · 후보 ${fmtDate(p.exact_local)}` : ''}`;
+  }
+
+  function horaryCopyText(data) {
+    if (!data) return '';
+    const sig = data.significators || {};
+    const j = data.judgment_support || {};
+    const p = j.perfection || {};
+    const c = j.primary_connection;
+    const moon = j.moon_course || {};
+    const moonNext = (moon.next_aspects || []).map((x, i) =>
+      `${i + 1}. ${x.time_local || '시각 미정'} · Moon(달) → ${x.body_ko || x.body || '—'} · ${x.aspect_ko || '—'} · orb(오브) ${x.orb ?? '—'}°`
+    ).join('\n') || '별자리 이탈 전 완성 주요각 없음';
+    const interventions = (j.potential_prohibition || []).map((x, i) =>
+      `${i + 1}. ${x.intervening_ko || x.intervening || '—'} → ${x.target_ko || x.target || '—'} · ${x.aspect_ko || '—'} · 약 ${x.estimated_days ?? '—'}일 뒤 후보`
+    ).join('\n') || '없음';
+    const warnings = (j.warnings || []).map((x, i) => `${i + 1}. ${x.text_ko || x.code || '—'}`).join('\n') || '없음';
+
+    return `LUNEA · TRADITIONAL HORARY(전통 호라리)\n\n[질문 원문]\n${data.question?.text || stateHorary.question}\n\n[차트 기준]\n- 질문 시각: ${data.moment?.local_iso || '—'}\n- 질문 장소: ${data.moment?.place_resolved || '—'}\n- 질문 주제: ${data.question?.topic_label_ko || '—'}\n- 하우스 선택 근거: ${data.question?.topic_note_ko || '—'}\n- 황도/하우스: Tropical(열대황도) / Regiomontanus(레지오몬타누스)\n- ASC(상승점): ${data.angles?.ASC?.sign || '—'} ${data.angles?.ASC?.degree ?? '—'}°\n- MC(중천점): ${data.angles?.MC?.sign || '—'} ${data.angles?.MC?.degree ?? '—'}°\n\n[핵심 판정]\n${conclusionText(data)}\n\n[시그니피케이터·상징 행성]\n- 질문자: ${sig.querent?.ruler || '—'}(${sig.querent?.ruler_ko || '—'}) · ${planetText(sig.querent?.planet)}\n- 대상: ${sig.quesited?.ruler || '—'}(${sig.quesited?.ruler_ko || '—'}) · ${planetText(sig.quesited?.planet)}\n${sig.event ? `- 사건 보조: ${sig.event.ruler || '—'}(${sig.event.ruler_ko || '—'}) · ${planetText(sig.event.planet)}\n` : ''}- Moon(달): ${planetText(sig.moon)}\n\n[성사각·리셉션]\n- 주 연결: ${c ? `${c.aspect_ko || '—'} · orb(오브) ${c.orb ?? '—'}° · ${c.phase_ko || '—'}` : '별도 연결각 없음'}\n- Perfection(퍼펙션·성사각): ${p.reason_ko || '확인되지 않음'}${p.exact_local ? ` · ${p.exact_local}` : ''}\n- Reception(리셉션·수용 관계): ${receptionText(j.reception)}\n\n[Moon(달)의 진행]\n- Void of Course(보이드 오브 코스·공전달): ${moon.void_of_course ? '해당' : '아님'}\n- 현재 별자리 이탈까지: 약 ${moon.hours_to_sign_exit ?? '—'}시간\n${moonNext}\n\n[잠재 개입각]\n${interventions}\n\n[판정 전 고려사항]\n${warnings}${stateHorary.aiText ? `\n\n[호라리 AI(인공지능) 해석]\n${stateHorary.aiText}` : ''}`;
+  }
+
+  async function writeClipboard(text) {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {}
+    const area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+    document.body.appendChild(area);
+    area.select();
+    area.setSelectionRange(0, area.value.length);
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch {}
+    area.remove();
+    return ok;
+  }
+
+  async function copyHoraryResult() {
+    if (!stateHorary.result) return alert('먼저 호라리 차트를 계산해줘.');
+    const button = $('astroHoraryCopy');
+    const original = button.textContent;
+    button.disabled = true;
+    const ok = await writeClipboard(horaryCopyText(stateHorary.result));
+    button.disabled = false;
+    button.textContent = ok ? '✓ 전체 복사 완료' : original;
+    if (!ok) alert('복사 권한을 확인해줘.');
+    if (ok) setTimeout(() => { button.textContent = original; }, 1600);
   }
 
   function renderInline() {
