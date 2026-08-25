@@ -488,7 +488,7 @@ $('flipAll').onclick=()=>state.drawn.forEach((_,i)=>flipAt(i));
 $('extraCard').onclick=()=>{const c=drawUnused();if(!c)return alert('덱을 모두 사용했어.');const rev=state.allowReversed&&secureBool();const i=state.drawn.length;state.drawn.push({...c,isReversed:rev,position:`전체 추가 카드 #${i-state.positions.length+1}`,subCards:[]});$('cards').appendChild(makeCardWrapper(i,c,rev));invalidateAiReading()};
 $('retry').onclick=()=>startSpread(state.question,state.positions,state.title,state.rationale);
 $('dailyBtn').onclick=()=>{state.category='DAILY';state.title='DAILY ORBIT 4';state.allowReversed=false;startSpread('오늘 하루 나의 전반적인 에너지와 대인관계 흐름',['아침의 기운과 행동 템포','낮의 집중력과 현실 과제','대인관계·연애에서 반응할 지점','밤의 회복과 내일로 가져갈 메시지'],'DAILY ORBIT 4','하루를 네 구간의 역할로 나눈 고정형 데일리 배열')};
-$('drawBtn').onclick=async()=>{const q=$('question').value.trim();if(!q){alert('질문 원문을 먼저 입력해줘. 질문이 비어 있으면 정확한 포지션 설계와 해석을 할 수 없어.');$('question').focus();return}const btn=$('drawBtn');if(state.isAi){btn.disabled=true;$('drawLabel').textContent='질문 구조 분석 중…';const sp=await designSpread(q);btn.disabled=false;$('drawLabel').textContent='질문 분석 & 맞춤 배열 설계';startSpread(q,sp.positions,sp.spreadTitle,sp.designRationale)}else{startSpread(q,fixedPositions(state.title,state.count),state.title,'고정 스프레드 구조')}};
+$('drawBtn').onclick=async()=>{const q=$('question').value.trim();if(!q){alert('질문 원문을 먼저 입력해줘. 질문이 비어 있으면 정확한 포지션 설계와 해석을 할 수 없어.');$('question').focus();return}const btn=$('drawBtn');if(state.isAi){btn.disabled=true;$('drawLabel').textContent='질문 구조 분석 중…';try{const sp=await designSpread(q);if(!sp||!Array.isArray(sp.positions)||!sp.positions.length)throw new Error('배열 결과가 비어 있음');startSpread(q,sp.positions,sp.spreadTitle,sp.designRationale)}catch(err){console.error('[LUNEA] custom spread failed',err);alert('질문 맞춤 배열을 만들지 못했어. 질문을 그대로 두고 다시 눌러줘.')}finally{btn.disabled=false;$('drawLabel').textContent='질문 분석 & 맞춤 배열 설계'}}else{startSpread(q,fixedPositions(state.title,state.count),state.title,'고정 스프레드 구조')}};
 
 // ============================================================
 // AI interpretation
@@ -524,8 +524,8 @@ $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{c
 // Initial memory + iOS resume robustness
 window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.setAttribute('aria-hidden','true'));syncProfile()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
-</script><script src="./spread-engine-v7.4.js?v=74"></script>
-  <script src="./lunea-structural-routing-v4.js?v=411"></script>
+</script><script src="./spread-engine-v7.4.js?v=75"></script>
+  <script src="./lunea-structural-routing-v4.js?v=412"></script>
   <script src="./timing-oracle-v1.js?v=101"></script>
   <script src="./general-5-6-v1.js?v=101"></script>
   <script src="./profile-advanced-v2.js?v=201"></script>
@@ -535,7 +535,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.
   <script src="./astro-transit-v1.js?v=101"></script>
   <script src="./astro-return-v1.js?v=101"></script>
 <script src="./thai-taksa-v1.js?v=101"></script>
-  <script src="./astro-horary-v1.js?v=102"></script>
+  <script src="./astro-horary-v1.js?v=103"></script>
   <script src="./lunea-lag-guard-v1.js?v=101"></script>
   <script src="./lunea-astro-stability-v2.js?v=201"></script>
    <script src="./lunea-ios-performance-v3.js?v=306"></script>
