@@ -119,6 +119,23 @@
         push(s);
       });
     }
+    // Natural Korean compound questions often separate requested answers with
+    // commas or conjunctions instead of explicit slashes.
+    const clauseSource=q
+      .replace(/[?!。]+/g,';')
+      .replace(/\s*(?:그리고|또한|또|그다음|아울러)\s*/g,';')
+      .replace(/,\s*(?=[^,;]{0,28}(?:인지|는지|한지|할지|될지|어떤지|언제|왜|얼마나|누가))/g,';');
+    clauseSource.split(/[;；]/).forEach(seg=>{
+      let s=seg.trim()
+        .replace(/^(?:그래서|그럼|그러면|근데|그런데|혹시)\s*/,'')
+        .replace(/[?.!]+$/g,'');
+      if(!/(인지|는지|한지|했는지|할지|될지|어떤지|언제|왜|얼마나|누가|무엇|어떻게|가능성|속마음|감정|행동|연락|재회|비교)/i.test(s))return;
+      if(s.length>58){
+        const tail=s.match(/([^,]{2,58}(?:인지|는지|한지|했는지|할지|될지|어떤지|언제[^,]*|왜[^,]*|얼마나[^,]*))$/i);
+        if(tail)s=tail[1];
+      }
+      push(s);
+    });
     // Strong concept labels are safer than guessing noun chunks.
     targets.forEach(t=>{
       if(['my_status','my_emotion','my_romance','new_connection','profile_photo','profile_music','status_message','instagram_story','appearance','body','exam','study','career','job_change','money','debt','stock','business','move','travel','purchase'].includes(t.id)) push(t.label);
@@ -355,23 +372,24 @@
     const obj=withObjectParticle(t);
     const verb=target?.id==='profile_music'?'직접 들어본 사실':target?.id==='profile_photo'?'직접 보거나 확인한 사실':target?.id==='status_message'?'직접 읽거나 확인한 사실':'직접 확인한 사실';
     const reaction=sem.conditionalReaction?`실제로 ${obj} 확인했다면 그 순간 받은 인상·생각`:null;
+    const actionFollowup=sem.action?`실제로 ${obj} 확인했다면 그 뒤 연락·반응 행동으로 넘어갈 마음이 생겼는지`:null;
     return [
       makeSp(`${t} 확인 여부 · 증거/반증 판별`,'관계 맥락보다 실제 확인 여부를 먼저 판별하고, 지지 신호와 반대 신호를 같은 무게로 비교','evidence',[
         `${obj} ${verb}을 지지하는 카드상 신호`,
         `${obj} 확인하지 않았거나 우연히 노출됐을 가능성을 지지하는 반대 신호`,
-        `두 가능성 중 어느 쪽이 더 우세한지 가르는 최종 판별 기준`,...(reaction?[reaction]:[])
+        `두 가능성 중 어느 쪽이 더 우세한지 가르는 최종 판별 기준`,...(reaction?[reaction]:[]),...(actionFollowup?[actionFollowup]:[])
       ]),
       makeSp(`${t} 접근 흔적 · 의도성 검증`,'봤다/안 봤다를 바로 단정하지 않고 접근 가능성→의도성→반증 순서로 좁힌다','threshold',[
         `최근 상대에게 ‘${t}’이 실제로 노출되거나 접근 가능했을 가능성`,
         `노출됐다면 상대가 의도적으로 ‘${t}’에 주의를 기울였을 가능성`,
         `단순 우연·자동 노출·미확인 쪽을 지지하는 가장 강한 반증`,
-        `전체 신호를 합쳤을 때 직접 확인 쪽인지 미확인 쪽인지 가르는 결론`,...(reaction?[reaction]:[])
+        `전체 신호를 합쳤을 때 직접 확인 쪽인지 미확인 쪽인지 가르는 결론`,...(reaction?[reaction]:[]),...(actionFollowup?[actionFollowup]:[])
       ]),
       makeSp(`${t} 관찰 여부 · 3단 필터`,'접근 기회, 실제 주의, 반대 증거를 분리해 과잉해석을 줄인다','blindspot',[
         `상대가 ‘${t}’을 접할 현실적 기회가 있었는지`,
         `기회가 있었다면 실제로 멈춰서 확인했음을 시사하는 집중 신호`,
         `내가 '봤을 것'이라고 과대해석하게 만들 수 있는 반대 변수`,
-        `세 신호를 비교했을 때 가장 타당한 판별`,...(reaction?[reaction]:[])
+        `세 신호를 비교했을 때 가장 타당한 판별`,...(reaction?[reaction]:[]),...(actionFollowup?[actionFollowup]:[])
       ])
     ];
   }
@@ -1030,6 +1048,7 @@
     const result={...best.sp};
     result.positions=(result.positions||[]).map((p,i)=>String(p).match(/^\d+[.)]\s*/)?String(p):`${i+1}. ${p}`);
     result.designRationale=`${result.designRationale||'질문 구조 기반 설계'} · V7 후보 ${ranked.length}개 비교 후 선택 (적합도 ${Math.max(0,best.score)}점)`;
+    try { Object.defineProperty(result,'_luneaQualityScore',{value:best.score,enumerable:false}); } catch {}
     remember(sem.question,result,sem,best.score);
     console.info('[LUNEA V7] semantic',sem,'ranked',ranked.map(x=>({title:x.sp.spreadTitle,score:x.score,reasons:x.reasons})));
     return result;
@@ -1560,23 +1579,38 @@
     W.LUNEA_V7_LAST_SEMANTIC=baseSem;
     W.LUNEA_V72_LAST_SEMANTIC=sem;
     let c=specialtyCandidates(sem);
+    const hasApi=!!localStorage.getItem('LUNEA_API_KEY');
+    let aiResult=null;
+    // A specialist keyword match is only a candidate in AI custom mode.
+    // Read the full original question with the V7 candidate generator and
+    // prefer that result when its intent/slot audit is strong enough.
+    if(hasApi){
+      aiResult=await oldDesign(question);
+      const aiScore=Number(aiResult?._luneaQualityScore ?? -999);
+      const complexRequest=baseSem.slots.length>=2 || baseSem.intentTags.length>=2 || /[\/；;,]|그리고|또한|그다음/.test(baseSem.question);
+      if(aiResult && (aiScore>=72 || (complexRequest && aiScore>=66) || !c.length)){
+        aiResult.designRationale=`${aiResult.designRationale||'AI 질문 구조 설계'} · V7.4가 질문의 요청 항목·사건단계·대상 범위를 재검수`;
+        return aiResult;
+      }
+      if(aiResult)c.push(aiResult);
+    }
     // V7 기본 엔진이 이미 더 정밀하게 처리하는 질문군은
     // V7.2/7.3의 범용 3카드 fallback으로 덮어쓰지 않는다.
     if(!c.length && ['observation','perception','signal_intent','new_connection','thought_frequency'].includes(baseSem.kind)){
-      const r=await oldDesign(question);
+      const r=aiResult||await oldDesign(question);
       r.designRationale=`${r.designRationale||'V7 정밀 설계'} · V7.4 메타: ${axesText(sem)}`;
       return r;
     }
     // 주식/주거/커리어/시험의 A-B 비교는 V7 기본 엔진에 이미 도메인 전용 대칭 배열이 있으므로
     // 범용 A/B 템플릿으로 덮지 않는다.
     if(!c.length && baseSem.kind==='choice' && sem.domains.some(d=>['stock','move','career','exam'].includes(d))){
-      const r=await oldDesign(question);
+      const r=aiResult||await oldDesign(question);
       r.designRationale=`${r.designRationale||'V7 도메인 전용 선택 설계'} · V7.4 메타: ${axesText(sem)}`;
       return r;
     }
     if(!c.length)c=structuralFallback(sem);
     if(!c.length){
-      const r=await oldDesign(question);
+      const r=aiResult||await oldDesign(question);
       r.designRationale=`${r.designRationale||'V7 기본 설계'} · V7.4 메타: ${axesText(sem)}`;
       return r;
     }
