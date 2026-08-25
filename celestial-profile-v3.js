@@ -305,7 +305,7 @@
         </div>
         <label class="cpv3-switch"><input type="checkbox" id="astroV3Placidus" checked> SECONDARY</label>
       </div>
-      <p class="cpv3-note">호라리(Horary·질문시각 점성술)는 이 설정과 분리하고 Regiomontanus(레지오몬타누스)를 사용하도록 설계돼 있어.</p>
+      <p class="cpv3-note">호라리(Horary·질문시각 점성술)는 출생차트 설정과 분리돼. 홈의 HORARY ASTROLOGY에서 질문 시각·장소를 기준으로 Regiomontanus(레지오몬타누스) 하우스를 계산해.</p>
     `;
     panel.appendChild(policy);
 

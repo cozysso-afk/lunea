@@ -16,6 +16,7 @@
     astro-transit-v1.js
     astro-return-v1.js
     thai-taksa-v1.js
+    astro-horary-v1.js
     lunea-lag-guard-v1.js
     lunea-astro-stability-v2.js   <-- HERE
     lunea-ios-performance-v3.js
@@ -236,6 +237,12 @@
       'astroReturnRun',
       'astroReturnStatus',
       'Astro Core 서버 준비 확인 중… 준비되면 회귀 계산을 자동으로 이어서 시작해.'
+    );
+
+    wrapRunButton(
+      'astroHoraryRun',
+      'astroHoraryStatus',
+      'Astro Core 서버 준비 확인 중… 준비되면 호라리 계산을 자동으로 이어서 시작해.'
     );
 
     // Warm in the background. Network I/O only; no synchronous ephemeris or DOM work.
