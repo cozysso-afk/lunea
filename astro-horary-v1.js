@@ -133,7 +133,14 @@
       #astroHoraryOverlay{background:rgba(5,5,12,.93);backdrop-filter:blur(16px)}
       .horary-modal{max-width:448px}
       .horary-help{font-size:10px;line-height:1.55;color:var(--dim);margin:3px 0 10px}
-      .horary-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+      .horary-modal .field{min-width:0}
+      .horary-modal textarea,.horary-modal input,.horary-modal select{
+        display:block;box-sizing:border-box;min-width:0;max-width:100%
+      }
+      .horary-modal textarea{min-height:78px;line-height:1.55}
+      .horary-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px}
+      .horary-grid .field{margin-bottom:0}
+      #astroHoraryMoment,#astroHoraryPlace{min-height:46px}
       .horary-now{
         margin-top:5px;border:1px solid rgba(124,211,255,.22);
         background:rgba(124,211,255,.07);color:#c9edff
@@ -176,7 +183,14 @@
       .horary-inline small{display:block;color:#bfeaff;font-size:8.5px;letter-spacing:.7px}
       .horary-inline b{display:block;margin:3px 0;color:#f4effb;font-size:11.5px}
       .horary-inline span{font-size:9.3px;color:var(--dim);line-height:1.45}
-      @media(max-width:370px){.horary-grid{grid-template-columns:1fr}}
+      @media(max-width:520px){
+        .horary-grid{grid-template-columns:minmax(0,1fr);gap:10px}
+        .horary-now{width:100%;min-height:40px;margin-top:8px}
+      }
+      @media(max-width:390px){
+        .horary-modal{padding-left:16px;padding-right:16px}
+        .horary-modal .modal-h{font-size:16px;line-height:1.45}
+      }
     `;
     document.head.appendChild(style);
   }
