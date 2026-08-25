@@ -61,6 +61,10 @@
         /(연애\s*(방식|스타일|성향)|애정\s*(표현|방식)|사랑\s*(방식|스타일))/i],
       ['attitude_to_me', '나를 대했던 태도',
         /(나를|나한테|내게|나에게).{0,10}(대했던|대하는|보였던|취했던).{0,6}태도|나에\s*대한\s*태도/i],
+      ['current_view', '현재 나를 보는 생각·인식',
+        /(각각|둘|A|B).{0,18}(나를|내게|나에\s*대해).{0,12}(어떻게\s*)?(생각|인식|평가|보는)|나를.{0,12}(어떻게\s*)?(생각|보는|평가)/i],
+      ['sincerity', '감정의 진심·무게',
+        /(누가|어느\s*쪽|둘\s*중).{0,16}(더\s*)?(진심|감정|마음|호감|미련).{0,8}(큰|강|깊|진짜|진심)?|진심.{0,10}(비교|차이|누가)/i],
       ['recall_reason', '현재 나를 다시 떠올리는 이유',
         /(다시\s*)?(떠올리는|생각하는|생각나는).{0,8}(이유|원인)|왜.{0,10}(다시\s*)?(떠올|생각)/i],
       ['return_motive', '다시 다가오려는 이유·동기',
@@ -68,7 +72,7 @@
       ['approach_style', '실제 접근·연락 방식',
         /(접근|다가오는|연락|재접근).{0,6}(방식|스타일|패턴)|어떤\s*식으로.{0,8}(접근|연락|다가)/i],
       ['action_likelihood', '실제로 움직일 가능성',
-        /(실제|현실에서).{0,10}(움직|행동|연락).{0,10}(가능성|확률|강|높)|누가.{0,18}(실제\s*)?(움직|행동|연락).{0,10}(강|높|먼저)/i],
+        /(실제|현실에서).{0,10}(움직|행동|연락).{0,10}(가능성|확률|강|높)|누가.{0,18}(실제\s*)?(움직|행동|연락).{0,10}(강|높|먼저)|누가.{0,10}먼저.{0,10}(움직|행동|연락)/i],
       ['reconnection_potential', '관계가 다시 이어질 가능성',
         /(관계|인연).{0,10}다시.{0,10}(이어|연결|회복).{0,10}(가능성|여지)|재회\s*가능성|재연결\s*가능성|다시\s*이어질\s*가능성/i]
     ];
@@ -123,6 +127,10 @@
 
     function comparisonCue(q) {
       return /(비교|각각|나눠서|나누어|나눠\s*봐|대칭|A.{0,14}B|둘.{0,10}(차이|비교)|누가.{0,20}더\s*(강|높|크|가능))/i.test(q);
+    }
+
+    function personComparisonCue(q) {
+      return pastCue(q) || /(두\s*사람|두\s*남자|두\s*여자|두\s*상대|후보\s*[12AB]|A와\s*B|A\s*및\s*B|A랑\s*B|A와B|둘.{0,18}(나를|내게|감정|진심|연락|행동)|누가.{0,18}(진심|마음|감정|먼저\s*행동))/i.test(q);
     }
 
     function explicitChoiceDecision(q) {
@@ -214,12 +222,12 @@
       const typeCount = Object.values(req.types).filter(Boolean).length;
 
       // 1. Explicit A/B comparison outranks everything.
-      if (pastCue(q) && pairCue(q) && comparisonCue(q)) {
+      if (pairCue(q) && comparisonCue(q) && personComparisonCue(q)) {
         return {
           mode: 'person_comparison',
           targetCount: 2,
           targetCountMode: 'fixed',
-          relation: 'parallel_comparison',
+          relation: pastCue(q) ? 'past_parallel_comparison' : 'parallel_comparison',
           decisionRequested: explicitChoiceDecision(q),
           request: req,
           period: periodInfo(q)
@@ -267,13 +275,14 @@
 
     function buildComparison(q, route) {
       const axes = extractCompareAxes(q);
+      const scopeLabel = pastCue(q) ? '과거 인연' : '두 사람';
       const positions = [
         ...axes.map((axis,i)=>`A · 축 ${i+1} · ${axis}`),
         ...axes.map((axis,i)=>`B · 축 ${i+1} · ${axis}`)
       ];
 
       return {
-        spreadTitle: `과거 인연 A/B · ${axes.length}축 대칭 비교 · ${positions.length}카드`,
+        spreadTitle: `${scopeLabel} A/B · ${axes.length}축 대칭 비교 · ${positions.length}카드`,
         layoutType: 'structural-v4-person-comparison',
         positions,
         designRationale: [
@@ -294,8 +303,8 @@
           axisCount: axes.length,
           decisionRequested: route.decisionRequested,
           pages: [
-            {label:'과거 인연 A', indices:Array.from({length:axes.length},(_,i)=>i)},
-            {label:'과거 인연 B', indices:Array.from({length:axes.length},(_,i)=>axes.length+i)}
+            {label:`${scopeLabel} A`, indices:Array.from({length:axes.length},(_,i)=>i)},
+            {label:`${scopeLabel} B`, indices:Array.from({length:axes.length},(_,i)=>axes.length+i)}
           ]
         }
       };
