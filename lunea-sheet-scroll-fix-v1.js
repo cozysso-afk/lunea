@@ -8,6 +8,7 @@
   - Keeps the fixed bottom-sheet design.
   - Gives the sheet its own viewport-bounded vertical scroll area.
   - Prevents the page behind the sheet from scrolling while it is open.
+  - Adds a persistent top-right close button without clearing form values.
   - Does not alter spread logic, form values, RNG, or overlays.
 */
 (() => {
@@ -38,19 +39,66 @@
       #luneaManualPanel textarea,
       #luneaManualPanel input,
       #luneaManualPanel select{touch-action:auto}
+      #luneaSheetClose{
+        position:sticky;
+        top:0;
+        float:right;
+        z-index:20;
+        width:38px;
+        height:38px;
+        margin:-8px -4px 4px 8px;
+        padding:0;
+        border:1px solid rgba(189,164,248,.24);
+        border-radius:50%;
+        background:rgba(18,14,28,.92);
+        color:#d8cff0;
+        font-size:28px;
+        font-weight:300;
+        line-height:34px;
+        text-align:center;
+        cursor:pointer;
+        box-shadow:0 5px 18px rgba(0,0,0,.28);
+        backdrop-filter:blur(10px);
+        -webkit-backdrop-filter:blur(10px);
+        touch-action:manipulation;
+      }
+      #luneaSheetClose:active{transform:scale(.94)}
       @media(max-width:520px){
         .sheet{
           max-height:calc(100dvh - max(8px, env(safe-area-inset-top)));
           padding-bottom:calc(34px + env(safe-area-inset-bottom));
         }
+        #luneaSheetClose{width:40px;height:40px;font-size:29px;line-height:36px}
       }
     `;
     document.head.appendChild(style);
   }
 
+  function ensureCloseButton(sheet) {
+    let button = $('luneaSheetClose');
+    if (button) return button;
+    button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'luneaSheetClose';
+    button.setAttribute('aria-label', '창 닫기');
+    button.title = '닫기';
+    button.textContent = '×';
+    sheet.insertAdjacentElement('afterbegin', button);
+    button.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      sheet.classList.remove('open');
+      document.body.classList.remove('lunea-sheet-open');
+      button.blur();
+    });
+    return button;
+  }
+
   function install() {
     const sheet = $('sheet');
-    if (!sheet || sheet.__luneaScrollFixed) return !!sheet;
+    if (!sheet) return false;
+    ensureCloseButton(sheet);
+    if (sheet.__luneaScrollFixed) return true;
     sheet.__luneaScrollFixed = true;
 
     let wasOpen = sheet.classList.contains('open');
