@@ -1,19 +1,20 @@
 'use strict';
 
 /*
-  LUNEA TIMING ORACLE A/B V1
+  LUNEA TIMING ORACLE A/B V2
   ==========================
   Multi-target companion for Timing Oracle V1.
 
   - Single-target Timing Oracle remains unchanged.
-  - A/B or two-person questions draw one independent Timing Oracle card per target.
+  - A/B or genuinely two-person questions draw one independent Timing Oracle card per target.
+  - Scenario words such as "각각" do NOT by themselves mean multiple people.
   - Both targets use the same question-derived candidate policy; neither is forced to differ.
   - No artificial comparison winner and no event-certainty claim.
 */
 (() => {
   const W = window;
-  if (W.__LUNEA_TIMING_AB_V1__) return;
-  W.__LUNEA_TIMING_AB_V1__ = true;
+  if (W.__LUNEA_TIMING_AB_V2__) return;
+  W.__LUNEA_TIMING_AB_V2__ = true;
 
   const $ = id => document.getElementById(id);
   const HISTORY_KEY = 'LUNEA_TIMING_AB_HISTORY_V1';
@@ -27,11 +28,15 @@
   function isPairQuestion(question) {
     const guard = W.LUNEA_HORARY_MULTI_GUARD?.isMultiPersonQuestion;
     if (typeof guard === 'function') {
-      try { if (guard(question)) return true; } catch {}
+      try { return !!guard(question); } catch {}
     }
+
+    // Fallback only when the shared guard is unavailable.
+    // IMPORTANT: "각각" is intentionally excluded because it frequently
+    // describes multiple timings/options for ONE person.
     const q = norm(question);
-    const pair = /(?:\ba\s*(?:와|과|랑|\/|·|및|,|그리고)\s*b\b|a와b|a\/b|a·b|두\s*(?:사람|명|인연|상대)|2\s*(?:사람|명)|둘\s*(?:다|은|이|의)?|각각)/i.test(q);
-    const people = /(사람|상대|인연|전남친|전여친|전애인|구남친|구여친|연인|이성|썸|친구|지인|동료)/i.test(q);
+    const pair = /(?:\ba\s*(?:와|과|랑|\/|·|및|,|그리고)\s*b\b|a와b|a\/b|a·b|두\s*(?:사람|명|인연|상대|대상)|2\s*(?:사람|명|인연|상대|대상)|둘\s*(?:다|은|이|의)?)/i.test(q);
+    const people = /(사람|상대|인연|전남친|전여친|전애인|구남친|구여친|연인|이성|썸|친구|지인|동료|대상)/i.test(q);
     return pair && people;
   }
 
@@ -216,6 +221,7 @@
     abState.question=''; abState.mode=null; abState.A=null; abState.B=null; abState.ai=''; abState.analysis=null;
     const p=$('luneaTimingABPanel'); if (p) p.classList.remove('show');
     const out=$('luneaTimingABAI'); if (out) {out.classList.remove('show');out.textContent='';}
+    W.LUNEA_TIMING_AB_LAST = null;
   }
   function setBaseStageVisible(visible) {
     ['timingFlip','timingResult','timingActions','timingAIText'].forEach(id=>{const el=$(id); if(el) el.style.display=visible?'':'none';});
@@ -230,7 +236,9 @@
       if (help) help.textContent='두 사람 질문은 한 장에 합치지 않고 A와 B에 시기 카드 1장씩 독립 추출해. 같은 카드가 둘 다 나올 수도 있어.';
       setBaseStageVisible(false);
     } else {
+      clearAB();
       if (btn) btn.textContent='⏳ 시기 카드 한 장 뽑기';
+      if (help) help.textContent='질문 범위에 맞는 시기 카드 1장을 뽑아. 한 사람에 대한 여러 시나리오/시점 비교는 두 사람 질문으로 보지 않아.';
       setBaseStageVisible(true);
       panel.classList.remove('show');
     }
@@ -296,7 +304,7 @@
     const prior=W.promptString || (typeof promptString==='function'?promptString:null);
     if(typeof prior!=='function') return;
     const wrapped=function(){let p=String(prior.apply(this,arguments)||'');let q='';try{q=String(state?.question||'').trim();}catch{}
-      if(abState.mode==='support'&&abState.A&&abState.B&&abState.question===q){p+=`\n\n[LUNEA TIMING ORACLE A/B — 두 대상 독립 시기 보조]\n- A: ${abState.A.label_ko} / ${abState.A.label_en} — ${abState.A.meaning}\n- B: ${abState.B.label_ko} / ${abState.B.label_en} — ${abState.B.meaning}\n- A/B를 한 장으로 합치지 말고 각각 읽은 뒤 마지막에만 비교한다. 동일/유사 신호면 차이를 억지로 만들지 않는다. 시기 카드만으로 사건 발생을 확정하지 않는다.`;}return p;};
+      if(abState.mode==='support'&&abState.A&&abState.B&&abState.question===q&&isPairQuestion(q)){p+=`\n\n[LUNEA TIMING ORACLE A/B — 두 대상 독립 시기 보조]\n- A: ${abState.A.label_ko} / ${abState.A.label_en} — ${abState.A.meaning}\n- B: ${abState.B.label_ko} / ${abState.B.label_en} — ${abState.B.meaning}\n- A/B를 한 장으로 합치지 말고 각각 읽은 뒤 마지막에만 비교한다. 동일/유사 신호면 차이를 억지로 만들지 않는다. 시기 카드만으로 사건 발생을 확정하지 않는다.`;}return p;};
     wrapped.__luneaTimingABWrapped=true; W.promptString=wrapped; try{promptString=wrapped;}catch{} W.__LUNEA_TIMING_AB_PROMPT_WRAPPED__=true;
   }
 
@@ -311,6 +319,6 @@
     installPromptWrap(); syncMode(); return true;
   }
 
-  function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>100)clearInterval(timer);},120);install();W.LUNEA_TIMING_AB={isPairQuestion,state:abState};console.info('⏳ LUNEA Timing Oracle A/B V1 loaded');}
+  function boot(){let tries=0;const timer=setInterval(()=>{tries++;if(install()||tries>100)clearInterval(timer);},120);install();W.LUNEA_TIMING_AB={isPairQuestion,state:abState};console.info('⏳ LUNEA Timing Oracle A/B V2 loaded');}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
