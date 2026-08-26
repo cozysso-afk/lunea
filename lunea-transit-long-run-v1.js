@@ -1,30 +1,31 @@
 'use strict';
 
 /*
-  LUNEA TRANSIT LONG RUN V1
+  LUNEA TRANSIT LONG RUN V2
   =========================
-  Safe compatibility layer for Transit Scanner ranges > 120 days.
+  Resumable compatibility layer for Transit Scanner ranges > 120 days.
 
-  Design:
-  - Does NOT permanently replace window.fetch.
-  - Waits until the existing Transit button has been fully installed/wrapped.
-  - For <=120 days, delegates untouched to the original handler.
-  - For >120 days, temporarily intercepts only the one Transit POST initiated
-    by the existing handler, splits it into <=120-day requests, merges the
-    results, returns a normal Response to the existing renderer, then restores
-    window.fetch immediately.
-  - Preserves Lag Guard / Astro Stability because chunk requests call the
-    already-installed fetch chain.
+  - <=120 days: delegates untouched to the original Transit handler.
+  - >120 days: splits into <=120-day chunks and merges the normal V1 responses.
+  - Saves every completed chunk to localStorage immediately.
+  - If iOS suspends/kills an in-flight request while the app is backgrounded,
+    waits for foreground and retries the SAME chunk instead of failing the run.
+  - If the page/app reloads, pressing Transit Scan again with the same
+    topic/range/natal data resumes from the saved chunk checkpoint.
+  - A completed merged result clears the temporary checkpoint.
 */
 (() => {
   const W = window;
-  if (W.__LUNEA_TRANSIT_LONG_RUN_V1__) return;
+  if (W.__LUNEA_TRANSIT_LONG_RUN_V2__) return;
+  W.__LUNEA_TRANSIT_LONG_RUN_V2__ = true;
   W.__LUNEA_TRANSIT_LONG_RUN_V1__ = true;
 
   const $ = id => document.getElementById(id);
   const MAX_CHUNK = 120;
   const OVERLAP = 2;
   const DAY_MS = 86400000;
+  const CHECKPOINT_KEY = 'LUNEA_TRANSIT_LONG_RUN_V2_CHECKPOINT';
+  const CHECKPOINT_MAX_AGE_MS = 12 * 60 * 60 * 1000;
 
   function errorText(data, status, statusText) {
     const detail = data?.detail ?? data?.message ?? data?.error;
@@ -133,7 +134,8 @@
         timezone:body.timezone || first?.range?.timezone || 'Asia/Seoul',
         sample_step_hours:Math.max(24, ...parts.map(p => Number(p?.range?.sample_step_hours)||0)),
         client_chunks:chunks.length,
-        client_overlap_days:OVERLAP
+        client_overlap_days:OVERLAP,
+        resumable_chunks:true
       },
       overall:{
         max_activation:maxActivation,
@@ -149,41 +151,168 @@
       rules:{
         ...(first?.rules || {}),
         extended_client_chunking:true,
+        resumable_client_chunking:true,
         note:(first?.rules?.note || 'Transit activation is a timing/activation signal, not a guaranteed event outcome.')
-          + ` Long range merged from ${chunks.length} server scans.`
+          + ` Long range merged from ${chunks.length} resumable server scans.`
       }
     };
   }
 
+  function signatureFor(body) {
+    let raw = '';
+    try {
+      raw = JSON.stringify({
+        days:Number(body?.days || 0),
+        topic:String(body?.topic || ''),
+        timezone:String(body?.timezone || ''),
+        natal:body?.natal || null
+      });
+    } catch {
+      raw = `${body?.days}|${body?.topic}|${body?.timezone}`;
+    }
+    let h = 2166136261;
+    for (let i = 0; i < raw.length; i += 1) {
+      h ^= raw.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(16);
+  }
+
+  function readCheckpoint(body, chunks) {
+    try {
+      const saved = JSON.parse(localStorage.getItem(CHECKPOINT_KEY) || 'null');
+      if (!saved) return null;
+      if (Date.now() - Number(saved.updatedAt || 0) > CHECKPOINT_MAX_AGE_MS) {
+        localStorage.removeItem(CHECKPOINT_KEY);
+        return null;
+      }
+      if (saved.signature !== signatureFor(body)) return null;
+      if (!Array.isArray(saved.parts) || saved.parts.length > chunks.length) return null;
+      return saved;
+    } catch {
+      return null;
+    }
+  }
+
+  function writeCheckpoint(body, parts, chunks, startIso) {
+    try {
+      localStorage.setItem(CHECKPOINT_KEY, JSON.stringify({
+        version:2,
+        signature:signatureFor(body),
+        totalDays:Number(body.days),
+        startIso,
+        parts,
+        completed:parts.length,
+        totalChunks:chunks.length,
+        updatedAt:Date.now()
+      }));
+    } catch (err) {
+      console.warn('[Transit Long V2] checkpoint save skipped', err);
+    }
+  }
+
+  function clearCheckpoint() {
+    try { localStorage.removeItem(CHECKPOINT_KEY); } catch {}
+  }
+
+  function waitUntilVisible(status, i, total) {
+    if (!document.hidden) return Promise.resolve();
+    if (status) status.textContent = `장기 트랜짓 일시정지 · 앱으로 돌아오면 ${i + 1}/${total} 구간부터 자동 재개`;
+    return new Promise(resolve => {
+      const onVisible = () => {
+        if (document.hidden) return;
+        document.removeEventListener('visibilitychange', onVisible);
+        if (status) status.textContent = `장기 트랜짓 재개 중 · ${i + 1}/${total} 구간`;
+        resolve();
+      };
+      document.addEventListener('visibilitychange', onVisible);
+    });
+  }
+
+  function isTransientNetworkError(err) {
+    const name = String(err?.name || '');
+    const msg = String(err?.message || err || '');
+    return name === 'TypeError'
+      || /network|load failed|fetch|internet|connection|cancelled|canceled/i.test(msg)
+      || (name === 'AbortError' && document.hidden);
+  }
+
+  async function fetchOneChunk(baseFetch, input, init, chunkBody, i, total, status) {
+    let attempt = 0;
+    while (attempt < 4) {
+      attempt += 1;
+      await waitUntilVisible(status, i, total);
+      try {
+        const res = await baseFetch(input, {
+          ...(init || {}),
+          body:JSON.stringify(chunkBody)
+        });
+        let data = null;
+        try { data = await res.json(); } catch {}
+
+        if (!res.ok) {
+          // Server-side validation/client errors should surface immediately.
+          if (res.status >= 400 && res.status < 500 && res.status !== 408 && res.status !== 429) {
+            throw new Error(`${i + 1}/${total} 구간 실패 · ${errorText(data, res.status, res.statusText)}`);
+          }
+          throw Object.assign(new Error(`${i + 1}/${total} 구간 일시 오류 · ${errorText(data, res.status, res.statusText)}`), {transient:true});
+        }
+        if (data?.schema !== 'LUNEA_TRANSIT_SCAN_V1') {
+          throw new Error(`${i + 1}/${total} 구간의 응답 형식이 예상과 달라.`);
+        }
+        return data;
+      } catch (err) {
+        const transient = err?.transient || isTransientNetworkError(err);
+        if (!transient) throw err;
+
+        if (document.hidden) {
+          await waitUntilVisible(status, i, total);
+        } else if (attempt < 4) {
+          if (status) status.textContent = `연결 복구 중 · ${i + 1}/${total} 구간 재시도 ${attempt}/3`;
+          await new Promise(r => setTimeout(r, 700 * attempt));
+        }
+
+        if (attempt >= 4) {
+          throw new Error(`${i + 1}/${total} 구간의 네트워크 연결이 반복해서 끊겼어. 완료된 구간은 저장했으니 다시 스캔하면 여기서 이어서 계산해.`);
+        }
+      }
+    }
+    throw new Error(`${i + 1}/${total} 구간 계산을 재개하지 못했어.`);
+  }
+
   async function chunkedResponse(baseFetch, input, init, body) {
     const chunks = plan(body.days);
-    const parts = [];
     const status = $('astroTransitStatus');
+    const saved = readCheckpoint(body, chunks);
+    const parts = saved?.parts?.slice() || [];
+    const startIso = saved?.startIso || body.start_iso || new Date().toISOString();
+    const effectiveBody = {...body, start_iso:startIso};
 
-    for (let i = 0; i < chunks.length; i += 1) {
+    if (saved && parts.length) {
+      if (status) status.textContent = `이전 장기 계산 복원 · ${parts.length}/${chunks.length} 구간 완료 · 다음 구간부터 이어서 계산`;
+    } else {
+      writeCheckpoint(effectiveBody, parts, chunks, startIso);
+    }
+
+    for (let i = parts.length; i < chunks.length; i += 1) {
       const c = chunks[i];
       if (status) status.textContent = `장기 트랜짓 계산 중 · ${i + 1}/${chunks.length} 구간 · 전체 ${body.days}일`;
       const chunkBody = {
-        ...body,
-        start_iso:shiftIso(body.start_iso, c.startOffset),
+        ...effectiveBody,
+        start_iso:shiftIso(startIso, c.startOffset),
         days:c.days
       };
-      const res = await baseFetch(input, {
-        ...(init || {}),
-        body:JSON.stringify(chunkBody)
-      });
-      let data = null;
-      try { data = await res.json(); } catch {}
-      if (!res.ok) {
-        throw new Error(`${i + 1}/${chunks.length} 구간 실패 · ${errorText(data, res.status, res.statusText)}`);
-      }
-      if (data?.schema !== 'LUNEA_TRANSIT_SCAN_V1') {
-        throw new Error(`${i + 1}/${chunks.length} 구간의 응답 형식이 예상과 달라.`);
-      }
+
+      const data = await fetchOneChunk(baseFetch, input, init, chunkBody, i, chunks.length, status);
       parts.push(data);
+      writeCheckpoint(effectiveBody, parts, chunks, startIso);
+      if (status && i + 1 < chunks.length) {
+        status.textContent = `${i + 1}/${chunks.length} 구간 저장 완료 · 다음 구간 계산 준비 중`;
+      }
     }
 
-    const merged = merge(parts, body, chunks);
+    const merged = merge(parts, effectiveBody, chunks);
+    clearCheckpoint();
     return new Response(JSON.stringify(merged), {
       status:200,
       headers:{'Content-Type':'application/json'}
@@ -192,10 +321,11 @@
 
   function install() {
     const btn = $('astroTransitRun');
-    if (!btn || btn.__luneaLongRunV1) return !!btn;
+    if (!btn || btn.__luneaLongRunV2) return !!btn;
     const original = btn.onclick;
     if (typeof original !== 'function') return false;
 
+    btn.__luneaLongRunV2 = true;
     btn.__luneaLongRunV1 = true;
     btn.onclick = async function(event) {
       const days = Number($('astroTransitDays')?.value || 0);
@@ -229,7 +359,7 @@
       }
     };
 
-    console.info('🌌 LUNEA Transit Long Run V1 installed · >120d uses safe chunk runner');
+    console.info('🌌 LUNEA Transit Long Run V2 installed · resumable >120d scans ON');
     return true;
   }
 
