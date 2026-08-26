@@ -26,7 +26,8 @@
     const explicitPair = /(?:\bA\s*(?:와|과|랑|\/|·|및|,|그리고)\s*B\b|A와B|A\/B|A·B|두\s*(?:사람|명|인연|상대)|2\s*(?:사람|명)|둘\s*(?:다|은|이|의)?|각각)/i.test(q);
     const parallelNames = /(?:A[^\n]{0,45}B|B[^\n]{0,45}A)/i.test(q);
     const relational = /(상대|사람|인연|전남친|전여친|전애인|구남친|구여친|연인|이성|썸|친구|지인|동료|직장동료|상사|부하|배우자|남편|아내)/i.test(q);
-    return relational && (explicitPair || parallelNames);
+    const personPredicate = /(생각|떠올|의식|기억|마음|감정|정서|호감|그리움|후회|궁금|연락|카톡|메시지|전화|만나|재회|관계|나를\s*보|내게\s*느끼|나한테\s*느끼)/i.test(q);
+    return (explicitPair || parallelNames) && (relational || personPredicate);
   }
 
   function roleClassSummary(question) {
