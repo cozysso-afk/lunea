@@ -1,20 +1,21 @@
 'use strict';
 
 /*
-  LUNEA HORARY MULTI-TARGET GUARD V2
+  LUNEA HORARY MULTI-TARGET GUARD V3
   ==================================
   Traditional-method safety layer for compound person questions.
 
-  - A/B or multi-person questions are NOT split into artificial 5H/7H roles.
+  - A/B or genuinely multi-person questions are NOT split into artificial 5H/7H roles.
   - Same-category people at one question moment are NOT given separate significators without a non-arbitrary basis.
+  - Scenario words such as "각각" do NOT by themselves mean multiple people.
   - Re-asking A and B seconds/minutes apart merely to manufacture separate charts is discouraged.
-  - Automatic horary calculation is skipped for compound multi-person comparisons.
+  - Automatic horary calculation is skipped only for genuine compound multi-person comparisons.
   - Single-person horary remains completely unchanged.
 */
 (() => {
   const W = window;
-  if (W.__LUNEA_HORARY_MULTI_GUARD_V2__) return;
-  W.__LUNEA_HORARY_MULTI_GUARD_V2__ = true;
+  if (W.__LUNEA_HORARY_MULTI_GUARD_V3__) return;
+  W.__LUNEA_HORARY_MULTI_GUARD_V3__ = true;
 
   const $ = id => document.getElementById(id);
   const norm = v => String(v || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
@@ -23,11 +24,21 @@
     const q = norm(question);
     if (!q) return false;
 
-    const explicitPair = /(?:\bA\s*(?:와|과|랑|\/|·|및|,|그리고)\s*B\b|A와B|A\/B|A·B|두\s*(?:사람|명|인연|상대)|2\s*(?:사람|명)|둘\s*(?:다|은|이|의)?|각각)/i.test(q);
-    const parallelNames = /(?:A[^\n]{0,45}B|B[^\n]{0,45}A)/i.test(q);
+    // IMPORTANT: "각각" is intentionally NOT a multi-person marker.
+    // It often describes multiple timings/options for one person, e.g.
+    // "지금/몇 시간 뒤/내일 각각 A의 반응은?"
+    const explicitPair = /(?:\bA\s*(?:와|과|랑|\/|·|및|,|그리고)\s*B\b|A와B|A\/B|A·B|두\s*(?:사람|명|인연|상대|대상)|2\s*(?:사람|명|인연|상대|대상)|둘\s*(?:다|은|이|의)?)/i.test(q);
+
+    // A and B must both appear as actual target labels in a compact relationship/comparison phrase.
+    // A lone "A" plus unrelated Latin text must never trigger this branch.
+    const parallelLabels = /(?:\bA\b[^\n]{0,55}\bB\b|\bB\b[^\n]{0,55}\bA\b)/i.test(q);
+    const comparisonConnector = /(?:비교|둘|두\s*(?:사람|명|대상)|각\s*(?:사람|대상)|서로|A\s*(?:와|과|랑|\/|·|및|,|그리고)\s*B)/i.test(q);
+
     const relational = /(상대|사람|인연|전남친|전여친|전애인|구남친|구여친|연인|이성|썸|친구|지인|동료|직장동료|상사|부하|배우자|남편|아내)/i.test(q);
-    const personPredicate = /(생각|떠올|의식|기억|마음|감정|정서|호감|그리움|후회|궁금|연락|카톡|메시지|전화|만나|재회|관계|나를\s*보|내게\s*느끼|나한테\s*느끼)/i.test(q);
-    return (explicitPair || parallelNames) && (relational || personPredicate);
+    const personPredicate = /(생각|떠올|의식|기억|마음|감정|정서|호감|그리움|후회|궁금|연락|카톡|메시지|전화|dm|디엠|답장|만나|재회|관계|나를\s*보|내게\s*느끼|나한테\s*느끼)/i.test(q);
+
+    const twoTargets = explicitPair || (parallelLabels && comparisonConnector);
+    return twoTargets && (relational || personPredicate);
   }
 
   function roleClassSummary(question) {
@@ -90,6 +101,11 @@
     panel.classList.toggle('show', multi);
     if (!multi) {
       panel.innerHTML = '';
+      const status = $('astroHoraryStatus');
+      if (status?.classList.contains('err') && /다중|개별 비교 판정 생략/.test(status.textContent || '')) {
+        status.className = 'horary-status';
+        status.textContent = '';
+      }
       return;
     }
     panel.innerHTML = `<b>☿ 다중 대상 호라리 · 개별 비교 자동 판정 생략</b>
@@ -140,7 +156,7 @@
     }, 125);
     installRunGuard();
     W.LUNEA_HORARY_MULTI_GUARD = { isMultiPersonQuestion, roleClassSummary };
-    console.info('☿ LUNEA Horary Multi-Target Guard V2 loaded');
+    console.info('☿ LUNEA Horary Multi-Target Guard V3 loaded');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
