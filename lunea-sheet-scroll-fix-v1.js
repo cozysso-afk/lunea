@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA SHEET SCROLL FIX V2.1
+  LUNEA SHEET SCROLL FIX V2.2
   ===========================
   iOS/PWA-safe scrolling for the tall bottom sheet.
 
@@ -54,7 +54,7 @@
         border-radius:50%;
         background:rgba(23,17,35,.90);
         color:#eee7f9;
-        font-size:23px;
+        font-size:18px;
         font-weight:300;
         line-height:1;
         place-items:center;
@@ -85,7 +85,7 @@
           right:14px;
           width:34px;
           height:34px;
-          font-size:23px;
+          font-size:18px;
         }
       }
     `;
@@ -158,7 +158,7 @@
       if (install() || tries > 80) clearInterval(timer);
     }, 80);
     install();
-    console.info('📜 LUNEA Sheet Scroll Fix V2.1 loaded');
+    console.info('📜 LUNEA Sheet Scroll Fix V2.2 loaded');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
