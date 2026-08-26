@@ -15,7 +15,7 @@
     document.write('<script src="./lunea-manual-structure-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
-    document.write('<script src="./lunea-sheet-scroll-fix-v1.js?v=102"><\/script>');
+    document.write('<script src="./lunea-sheet-scroll-fix-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-horary-ab-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-timing-ab-v1.js?v=101"><\/script>');
     return;
@@ -26,7 +26,7 @@
     './lunea-manual-structure-v1.js?v=101',
     './lunea-manual-everywhere-v1.js?v=101',
     './lunea-manual-library-v1.js?v=101',
-    './lunea-sheet-scroll-fix-v1.js?v=102',
+    './lunea-sheet-scroll-fix-v1.js?v=103',
     './lunea-horary-ab-v1.js?v=103',
     './lunea-timing-ab-v1.js?v=101'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
