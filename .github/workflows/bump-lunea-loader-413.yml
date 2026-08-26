@@ -1,0 +1,42 @@
+name: Bump LUNEA loader cache 413
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bump-loader:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bump structural loader cache key
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          old = 'lunea-structural-routing-v4.js?v=412'
+          new = 'lunea-structural-routing-v4.js?v=413'
+          if old not in s:
+              print('Already bumped or target not found')
+          else:
+              p.write_text(s.replace(old, new), encoding='utf-8')
+              print('Bumped loader cache to v=413')
+          PY
+      - name: Commit cache bump
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html; then
+            echo 'No change needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Bump LUNEA structural loader cache to v413'
+          git push
