@@ -1,4 +1,4 @@
-name: Bump LUNEA loader cache 417
+name: Bump LUNEA loader cache 418
 
 on:
   push:
@@ -20,13 +20,13 @@ jobs:
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old = 'lunea-structural-routing-v4.js?v=416'
-          new = 'lunea-structural-routing-v4.js?v=417'
+          old = 'lunea-structural-routing-v4.js?v=417'
+          new = 'lunea-structural-routing-v4.js?v=418'
           if old not in s:
               print('Already bumped or target not found')
           else:
               p.write_text(s.replace(old, new), encoding='utf-8')
-              print('Bumped loader cache to v=417')
+              print('Bumped loader cache to v=418')
           PY
       - name: Commit cache bump
         shell: bash
@@ -38,5 +38,5 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html
-          git commit -m 'Bump LUNEA structural loader cache to v417'
+          git commit -m 'Bump LUNEA structural loader cache to v418'
           git push
