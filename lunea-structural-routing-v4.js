@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: Structural V4 + Manual Spread + reusable library + last-reading recovery + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle. */
+/* Loader shim: Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -16,6 +16,7 @@
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=101"><\/script>');
+    document.write('<script src="./lunea-flip-all-fix-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-transit-range-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-transit-long-run-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-astro-job-queue-v1.js?v=101"><\/script>');
@@ -31,6 +32,7 @@
     './lunea-manual-everywhere-v1.js?v=101',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
+    './lunea-flip-all-fix-v1.js?v=101',
     './lunea-transit-range-v1.js?v=103',
     './lunea-transit-long-run-v1.js?v=102',
     './lunea-astro-job-queue-v1.js?v=101',
