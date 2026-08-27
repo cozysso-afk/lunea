@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle. */
+/* Loader shim: Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -28,6 +28,7 @@
     document.write('<script src="./lunea-sheet-scroll-fix-v1.js?v=105"><\/script>');
     document.write('<script src="./lunea-horary-ab-v1.js?v=104"><\/script>');
     document.write('<script src="./lunea-timing-ab-v1.js?v=102"><\/script>');
+    document.write('<script src="./lunea-timing-prompt-repair-v1.js?v=101"><\/script>');
     return;
   }
 
@@ -48,6 +49,7 @@
     './lunea-astro-job-queue-v1.js?v=101',
     './lunea-sheet-scroll-fix-v1.js?v=105',
     './lunea-horary-ab-v1.js?v=104',
-    './lunea-timing-ab-v1.js?v=102'
+    './lunea-timing-ab-v1.js?v=102',
+    './lunea-timing-prompt-repair-v1.js?v=101'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();
