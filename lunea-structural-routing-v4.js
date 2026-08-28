@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + safe slower tarot flip / Moon Dial timing redesign + Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
+/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + safe slower tarot flip / Moon Dial timing redesign + celestial-object home portal + sequential whole-reading reveal + Structural V4 + Manual Spread + reusable library + last-reading recovery + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -20,7 +20,7 @@
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=101"><\/script>');
-    document.write('<script src="./lunea-flip-all-fix-v1.js?v=101"><\/script>');
+    document.write('<script src="./lunea-flip-all-fix-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-question-casebook-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-question-casebook-web-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-question-casebook-ranker-v1.js?v=101"><\/script>');
@@ -37,6 +37,7 @@
     document.write('<script src="./lunea-final-prompt-priority-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-daily-lock-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-card-motion-timing-v7.js?v=701"><\/script>');
+    document.write('<script src="./lunea-home-portal-v8.js?v=801"><\/script>');
     return;
   }
 
@@ -50,7 +51,7 @@
     './lunea-manual-everywhere-v1.js?v=101',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
-    './lunea-flip-all-fix-v1.js?v=101',
+    './lunea-flip-all-fix-v1.js?v=102',
     './lunea-question-casebook-v1.js?v=101',
     './lunea-question-casebook-web-v1.js?v=101',
     './lunea-question-casebook-ranker-v1.js?v=101',
@@ -66,6 +67,7 @@
     './lunea-timing-prompt-repair-v1.js?v=101',
     './lunea-final-prompt-priority-v1.js?v=101',
     './lunea-daily-lock-v1.js?v=101',
-    './lunea-card-motion-timing-v7.js?v=701'
+    './lunea-card-motion-timing-v7.js?v=701',
+    './lunea-home-portal-v8.js?v=801'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();
