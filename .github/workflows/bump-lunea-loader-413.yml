@@ -1,4 +1,4 @@
-name: Bump LUNEA loader cache 425
+name: Refresh LUNEA build cache
 
 on:
   push:
@@ -8,35 +8,63 @@ permissions:
   contents: write
 
 jobs:
-  bump-loader:
+  refresh-build-cache:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bump structural loader cache key
+
+      - name: Stamp build and version loader URLs
         shell: bash
         run: |
           python - <<'PY'
+          import json, os, re
           from pathlib import Path
+
+          build = os.environ['GITHUB_SHA'][:12]
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          old = 'lunea-structural-routing-v4.js?v=424'
-          new = 'lunea-structural-routing-v4.js?v=425'
-          if old not in s:
-              print('Already bumped or target not found')
+
+          # Every human/code change receives a unique structural-loader URL.
+          s = re.sub(
+              r'lunea-structural-routing-v4\.js\?v=[^"\']+',
+              f'lunea-structural-routing-v4.js?v={build}',
+              s,
+              count=1,
+          )
+
+          # Install/update the self-refresh guard in the HTML itself.
+          refresh_tag = f'<script src="./lunea-cache-refresh-v1.js?v={build}"></script>'
+          if 'lunea-cache-refresh-v1.js' in s:
+              s = re.sub(
+                  r'<script src="\./lunea-cache-refresh-v1\.js\?v=[^"]+"></script>',
+                  refresh_tag,
+                  s,
+                  count=1,
+              )
           else:
-              p.write_text(s.replace(old, new), encoding='utf-8')
-              print('Bumped loader cache to v=425')
+              anchor = '<script src="./spread-engine-v7.4.js?v=75"></script>'
+              if anchor not in s:
+                  raise SystemExit('Could not find spread-engine anchor for cache-refresh injection')
+              s = s.replace(anchor, refresh_tag + '\n  ' + anchor, 1)
+
+          p.write_text(s, encoding='utf-8')
+          Path('lunea-build.json').write_text(
+              json.dumps({'version': build}, ensure_ascii=False) + '\n',
+              encoding='utf-8',
+          )
+          print('Stamped LUNEA build:', build)
           PY
-      - name: Commit cache bump
+
+      - name: Commit build stamp
         shell: bash
         run: |
-          if git diff --quiet -- index.html; then
-            echo 'No change needed'
+          if git diff --quiet -- index.html lunea-build.json; then
+            echo 'No cache stamp change needed'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html
-          git commit -m 'Bump LUNEA structural loader cache to v425'
+          git add index.html lunea-build.json
+          git commit -m "Stamp LUNEA Pages build for cache refresh"
           git push
