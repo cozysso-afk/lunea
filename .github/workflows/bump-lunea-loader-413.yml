@@ -18,22 +18,12 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
-          import base64, json, os, re
+          import json, os, re
           from pathlib import Path
 
           build = os.environ['GITHUB_SHA'][:12]
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-
-          # Decode the staged exact #4 Home Screen artwork once, then remove staging files.
-          payload = Path('lunea-icon-4-v2.b64')
-          if payload.exists():
-              raw = base64.b64decode(payload.read_text(encoding='utf-8').strip(), validate=True)
-              if not raw.startswith(b'\x89PNG\r\n\x1a\n'):
-                  raise SystemExit('LUNEA icon payload is not a real PNG')
-              Path('lunea-icon-4-v2.png').write_bytes(raw)
-              payload.unlink()
-          Path('icon-test.txt').unlink(missing_ok=True)
 
           # Every human/code change receives a unique structural-loader URL.
           s = re.sub(
@@ -43,8 +33,9 @@ jobs:
               count=1,
           )
 
-          # Use a brand-new static icon URL so iOS cannot reuse the broken icon cache.
-          icon_tag = '<link rel="apple-touch-icon" sizes="180x180" href="./lunea-icon-4-v2.png">'
+          # Canonical iOS Home Screen artwork: original selected #4 opal tarot card.
+          # A new filename intentionally breaks Safari/iOS icon cache from the timing-oracle icon.
+          icon_tag = '<link rel="apple-touch-icon" sizes="180x180" href="./lunea-icon-opal-card-v11.png">'
           if re.search(r'<link[^>]+rel=["\']apple-touch-icon["\'][^>]*>', s, flags=re.I):
               s = re.sub(
                   r'<link[^>]+rel=["\']apple-touch-icon["\'][^>]*>',
@@ -56,7 +47,6 @@ jobs:
           else:
               s = s.replace('</title>', '</title>\n' + icon_tag, 1)
 
-          # Keep the iOS Home Screen label short and stable.
           app_title = '<meta name="apple-mobile-web-app-title" content="LUNEA">'
           if re.search(r'<meta[^>]+name=["\']apple-mobile-web-app-title["\'][^>]*>', s, flags=re.I):
               s = re.sub(
@@ -69,7 +59,6 @@ jobs:
           else:
               s = s.replace(icon_tag, icon_tag + '\n' + app_title, 1)
 
-          # Install/update the self-refresh guard in the HTML itself.
           refresh_tag = f'<script src="./lunea-cache-refresh-v1.js?v={build}"></script>'
           if 'lunea-cache-refresh-v1.js' in s:
               s = re.sub(
@@ -89,18 +78,18 @@ jobs:
               json.dumps({'version': build}, ensure_ascii=False) + '\n',
               encoding='utf-8',
           )
-          print('Stamped LUNEA build and Home Screen icon:', build)
+          print('Stamped LUNEA build and canonical Home Screen icon:', build)
           PY
 
       - name: Commit build stamp
         shell: bash
         run: |
-          if git diff --quiet -- index.html lunea-build.json lunea-icon-4-v2.png lunea-icon-4-v2.b64 icon-test.txt; then
+          if git diff --quiet -- index.html lunea-build.json; then
             echo 'No cache/icon stamp change needed'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A index.html lunea-build.json lunea-icon-4-v2.png lunea-icon-4-v2.b64 icon-test.txt
-          git commit -m "Stamp LUNEA Pages build and Home Screen icon"
+          git add index.html lunea-build.json
+          git commit -m "Stamp LUNEA Pages build and canonical Home Screen icon"
           git push
