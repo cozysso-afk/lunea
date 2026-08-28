@@ -130,7 +130,9 @@
 
     const balance = getBalance();
     const heading = summary.querySelector('h4');
-    if (heading && balance?.headline_ko) heading.textContent = balance.headline_ko;
+    if (heading && balance?.headline_ko && heading.textContent !== balance.headline_ko) {
+      heading.textContent = balance.headline_ko;
+    }
 
     let box = document.getElementById('luneaHoraryBalanceEvidence');
     if (!box) {
@@ -143,30 +145,35 @@
       ? balance.supporting_evidence_ko.filter(Boolean) : [];
     const limits = Array.isArray(balance?.constraints_ko)
       ? balance.constraints_ko.filter(Boolean) : [];
+    const signature = JSON.stringify({tier:balance?.tier || '', support, limits});
 
-    box.innerHTML = `
-      <div class="hb-kicker">HORARY EVIDENCE · BALANCED JUDGMENT</div>
-      <div class="hb-grid">
-        <div class="hb-col hb-support">
-          <b>지지 근거</b>
-          ${support.length
-            ? support.map(x => `<p>${esc(x)}</p>`).join('')
-            : '<p class="hb-empty">뚜렷한 보조 지지 근거 없음</p>'}
-        </div>
-        <div class="hb-col hb-limit">
-          <b>제한·마찰 근거</b>
-          ${limits.length
-            ? limits.map(x => `<p>${esc(x)}</p>`).join('')
-            : '<p class="hb-empty">별도 핵심 제한 근거 없음</p>'}
-        </div>
-      </div>`;
+    if (box.dataset.signature !== signature) {
+      box.dataset.signature = signature;
+      box.innerHTML = `
+        <div class="hb-kicker">HORARY EVIDENCE · BALANCED JUDGMENT</div>
+        <div class="hb-grid">
+          <div class="hb-col hb-support">
+            <b>지지 근거</b>
+            ${support.length
+              ? support.map(x => `<p>${esc(x)}</p>`).join('')
+              : '<p class="hb-empty">뚜렷한 보조 지지 근거 없음</p>'}
+          </div>
+          <div class="hb-col hb-limit">
+            <b>제한·마찰 근거</b>
+            ${limits.length
+              ? limits.map(x => `<p>${esc(x)}</p>`).join('')
+              : '<p class="hb-empty">별도 핵심 제한 근거 없음</p>'}
+          </div>
+        </div>`;
+    }
 
     const inline = document.querySelector('#luneaHoraryInline b');
     if (inline && balance?.headline_ko) {
       const c = latestHorary?.judgment_support?.primary_connection;
-      inline.textContent = balance.headline_ko + (c
+      const text = balance.headline_ko + (c
         ? ` · ${c.aspect_ko || ''} ${c.phase_ko || ''} orb ${c.orb ?? '—'}°`
         : '');
+      if (inline.textContent !== text) inline.textContent = text;
     }
   }
 
@@ -234,9 +241,14 @@
     ensureStyles();
     installFetchBridge();
 
+    let scheduled = false;
     const observer = new MutationObserver(() => {
-      if (!latestHorary) return;
-      renderEvidence();
+      if (!latestHorary || scheduled) return;
+      scheduled = true;
+      requestAnimationFrame(() => {
+        scheduled = false;
+        renderEvidence();
+      });
     });
     observer.observe(document.documentElement, {subtree:true, childList:true});
 
