@@ -11,6 +11,7 @@
   - Never uploads the memory as a dataset; matched examples travel only inside the user's
     normal Gemini preflight request for that current question.
   - Max 120 corrections, deduped by normalized question.
+  - Keeps up to 32 positions so A/B 24-card symmetric layouts are learned in full.
 */
 (() => {
   const W=window;
@@ -19,6 +20,7 @@
 
   const KEY='LUNEA_SPREAD_CORRECTION_MEMORY_V1';
   const MAX=120;
+  const MAX_POSITIONS=32;
   const $=id=>document.getElementById(id);
 
   function clean(v){return String(v||'').normalize('NFKC').replace(/\s+/g,' ').trim()}
@@ -28,8 +30,8 @@
   function jac(a,b){if(!a.size||!b.size)return 0;let h=0;a.forEach(x=>b.has(x)&&h++);return h/Math.max(1,new Set([...a,...b]).size)}
   function overlap(a,b){if(!a.size||!b.size)return 0;let h=0;a.forEach(x=>b.has(x)&&h++);return h/Math.max(1,Math.min(a.size,b.size))}
   function stripNum(v){return clean(v).replace(/^\d{1,2}\s*[.)]\s*/,'')}
-  function positions(v){return (Array.isArray(v)?v:[]).map(stripNum).filter(Boolean).slice(0,12)}
-  function lines(v){return String(v||'').split(/\n+/).map(stripNum).filter(Boolean).slice(0,12)}
+  function positions(v){return (Array.isArray(v)?v:[]).map(stripNum).filter(Boolean).slice(0,MAX_POSITIONS)}
+  function lines(v){return String(v||'').split(/\n+/).map(stripNum).filter(Boolean).slice(0,MAX_POSITIONS)}
   function samePositions(a,b){const A=positions(a),B=positions(b);return A.length===B.length&&A.every((x,i)=>x===B[i])}
 
   function read(){
@@ -66,7 +68,7 @@
       intentSummary:clean(meta.intentSummary),
       primaryIntent:clean(meta.primaryIntent),
       targetStructure:clean(meta.targetStructure),
-      requestedAxes:Array.isArray(meta.requestedAxes)?meta.requestedAxes.map(clean).filter(Boolean).slice(0,12):[],
+      requestedAxes:Array.isArray(meta.requestedAxes)?meta.requestedAxes.map(clean).filter(Boolean).slice(0,MAX_POSITIONS):[],
       createdAt:now,
       updatedAt:now
     };
@@ -197,9 +199,10 @@
   }
 
   W.LUNEA_SPREAD_LEARNING_V1={
-    version:1,
+    version:2,
     key:KEY,
     max:MAX,
+    maxPositions:MAX_POSITIONS,
     record,
     find,
     formatForPrompt,
@@ -210,5 +213,5 @@
 
   if(document.readyState==='complete')setTimeout(boot,0);
   else W.addEventListener('load',boot,{once:true});
-  console.info(`🧠 LUNEA User Spread Learning V1 loaded · ${read().length} learned corrections`);
+  console.info(`🧠 LUNEA User Spread Learning V1.1 loaded · ${read().length} learned corrections · max positions ${MAX_POSITIONS}`);
 })();
