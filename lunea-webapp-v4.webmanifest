@@ -1,0 +1,17 @@
+{
+  "name": "LUNEA",
+  "short_name": "LUNEA",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#06040a",
+  "theme_color": "#0e0b16",
+  "icons": [
+    {
+      "src": "./lunea-app-icon-v4.svg?v=4",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
