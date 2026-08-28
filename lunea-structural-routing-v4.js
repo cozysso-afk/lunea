@@ -47,7 +47,7 @@
     document.write('<script src="./lunea-timing-moondial-sync-v15.js?v=1501"><\/script>');
     document.write('<script src="./lunea-timing-ab-inline-v16.js?v=1601"><\/script>');
     document.write('<script src="./lunea-manual-limit20-v17.js?v=1701"><\/script>');
-    document.write('<script src="./lunea-horary-balance-v18.js?v=1801"><\/script>');
+    document.write('<script src="./lunea-horary-balance-v18.js?v=1802"><\/script>');
     return;
   }
 
@@ -88,6 +88,6 @@
     './lunea-timing-moondial-sync-v15.js?v=1501',
     './lunea-timing-ab-inline-v16.js?v=1601',
     './lunea-manual-limit20-v17.js?v=1701',
-    './lunea-horary-balance-v18.js?v=1801'
+    './lunea-horary-balance-v18.js?v=1802'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();
