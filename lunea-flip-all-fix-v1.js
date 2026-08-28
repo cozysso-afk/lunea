@@ -1,21 +1,24 @@
 'use strict';
 
 /*
-  LUNEA FLIP ALL FIX V1
+  LUNEA FLIP ALL FIX V2
   =====================
-  Restores the action-bar flip button to one consistent meaning:
-  flip every card in the current reading.
+  Keeps the action-bar flip button consistent and reveals the current reading
+  as a soft left-to-right sequence instead of flipping every card at once.
 
-  Fixes stale Structural V4 page state leaking into Manual / restored readings,
-  where the button could keep saying e.g. "현재 2장 전체 뒤집기" even when
-  the current reading had 6 or 12 cards.
+  - 110ms stagger between visible cards
+  - existing single-card flipAt behavior remains the source of truth
+  - Structural V4 future pages are still marked revealed after the visible sweep
+  - guards against rapid double taps while a sweep is running
 */
 (() => {
   const W = window;
-  if (W.__LUNEA_FLIP_ALL_FIX_V1__) return;
-  W.__LUNEA_FLIP_ALL_FIX_V1__ = true;
+  if (W.__LUNEA_FLIP_ALL_FIX_V2__) return;
+  W.__LUNEA_FLIP_ALL_FIX_V2__ = true;
 
   const $ = id => document.getElementById(id);
+  const GAP = 110;
+  let running = false;
 
   function getState() {
     try { return state; } catch { return null; }
@@ -23,7 +26,7 @@
 
   function labelFor(s) {
     const n = Array.isArray(s?.drawn) ? s.drawn.length : 0;
-    return n ? `✦ 전체 ${n}장 뒤집기` : '✦ 전체 뒤집기';
+    return running ? '✦ 카드를 여는 중…' : (n ? `✦ 전체 ${n}장 뒤집기` : '✦ 전체 뒤집기');
   }
 
   function clearStalePagerForManual(s) {
@@ -40,40 +43,68 @@
     if (!btn || !s) return;
     clearStalePagerForManual(s);
     btn.textContent = labelFor(s);
+    btn.disabled = running;
+    btn.setAttribute('aria-busy', running ? 'true' : 'false');
   }
 
   function flipVisibleIndex(i) {
     const card = $('card-' + i);
-    if (!card || card.classList.contains('flipped')) return;
+    if (!card || card.classList.contains('flipped')) return false;
     try {
       const fn = W.flipAt || flipAt;
       fn(i);
     } catch {
       card.classList.add('flipped');
     }
+    return true;
+  }
+
+  function visibleIndexes() {
+    const mounted = [...document.querySelectorAll('#cards .tarot-card-wrapper')];
+    const indexes = [];
+    mounted.forEach((wrapper, order) => {
+      const raw = wrapper.dataset?.index;
+      const parsed = raw == null || raw === '' ? order : Number(raw);
+      if (Number.isInteger(parsed) && $('card-' + parsed) && !$('card-' + parsed).classList.contains('flipped')) indexes.push(parsed);
+    });
+    return [...new Set(indexes)];
+  }
+
+  function finishSweep(s, pg) {
+    // Structural V4 may render large spreads page by page. Once the mounted
+    // page has finished its visible sweep, mark the remaining indexes revealed
+    // so later pages arrive face-up, matching the original "flip all" contract.
+    if (pg?.flipped instanceof Set) s.drawn.forEach((_, i) => pg.flipped.add(i));
+    running = false;
+    syncLabel();
   }
 
   function flipEverything() {
     const s = getState();
-    if (!s || !Array.isArray(s.drawn) || !s.drawn.length) return;
+    if (running || !s || !Array.isArray(s.drawn) || !s.drawn.length) return;
 
     clearStalePagerForManual(s);
     const pg = s.__luneaStructuralV4Page;
+    const indexes = visibleIndexes();
 
-    // Structural V4 large spreads render only one page at a time. Mark every
-    // index as revealed so future pages also open face-up, then animate the
-    // currently mounted cards only.
-    if (pg?.flipped instanceof Set) {
-      s.drawn.forEach((_, i) => pg.flipped.add(i));
-      document.querySelectorAll('#cards .tarot-card-wrapper[data-index]').forEach(wrapper => {
-        const i = Number(wrapper.dataset.index);
-        if (Number.isInteger(i)) flipVisibleIndex(i);
-      });
-    } else {
-      s.drawn.forEach((_, i) => flipVisibleIndex(i));
+    if (!indexes.length) {
+      if (pg?.flipped instanceof Set) s.drawn.forEach((_, i) => pg.flipped.add(i));
+      syncLabel();
+      return;
     }
 
-    requestAnimationFrame(syncLabel);
+    running = true;
+    syncLabel();
+
+    indexes.forEach((i, order) => {
+      setTimeout(() => {
+        flipVisibleIndex(i);
+        if (order === indexes.length - 1) {
+          // Give the final card a tiny beat before restoring the control.
+          setTimeout(() => finishSweep(s, pg), 180);
+        }
+      }, order * GAP);
+    });
   }
 
   function install() {
@@ -81,8 +112,8 @@
     const cards = $('cards');
     const overlay = $('spreadOverlay');
     if (!btn || !cards || !overlay) return false;
-    if (btn.dataset.luneaFlipAllFixV1 === '1') return true;
-    btn.dataset.luneaFlipAllFixV1 = '1';
+    if (btn.dataset.luneaFlipAllFixV2 === '1') return true;
+    btn.dataset.luneaFlipAllFixV2 = '1';
 
     // Capture phase intentionally outranks stale .onclick handlers left by the
     // Structural V4 page renderer.
@@ -104,7 +135,7 @@
     });
 
     syncLabel();
-    console.info('✦ LUNEA Flip All Fix V1 loaded · whole-reading flip restored');
+    console.info('✦ LUNEA Flip All Fix V2 loaded · 110ms sequential reveal');
     return true;
   }
 
