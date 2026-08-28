@@ -1,15 +1,15 @@
 'use strict';
 
 /*
-  LUNEA SHEET SCROLL FIX V2.2
+  LUNEA SHEET SCROLL FIX V2.3
   ===========================
   iOS/PWA-safe scrolling for the tall bottom sheet.
 
   - Keeps the fixed bottom-sheet design.
   - Gives the sheet its own viewport-bounded vertical scroll area.
   - Prevents the page behind the sheet from scrolling while it is open.
-  - Adds a persistent viewport-level top-right close button without clearing form values.
-  - Keeps a compact visual close control while preserving an easy touch target.
+  - Keeps the close button inside the sheet header area instead of floating at viewport top-right.
+  - Preserves an easy 44px-class touch target without clearing form values.
   - Does not alter spread logic, form values, RNG, or overlays.
 */
 (() => {
@@ -41,39 +41,40 @@
       #luneaManualPanel input,
       #luneaManualPanel select{touch-action:auto}
 
+      /* Close belongs to the sheet itself — no more detached viewport X. */
       #luneaSheetClose{
         display:none;
-        position:fixed;
-        top:calc(env(safe-area-inset-top) + 12px);
-        right:max(14px, calc((100vw - 480px)/2 + 14px));
-        z-index:195;
-        width:34px;
-        height:34px;
+        position:absolute;
+        top:13px;
+        right:14px;
+        z-index:18;
+        width:40px;
+        height:40px;
         padding:0;
-        border:1px solid rgba(210,195,255,.34);
+        border:1px solid rgba(220,213,244,.18);
         border-radius:50%;
-        background:rgba(23,17,35,.90);
-        color:#eee7f9;
-        font-size:18px;
+        background:
+          radial-gradient(circle at 34% 26%,rgba(255,255,255,.09),transparent 30%),
+          linear-gradient(145deg,rgba(34,34,59,.86),rgba(16,18,35,.91));
+        color:#e7e5ef;
+        font-size:21px;
         font-weight:300;
         line-height:1;
         place-items:center;
         cursor:pointer;
-        box-shadow:0 4px 14px rgba(0,0,0,.34),0 0 0 1px rgba(255,255,255,.025) inset;
-        -webkit-backdrop-filter:blur(10px);
-        backdrop-filter:blur(10px);
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.07),
+          0 7px 18px rgba(0,0,0,.24),
+          0 0 16px rgba(164,143,224,.055);
+        -webkit-backdrop-filter:blur(12px);
+        backdrop-filter:blur(12px);
         touch-action:manipulation;
         -webkit-tap-highlight-color:transparent;
       }
-      /* Invisible extension keeps the practical touch target ~46px without a huge circle. */
-      #luneaSheetClose::before{
-        content:'';
-        position:absolute;
-        inset:-6px;
-        border-radius:50%;
-      }
-      body.lunea-sheet-open #luneaSheetClose{display:grid}
-      #luneaSheetClose:active{transform:scale(.93)}
+      .sheet.open #luneaSheetClose{display:grid}
+      #luneaSheetClose:active{transform:scale(.95)}
+      #sheet>.sub{padding-right:48px!important}
+      #sheet>.sheet-title{padding-right:48px!important}
 
       @media(max-width:520px){
         .sheet{
@@ -81,11 +82,11 @@
           padding-bottom:calc(34px + env(safe-area-inset-bottom));
         }
         #luneaSheetClose{
-          top:calc(env(safe-area-inset-top) + 10px);
-          right:14px;
-          width:34px;
-          height:34px;
-          font-size:18px;
+          top:12px;
+          right:13px;
+          width:40px;
+          height:40px;
+          font-size:21px;
         }
       }
     `;
@@ -98,12 +99,12 @@
       button = document.createElement('button');
       button.type = 'button';
       button.id = 'luneaSheetClose';
-      button.setAttribute('aria-label', '창 닫기');
+      button.setAttribute('aria-label', '시트 닫기');
       button.title = '닫기';
       button.textContent = '×';
-      document.body.appendChild(button);
-    } else if (button.parentElement !== document.body) {
-      document.body.appendChild(button);
+      sheet.appendChild(button);
+    } else if (button.parentElement !== sheet) {
+      sheet.appendChild(button);
     }
 
     if (!button.__luneaCloseBound) {
@@ -141,7 +142,7 @@
 
       document.addEventListener('touchmove', event => {
         if (!sheet.classList.contains('open')) return;
-        if (!sheet.contains(event.target) && event.target !== $('luneaSheetClose')) event.preventDefault();
+        if (!sheet.contains(event.target)) event.preventDefault();
       }, {passive:false});
 
       window.addEventListener('pagehide', () => document.body.classList.remove('lunea-sheet-open'));
@@ -158,7 +159,7 @@
       if (install() || tries > 80) clearInterval(timer);
     }, 80);
     install();
-    console.info('📜 LUNEA Sheet Scroll Fix V2.2 loaded');
+    console.info('📜 LUNEA Sheet Scroll Fix V2.3 loaded');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
