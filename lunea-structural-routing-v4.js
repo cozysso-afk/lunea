@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
+/* Loader shim: luminous silver-lavender UI theme + Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -11,6 +11,7 @@
   })), Promise.resolve());
 
   if (document.readyState === 'loading') {
+    document.write('<script src="./lunea-luminous-theme-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-structural-routing-v4-base.js?v=412"><\/script>');
     document.write('<script src="./lunea-manual-structure-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=101"><\/script>');
@@ -34,6 +35,7 @@
   }
 
   loadSequential([
+    './lunea-luminous-theme-v1.js?v=101',
     './lunea-structural-routing-v4-base.js?v=412',
     './lunea-manual-structure-v1.js?v=101',
     './lunea-manual-everywhere-v1.js?v=101',
