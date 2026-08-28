@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
+/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + full reading-flow redesign + Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -26,6 +26,7 @@
     document.write('<script src="./lunea-question-casebook-ranker-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-user-spread-learning-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=101"><\/script>');
+    document.write('<script src="./lunea-reading-flow-v5.js?v=501"><\/script>');
     document.write('<script src="./lunea-transit-range-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-transit-long-run-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-astro-job-queue-v1.js?v=101"><\/script>');
@@ -53,6 +54,7 @@
     './lunea-question-casebook-ranker-v1.js?v=101',
     './lunea-user-spread-learning-v1.js?v=102',
     './lunea-ai-spread-preflight-v2.js?v=101',
+    './lunea-reading-flow-v5.js?v=501',
     './lunea-transit-range-v1.js?v=103',
     './lunea-transit-long-run-v1.js?v=102',
     './lunea-astro-job-queue-v1.js?v=101',
