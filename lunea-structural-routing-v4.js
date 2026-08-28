@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
+/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + slower tarot flip / Moon Dial timing redesign + Structural V4 + Manual Spread + reusable library + last-reading recovery + whole-reading flip fix + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -36,6 +36,7 @@
     document.write('<script src="./lunea-timing-prompt-repair-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-final-prompt-priority-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-daily-lock-v1.js?v=101"><\/script>');
+    document.write('<script src="./lunea-card-motion-timing-v6.js?v=601"><\/script>');
     return;
   }
 
@@ -64,6 +65,7 @@
     './lunea-timing-ab-v1.js?v=102',
     './lunea-timing-prompt-repair-v1.js?v=101',
     './lunea-final-prompt-priority-v1.js?v=101',
-    './lunea-daily-lock-v1.js?v=101'
+    './lunea-daily-lock-v1.js?v=101',
+    './lunea-card-motion-timing-v6.js?v=601'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();
