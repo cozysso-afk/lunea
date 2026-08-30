@@ -15,7 +15,7 @@
   const SESSION_KEY='LUNEA_SUPABASE_SESSION_V1';
   const MAX=500,MIN_ON_QUOTA=80;
   const $=id=>document.getElementById(id);
-  let syncing=null,hooked=false,lastMessage='',pushTimer=0;
+  let syncing=null,hooked=false,previewWatcher=false,lastMessage='',pushTimer=0;
 
   const clean=v=>String(v||'').normalize('NFKC').replace(/\s+/g,' ').trim();
   function readJSON(key,fallback){try{const x=JSON.parse(localStorage.getItem(key)||'null');return x==null?fallback:x}catch{return fallback}}
@@ -64,10 +64,7 @@
   function auth(path,body,token){return jsonRequest(`${URL}/auth/v1/${path}`,{method:body==null?'GET':'POST',headers:headers(token,body!=null),...(body==null?{}:{body:JSON.stringify(body)})})}
   async function refreshSession(){const old=loadSession();if(!old?.refresh_token)return null;try{return saveSession(await auth('token?grant_type=refresh_token',{refresh_token:old.refresh_token}))}catch(e){console.warn('[LUNEA Cloud Sync] session refresh failed',e);clearSession();return null}}
   async function session(){let s=loadSession();if(!s)return null;if(!s.expires_at||Number(s.expires_at)<=Date.now()+60000)s=await refreshSession();return s}
-  async function userSession(){
-    let s=await session();if(!s?.access_token)return null;if(s.user?.id)return s;
-    try{const u=await auth('user',null,s.access_token);s={...s,user:{id:u.id,email:u.email||''}};localStorage.setItem(SESSION_KEY,JSON.stringify(s));return s}catch{return refreshSession()}
-  }
+  async function userSession(){let s=await session();if(!s?.access_token)return null;if(s.user?.id)return s;try{const u=await auth('user',null,s.access_token);s={...s,user:{id:u.id,email:u.email||''}};localStorage.setItem(SESSION_KEY,JSON.stringify(s));return s}catch{return refreshSession()}}
   async function signIn(email,password){const s=saveSession(await auth('token?grant_type=password',{email:clean(email),password:String(password||'')}));if(!s)throw new Error('로그인 세션을 만들지 못했어.');return s}
   async function signUp(email,password){const d=await auth('signup',{email:clean(email),password:String(password||'')});return{session:d?.access_token?saveSession(d):null,user:d?.user||null}}
   async function signOut(){const s=loadSession();try{if(s?.access_token)await auth('logout',{},s.access_token)}catch(e){console.warn('[LUNEA Cloud Sync] remote logout failed',e)}finally{clearSession();updateUI()}}
@@ -91,9 +88,7 @@
     })();
     try{return await syncing}finally{syncing=null}
   }
-  function queuePush(row){
-    updateUI();clearTimeout(pushTimer);pushTimer=setTimeout(async()=>{const s=await userSession();if(!s?.user?.id)return;try{setBusy(true,'새 학습 저장 중…');await pushRows(s,[row]);lastMessage=`새 교정 학습 저장 완료 · ${localRows().length}/${MAX}`}catch(e){console.warn('[LUNEA Cloud Sync] background push failed',e);lastMessage='새 학습은 이 기기에 저장됨 · 계정 동기화는 나중에 다시 시도'}finally{setBusy(false);updateUI(lastMessage)}},280);
-  }
+  function queuePush(row){updateUI();clearTimeout(pushTimer);pushTimer=setTimeout(async()=>{const s=await userSession();if(!s?.user?.id)return;try{setBusy(true,'새 학습 저장 중…');await pushRows(s,[row]);lastMessage=`새 교정 학습 저장 완료 · ${localRows().length}/${MAX}`}catch(e){console.warn('[LUNEA Cloud Sync] background push failed',e);lastMessage='새 학습은 이 기기에 저장됨 · 계정 동기화는 나중에 다시 시도'}finally{setBusy(false);updateUI(lastMessage)}},280)}
 
   function hookLearning(){
     const api=learning();if(!api||hooked)return!!api;hooked=true;
@@ -101,6 +96,14 @@
     if(typeof api.recordManual==='function'){const prior=api.recordManual.bind(api);api.recordManual=function(payload){const r=prior(payload);if(r?.saved&&r.row)queuePush(r.row);else updateUI();return r}}
     if(typeof api.clear==='function'){const prior=api.clear.bind(api);api.clear=function(){const out=prior();lastMessage='이 기기의 학습 메모리만 비웠어. 계정 보관본은 삭제하지 않아.';updateUI(lastMessage);return out}}
     return true;
+  }
+  function hookPrivatePreviewLearning(){
+    if(previewWatcher)return;previewWatcher=true;
+    document.addEventListener('click',event=>{
+      const hit=event.target?.closest?.('#luneaSpreadPreviewConfirm');if(!hit)return;
+      const before=rowTime(localRows()[0]);
+      setTimeout(()=>{const latest=localRows()[0];if(latest&&rowTime(latest)>before)queuePush(latest)},0);
+    },true);
   }
 
   function ensureStyles(){if($('luneaLearningCloudSyncStyle'))return;const s=document.createElement('style');s.id='luneaLearningCloudSyncStyle';s.textContent=`
@@ -121,7 +124,7 @@
   function credentials(){const email=clean($('luneaLearningEmail')?.value),password=String($('luneaLearningPassword')?.value||'');if(!/^\S+@\S+\.\S+$/.test(email))throw new Error('이메일 형식을 확인해줘.');if(password.length<6)throw new Error('비밀번호는 6자 이상 입력해줘.');return{email,password}}
   async function handleSignIn(){setBusy(true,'로그인 중…');try{const c=credentials();await signIn(c.email,c.password);lastMessage='로그인 완료. 이 기기 학습과 계정 보관본을 합치는 중…';updateUI(lastMessage);await syncAll()}catch(e){lastMessage=`로그인 실패 · ${e.message||e}`;updateUI(lastMessage,true)}finally{setBusy(false)}}
   async function handleSignUp(){setBusy(true,'계정 만드는 중…');try{const c=credentials(),r=await signUp(c.email,c.password);if(r.session){lastMessage='계정 생성 + 로그인 완료. 학습을 동기화할게.';updateUI(lastMessage);await syncAll()}else{lastMessage='계정을 만들었어. 확인 메일이 왔다면 인증한 뒤 여기서 로그인해줘.';updateUI(lastMessage)}}catch(e){lastMessage=`가입 실패 · ${e.message||e}`;updateUI(lastMessage,true)}finally{setBusy(false)}}
-  async function boot(){ensureUI();let tries=0;const t=setInterval(()=>{tries++;if(hookLearning()||tries>160)clearInterval(t);updateUI()},80);hookLearning();const s=await userSession();updateUI();if(s?.user?.id)syncAll({silent:true})}
+  async function boot(){ensureUI();hookPrivatePreviewLearning();let tries=0;const t=setInterval(()=>{tries++;if(hookLearning()||tries>160)clearInterval(t);updateUI()},80);hookLearning();const s=await userSession();updateUI();if(s?.user?.id)syncAll({silent:true})}
 
   W.LUNEA_LEARNING_CLOUD_SYNC_V1={version:1,max:MAX,mergeRows,normalizeCloudRow,questionKey,localRows,session:userSession,signIn,signUp,signOut,sync:syncAll,open:openModal};
   if(document.readyState==='loading')W.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
