@@ -6,6 +6,10 @@
   Small-tile refinement for the generated Thai Astrology artwork.
   Visual only: enlarges the central celestial wheel, lifts gold luminance,
   and reduces the visual weight of edge detail through cropping/glass masking.
+
+  V27 bridge:
+  - Loads Thai result copy/archive actions.
+  - Loads per-question Timing Oracle state isolation.
 */
 (() => {
   const W = window;
@@ -90,8 +94,19 @@
     return false;
   }
 
+  function loadV27(){
+    if(W.__LUNEA_THAI_ARCHIVE_TIMING_ISOLATION_V27__) return;
+    if(document.querySelector('script[data-lunea-v27-loader]')) return;
+    const s=document.createElement('script');
+    s.src='./lunea-thai-archive-timing-isolation-v27.js?v=2701';
+    s.dataset.luneaV27Loader='1';
+    s.onerror=()=>console.error('[LUNEA V26] Failed to load V27');
+    document.head.appendChild(s);
+  }
+
   function boot(){
     addStyle();
+    loadV27();
     if(tagImage()) return;
     const mo=new MutationObserver(()=>{ if(tagImage()) mo.disconnect(); });
     mo.observe(document.documentElement,{childList:true,subtree:true});
