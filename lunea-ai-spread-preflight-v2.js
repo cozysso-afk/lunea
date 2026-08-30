@@ -47,15 +47,24 @@
   function caseContext(question){
     try{
       const book=W.LUNEA_QUESTION_CASEBOOK_V1;
+      const learning=W.LUNEA_SPREAD_LEARNING_V1;
+      const learned=learning&&typeof learning.find==='function'?learning.find(question,3):[];
       if(book&&typeof book.formatForPrompt==='function'){
         return {
           text:book.formatForPrompt(question,4),
           matches:typeof book.find==='function'?book.find(question,4):[],
-          stats:{families:book.familyCount||0,utterances:book.utteranceCount||0}
+          learnedMatches:learned.map(x=>({
+            id:x.row?.id||'',
+            score:Number(x.score||0),
+            question:String(x.row?.question||''),
+            spreadTitle:String(x.row?.spreadTitle||''),
+            profile:x.rowProfile||x.row?.structureProfile||{}
+          })),
+          stats:{families:book.familyCount||0,utterances:book.utteranceCount||0,learned:learned.length,totalLearned:typeof learning?.count==='function'?learning.count():0}
         };
       }
     }catch(e){console.warn('[LUNEA Preflight V2] casebook lookup failed',e)}
-    return {text:'관련 사례 없음',matches:[],stats:{families:0,utterances:0}};
+    return {text:'관련 사례 없음',matches:[],learnedMatches:[],stats:{families:0,utterances:0,learned:0,totalLearned:0}};
   }
   function schema(){
     return {
@@ -103,6 +112,7 @@
       if(!raw)return null;
       const ai=JSON.parse(raw);
       ai.__casebookMatches=cases.matches.map(x=>({id:x.case?.id||'',score:x.score||0,sample:x.sample||''}));
+      ai.__learnedMatches=cases.learnedMatches||[];
       ai.__casebookStats=cases.stats;
       return ai;
     }catch(err){
@@ -137,6 +147,7 @@
       timeScope:String(ai.timeScope||'미지정'),
       usedBaseline:keep,
       casebookMatches:ai.__casebookMatches||[],
+      learnedMatches:ai.__learnedMatches||[],
       casebookStats:ai.__casebookStats||{}
     };
     return out;
@@ -193,7 +204,8 @@
     $('luneaSpreadPreviewPositions').value=(sp?.positions||[]).map(stripNum).join('\n');
     $('luneaSpreadPreviewIntent').textContent=m.intentSummary||'LUNEA 기본 구조 분석 결과';
     const matched=Array.isArray(m.casebookMatches)?m.casebookMatches.length:0;
-    const bits=[m.targetStructure,m.primaryIntent,m.timeScope&&m.timeScope!=='미지정'?`기간: ${m.timeScope}`:'',matched?`사례집 ${matched}개 참조`:''].filter(Boolean);
+    const learned=Array.isArray(m.learnedMatches)?m.learnedMatches.length:0;
+    const bits=[m.targetStructure,m.primaryIntent,m.timeScope&&m.timeScope!=='미지정'?`기간: ${m.timeScope}`:'',learned?`내 교정 ${learned}개 반영`:'',matched?`기본 사례 ${matched}개 참조`:''].filter(Boolean);
     $('luneaSpreadPreviewMeta').textContent=bits.join(' · '); updateCount();
   }
   function openPreview(question,initial){
