@@ -205,7 +205,9 @@
     $('luneaSpreadPreviewIntent').textContent=m.intentSummary||'LUNEA 기본 구조 분석 결과';
     const matched=Array.isArray(m.casebookMatches)?m.casebookMatches.length:0;
     const learned=Array.isArray(m.learnedMatches)?m.learnedMatches.length:0;
-    const bits=[m.targetStructure,m.primaryIntent,m.timeScope&&m.timeScope!=='미지정'?`기간: ${m.timeScope}`:'',learned?`내 교정 ${learned}개 반영`:'',matched?`기본 사례 ${matched}개 참조`:''].filter(Boolean);
+    const total=Number(m.casebookStats?.totalLearned||0);
+    const max=Number(W.LUNEA_SPREAD_LEARNING_V1?.max||1000);
+    const bits=[m.targetStructure,m.primaryIntent,m.timeScope&&m.timeScope!=='미지정'?`기간: ${m.timeScope}`:'',learned?`내 교정 ${learned}개 반영`:'',total?`학습 누적 ${total}/${max}`:'',matched?`기본 사례 ${matched}개 참조`:''].filter(Boolean);
     $('luneaSpreadPreviewMeta').textContent=bits.join(' · '); updateCount();
   }
   function openPreview(question,initial){
