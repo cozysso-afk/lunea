@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA USER SPREAD LEARNING V1.2
+  LUNEA USER SPREAD LEARNING V1.3
   =============================
   Local-only correction memory for AI spread preflight.
 
@@ -10,9 +10,10 @@
   - Prepends only the closest structurally compatible corrections to the normal casebook prompt.
   - A single correction can generalize across paraphrases through domain / target / intent / stage cues.
   - Blocks misleading matches such as two-person comparison vs one-person scenarios.
+  - Learns user-authored manual spreads after the user actually starts the draw.
   - Never uploads the memory as a dataset; matched examples travel only inside the user's
     normal Gemini preflight request for that current question.
-  - Max 120 corrections, deduped by normalized question.
+  - Max 500 corrections, deduped by normalized question; shrinks safely only if storage is full.
   - Keeps up to 32 positions so A/B 24-card symmetric layouts are learned in full.
 */
 (() => {
@@ -21,7 +22,8 @@
   W.__LUNEA_SPREAD_LEARNING_V1__=true;
 
   const KEY='LUNEA_SPREAD_CORRECTION_MEMORY_V1';
-  const MAX=120;
+  const MAX=500;
+  const MIN_ON_QUOTA=80;
   const MAX_POSITIONS=32;
   const $=id=>document.getElementById(id);
 
@@ -103,8 +105,15 @@
     }catch{return[]}
   }
   function write(rows){
-    try{localStorage.setItem(KEY,JSON.stringify(rows.slice(0,MAX)));return true}
-    catch(e){console.warn('[LUNEA Learning] save failed',e);return false}
+    let kept=rows.slice(0,MAX);
+    while(kept.length){
+      try{localStorage.setItem(KEY,JSON.stringify(kept));return true}
+      catch(e){
+        if(kept.length<=MIN_ON_QUOTA){console.warn('[LUNEA Learning] save failed',e);return false}
+        kept=kept.slice(0,Math.max(MIN_ON_QUOTA,Math.floor(kept.length*.8)));
+      }
+    }
+    return false;
   }
 
   function record(payload={}){
@@ -132,6 +141,7 @@
       targetStructure:clean(meta.targetStructure),
       requestedAxes:Array.isArray(meta.requestedAxes)?meta.requestedAxes.map(clean).filter(Boolean).slice(0,MAX_POSITIONS):[],
       structureProfile:profile(q,meta),
+      source:payload.source==='manual'?'manual':'ai_correction',
       createdAt:now,
       updatedAt:now
     };
@@ -146,6 +156,23 @@
     const ok=write(rows);
     if(ok)console.info('🧠 LUNEA learned corrected spread',row.question);
     return {saved:ok,row};
+  }
+
+  function recordManual(payload={}){
+    const finalPos=positions(payload.positions);
+    const axes=positions(payload.axes);
+    return record({
+      question:payload.question,
+      originalSpread:{spreadTitle:'',positions:[]},
+      correctedSpread:{spreadTitle:clean(payload.spreadTitle)||'사용자 직접 배열',positions:finalPos},
+      source:'manual',
+      meta:{
+        intentSummary:'사용자가 질문에 맞춰 처음부터 직접 설계한 최종 배열',
+        primaryIntent:'사용자 직접 설계 배열',
+        targetStructure:payload.symmetric?'두 사람 A/B 대칭 비교':'사용자 지정 대상 구조',
+        requestedAxes:axes.length?axes:finalPos
+      }
+    });
   }
 
   function score(q,row){
@@ -268,11 +295,12 @@
   }
 
   W.LUNEA_SPREAD_LEARNING_V1={
-    version:3,
+    version:4,
     key:KEY,
     max:MAX,
     maxPositions:MAX_POSITIONS,
     record,
+    recordManual,
     find,
     profile,
     compatibility,
@@ -284,5 +312,5 @@
 
   if(document.readyState==='complete')setTimeout(boot,0);
   else W.addEventListener('load',boot,{once:true});
-  console.info(`🧠 LUNEA User Spread Learning V1.2 loaded · ${read().length} learned corrections · structural small-data matching · max positions ${MAX_POSITIONS}`);
+  console.info(`🧠 LUNEA User Spread Learning V1.3 loaded · ${read().length}/${MAX} learned corrections · AI edits + manual spreads · structural small-data matching`);
 })();
