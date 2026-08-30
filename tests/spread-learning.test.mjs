@@ -31,7 +31,7 @@ vm.runInNewContext(source, {
 const learning = window.LUNEA_SPREAD_LEARNING_V1;
 assert.ok(learning, 'learning API should be exposed');
 assert.equal(learning.version, 4);
-assert.equal(learning.max, 500);
+assert.equal(learning.max, 1000);
 
 const scenario = learning.record({
   question:'그 사람한테 답장을 지금 할지 내일 할지 각각 반응을 보고 싶어',
