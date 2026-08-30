@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + shared dynamic Gemini model picker + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + safe slower tarot flip / Moon Dial timing redesign + celestial-object home portal + final home/timing polish + category artwork thumbnails + mobile reading action/timing-card usability + opal moonlight reading polish + reading readability/A-B symmetry repair + unified Timing Moon Dial visuals + persistent A/B Timing inline results + static PNG Home Screen icon + sequential whole-reading reveal + Structural V4 + Manual Spread + reusable library + last-reading recovery + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority + manual spreads up to 20 cards + balanced Horary evidence V18 + category tarot card-back restore V19 + universal category AI spread studio / opal light V20 + six-axis DAILY ORBIT / weekday trading V21 + cinematic celestial Daily home V22. */
+/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + shared dynamic Gemini model picker + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + safe slower tarot flip / Moon Dial timing redesign + celestial-object home portal + final home/timing polish + category artwork thumbnails + mobile reading action/timing-card usability + opal moonlight reading polish + reading readability/A-B symmetry repair + unified Timing Moon Dial visuals + persistent A/B Timing inline results + static PNG Home Screen icon + sequential whole-reading reveal + Structural V4 + Manual Spread + reusable library + last-reading recovery + question casebook/web patterns/ranker + local user-correction learning + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + final evidence/Saju prompt priority + manual spreads up to 20 cards + balanced Horary evidence V18 + category tarot card-back restore V19 + universal category AI spread studio / opal light V20 + six-axis DAILY ORBIT / weekday trading V21 + cinematic celestial Daily home V22 + persistent Transit/Return auto-resume V23 + standalone Thai Maha Taksa home V24. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -52,6 +52,8 @@
     document.write('<script src="./lunea-universal-ai-opal-v20.js?v=2001"><\/script>');
     document.write('<script src="./lunea-daily-orbit6-v21.js?v=2101"><\/script>');
     document.write('<script src="./lunea-daily-celestial-v22.js?v=2201"><\/script>');
+    document.write('<script src="./lunea-astro-resume-v23.js?v=2301"><\/script>');
+    document.write('<script src="./lunea-thai-standalone-v24.js?v=2401"><\/script>');
     return;
   }
 
@@ -96,6 +98,8 @@
     './lunea-cardback-restore-v19.js?v=1901',
     './lunea-universal-ai-opal-v20.js?v=2001',
     './lunea-daily-orbit6-v21.js?v=2101',
-    './lunea-daily-celestial-v22.js?v=2201'
+    './lunea-daily-celestial-v22.js?v=2201',
+    './lunea-astro-resume-v23.js?v=2301',
+    './lunea-thai-standalone-v24.js?v=2401'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();
