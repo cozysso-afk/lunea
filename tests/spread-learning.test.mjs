@@ -30,7 +30,8 @@ vm.runInNewContext(source, {
 
 const learning = window.LUNEA_SPREAD_LEARNING_V1;
 assert.ok(learning, 'learning API should be exposed');
-assert.equal(learning.version, 3);
+assert.equal(learning.version, 4);
+assert.equal(learning.max, 500);
 
 const scenario = learning.record({
   question:'그 사람한테 답장을 지금 할지 내일 할지 각각 반응을 보고 싶어',
@@ -78,6 +79,16 @@ const unchanged = learning.record({
 });
 assert.equal(unchanged.saved, false);
 assert.equal(unchanged.reason, 'unchanged');
+
+const manual = learning.recordManual({
+  question:'내가 직접 짠 재회 질문 배열',
+  spreadTitle:'직접 재회 구조',
+  positions:['현재 감정','현실 장벽','행동 촉발 조건','재접촉 후 반복 위험'],
+  symmetric:false
+});
+assert.equal(manual.saved, true);
+assert.equal(manual.row.source, 'manual');
+assert.equal(manual.row.primaryIntent, '사용자 직접 설계 배열');
 
 const prompt = learning.formatForPrompt('답장을 바로 할지 내일 할지 반응 비교', 3);
 assert.match(prompt, /사용자 교정 정답/);
