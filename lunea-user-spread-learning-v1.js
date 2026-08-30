@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA USER SPREAD LEARNING V1.3
+  LUNEA USER SPREAD LEARNING V1.4
   =============================
   Local-only correction memory for AI spread preflight.
 
@@ -13,7 +13,7 @@
   - Learns user-authored manual spreads after the user actually starts the draw.
   - Never uploads the memory as a dataset; matched examples travel only inside the user's
     normal Gemini preflight request for that current question.
-  - Max 500 corrections, deduped by normalized question; shrinks safely only if storage is full.
+  - Max 1000 corrections, deduped by normalized question; shrinks safely only if storage is full.
   - Keeps up to 32 positions so A/B 24-card symmetric layouts are learned in full.
 */
 (() => {
@@ -22,7 +22,7 @@
   W.__LUNEA_SPREAD_LEARNING_V1__=true;
 
   const KEY='LUNEA_SPREAD_CORRECTION_MEMORY_V1';
-  const MAX=500;
+  const MAX=1000;
   const MIN_ON_QUOTA=80;
   const MAX_POSITIONS=32;
   const $=id=>document.getElementById(id);
@@ -312,5 +312,5 @@
 
   if(document.readyState==='complete')setTimeout(boot,0);
   else W.addEventListener('load',boot,{once:true});
-  console.info(`🧠 LUNEA User Spread Learning V1.3 loaded · ${read().length}/${MAX} learned corrections · AI edits + manual spreads · structural small-data matching`);
+  console.info(`🧠 LUNEA User Spread Learning V1.4 loaded · ${read().length}/${MAX} learned corrections · AI edits + manual spreads · structural small-data matching`);
 })();
