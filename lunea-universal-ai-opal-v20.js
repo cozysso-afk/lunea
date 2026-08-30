@@ -284,10 +284,12 @@
 
   function previewMeta(sp) {
     const meta = sp?._luneaPreflight || {};
+    const learned = Array.isArray(meta.learnedMatches) ? meta.learnedMatches.length : 0;
     const bits = [
       meta.targetStructure,
       meta.primaryIntent,
       meta.timeScope && meta.timeScope !== '미지정' ? `기간: ${meta.timeScope}` : '',
+      learned ? `내 교정 ${learned}개 반영` : '',
       `AI 제안 ${Math.min(12, Array.isArray(sp?.positions) ? sp.positions.length : 0)}장 · 수동 확장 최대 ${MAX_USER}장`
     ].filter(Boolean);
     return bits.join(' · ');
