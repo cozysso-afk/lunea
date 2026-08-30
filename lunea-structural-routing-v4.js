@@ -17,7 +17,7 @@
     document.write('<script src="./lunea-top-spacing-v4.js?v=401"><\/script>');
     document.write('<script src="./lunea-gemini-model-picker-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-structural-routing-v4-base.js?v=412"><\/script>');
-    document.write('<script src="./lunea-manual-structure-v1.js?v=101"><\/script>');
+    document.write('<script src="./lunea-manual-structure-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=101"><\/script>');
@@ -25,8 +25,8 @@
     document.write('<script src="./lunea-question-casebook-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-question-casebook-web-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-question-casebook-ranker-v1.js?v=101"><\/script>');
-    document.write('<script src="./lunea-user-spread-learning-v1.js?v=103"><\/script>');
-    document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=101"><\/script>');
+    document.write('<script src="./lunea-user-spread-learning-v1.js?v=105"><\/script>');
+    document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=102"><\/script>');
     document.write('<script src="./lunea-reading-flow-v5.js?v=501"><\/script>');
     document.write('<script src="./lunea-transit-range-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-transit-long-run-v1.js?v=102"><\/script>');
@@ -46,10 +46,10 @@
     document.write('<script src="./lunea-reading-polish-v14.js?v=1401"><\/script>');
     document.write('<script src="./lunea-timing-moondial-sync-v15.js?v=1501"><\/script>');
     document.write('<script src="./lunea-timing-ab-inline-v16.js?v=1601"><\/script>');
-    document.write('<script src="./lunea-manual-limit20-v17.js?v=1701"><\/script>');
+    document.write('<script src="./lunea-manual-limit20-v17.js?v=1702"><\/script>');
     document.write('<script src="./lunea-horary-balance-v18.js?v=1803"><\/script>');
     document.write('<script src="./lunea-cardback-restore-v19.js?v=1901"><\/script>');
-    document.write('<script src="./lunea-universal-ai-opal-v20.js?v=2001"><\/script>');
+    document.write('<script src="./lunea-universal-ai-opal-v20.js?v=2002"><\/script>');
     document.write('<script src="./lunea-daily-orbit6-v21.js?v=2101"><\/script>');
     document.write('<script src="./lunea-daily-celestial-v22.js?v=2201"><\/script>');
     document.write('<script src="./lunea-astro-resume-v23.js?v=2301"><\/script>');
@@ -66,7 +66,7 @@
     './lunea-top-spacing-v4.js?v=401',
     './lunea-gemini-model-picker-v1.js?v=101',
     './lunea-structural-routing-v4-base.js?v=412',
-    './lunea-manual-structure-v1.js?v=101',
+    './lunea-manual-structure-v1.js?v=102',
     './lunea-manual-everywhere-v1.js?v=101',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
@@ -74,8 +74,8 @@
     './lunea-question-casebook-v1.js?v=101',
     './lunea-question-casebook-web-v1.js?v=101',
     './lunea-question-casebook-ranker-v1.js?v=101',
-    './lunea-user-spread-learning-v1.js?v=103',
-    './lunea-ai-spread-preflight-v2.js?v=101',
+    './lunea-user-spread-learning-v1.js?v=105',
+    './lunea-ai-spread-preflight-v2.js?v=102',
     './lunea-reading-flow-v5.js?v=501',
     './lunea-transit-range-v1.js?v=103',
     './lunea-transit-long-run-v1.js?v=102',
@@ -95,10 +95,10 @@
     './lunea-reading-polish-v14.js?v=1401',
     './lunea-timing-moondial-sync-v15.js?v=1501',
     './lunea-timing-ab-inline-v16.js?v=1601',
-    './lunea-manual-limit20-v17.js?v=1701',
+    './lunea-manual-limit20-v17.js?v=1702',
     './lunea-horary-balance-v18.js?v=1803',
     './lunea-cardback-restore-v19.js?v=1901',
-    './lunea-universal-ai-opal-v20.js?v=2001',
+    './lunea-universal-ai-opal-v20.js?v=2002',
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-celestial-v22.js?v=2201',
     './lunea-astro-resume-v23.js?v=2301',

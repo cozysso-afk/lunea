@@ -181,7 +181,7 @@
         <input type="checkbox" id="luneaManualAB">
         <span><b>A/B 대칭 비교로 펼치기</b><span>위에는 공통 축만 입력해. A와 B에 같은 축·같은 순서로 자동 복제해.</span></span>
       </label>
-      <p class="manual-help">직접 입력 모드에서는 AI가 배열을 다시 설계하지 않아. 네가 쓴 포지션 문구가 그대로 카드 자리에 고정돼.</p>
+      <p class="manual-help">직접 입력 모드에서는 AI가 배열을 다시 설계하지 않아. 네가 쓴 포지션 문구가 그대로 카드 자리에 고정돼. 카드 펼치기를 확정하면 이 배열은 비슷한 자동 배열의 학습 정답으로 저장돼.</p>
     `;
     questionField.insertAdjacentElement('afterend', panel);
 
@@ -229,7 +229,7 @@
     });
   }
 
-  function startManualSpread(question, positions, title, rationale) {
+  function startManualSpread(question, positions, title, rationale, learn=true) {
     state.__luneaManualReading = true;
     state.question = question || '현재 나에게 필요한 흐름';
     state.positions = [...positions];
@@ -262,6 +262,20 @@
       state.drawn.push({...card, isReversed, position:positions[i], subCards:[]});
       document.getElementById('cards')?.appendChild(makeCardWrapper(i, card, isReversed));
     });
+
+    if (learn && W.LUNEA_SPREAD_LEARNING_V1?.recordManual) {
+      try {
+        W.LUNEA_SPREAD_LEARNING_V1.recordManual({
+          question:state.question,
+          spreadTitle:title,
+          positions,
+          symmetric:!!document.getElementById('luneaManualAB')?.checked,
+          axes:parseManualPositions().axes
+        });
+      } catch (error) {
+        console.warn('[LUNEA Manual V1] manual spread learning failed', error);
+      }
+    }
 
     document.getElementById('sheet')?.classList.remove('open');
     showOverlay('spreadOverlay');
@@ -396,7 +410,7 @@
       const originalRetry = retry.onclick;
       retry.onclick = function(event) {
         if (state?.__luneaManualReading) {
-          return startManualSpread(state.question, state.positions, state.title, state.rationale);
+          return startManualSpread(state.question, state.positions, state.title, state.rationale, false);
         }
         return typeof originalRetry === 'function' ? originalRetry.call(this, event) : undefined;
       };

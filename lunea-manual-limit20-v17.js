@@ -106,6 +106,20 @@
       return;
     }
 
+    if (W.LUNEA_SPREAD_LEARNING_V1?.recordManual) {
+      try {
+        W.LUNEA_SPREAD_LEARNING_V1.recordManual({
+          question:state.question,
+          spreadTitle:title,
+          positions:p.positions,
+          symmetric:!!p.symmetric,
+          axes:p.axes
+        });
+      } catch (error) {
+        console.warn('[LUNEA Manual 20] manual spread learning failed', error);
+      }
+    }
+
     persistDraft();
     $('sheet')?.classList.remove('open');
     try {
