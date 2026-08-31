@@ -78,10 +78,14 @@ create table if not exists public.spread_learning_common_cases (
 
 alter table public.spread_learning_common_cases enable row level security;
 
--- No client policies on approved common cases yet. They stay server-only until
--- the separate common-case auto-application safeguards are explicitly enabled.
+-- Explicit deny policy: keeps the table server-only while also making the lock
+-- visible to database security tooling. Service-role/server validation bypasses RLS.
+drop policy if exists "spread learning common cases locked" on public.spread_learning_common_cases;
+create policy "spread learning common cases locked"
+  on public.spread_learning_common_cases for select
+  using (false);
 
 comment on table public.spread_learning_common_candidates is
   'Future common-spread promotion candidates. Server-controlled validation scaffold only; not consumed by LUNEA automatic spread selection yet.';
 comment on table public.spread_learning_common_cases is
-  'Approved anonymized common spread cases. Client access intentionally closed until common-case auto-application safeguards are enabled.';
+  'Approved anonymized common spread cases. Client access intentionally denied until common-case auto-application safeguards are enabled.';
