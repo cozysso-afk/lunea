@@ -23,7 +23,7 @@ const baseCommit = preflight.indexOf('await commitCorrectionAfterStart(confirmed
 assert.ok(baseStart >= 0 && baseCommit > baseStart, 'base AI learning commit must occur after startSpread');
 
 assert.match(gate, /deferred_until_draw/, 'V20 preview correction must be deferred while preview is open');
-assert.match(gate, /LUNEA_SPREAD_LEARNING_V1\.record\(hit\.payload\)/, 'V20 gate must commit through the live learning API after start');
+assert.match(gate, /api\.record\(hit\.payload\)/, 'V20 gate must commit through the live learning API after start');
 assert.match(loader, /lunea-universal-ai-opal-v20\.js[\s\S]*lunea-learning-success-gate-v1\.js/, 'V20 success gate must load after V20');
 
 assert.match(preflight, /book\.formatForPrompt\(question,4\)/, 'AI preflight must consume the casebook bridge that includes learned corrections');
