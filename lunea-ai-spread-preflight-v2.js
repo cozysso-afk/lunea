@@ -10,6 +10,7 @@
   - Distinguishes person count from scenario count.
   - Preserves explicit user axes and manual/fixed spreads.
   - RNG cards are never drawn before user confirmation.
+  - User preview corrections are committed to learning only after the spread actually starts successfully.
 */
 (() => {
   const W = window;
@@ -24,6 +25,8 @@
   function getState(){ try{return state}catch{return null} }
   function clean(v){return String(v||'').normalize('NFKC').replace(/\s+/g,' ').trim()}
   function stripNum(v){return String(v||'').replace(/^\s*\d{1,2}\s*[.)]\s*/,'').trim()}
+  function plainPositions(items){return (Array.isArray(items)?items:[]).map(stripNum).filter(Boolean).slice(0,12)}
+  function samePlainPositions(a,b){const A=plainPositions(a),B=plainPositions(b);return A.length===B.length&&A.every((x,i)=>x===B[i])}
   function normalizePositions(items){
     const out=[];
     for(const x of Array.isArray(items)?items:[]){
@@ -184,6 +187,7 @@
   function ensurePreview(){
     let o=$('luneaSpreadPreviewOverlay'); if(o)return o;
     addStyles(); o=document.createElement('div'); o.id='luneaSpreadPreviewOverlay'; o.setAttribute('aria-hidden','true');
+    o.__luneaLearningCapture=true;
     o.innerHTML=`<div id="luneaSpreadPreviewModal">
       <button type="button" id="luneaSpreadPreviewClose" aria-label="미리보기 닫기">×</button>
       <div class="lsp-kicker">LUNEA · CASEBOOK PREFLIGHT V2</div><h3 class="lsp-title">카드 뽑기 전 배열 확인</h3>
@@ -210,8 +214,9 @@
     const bits=[m.targetStructure,m.primaryIntent,m.timeScope&&m.timeScope!=='미지정'?`기간: ${m.timeScope}`:'',learned?`내 교정 ${learned}개 반영`:'',total?`학습 누적 ${total}/${max}`:'',matched?`기본 사례 ${matched}개 참조`:''].filter(Boolean);
     $('luneaSpreadPreviewMeta').textContent=bits.join(' · '); updateCount();
   }
+  function snapshot(sp){return{spreadTitle:clean(sp?.spreadTitle),positions:plainPositions(sp?.positions)}}
   function openPreview(question,initial){
-    const o=ensurePreview(); let current=initial; fill(current); o.classList.add('show'); o.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open');
+    const o=ensurePreview(); let current=initial; let baseline=snapshot(initial); fill(current); o.classList.add('show'); o.setAttribute('aria-hidden','false'); document.body.classList.add('modal-open');
     return new Promise(resolve=>{
       let done=false;
       const finish=v=>{if(done)return;done=true;o.classList.remove('show');o.setAttribute('aria-hidden','true');document.body.classList.remove('modal-open');resolve(v)};
@@ -221,16 +226,31 @@
       $('luneaSpreadPreviewConfirm').onclick=()=>{
         const lines=textareaLines(); if(lines.length<2)return alert('카드 포지션을 최소 2개는 남겨줘.');
         const title=clean($('luneaSpreadPreviewTitle').value)||current?.spreadTitle||'질문 맞춤 배열';
-        finish({...current,spreadTitle:title,positions:lines.map((x,i)=>`${i+1}. ${x}`),designRationale:String(current?.designRationale||'사례집 기반 AI 배열')+' · PRE-DRAW USER CONFIRMED'});
+        const numbered=lines.map((x,i)=>`${i+1}. ${x}`);
+        const changed=title!==baseline.spreadTitle||!samePlainPositions(baseline.positions,lines);
+        const pending=changed?{
+          question,
+          originalSpread:{spreadTitle:baseline.spreadTitle,positions:baseline.positions},
+          correctedSpread:{spreadTitle:title,positions:numbered},
+          meta:current?._luneaPreflight||{}
+        }:null;
+        finish({...current,spreadTitle:title,positions:numbered,designRationale:String(current?.designRationale||'사례집 기반 AI 배열')+' · PRE-DRAW USER CONFIRMED',_luneaPendingCorrection:pending});
       };
       $('luneaSpreadPreviewRegenerate').onclick=async()=>{
         const b=$('luneaSpreadPreviewRegenerate'),c=$('luneaSpreadPreviewConfirm'),avoid=textareaLines();
         b.disabled=true;c.disabled=true;b.textContent='사례 다시 매칭 중…';
-        try{current=await smartDesign(question,{regenerate:true,avoid});fill(current)}
+        try{current=await smartDesign(question,{regenerate:true,avoid});fill(current);baseline=snapshot(current)}
         catch(err){console.error('[LUNEA Preflight V2] regenerate failed',err);alert('다른 배열 생성에 실패했어. 현재 배열은 유지할게.')}
         finally{b.disabled=false;c.disabled=false;b.textContent='↻ 다른 배열'}
       };
     });
+  }
+
+  async function commitCorrectionAfterStart(confirmed){
+    const pending=confirmed?._luneaPendingCorrection;
+    if(!pending||typeof W.LUNEA_SPREAD_LEARNING_V1?.record!=='function')return;
+    try{W.LUNEA_SPREAD_LEARNING_V1.record(pending)}
+    catch(err){console.warn('[LUNEA Preflight V2] post-draw correction learning failed',err)}
   }
 
   function install(){
@@ -248,13 +268,15 @@
         const sp=await W.designSpread(q); if(!sp||!Array.isArray(sp.positions)||sp.positions.length<2)throw new Error('배열 결과가 비어 있음');
         const confirmed=await openPreview(q,sp); if(!confirmed)return;
         const start=W.startSpread||(typeof startSpread==='function'?startSpread:null); if(typeof start!=='function')throw new Error('카드 펼치기 함수를 찾지 못했어.');
-        start(q,confirmed.positions,confirmed.spreadTitle,confirmed.designRationale);
+        const started=start(q,confirmed.positions,confirmed.spreadTitle,confirmed.designRationale);
+        if(started&&typeof started.then==='function')await started;
+        await commitCorrectionAfterStart(confirmed);
       }catch(err){console.error('[LUNEA Preflight V2] custom spread failed',err);alert('맞춤 배열을 만드는 중 오류가 났어. 질문은 그대로 유지돼.')}
       finally{drawBtn.disabled=false;if(label)label.textContent='질문 분석 & 맞춤 배열 설계'}
     };
     ensurePreview(); installed=true;
     W.LUNEA_AI_SPREAD_PREFLIGHT={version:2,design:smartDesign,getLast:()=>W.LUNEA_AI_SPREAD_PREFLIGHT_LAST||null,casebook:()=>W.LUNEA_QUESTION_CASEBOOK_V1||null};
-    console.info('🧠 LUNEA AI Spread Preflight V2 installed · casebook-grounded semantic QA + pre-draw preview');
+    console.info('🧠 LUNEA AI Spread Preflight V2 installed · casebook-grounded semantic QA + pre-draw preview + post-draw learning commit');
     return true;
   }
   function boot(){let tries=0;const t=setInterval(()=>{tries++;if(install()||tries>120)clearInterval(t)},80);install()}
