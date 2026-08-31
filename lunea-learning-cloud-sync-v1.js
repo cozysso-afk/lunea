@@ -15,7 +15,7 @@
   const SESSION_KEY='LUNEA_SUPABASE_SESSION_V1';
   const MAX=1000,MIN_ON_QUOTA=80;
   const $=id=>document.getElementById(id);
-  let syncing=null,hooked=false,previewWatcher=false,lastMessage='',pushTimer=0;
+  let syncing=null,hooked=false,lastMessage='',pushTimer=0;
 
   const clean=v=>String(v||'').normalize('NFKC').replace(/\s+/g,' ').trim();
   function readJSON(key,fallback){try{const x=JSON.parse(localStorage.getItem(key)||'null');return x==null?fallback:x}catch{return fallback}}
@@ -97,14 +97,6 @@
     if(typeof api.clear==='function'){const prior=api.clear.bind(api);api.clear=function(){const out=prior();lastMessage='이 기기의 학습 메모리만 비웠어. 계정 보관본은 삭제하지 않아.';updateUI(lastMessage);return out}}
     return true;
   }
-  function hookPrivatePreviewLearning(){
-    if(previewWatcher)return;previewWatcher=true;
-    document.addEventListener('click',event=>{
-      const hit=event.target?.closest?.('#luneaSpreadPreviewConfirm');if(!hit)return;
-      const before=rowTime(localRows()[0]);
-      setTimeout(()=>{const latest=localRows()[0];if(latest&&rowTime(latest)>before)queuePush(latest)},0);
-    },true);
-  }
 
   function ensureStyles(){if($('luneaLearningCloudSyncStyle'))return;const s=document.createElement('style');s.id='luneaLearningCloudSyncStyle';s.textContent=`
     #luneaLearningSyncBar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:-8px 0 16px;padding:8px 10px;border-radius:12px;background:rgba(189,164,248,.055);border:1px solid rgba(189,164,248,.14);font-size:10px;color:#d9d0e9}#luneaLearningSyncBar b{color:#efe9fb}#luneaLearningSyncStatus{color:var(--dim);font-size:9.5px;margin-top:2px;line-height:1.35}#luneaLearningSyncBtn{flex:0 0 auto;padding:6px 9px}
@@ -124,9 +116,9 @@
   function credentials(){const email=clean($('luneaLearningEmail')?.value),password=String($('luneaLearningPassword')?.value||'');if(!/^\S+@\S+\.\S+$/.test(email))throw new Error('이메일 형식을 확인해줘.');if(password.length<6)throw new Error('비밀번호는 6자 이상 입력해줘.');return{email,password}}
   async function handleSignIn(){setBusy(true,'로그인 중…');try{const c=credentials();await signIn(c.email,c.password);lastMessage='로그인 완료. 이 기기 학습과 계정 보관본을 합치는 중…';updateUI(lastMessage);await syncAll()}catch(e){lastMessage=`로그인 실패 · ${e.message||e}`;updateUI(lastMessage,true)}finally{setBusy(false)}}
   async function handleSignUp(){setBusy(true,'계정 만드는 중…');try{const c=credentials(),r=await signUp(c.email,c.password);if(r.session){lastMessage='계정 생성 + 로그인 완료. 학습을 동기화할게.';updateUI(lastMessage);await syncAll()}else{lastMessage='계정을 만들었어. 확인 메일이 왔다면 인증한 뒤 여기서 로그인해줘.';updateUI(lastMessage)}}catch(e){lastMessage=`가입 실패 · ${e.message||e}`;updateUI(lastMessage,true)}finally{setBusy(false)}}
-  async function boot(){ensureUI();hookPrivatePreviewLearning();let tries=0;const t=setInterval(()=>{tries++;if(hookLearning()||tries>160)clearInterval(t);updateUI()},80);hookLearning();const s=await userSession();updateUI();if(s?.user?.id)syncAll({silent:true})}
+  async function boot(){ensureUI();let tries=0;const t=setInterval(()=>{tries++;if(hookLearning()||tries>160)clearInterval(t);updateUI()},80);hookLearning();const s=await userSession();updateUI();if(s?.user?.id)syncAll({silent:true})}
 
   W.LUNEA_LEARNING_CLOUD_SYNC_V1={version:1,max:MAX,mergeRows,normalizeCloudRow,questionKey,localRows,session:userSession,signIn,signUp,signOut,sync:syncAll,open:openModal};
   if(document.readyState==='loading')W.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
-  console.info('☁️ LUNEA Learning Cloud Sync V1 loaded · opt-in account sync · RLS owner-only · no remote delete');
+  console.info('☁️ LUNEA Learning Cloud Sync V1 loaded · opt-in account sync · successful records only · RLS owner-only · no remote delete');
 })();
