@@ -19,7 +19,7 @@ assert.match(preflight, /__luneaLearningCapture=true/, 'base preflight must disa
 assert.match(preflight, /_luneaPendingCorrection/, 'base AI preview edits must be staged until a real draw starts');
 assert.match(preflight, /commitCorrectionAfterStart/, 'base AI correction must commit after startSpread');
 const baseStart = preflight.indexOf('const started=start(');
-const baseCommit = preflight.indexOf('commitCorrectionAfterStart(confirmed)');
+const baseCommit = preflight.indexOf('await commitCorrectionAfterStart(confirmed)');
 assert.ok(baseStart >= 0 && baseCommit > baseStart, 'base AI learning commit must occur after startSpread');
 
 assert.match(gate, /deferred_until_draw/, 'V20 preview correction must be deferred while preview is open');
