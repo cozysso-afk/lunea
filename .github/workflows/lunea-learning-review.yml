@@ -1,0 +1,39 @@
+name: LUNEA learning review
+
+on:
+  push:
+    branches:
+      - codex/lunea-learning-final-review-20260831
+
+permissions:
+  contents: read
+
+jobs:
+  validate-learning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout review branch
+        uses: actions/checkout@v4
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Syntax check changed learning scripts
+        run: |
+          node --check lunea-user-spread-learning-v1.js
+          node --check lunea-learning-cloud-sync-v1.js
+          node --check lunea-ai-spread-preflight-v2.js
+          node --check lunea-learning-success-gate-v1.js
+          node --check lunea-structural-routing-v4.js
+
+      - name: Run spread learning tests
+        run: |
+          node tests/spread-learning.test.mjs
+          node tests/spread-learning-bridge.test.mjs
+          node tests/spread-learning-retention.test.mjs
+          node tests/spread-learning-cloud-sync.test.mjs
+          node tests/spread-learning-success-gate.test.mjs
+          node tests/spread-learning-integration-contract.test.mjs
