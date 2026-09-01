@@ -21,7 +21,7 @@
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=101"><\/script>');
-    document.write('<script src="./lunea-reading-journal-v1.js?v=101"><\/script>');
+    document.write('<script src="./lunea-reading-journal-v2.js?v=201"><\/script>');
     document.write('<script src="./lunea-flip-all-fix-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-question-casebook-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-question-casebook-web-v1.js?v=101"><\/script>');
@@ -73,7 +73,7 @@
     './lunea-manual-everywhere-v1.js?v=101',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
-    './lunea-reading-journal-v1.js?v=101',
+    './lunea-reading-journal-v2.js?v=201',
     './lunea-flip-all-fix-v1.js?v=102',
     './lunea-question-casebook-v1.js?v=101',
     './lunea-question-casebook-web-v1.js?v=101',
