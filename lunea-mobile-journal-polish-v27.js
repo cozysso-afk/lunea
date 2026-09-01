@@ -86,7 +86,7 @@
         --v27-rose2:#e97aa8;--v27-gold:#ffd58b;--v27-lilac:#cbb7ff
       }
       #archiveOverlay .archive-modal{
-        position:relative!important;overflow:hidden!important;
+        position:relative!important;overflow-x:hidden!important;overflow-y:auto!important;
         background:radial-gradient(circle at 8% 0%,rgba(76,215,200,.23),transparent 27%),radial-gradient(circle at 96% 8%,rgba(255,139,190,.18),transparent 25%),radial-gradient(circle at 48% 110%,rgba(190,156,255,.10),transparent 34%),linear-gradient(164deg,#101824 0%,#10131f 43%,#181220 100%)!important;
         border-color:rgba(120,231,218,.34)!important;
         box-shadow:0 28px 80px rgba(0,0,0,.75),0 0 0 1px rgba(255,161,200,.055),0 0 42px rgba(74,205,193,.10)!important
