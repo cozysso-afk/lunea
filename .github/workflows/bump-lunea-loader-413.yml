@@ -25,13 +25,18 @@ jobs:
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
-          # Every human/code change receives a unique structural-loader URL.
-          s = re.sub(
-              r'lunea-structural-routing-v4\.js\?v=[^"\']+',
-              f'lunea-structural-routing-v4.js?v={build}',
-              s,
-              count=1,
-          )
+          # Every human/code change receives unique URLs for behavior-critical
+          # loaders so iOS/PWA cannot keep an older request watchdog in cache.
+          for asset in (
+              'lunea-structural-routing-v4.js',
+              'lunea-astro-stability-v2.js',
+              'lunea-ios-performance-v3.js',
+          ):
+              pattern = re.escape(asset) + r'\?v=[^"\']+'
+              replacement = f'{asset}?v={build}'
+              s, count = re.subn(pattern, replacement, s, count=1)
+              if count != 1:
+                  raise SystemExit(f'Could not stamp required loader: {asset}')
 
           # Canonical iOS Home Screen artwork: original selected #4 opal tarot card.
           # A new filename intentionally breaks Safari/iOS icon cache from the timing-oracle icon.
@@ -78,7 +83,7 @@ jobs:
               json.dumps({'version': build}, ensure_ascii=False) + '\n',
               encoding='utf-8',
           )
-          print('Stamped LUNEA build and canonical Home Screen icon:', build)
+          print('Stamped LUNEA build, request watchdog loaders, and canonical Home Screen icon:', build)
           PY
 
       - name: Commit build stamp

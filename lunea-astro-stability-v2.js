@@ -6,7 +6,8 @@
   Purpose:
   - remove the old global 60s cutoff from Astro requests without touching
     iOS card/compositor code
-  - keep the old Gemini 40s protection
+  - keep one Gemini watchdog, allowing 75s for long tarot/profile prompts
+  - actively abort a timed-out Gemini request so it does not keep running
   - warm Astro Core before Transit / Return buttons run
   - leave Natal V1.1's own one-tap lifecycle intact
   - preserve Lag Guard's AbortController for stale auxiliary requests
@@ -21,6 +22,10 @@
     lunea-astro-stability-v2.js   <-- HERE
     lunea-ios-performance-v3.js
 
+  No automatic Gemini retry: generateContent is a billable POST, so an
+  automatic retry after an ambiguous network failure could duplicate usage.
+  The existing UI remains the explicit retry path.
+
   No MutationObserver.
   No card DOM/CSS changes.
   No routing/RNG changes.
@@ -31,15 +36,14 @@
   W.__LUNEA_ASTRO_STABILITY_V2__ = true;
 
   /*
-    iOS Performance V306 installs one global watchdog for Gemini + every Astro
-    endpoint and rejects Astro requests at 60s. Transit/Return can legitimately
-    exceed that while the Python ephemeris/refinement work is still running.
-    Pre-claim the flag so V306 skips that old combined wrapper.
+    iOS Performance V306 contains an older combined Gemini/Astro watchdog.
+    Pre-claim its flag so there is exactly one request watchdog in production.
   */
   W.__LUNEA_REQUEST_WATCHDOG_V305__ = true;
 
   const API_KEY = 'LUNEA_ASTRO_API_URL';
   const DEFAULT_API_URL = 'https://lunea-astro-api.onrender.com';
+  const GEMINI_TIMEOUT_MS = 75000;
 
   // At this point Lag Guard is already loaded, so this retains its stale-request
   // AbortController behavior for Transit / Return / Thai.
@@ -51,10 +55,11 @@
   }
 
   // ------------------------------------------------------------
-  // Gemini-only watchdog: replaces the part of V306 we intentionally skipped.
-  // Astro requests are NOT capped here.
+  // Gemini-only watchdog. Astro requests are NOT capped here.
   // ------------------------------------------------------------
-  if (!W.__LUNEA_GEMINI_WATCHDOG_V2__) {
+  if (!W.__LUNEA_GEMINI_WATCHDOG_V3__) {
+    W.__LUNEA_GEMINI_WATCHDOG_V3__ = true;
+    // Also claim the legacy flag so no older patch can add a second wrapper.
     W.__LUNEA_GEMINI_WATCHDOG_V2__ = true;
 
     W.fetch = function(input, init) {
@@ -67,28 +72,63 @@
         return baseFetch(input, init);
       }
 
+      const timeoutController = typeof AbortController === 'function'
+        ? new AbortController()
+        : null;
+      const upstreamSignal = init?.signal || input?.signal || null;
+      let detachUpstreamAbort = null;
+      let nextInit = init;
+
+      if (timeoutController) {
+        if (upstreamSignal?.aborted) {
+          try { timeoutController.abort(upstreamSignal.reason); }
+          catch { timeoutController.abort(); }
+        } else if (upstreamSignal?.addEventListener) {
+          const forwardAbort = () => {
+            try { timeoutController.abort(upstreamSignal.reason); }
+            catch { timeoutController.abort(); }
+          };
+          upstreamSignal.addEventListener('abort', forwardAbort, {once:true});
+          detachUpstreamAbort = () => {
+            try { upstreamSignal.removeEventListener('abort', forwardAbort); } catch {}
+          };
+        }
+
+        nextInit = Object.assign({}, init || {}, {signal: timeoutController.signal});
+      }
+
       return new Promise((resolve, reject) => {
         let settled = false;
+
+        const cleanup = () => {
+          clearTimeout(timer);
+          if (detachUpstreamAbort) detachUpstreamAbort();
+        };
 
         const timer = setTimeout(() => {
           if (settled) return;
           settled = true;
-          reject(new Error('AI 요청 시간이 너무 길어 중단했어. 다시 눌러줘.'));
-        }, 40000);
+          if (timeoutController && !timeoutController.signal.aborted) {
+            try { timeoutController.abort('lunea-gemini-timeout'); }
+            catch { timeoutController.abort(); }
+          }
+          cleanup();
+          reject(new Error('AI 요청이 75초를 넘어 중단했어. 다시 눌러줘.'));
+        }, GEMINI_TIMEOUT_MS);
 
         Promise.resolve()
-          .then(() => baseFetch(input, init))
+          .then(() => baseFetch(input, nextInit))
           .then(
             value => {
               if (settled) return;
               settled = true;
-              clearTimeout(timer);
+              cleanup();
               resolve(value);
             },
             error => {
               if (settled) return;
               settled = true;
-              clearTimeout(timer);
+              cleanup();
               reject(error);
             }
           );
@@ -252,7 +292,7 @@
       });
     }, 0);
 
-    console.info('✦ LUNEA ASTRO STABILITY V2 loaded · Astro 60s global cutoff disabled');
+    console.info('✦ LUNEA ASTRO STABILITY V2 loaded · Gemini 75s watchdog · Astro 60s cutoff disabled');
   }
 
   if (document.readyState === 'loading') {
