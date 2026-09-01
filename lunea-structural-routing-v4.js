@@ -61,6 +61,7 @@
     document.write('<script src="./lunea-thai-art-polish-v26.js?v=2601"><\/script>');
     document.write('<script src="./lunea-mobile-journal-polish-v27.js?v=2701"><\/script>');
     document.write('<script src="./lunea-sector-color-system-v28.js?v=2801"><\/script>');
+    document.write('<script src="./lunea-boot-reveal-v29.js?v=2901"><\/script>');
     return;
   }
 
@@ -114,6 +115,7 @@
     './lunea-thai-art-v25.js?v=2501',
     './lunea-thai-art-polish-v26.js?v=2601',
     './lunea-mobile-journal-polish-v27.js?v=2701',
-    './lunea-sector-color-system-v28.js?v=2801'
+    './lunea-sector-color-system-v28.js?v=2801',
+    './lunea-boot-reveal-v29.js?v=2901'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();

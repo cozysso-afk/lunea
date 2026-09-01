@@ -1,6 +1,41 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script id="luneaBootGateV29">
+(()=>{
+  const root=document.documentElement;
+  root.classList.add('lunea-booting');
+  window.__LUNEA_BOOT_STARTED__=performance.now();
+  window.__LUNEA_BOOT_FAILSAFE__=setTimeout(()=>{
+    root.classList.remove('lunea-booting');
+    root.classList.add('lunea-ui-ready');
+  },3500);
+})();
+</script>
+<style id="luneaBootGateV29Style">
+html.lunea-booting,html.lunea-booting body{background:#060713!important;overflow:hidden!important}
+html.lunea-booting body>.app,
+html.lunea-booting body>.sheet,
+html.lunea-booting body>.overlay{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
+html.lunea-booting body::before{
+  content:'';position:fixed;inset:0;z-index:2147483000;pointer-events:none;
+  background:
+    radial-gradient(circle at 50% 43%,rgba(205,190,255,.16) 0 7%,transparent 23%),
+    radial-gradient(circle at 50% 46%,rgba(112,222,213,.075),transparent 34%),
+    linear-gradient(180deg,#080a18 0%,#090918 52%,#050610 100%);
+}
+html.lunea-booting body::after{
+  content:'☾  L U N E A';position:fixed;left:50%;top:46%;z-index:2147483001;
+  transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;
+  color:#f4efff;font:600 18px/1.2 Georgia,'Times New Roman',serif;letter-spacing:5px;
+  text-shadow:0 0 22px rgba(204,187,255,.42),0 0 36px rgba(108,220,211,.14);
+  animation:luneaBootPulseV29 1.35s ease-in-out infinite alternate;
+}
+@keyframes luneaBootPulseV29{from{opacity:.68;filter:blur(.1px)}to{opacity:1;filter:blur(0)}}
+html.lunea-ui-ready .app{animation:luneaBootRevealV29 .28s cubic-bezier(.2,.8,.2,1) both}
+@keyframes luneaBootRevealV29{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){html.lunea-booting body::after,html.lunea-ui-ready .app{animation:none!important}}
+</style>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0e0b16">
