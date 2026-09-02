@@ -1,0 +1,76 @@
+name: Apply GENERAL V30.5
+
+on:
+  push:
+    branches: [fix/general-priority-v30-5]
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/general-priority-v30-5
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch loader and contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          loader = Path('lunea-structural-routing-v4.js')
+          text = loader.read_text()
+          text = text.replace('final GENERAL order V30.4.', 'final GENERAL priority order V30.5.')
+          old = 'lunea-general-order-v30-4.js?v=3004'
+          new = 'lunea-general-order-v30-5.js?v=3005'
+          if text.count(old) != 2:
+              raise SystemExit(f'expected 2 old loader refs, got {text.count(old)}')
+          text = text.replace(old, new)
+          loader.write_text(text)
+
+          test = Path('tests/v30-spread-horary-contract.test.mjs')
+          text = test.read_text()
+          text = text.replace("const generalOrder = read('lunea-general-order-v30-4.js');", "const generalOrder = read('lunea-general-order-v30-5.js');")
+          text = text.replace("'lunea-general-order-v30-4.js',", "'lunea-general-order-v30-5.js',")
+          old_order = "const finalGeneralOrder = [\n  'ONE CARD',\n  'YES / NO',\n  'TIMELINE',\n  '5 CARD · CORE FLOW',\n  '6 CARD · FULL VIEW',\n  'DEEP FLOW',\n  'CELTIC CROSS'\n];"
+          new_order = "const finalGeneralOrder = [\n  '질문 맞춤 AI 배열',\n  '직접 입력 배열',\n  'ONE CARD',\n  'YES / NO',\n  'TIMELINE',\n  '5 CARD · CORE FLOW',\n  '6 CARD · FULL VIEW',\n  'DEEP FLOW',\n  'CELTIC CROSS'\n];"
+          if old_order not in text:
+              raise SystemExit('final GENERAL order contract anchor missing')
+          text = text.replace(old_order, new_order, 1)
+          text = text.replace("/version:30\\.4/", "/version:30\\.5/")
+          text = text.replace('GENERAL order V30.4 export missing', 'GENERAL order V30.5 export missing')
+          text = text.replace("/lunea-general-order-v30-4\\.js\\?v=3004/", "/lunea-general-order-v30-5\\.js\\?v=3005/")
+          text = text.replace('GENERAL V30.4 cache URL missing', 'GENERAL V30.5 cache URL missing')
+          text = text.replace("loader.lastIndexOf('lunea-general-order-v30-4.js?v=3004')", "loader.lastIndexOf('lunea-general-order-v30-5.js?v=3005')")
+          text = text.replace('GENERAL V30.4 must run after spread-depth V30.3', 'GENERAL V30.5 must run after spread-depth V30.3')
+          text = text.replace("console.log('V30.4 GENERAL order / Horary V19.4 contract tests passed');", "assert.match(generalOrder, /manual\\.dataset\\.title\\s*=\\s*'직접 입력 배열'/, 'manual GENERAL title metadata repair missing');\nassert.match(generalOrder, /manual\\.dataset\\.cat\\s*=\\s*'GENERAL'/, 'manual GENERAL category metadata repair missing');\n\nconsole.log('V30.5 GENERAL priority / Horary V19.4 contract tests passed');")
+          test.write_text(text)
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check lunea-general-order-v30-5.js
+          node --check lunea-structural-routing-v4.js
+          for test in tests/*.test.mjs; do
+            echo "==> $test"
+            node "$test"
+          done
+      - name: Commit validated patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lunea-structural-routing-v4.js tests/v30-spread-horary-contract.test.mjs
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m 'fix: finalize GENERAL AI-first order V30.5'
+          git push origin HEAD:fix/general-priority-v30-5
