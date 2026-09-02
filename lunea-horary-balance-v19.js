@@ -1,6 +1,6 @@
 'use strict';
 
-/* LUNEA HORARY BALANCE V19 · UI / topic-routing companion for API Balance V3. */
+/* LUNEA HORARY BALANCE V19.2 · UI / topic-routing companion for API Balance V3. */
 (() => {
   const W = window;
   if (W.__LUNEA_HORARY_BALANCE_V19_UI__) return;
@@ -32,7 +32,22 @@
 
   function inferTopic(question) {
     const q = String(question || '');
-    for (const [key, [, re]] of Object.entries(EXTRA_TOPICS)) if (re.test(q)) return key;
+    // More specific intents must win over broader words such as "관계", "연락", or "계약".
+    if (/법률|소송|재판|판결|고소|계약\s*분쟁/.test(q)) return 'legal';
+    if (/재회|다시\s*만나|관계\s*회복|구남친|구여친/.test(q)) return 'reconciliation';
+    if (/연락|카톡|메시지|답장|전화|DM|디엠/.test(q)) return 'contact';
+    if (EXTRA_TOPICS.contract[1].test(q)) return 'contract';
+    if (EXTRA_TOPICS.communication[1].test(q)) return 'communication';
+    if (EXTRA_TOPICS.friend[1].test(q)) return 'friend';
+    if (EXTRA_TOPICS.travel[1].test(q)) return 'travel';
+    if (EXTRA_TOPICS.purchase[1].test(q)) return 'purchase';
+    if (/연애|호감|썸|사귀|데이트|상대방/.test(q)) return 'relationship';
+    if (/시험|합격|불합격|면접|성적|점수/.test(q)) return 'exam';
+    if (/이직|퇴사|직장|회사|승진|커리어|업무/.test(q)) return 'career';
+    if (/주식|코인|매수|매도|익절|손절|종목|투자/.test(q)) return 'stock';
+    if (/돈|금전|재물|수입|지출|대출|재정/.test(q)) return 'money';
+    if (/집|이사|부동산|토지|가족/.test(q)) return 'home';
+    if (/건강|회복|질병|병원|치료|수술/.test(q)) return 'health';
     return 'general';
   }
 
@@ -43,12 +58,10 @@
     if (!input || !select) return;
     if (select.value !== 'general' && !select.dataset.luneaAutoTopicV19) return;
     const next = inferTopic(input.value);
-    if (next !== 'general') {
+    if (select.querySelector(`option[value="${next}"]`)) {
       select.value = next;
-      select.dataset.luneaAutoTopicV19 = '1';
-    } else if (select.dataset.luneaAutoTopicV19) {
-      select.value = 'general';
-      delete select.dataset.luneaAutoTopicV19;
+      if (next !== 'general') select.dataset.luneaAutoTopicV19 = '1';
+      else delete select.dataset.luneaAutoTopicV19;
     }
   }
 
@@ -110,7 +123,7 @@
     if (q && !q.dataset.hv19Bound) { q.dataset.hv19Bound='1'; q.addEventListener('input', syncTopic); }
     if (select && !select.dataset.hv19Bound) {
       select.dataset.hv19Bound='1';
-      select.addEventListener('change', () => { if (select.value !== 'general') delete select.dataset.luneaAutoTopicV19; });
+      select.addEventListener('change', () => { delete select.dataset.luneaAutoTopicV19; });
     }
     if (run && !run.dataset.hv19Bound) { run.dataset.hv19Bound='1'; run.addEventListener('click', syncTopic, true); }
   }
@@ -118,9 +131,15 @@
   function boot() {
     ensureStyle(); bind();
     [80,300,800,1600].forEach(ms => setTimeout(() => { bind(); syncTopic(); renderV3(); }, ms));
-    const observer = new MutationObserver(() => requestAnimationFrame(() => { bind(); renderV3(); }));
+    let queued = false;
+    const observer = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued=false; bind(); renderV3(); });
+    });
     observer.observe(document.documentElement,{subtree:true,childList:true});
-    console.info('☿ LUNEA Horary Balance V19 UI loaded');
+    W.LUNEA_HORARY_TOPIC_V19 = {version:19.2,inferTopic};
+    console.info('☿ LUNEA Horary Balance V19.2 UI loaded');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true}); else boot();
