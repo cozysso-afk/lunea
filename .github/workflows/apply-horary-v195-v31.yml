@@ -1,0 +1,69 @@
+name: Apply Horary V19.5 V3.1
+
+on:
+  push:
+    branches: [feat/horary-v19-5-balance-v31]
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat/horary-v19-5-balance-v31
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Patch loader and contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          loader = Path('lunea-structural-routing-v4.js')
+          text = loader.read_text()
+          text = text.replace('single Horary Balance V3 bridge V19.4', 'single Horary Balance V3.1 bridge V19.5')
+          old = 'lunea-horary-balance-v19-4.js?v=1904'
+          new = 'lunea-horary-balance-v19-5.js?v=1905'
+          if text.count(old) != 2:
+              raise SystemExit(f'expected 2 V19.4 loader refs, got {text.count(old)}')
+          text = text.replace(old, new)
+          loader.write_text(text)
+
+          test = Path('tests/v30-spread-horary-contract.test.mjs')
+          text = test.read_text()
+          text = text.replace("const horary = read('lunea-horary-balance-v19-4.js');", "const horary = read('lunea-horary-balance-v19-5.js');")
+          text = text.replace("'lunea-horary-balance-v19-4.js',", "'lunea-horary-balance-v19-5.js',")
+          text = text.replace("/version:19\\.4/, 'Horary V19.4 export missing'", "/version:19\\.5/, 'Horary V19.5 export missing'")
+          text = text.replace("assert.match(horary, /balance_v3/, 'Horary V3 UI bridge missing');", "assert.match(horary, /balance_v31/, 'Horary V3.1 UI bridge missing');\nassert.match(horary, /balance_v3/, 'Horary V3 fallback missing');")
+          text = text.replace("assert.match(horary, /HORARY BALANCE V3 · 최종 판정 근거/, 'Horary Gemini prompt must use V3 evidence');", "assert.match(horary, /HORARY BALANCE V3\\.1/, 'Horary Gemini prompt must support V3.1 evidence');\nassert.match(horary, /translation_of_light/, 'Translation of Light prompt/UI bridge missing');\nassert.match(horary, /collection_of_light/, 'Collection of Light prompt/UI bridge missing');\nassert.match(horary, /confirmed_obstructions/, 'confirmed obstruction bridge missing');\nassert.match(horary, /reception_v31/, 'V3.1 reception bridge missing');")
+          text = text.replace("'V19.4 must not append the old V2 prompt block'", "'V19.5 must not append the old V2 prompt block'")
+          text = text.replace("/luneaTopicManualV194/, 'manual topic override guard missing'", "/luneaTopicManualV195/, 'manual topic override guard missing'")
+          text = text.replace("assert.match(loader, /lunea-horary-balance-v19-4\\.js\\?v=1904/, 'V19.4 cache URL missing');", "assert.match(loader, /lunea-horary-balance-v19-5\\.js\\?v=1905/, 'V19.5 cache URL missing');\nassert.doesNotMatch(loader, /lunea-horary-balance-v19-4\\.js\\?v=1904/, 'legacy V19.4 bridge must be inactive');")
+          text = text.replace("console.log('V30.5 GENERAL priority / Horary V19.4 contract tests passed');", "console.log('V30.5 GENERAL priority / Horary V19.5 V3.1 contract tests passed');")
+          test.write_text(text)
+          PY
+      - name: Validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check lunea-horary-balance-v19-5.js
+          node --check lunea-structural-routing-v4.js
+          for test in tests/*.test.mjs; do
+            echo "==> $test"
+            node "$test"
+          done
+      - name: Commit validated patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lunea-structural-routing-v4.js tests/v30-spread-horary-contract.test.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'feat: wire Horary V19.5 to Balance V3.1'
+          git push origin HEAD:feat/horary-v19-5-balance-v31
