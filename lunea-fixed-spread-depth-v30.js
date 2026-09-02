@@ -1,9 +1,10 @@
 'use strict';
 
 /*
-  LUNEA FIXED SPREAD DEPTH V30.2
+  LUNEA FIXED SPREAD DEPTH V30.3
   ==============================
-  Deepens fixed presets that were too shallow for evidence-based use.
+  Deepens fixed presets that were too shallow for evidence-based use and
+  orders GENERAL spreads from light/fast reading to the deepest diagnostic.
 
   - No RNG / card identity / reversal changes.
   - No AI custom spread changes.
@@ -14,6 +15,14 @@
   const W = window;
   if (W.__LUNEA_FIXED_SPREAD_DEPTH_V30__) return;
   W.__LUNEA_FIXED_SPREAD_DEPTH_V30__ = true;
+
+  const GENERAL_ORDER = [
+    'ONE CARD',
+    'YES / NO',
+    'TIMELINE',
+    'DEEP FLOW',
+    'CELTIC CROSS'
+  ];
 
   const PRESETS = {
     'YES / NO': {
@@ -81,16 +90,19 @@
       ]
     },
     '일반 금전운 & 재물 흐름': {
-      count: 6,
-      desc: '현재 현금흐름, 새는 돈, 수익 기회, 외부 변수와 재정 안정 행동을 분리합니다.',
-      subtitle: '현금흐름 · 누수 · 수익 기회 · 외부 변수 · 리스크 · 안정 행동',
+      count: 9,
+      desc: '현재 재정 상태부터 수입축·고정비·숨은 누수·현금 여력·기회·외부 위험·단기와 중기 흐름까지 입체적으로 봅니다.',
+      subtitle: '재정 상태 · 수입축 · 고정비 · 누수 · 현금여력 · 기회 · 외부위험 · 단기흐름 · 중기전략',
       positions: [
-        '현재 돈의 유입과 유출을 결정하는 핵심 흐름',
-        '내가 과소평가하고 있는 지출·누수·고정비 위험',
-        '가까운 기간 새롭게 열릴 수 있는 수익 또는 절약 기회',
-        '내 통제 밖에서 재정에 영향을 줄 외부 변수',
-        '현재 재정 판단에서 가장 조심해야 할 리스크나 편향',
-        '재정 안정성을 실제로 높일 우선 행동과 확인 신호'
+        '현재 전체 재정 상태와 돈의 유입·유출 균형에서 가장 중요한 핵심',
+        '현재 가장 안정적으로 돈을 만들어 주는 수입축과 그 지속 가능성',
+        '고정비·부채·의무지출 중 현금흐름을 가장 강하게 압박하는 부분',
+        '눈에 잘 보이지 않지만 반복적으로 돈이 새는 지출·손실·예상 밖 비용',
+        '예상치 못한 상황을 버틸 수 있는 현금 여력·비상자금·재정 완충력',
+        '가까운 기간 새롭게 열릴 수 있는 수입 증가·자산 성장·비용 절감 기회',
+        '내 통제 밖에서 재정에 큰 영향을 줄 수 있는 외부 변수와 가장 큰 위험',
+        '앞으로 1~3개월 돈의 흐름이 실제로 움직이는 방향과 먼저 확인할 현실 신호',
+        '3~6개월 재정 안정성을 높이기 위해 가장 먼저 바꿔야 할 전략과 최종 판단 기준'
       ]
     },
     '친구·지인 관계 & 주변 인연운': {
@@ -222,8 +234,32 @@
     });
   }
 
+  function patchGeneralOrder() {
+    const items = [...document.querySelectorAll('.reading-item[data-cat="GENERAL"]')];
+    if (items.length < 2) return false;
+    const parent = items[0].parentElement;
+    if (!parent || items.some(el => el.parentElement !== parent)) return false;
+
+    const current = items.map(el => el.dataset.title || '');
+    const desiredKnown = GENERAL_ORDER.filter(title => current.includes(title));
+    const extras = current.filter(title => !GENERAL_ORDER.includes(title));
+    const desired = [...desiredKnown, ...extras];
+    if (desired.join('\u0000') === current.join('\u0000')) return true;
+
+    const byTitle = new Map(items.map(el => [el.dataset.title, el]));
+    const anchor = items[items.length - 1].nextSibling;
+    const fragment = document.createDocumentFragment();
+    desired.forEach(title => {
+      const el = byTitle.get(title);
+      if (el) fragment.appendChild(el);
+    });
+    parent.insertBefore(fragment, anchor);
+    return true;
+  }
+
   function patchMenus() {
     Object.entries(PRESETS).forEach(([title, preset]) => patchMenuItem(title, preset));
+    patchGeneralOrder();
   }
 
   function boot() {
@@ -236,13 +272,14 @@
     }, ms));
 
     W.LUNEA_FIXED_SPREAD_DEPTH_V30 = {
-      version: 30.2,
+      version: 30.3,
+      generalOrder: GENERAL_ORDER.slice(),
       presets: Object.fromEntries(Object.entries(PRESETS).map(([k, v]) => [k, {
         count: v.count,
         positions: v.positions.slice()
       }]))
     };
-    console.info('✦ LUNEA Fixed Spread Depth V30.2 loaded');
+    console.info('✦ LUNEA Fixed Spread Depth V30.3 loaded');
   }
 
   if (document.readyState === 'loading') {
