@@ -61,8 +61,8 @@ assert.match(orderSource, /const desired = \[\.\.\.known\.map\(x => x\.node\), \
 assert.match(orderSource, /if \(already\) return true/);
 
 // Long spreads get small convenience controls immediately after the prompt-copy box.
-assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.1/);
-assert.match(orderSource, /version:'33\.1'/);
+assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.2/);
+assert.match(orderSource, /version:'33\.2'/);
 assert.match(orderSource, /luneaBottomReadingActions/);
 assert.match(orderSource, /luneaBottomAiRead/);
 assert.match(orderSource, /luneaBottomSaveReading/);
@@ -72,6 +72,14 @@ assert.match(orderSource, /save\.textContent = '💾 저장'/);
 assert.match(orderSource, /clickSource\('aiRead'\)/);
 assert.match(orderSource, /clickSource\('saveReading'\)/);
 assert.ok(!orderSource.includes("document.getElementById('copyPrompt').onclick"), 'prompt-copy behavior must not be replaced');
+
+// iOS Thai period date controls must never use intrinsic grid width that can overlap.
+assert.match(orderSource, /grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\)!important/);
+assert.match(orderSource, /\.thai-v33-field\{min-width:0!important;overflow:hidden\}/);
+assert.match(orderSource, /input\[type="date"\]/);
+assert.match(orderSource, /min-width:0!important/);
+assert.match(orderSource, /max-width:100%!important/);
+assert.match(orderSource, /@media\(max-width:360px\)/);
 
 // Both parser and sequential loader paths must include the modules, regardless of build-stamp value.
 for (const asset of [
@@ -92,4 +100,4 @@ for (const asset of [
   assert.match(workflow, new RegExp(asset.replaceAll('.', '\\.')));
 }
 
-console.log('Thai range V33 + reading action order V33.1 regression tests: PASS');
+console.log('Thai range V33 + reading action order V33.2 regression tests: PASS');
