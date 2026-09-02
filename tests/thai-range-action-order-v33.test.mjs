@@ -60,10 +60,28 @@ assert.match(orderSource, /Unknown\/future buttons are preserved/);
 assert.match(orderSource, /const desired = \[\.\.\.known\.map\(x => x\.node\), \.\.\.unknown\.map\(x => x\.node\)\]/);
 assert.match(orderSource, /if \(already\) return true/);
 
-// Both parser and sequential loader paths must include the new modules.
-assert.equal(loader.split('lunea-thai-range-v33.js?v=3301').length - 1, 2);
-assert.equal(loader.split('lunea-reading-action-order-v33.js?v=3301').length - 1, 2);
-assert.equal(loader.split('lunea-thai-tarot-bridge-v32.js?v=3202').length - 1, 2);
+// Long spreads get small convenience controls immediately after the prompt-copy box.
+assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.1/);
+assert.match(orderSource, /version:'33\.1'/);
+assert.match(orderSource, /luneaBottomReadingActions/);
+assert.match(orderSource, /luneaBottomAiRead/);
+assert.match(orderSource, /luneaBottomSaveReading/);
+assert.match(orderSource, /copyBox\.insertAdjacentElement\('afterend', root\)/);
+assert.match(orderSource, /ai\.textContent = '🔮 AI 해석'/);
+assert.match(orderSource, /save\.textContent = '💾 저장'/);
+assert.match(orderSource, /clickSource\('aiRead'\)/);
+assert.match(orderSource, /clickSource\('saveReading'\)/);
+assert.ok(!orderSource.includes("document.getElementById('copyPrompt').onclick"), 'prompt-copy behavior must not be replaced');
+
+// Both parser and sequential loader paths must include the modules, regardless of build-stamp value.
+for (const asset of [
+  'lunea-thai-range-v33.js',
+  'lunea-reading-action-order-v33.js',
+  'lunea-thai-tarot-bridge-v32.js'
+]) {
+  const pattern = new RegExp(asset.replaceAll('.', '\\.') + '\\?v=[^"\\']+', 'g');
+  assert.equal((loader.match(pattern) || []).length, 2, `${asset} must exist in both structural loader paths`);
+}
 
 // Future Pages releases must cache-bust all behavior-critical Thai/action modules.
 for (const asset of [
@@ -74,4 +92,4 @@ for (const asset of [
   assert.match(workflow, new RegExp(asset.replaceAll('.', '\\.')));
 }
 
-console.log('Thai range V33 + reading action order V33 regression tests: PASS');
+console.log('Thai range V33 + reading action order V33.1 regression tests: PASS');
