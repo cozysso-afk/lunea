@@ -5,13 +5,13 @@ import { execFileSync } from 'node:child_process';
 const read = path => fs.readFileSync(path, 'utf8');
 const spread = read('lunea-fixed-spread-depth-v30.js');
 const horary = read('lunea-horary-balance-v19-4.js');
-const generalOrder = read('lunea-general-order-v30-4.js');
+const generalOrder = read('lunea-general-order-v30-5.js');
 const loader = read('lunea-structural-routing-v4.js');
 
 for (const file of [
   'lunea-fixed-spread-depth-v30.js',
   'lunea-horary-balance-v19-4.js',
-  'lunea-general-order-v30-4.js',
+  'lunea-general-order-v30-5.js',
   'lunea-structural-routing-v4.js'
 ]) {
   execFileSync(process.execPath, ['--check', file], {stdio:'pipe'});
@@ -51,6 +51,8 @@ assert.match(moneyBlock, /1~3개월/, 'money spread short-term horizon missing')
 assert.match(moneyBlock, /3~6개월/, 'money spread medium-term horizon missing');
 
 const finalGeneralOrder = [
+  '질문 맞춤 AI 배열',
+  '직접 입력 배열',
   'ONE CARD',
   'YES / NO',
   'TIMELINE',
@@ -65,7 +67,7 @@ for (const title of finalGeneralOrder) {
   assert.ok(idx > finalLast, `final GENERAL order wrong around ${title}`);
   finalLast = idx;
 }
-assert.match(generalOrder, /version:30\.4/, 'GENERAL order V30.4 export missing');
+assert.match(generalOrder, /version:30\.5/, 'GENERAL order V30.5 export missing');
 
 for (const topic of ['reconciliation','contact','relationship','exam','career','stock','money','home','health','legal','friend','travel','contract','purchase','communication']) {
   assert.ok(horary.includes(`return '${topic}'`), `Horary auto topic missing: ${topic}`);
@@ -94,11 +96,14 @@ assert.match(loader, /lunea-horary-balance-v19-4\.js\?v=1904/, 'V19.4 cache URL 
 assert.doesNotMatch(loader, /lunea-horary-balance-v18\.js\?v=1803/, 'legacy V18 bridge must be inactive');
 assert.doesNotMatch(loader, /lunea-horary-balance-v19\.js\?v=1903/, 'legacy V19.3 bridge must be inactive');
 assert.match(loader, /lunea-fixed-spread-depth-v30\.js\?v=3003/, 'V30.3 cache URL missing');
-assert.match(loader, /lunea-general-order-v30-4\.js\?v=3004/, 'GENERAL V30.4 cache URL missing');
+assert.match(loader, /lunea-general-order-v30-5\.js\?v=3005/, 'GENERAL V30.5 cache URL missing');
 const spreadIndex = loader.lastIndexOf('lunea-fixed-spread-depth-v30.js?v=3003');
-const generalOrderIndex = loader.lastIndexOf('lunea-general-order-v30-4.js?v=3004');
+const generalOrderIndex = loader.lastIndexOf('lunea-general-order-v30-5.js?v=3005');
 const revealIndex = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=2902');
-assert.ok(spreadIndex >= 0 && generalOrderIndex > spreadIndex, 'GENERAL V30.4 must run after spread-depth V30.3');
+assert.ok(spreadIndex >= 0 && generalOrderIndex > spreadIndex, 'GENERAL V30.5 must run after spread-depth V30.3');
 assert.ok(revealIndex > generalOrderIndex, 'boot reveal must run after final GENERAL order patch');
 
-console.log('V30.4 GENERAL order / Horary V19.4 contract tests passed');
+assert.match(generalOrder, /manual\.dataset\.title\s*=\s*'직접 입력 배열'/, 'manual GENERAL title metadata repair missing');
+assert.match(generalOrder, /manual\.dataset\.cat\s*=\s*'GENERAL'/, 'manual GENERAL category metadata repair missing');
+
+console.log('V30.5 GENERAL priority / Horary V19.4 contract tests passed');
