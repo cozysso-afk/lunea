@@ -57,6 +57,7 @@
     const style = document.createElement('style');
     style.id = 'luneaHoraryV19UiStyle';
     style.textContent = `
+      #luneaHoraryBalanceEvidence{display:none!important}
       #luneaHoraryBalanceEvidenceV19{margin-top:8px;padding:12px;border-radius:14px;border:1px solid rgba(124,211,255,.22);background:linear-gradient(145deg,rgba(124,211,255,.055),rgba(189,164,248,.07))}
       #luneaHoraryBalanceEvidenceV19 .hv19-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
       #luneaHoraryBalanceEvidenceV19 .hv19-k{font-size:9px;font-weight:850;letter-spacing:1.05px;color:#c9eaff}
@@ -81,7 +82,6 @@
 
     const heading = summary.querySelector('h4');
     if (heading && balance.headline_ko) heading.textContent = balance.headline_ko;
-    document.getElementById('luneaHoraryBalanceEvidence')?.remove();
 
     let box = document.getElementById('luneaHoraryBalanceEvidenceV19');
     if (!box) {
