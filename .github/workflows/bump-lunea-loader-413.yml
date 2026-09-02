@@ -40,12 +40,15 @@ jobs:
 
           # Behavior-critical scripts loaded from inside the structural loader
           # appear twice (parser path + sequential fallback). Stamp both paths so
-          # iOS/PWA cannot keep an older repair/prompt policy after a release.
+          # iOS/PWA cannot keep an older repair/prompt/Thai UI policy after release.
           loader_path = Path('lunea-structural-routing-v4.js')
           loader = loader_path.read_text(encoding='utf-8')
           for asset in (
               'lunea-cardback-restore-v19.js',
               'lunea-final-prompt-priority-v1.js',
+              'lunea-thai-tarot-bridge-v32.js',
+              'lunea-thai-range-v33.js',
+              'lunea-reading-action-order-v33.js',
           ):
               pattern = re.escape(asset) + r'\?v=[^"\']+'
               replacement = f'{asset}?v={build}'
@@ -99,7 +102,7 @@ jobs:
               json.dumps({'version': build}, ensure_ascii=False) + '\n',
               encoding='utf-8',
           )
-          print('Stamped LUNEA build, nested repairs/prompt policy, request watchdog loaders, and canonical Home Screen icon:', build)
+          print('Stamped LUNEA build, nested repairs/prompt/Thai UI policy, request watchdog loaders, and canonical Home Screen icon:', build)
           PY
 
       - name: Commit build stamp
