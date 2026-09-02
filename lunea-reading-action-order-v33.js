@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA READING ACTION ORDER V33.1
+  LUNEA READING ACTION ORDER V33.2
   ================================
   Keeps the reading action grid in a stable, task-oriented order even though
   several buttons are injected by independent feature modules.
@@ -15,6 +15,9 @@
   Also adds small AI 해석 / 저장 shortcuts directly below the prompt-copy
   control for long spreads. These shortcuts delegate to the existing source
   buttons; they never duplicate interpretation or persistence logic.
+
+  V33.2 also hardens the Thai period date grid on iOS so native date inputs do
+  not overflow their grid tracks or collide in the middle of the modal.
 
   Unknown/future buttons are preserved after the known controls.
 */
@@ -90,6 +93,28 @@
       }
       #${BOTTOM_ID} button:active{transform:translateY(1px);opacity:.82}
       #${BOTTOM_ID} button:disabled{opacity:.42;pointer-events:none}
+
+      /* iOS native date inputs can contribute a large min-content width inside
+         CSS Grid. Force both Thai period columns and fields to shrink inside the
+         modal instead of visually overlapping at the center seam. */
+      .thai-v33-dates{
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+        gap:10px!important;
+      }
+      .thai-v33-field{min-width:0!important;overflow:hidden}
+      .thai-v33-field input[type="date"]{
+        display:block!important;
+        width:100%!important;
+        min-width:0!important;
+        max-width:100%!important;
+        box-sizing:border-box!important;
+        padding-left:6px!important;
+        padding-right:6px!important;
+      }
+      @media(max-width:360px){
+        .thai-v33-dates{grid-template-columns:1fr!important;gap:8px!important}
+        .thai-v33-field{overflow:visible}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -178,7 +203,7 @@
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
-    version:'33.1',
+    version:'33.2',
     order:[...ORDER],
     reorder,
     ensureBottomActions,
