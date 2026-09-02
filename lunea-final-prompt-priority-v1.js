@@ -1,18 +1,18 @@
 'use strict';
 
 /*
-  LUNEA FINAL PROMPT PRIORITY V1
+  LUNEA FINAL PROMPT PRIORITY V2
   ==============================
-  Last-mile reading priority + conditional Saju usage policy.
+  Last-mile evidence priority + balanced auxiliary-system usage policy.
 
   Goals:
-  - Keep question/positions/cards as the primary evidence.
-  - Prevent the detailed Saju profile from being silently ignored when the
-    question directly concerns the user's own choice, boundary, burden,
-    response style, career/money/study or self-pattern.
-  - Never use the user's Saju as evidence of another person's private feelings
-    or behavior.
-  - Never generate luck-cycle/timing claims from natal Saju fields alone.
+  - Keep question/positions/RWS cards as the primary evidence.
+  - Prevent a valid computed Western natal chart from being silently ignored.
+  - Use Transit / Returns / Thai Taksa only when their real computed blocks are
+    present for the current question.
+  - Preserve the conditional Saju policy.
+  - Never use the user's natal/profile data as proof of another person's private
+    feelings or as a substitute for event/timing calculations.
 */
 (() => {
   const W = window;
@@ -27,6 +27,31 @@
     const s = String(prompt || '');
     const m = s.match(/\[질문 원문\]\s*\n["“]?([\s\S]*?)["”]?\s*\n\n\[질문 유형\]/);
     return clean(m?.[1] || '');
+  }
+
+  function westernBlock(prompt){
+    const s = String(prompt || '');
+    const m = s.match(/\[WESTERN ASTROLOGY · 서양점성술\]([\s\S]*?)(?=\n\[SAJU \/ FOUR PILLARS|\n\[THAI ASTROLOGY|\n\[프로필 체계 사용 규칙|\n\n\[뽑힌 카드\]|$)/);
+    return String(m?.[1] || '');
+  }
+
+  function hasWesternNatal(prompt){
+    const b = westernBlock(prompt);
+    if (!b || /아직\s*Astro\s*Core\s*미연결/i.test(b)) return false;
+    const hits = b.match(/-\s*(?:Sun\(태양\)|Moon\(달\)|ASC\(상승점\)|MC\(중천점\)|Mercury\(수성\)|Venus\(금성\)|Mars\(화성\)|Jupiter\(목성\)|Saturn\(토성\)|Vertex\(버텍스\)):\s*\S[^\n]*/g) || [];
+    return hits.length >= 2;
+  }
+
+  function hasTransit(prompt){
+    return String(prompt || '').includes('[WESTERN ASTROLOGY — TRANSIT SCANNER');
+  }
+
+  function hasReturns(prompt){
+    return String(prompt || '').includes('[PLANETARY RETURNS · 회귀 계산 결과]');
+  }
+
+  function hasThaiComputed(prompt){
+    return String(prompt || '').includes('[THAI ASTROLOGY · MAHA TAKSA 계산 결과]');
   }
 
   function sajuBlock(prompt){
@@ -54,6 +79,40 @@
     return 'neutral';
   }
 
+  function westernPolicy(prompt){
+    if (!hasWesternNatal(prompt)) {
+      return `- Western Natal(서양 출생차트): 실제 계산된 Natal 핵심값이 없으면 태양궁 호환값이나 출생정보만으로 상세 출생차트를 지어내지 않는다.`;
+    }
+
+    const mode = classify(questionFromPrompt(prompt));
+    if (mode === 'other_focused') {
+      return `- Western Natal(서양 출생차트): 실제 계산된 Natal 값이 있으므로 최종 답변에 짧은 '서양점성 보조' 문장 또는 단락을 최소 1회 실질적으로 반영한다. 단, 이번 질문이 타인의 생각·감정·행동 중심이면 사용자의 Natal을 상대의 속마음·연락 발생·행동 증거로 쓰지 않는다. Sun/Moon/ASC/MC/Mercury/Venus/Mars/Jupiter/Saturn/Vertex 중 현재 질문과 연결되는 실제 계산값 1~2개를 정확히 짚어 사용자의 관계 체감·반응 패턴·경계 또는 선택 기준만 보조한다. 막연히 '점성술상'이라고만 쓰지 않는다.`;
+    }
+
+    return `- Western Natal(서양 출생차트): 실제 계산된 Natal 값이 있으므로 최종 답변에 짧은 '서양점성 보조' 문장 또는 단락을 최소 1회 실질적으로 반영한다. Sun/Moon/ASC/MC/Mercury/Venus/Mars/Jupiter/Saturn/Vertex 중 질문과 직접 관련된 실제 계산값 1~2개를 정확히 짚고 현재 카드/포지션과 어떻게 교차 보조되는지 설명한다. Natal은 사용자의 성향·반응·관계 방식·현실 판단을 보조하며 카드 결론이나 사건 성립 여부를 대신하지 않는다. 막연히 '점성술상'이라고만 쓰지 않는다.`;
+  }
+
+  function transitPolicy(prompt){
+    if (!hasTransit(prompt)) {
+      return `- Transit Scanner(트랜짓): 현재 질문의 실제 계산 결과 블록이 없으면 트랜짓을 참고했다고 말하거나 현재 천체 위치·시기를 새로 만들지 않는다.`;
+    }
+    return `- Transit Scanner(트랜짓): 현재 질문의 실제 계산 결과가 있으므로 시기·현재 흐름을 다루는 부분에서는 계산된 peak/caution/exact-hit 중 관련 근거를 최소 1개 구체적으로 반영한다. 트랜짓은 활성 구간 보조이며 사건 성립 자체를 확정하거나 RWS 카드 결론을 뒤집지 않는다.`;
+  }
+
+  function returnPolicy(prompt){
+    if (!hasReturns(prompt)) {
+      return `- Planetary Returns(행성 회귀): 실제 계산 결과가 없으면 회귀 시각·하우스·주기를 만들어내지 않는다.`;
+    }
+    return `- Planetary Returns(행성 회귀): 실제 계산 결과가 있으면 질문과 직접 관련된 회귀 1개를 배경 주기로 짧게 교차참고한다. 회귀 날짜 하나를 연락·재회·합격·주가 움직임의 확정일로 바꾸지 않는다.`;
+  }
+
+  function thaiPolicy(prompt){
+    if (!hasThaiComputed(prompt)) {
+      return `- Thai Taksa(태국 탁사): 현재 질문의 실제 Maha Taksa 계산 결과가 없으면 출생 요일 프로필만으로 정밀 사건·시기 근거를 만들어내지 않는다.`;
+    }
+    return `- Thai Taksa(태국 탁사): 현재 질문의 실제 Maha Taksa 계산 결과가 있으므로 질문과 연결되는 Taksa 영역/행성 1개를 짧은 '태국점성 보조'로 반영한다. 구조·상징 보조층으로만 쓰고 정밀 날짜나 타인의 속마음 증거로 확대하지 않는다.`;
+  }
+
   function sajuPolicy(prompt){
     if (!hasSaju(prompt)) return `- Saju(사주명리): 유효한 입력값이 없으면 사용하지 않는다.`;
     const mode = classify(questionFromPrompt(prompt));
@@ -68,8 +127,13 @@
   }
 
   function finalBlock(prompt){
-    const policy = sajuPolicy(prompt);
-    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다.\n3. Timing Oracle(시기 오라클), Transit Scanner(트랜짓 스캐너), Return(회귀)은 프롬프트에 실제 결과가 있을 때만 각자의 역할 범위에서 사용한다. 시기 자료가 사건 성립 자체를 대신하지 않는다.\n4. 출생 프로필은 사건 증거가 아니라 사용자 쪽 성향·반응·경계·현실 판단을 보조하는 층이다. 프로필 때문에 카드 결론을 뒤집지 않는다.\n${policy}\n6. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n7. 사주와 카드가 같은 방향이면 '교차 보조 신호'라고 짧게 표현한다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다.\n8. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n9. 최종 답변에서는 프로필 설명 자체보다 질문의 결론이 먼저다. 프로필 보조는 필요한 만큼만 짧고 구체적으로 쓴다.`;
+    const western = westernPolicy(prompt);
+    const transit = transitPolicy(prompt);
+    const returns = returnPolicy(prompt);
+    const thai = thaiPolicy(prompt);
+    const saju = sajuPolicy(prompt);
+
+    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n12. 최종 답변에서는 질문의 결론과 카드 근거가 먼저다. 그다음 유효한 점성/프로필 보조를 짧고 구체적으로 붙인다. 계산값이 있는 보조 체계를 단순히 생략하지 않는다.`;
   }
 
   function install(){
@@ -82,18 +146,22 @@
       if (p.includes(MARKER)) return p;
       return `${p}\n\n${finalBlock(p)}`;
     };
-    wrapped.__luneaFinalPromptPriorityV1 = true;
+    wrapped.__luneaFinalPromptPriorityV2 = true;
     W.promptString = wrapped;
     try { promptString = wrapped; } catch {}
     W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__ = true;
-    console.info('🧭 LUNEA Final Prompt Priority V1 installed');
+    console.info('🧭 LUNEA Final Prompt Priority V2 installed');
     return true;
   }
 
   W.LUNEA_FINAL_PROMPT_PRIORITY_V1 = {
-    version:1,
+    version:2,
     classify,
     build:finalBlock,
+    hasWesternNatal,
+    hasTransit,
+    hasReturns,
+    hasThaiComputed,
     hasSaju:() => {
       const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
       if (typeof prior !== 'function') return false;
