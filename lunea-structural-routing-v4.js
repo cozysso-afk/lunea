@@ -50,7 +50,7 @@
     document.write('<script src="./lunea-timing-ab-inline-v16.js?v=1601"><\/script>');
     document.write('<script src="./lunea-manual-limit20-v17.js?v=1702"><\/script>');
     document.write('<script src="./lunea-horary-balance-v19-5.js?v=1905"><\/script>');
-    document.write('<script src="./lunea-cardback-restore-v19.js?v=e81279ba56c7"><\/script>');
+    document.write('<script src="./lunea-cardback-restore-v19.js?v=ab0770a990ca"><\/script>');
     document.write('<script src="./lunea-universal-ai-opal-v20.js?v=2002"><\/script>');
     document.write('<script src="./lunea-learning-success-gate-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-daily-orbit6-v21.js?v=2101"><\/script>');
@@ -108,7 +108,7 @@
     './lunea-timing-ab-inline-v16.js?v=1601',
     './lunea-manual-limit20-v17.js?v=1702',
     './lunea-horary-balance-v19-5.js?v=1905',
-    './lunea-cardback-restore-v19.js?v=e81279ba56c7',
+    './lunea-cardback-restore-v19.js?v=ab0770a990ca',
     './lunea-universal-ai-opal-v20.js?v=2002',
     './lunea-learning-success-gate-v1.js?v=101',
     './lunea-daily-orbit6-v21.js?v=2101',
