@@ -79,7 +79,7 @@ for (const asset of [
   'lunea-reading-action-order-v33.js',
   'lunea-thai-tarot-bridge-v32.js'
 ]) {
-  const pattern = new RegExp(asset.replaceAll('.', '\\.') + '\\?v=[^"\\']+', 'g');
+  const pattern = new RegExp(asset.replaceAll('.', '\\.') + "\\?v=[^\"']+", 'g');
   assert.equal((loader.match(pattern) || []).length, 2, `${asset} must exist in both structural loader paths`);
 }
 
