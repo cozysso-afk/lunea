@@ -54,12 +54,24 @@ assert.match(moneyBlock, /3~6개월/, 'money spread medium-term horizon missing'
 for (const topic of ['reconciliation','contact','relationship','exam','career','stock','money','home','health','legal','friend','travel','contract','purchase','communication']) {
   assert.ok(horary.includes(`return '${topic}'`), `Horary auto topic missing: ${topic}`);
 }
-assert.match(horary, /version:19\.2/, 'Horary V19.2 export missing');
+assert.match(horary, /version:19\.3/, 'Horary V19.3 export missing');
 assert.match(horary, /balance_v3/, 'Horary V3 UI bridge missing');
 assert.match(horary, /support_score/, 'Horary support score rendering missing');
 assert.match(horary, /constraint_score/, 'Horary constraint score rendering missing');
 
-assert.match(loader, /lunea-horary-balance-v19\.js\?v=1902/, 'V19.2 cache URL missing');
+// Subject-specific houses must win before the generic action word "연락".
+const inferStart = horary.indexOf('function inferTopic');
+const inferEnd = horary.indexOf('function syncTopic', inferStart);
+const inferBlock = horary.slice(inferStart, inferEnd);
+const contactIdx = inferBlock.indexOf("return 'contact'");
+for (const topic of ['friend', 'contract', 'exam', 'career', 'stock', 'money', 'home', 'health']) {
+  const idx = inferBlock.indexOf(`return '${topic}'`);
+  assert.ok(idx >= 0 && idx < contactIdx, `${topic} must route before generic contact`);
+}
+assert.ok(inferBlock.indexOf("return 'reconciliation'") < contactIdx, 'reconciliation must route before contact');
+assert.ok(inferBlock.indexOf("return 'communication'") < contactIdx, 'document/news route must win before generic contact');
+
+assert.match(loader, /lunea-horary-balance-v19\.js\?v=1903/, 'V19.3 cache URL missing');
 assert.match(loader, /lunea-fixed-spread-depth-v30\.js\?v=3003/, 'V30.3 cache URL missing');
 const spreadIndex = loader.lastIndexOf('lunea-fixed-spread-depth-v30.js?v=3003');
 const revealIndex = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=2902');
