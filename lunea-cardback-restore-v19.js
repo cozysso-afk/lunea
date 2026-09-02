@@ -1,22 +1,31 @@
 'use strict';
 
 /*
-  LUNEA CARD BACK RESTORE V19
-  ===========================
-  Repairs category-specific tarot backs without touching RNG / card choice / meanings.
+  LUNEA CARD BACK RESTORE V19.1
+  =============================
+  Keeps category-specific tarot backs visible on dynamically created/restored
+  cards, especially on iOS/PWA where an image request can fail transiently.
 
-  Why this exists:
-  - Core markup still points to back_daily / back_love / back_stock / back_career / back_general.
-  - Legacy <img onerror="this.style.display='none'"> permanently hid the artwork after a
-    transient image error, leaving only the star fallback visible.
-  - This patch restores the correct category image, retries once with a fresh cache key,
-    and keeps the star only as a true last-resort fallback.
+  V19.1 fixes two important holes from V19:
+  - MutationObserver receives an added card/wrapper as its root. Querying that
+    subtree with "#cards .tarot-card .back" cannot match because #cards is the
+    ancestor OUTSIDE the subtree. Newly drawn cards therefore escaped repair.
+  - lunea-ios-performance-v3 can attach a one-shot error listener that hides the
+    back <img>. V19.1 replaces an unmanaged back image once, removing unknown
+    legacy listeners, then owns retry/fallback behavior itself.
+
+  This patch changes only card-back presentation. It does not touch tarot RNG,
+  card selection, reversals, meanings, spreads, archive, journal, or learning.
 */
 (() => {
   const W = window;
-  if (W.__LUNEA_CARD_BACK_RESTORE_V19__) return;
+  if (W.__LUNEA_CARD_BACK_RESTORE_V19_1__) return;
+  W.__LUNEA_CARD_BACK_RESTORE_V19_1__ = true;
+  // Keep the old guard too so a stale V19 copy cannot install a second observer.
   W.__LUNEA_CARD_BACK_RESTORE_V19__ = true;
 
+  const RELEASE = '19.1';
+  const ASSET_KEY = '1911';
   const FILES = {
     DAILY: 'back_daily.PNG',
     LOVE: 'back_love.PNG',
@@ -36,7 +45,7 @@
 
   function assetUrl(file, fresh = false) {
     const url = new URL(`./${file}`, document.baseURI);
-    if (fresh) url.searchParams.set('lunea_cardback', `19-${Date.now()}`);
+    url.searchParams.set('lunea_cardback', fresh ? `${ASSET_KEY}-${Date.now()}` : ASSET_KEY);
     return url.href;
   }
 
@@ -45,6 +54,24 @@
     back.classList.remove('lunea-cardback-failed');
     img.style.removeProperty('display');
     img.style.removeProperty('opacity');
+  }
+
+  function makeManagedImage(back) {
+    const prior = back.querySelector(':scope > img');
+    if (prior?.dataset?.luneaCardbackManaged === ASSET_KEY) return prior;
+
+    // A fresh element intentionally drops old addEventListener('error', ...)
+    // handlers (not removable through removeAttribute) that can hide the image.
+    const img = document.createElement('img');
+    img.dataset.luneaCardbackManaged = ASSET_KEY;
+    img.alt = '';
+    img.decoding = 'async';
+    try { img.loading = 'eager'; } catch {}
+    try { img.draggable = false; } catch {}
+
+    if (prior) prior.replaceWith(img);
+    else back.prepend(img);
+    return img;
   }
 
   function repairBack(back) {
@@ -59,16 +86,8 @@
     back.style.setProperty('background-position', 'center', 'important');
     back.style.setProperty('background-repeat', 'no-repeat', 'important');
 
-    let img = back.querySelector(':scope > img');
-    if (!img) {
-      img = document.createElement('img');
-      back.prepend(img);
-    }
-
-    // Remove the legacy inline handler that permanently hides the artwork.
+    const img = makeManagedImage(back);
     img.removeAttribute('onerror');
-    img.alt = '';
-    img.decoding = 'async';
     img.classList.add('lunea-category-cardback');
     img.style.removeProperty('display');
     img.style.removeProperty('opacity');
@@ -82,35 +101,55 @@
       attempts += 1;
       img.dataset.luneaCardbackAttempts = String(attempts);
       back.classList.remove('lunea-cardback-loaded');
-      if (attempts <= 1) {
-        // A stale/cache-level error should not turn the card into a permanent placeholder.
+
+      if (attempts <= 2) {
+        // Retry with a unique URL so a transient iOS/WebKit cache failure cannot
+        // become a permanent blank back for the whole PWA session.
         setTimeout(() => {
+          img.style.removeProperty('display');
           img.src = assetUrl(file, true);
-        }, 80);
+        }, attempts === 1 ? 60 : 180);
         return;
       }
+
+      // Keep the CSS background image as the final visual source. The star is
+      // only a last-resort marker if even that asset truly cannot be loaded.
       back.classList.add('lunea-cardback-failed');
     };
 
-    const expectedTail = `/${file}`;
-    const hiddenByLegacyError = img.style.display === 'none';
-    const wrongAsset = !String(img.getAttribute('src') || '').includes(file);
-    const failedComplete = img.complete && img.naturalWidth === 0;
+    const currentSrc = String(img.getAttribute('src') || '');
+    const wrongAsset = !currentSrc.includes(file);
+    const failedComplete = !!img.complete && Number(img.naturalWidth || 0) === 0;
 
-    if (hiddenByLegacyError || wrongAsset || failedComplete || !img.getAttribute('src')) {
+    if (wrongAsset || failedComplete || !currentSrc) {
       img.dataset.luneaCardbackAttempts = '0';
       attempts = 0;
-      img.src = assetUrl(file, failedComplete || hiddenByLegacyError);
+      img.src = assetUrl(file, failedComplete);
     } else if (img.complete && img.naturalWidth > 0) {
       markLoaded(back, img);
     }
   }
 
+  function isInsideCards(el) {
+    try { return !!el?.closest?.('#cards'); }
+    catch { return false; }
+  }
+
   function repairRoot(root = document) {
-    const backs = root.matches?.('#cards .tarot-card .back')
-      ? [root]
-      : Array.from(root.querySelectorAll?.('#cards .tarot-card .back') || []);
-    backs.forEach(repairBack);
+    let backs = [];
+
+    if (root === document) {
+      backs = Array.from(document.querySelectorAll('#cards .tarot-card .back'));
+    } else if (root instanceof HTMLElement) {
+      // MutationObserver usually hands us a newly added wrapper/card. The
+      // selector MUST be relative to that subtree; #cards lives above it.
+      if (root.matches?.('.tarot-card .back') && isInsideCards(root)) backs.push(root);
+      if (root.matches?.('#cards') || isInsideCards(root)) {
+        backs.push(...Array.from(root.querySelectorAll?.('.tarot-card .back') || []));
+      }
+    }
+
+    [...new Set(backs)].forEach(repairBack);
   }
 
   function installStyles() {
@@ -134,30 +173,58 @@
     document.head.appendChild(style);
   }
 
-  function boot() {
-    installStyles();
-    repairRoot(document);
-
+  function installObservers() {
     const cards = document.getElementById('cards');
-    if (cards) {
+    if (cards && !cards.__luneaCardBackRestoreV191Observed) {
+      cards.__luneaCardBackRestoreV191Observed = true;
       const observer = new MutationObserver(records => {
         for (const record of records) {
-          for (const node of record.addedNodes) {
-            if (node.nodeType === 1) repairRoot(node);
+          for (const node of record.addedNodes || []) {
+            if (node?.nodeType === 1) repairRoot(node);
           }
         }
-        // Covers innerHTML replacement and restored/draft readings.
+        // Covers replaceChildren/innerHTML + any wrapper shape we did not know.
         repairRoot(cards);
       });
       observer.observe(cards, {childList:true, subtree:true});
     }
 
-    // Draft restore / delayed spread render safety without a body-wide observer.
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) repairRoot(document);
-    });
+    const overlay = document.getElementById('spreadOverlay');
+    if (overlay && !overlay.__luneaCardBackRestoreV191Observed) {
+      overlay.__luneaCardBackRestoreV191Observed = true;
+      new MutationObserver(() => {
+        if (!overlay.classList.contains('show')) return;
+        requestAnimationFrame(() => repairRoot(document));
+      }).observe(overlay, {attributes:true, attributeFilter:['class']});
+    }
+  }
 
-    console.info('🌙 LUNEA category card backs restored (V19)');
+  function repairVisibleReading() {
+    repairRoot(document);
+    // One delayed pass catches draft/daily restore code that renders a frame later.
+    setTimeout(() => repairRoot(document), 120);
+  }
+
+  function boot() {
+    installStyles();
+    installObservers();
+    repairVisibleReading();
+
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) repairVisibleReading();
+    });
+    W.addEventListener?.('pageshow', repairVisibleReading);
+
+    W.LUNEA_CARD_BACK_RESTORE_V19 = {
+      version: RELEASE,
+      assetKey: ASSET_KEY,
+      repairRoot,
+      repairBack,
+      repairVisibleReading,
+      files: {...FILES}
+    };
+
+    console.info('🌙 LUNEA category card backs restored (V19.1)');
   }
 
   if (document.readyState === 'loading') {
