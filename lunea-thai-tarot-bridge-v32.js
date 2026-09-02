@@ -1,11 +1,17 @@
 'use strict';
 
 /*
-  LUNEA THAI TAROT BRIDGE V32
-  ===========================
+  LUNEA THAI TAROT BRIDGE V32.1
+  =============================
   Hybrid bridge: keep the standalone Maha Taksa home experience while allowing
   an explicitly requested, question-scoped Thai Taksa calculation inside a
   tarot reading.
+
+  V32.1 performance repair:
+  - Never rewrites the Thai inline DOM when its rendered payload is unchanged.
+  - The MutationObserver is scoped to the spread overlay and RAF-throttled.
+  - Observer maintenance only recreates a missing inline result; it does not
+    call renderInline on every card/UI mutation.
 
   Rules:
   - Never auto-call the Thai API on card draw.
@@ -31,6 +37,7 @@
     topic: 'general',
     result: null,
     running: false,
+    renderSignature: '',
   };
 
   const $ = id => document.getElementById(id);
@@ -104,6 +111,7 @@
     bridgeState.topic = 'general';
     bridgeState.result = null;
     bridgeState.running = false;
+    bridgeState.renderSignature = '';
     $(INLINE_ID)?.remove();
     const button = $(BUTTON_ID);
     if (button) {
@@ -130,7 +138,7 @@
     button.title = '현재 타로 질문에 Maha Taksa 보조 계산을 추가';
     button.onclick = runForCurrentQuestion;
 
-    const timing = $('timingOracleBtn');
+    const timing = $('timingSupportBtn');
     const transit = $('astroTransitBtn');
     const save = $('saveReading');
     const anchor = transit || timing || save;
@@ -139,13 +147,42 @@
     return true;
   }
 
-  function renderInline() {
+  function inlineModel() {
     const d = bridgeState.result;
-    if (!d || bridgeState.question !== currentQuestion()) return;
+    if (!d || bridgeState.question !== currentQuestion()) return null;
+    const focusRows = d.question?.focus_rows || [];
+    const focus = focusRows.map(row => row.position_ko || row.position).filter(Boolean);
+    const now = d.current_day?.falls_in_natal_taksa;
+    const birth = d.birth || {};
+    const ruler = birth.ruler?.ko || birth.ruler?.key || '';
+    return {
+      weekday: birth.weekday_label || '',
+      ruler,
+      focus,
+      nowPosition: now?.position_ko || now?.position || '',
+    };
+  }
+
+  function renderInline({force = false} = {}) {
+    const model = inlineModel();
+    if (!model) return false;
     const cards = $('cards');
-    if (!cards) return;
+    if (!cards) return false;
+
+    const signature = JSON.stringify([
+      bridgeState.question,
+      model.weekday,
+      model.ruler,
+      model.focus,
+      model.nowPosition,
+    ]);
 
     let box = $(INLINE_ID);
+    const needsCreate = !box;
+    if (!needsCreate && !force && bridgeState.renderSignature === signature) {
+      return false;
+    }
+
     if (!box) {
       box = document.createElement('div');
       box.id = INLINE_ID;
@@ -154,21 +191,19 @@
       else cards.insertAdjacentElement('afterend', box);
     }
 
-    const focusRows = d.question?.focus_rows || [];
-    const focus = focusRows.map(row => row.position_ko || row.position).filter(Boolean);
-    const now = d.current_day?.falls_in_natal_taksa;
-    const birth = d.birth || {};
     box.innerHTML = `
       <small>THAI ASTROLOGY · TAROT SUPPORT</small>
-      <b>${esc(birth.weekday_label || '')} · ${esc(birth.ruler?.ko || birth.ruler?.key || '')} · ${focus.length ? `질문 초점 ${esc(focus.join(' / '))}` : 'Taksa 8영역 전체'}</b>
-      <span>${now ? `오늘의 요일 행성은 출생 Taksa의 ${esc(now.position_ko || now.position)} 영역 · ` : ''}카드 결론을 대신하지 않는 질문별 구조 보조. 눌러서 다시 계산할 수 있어.</span>`;
+      <b>${esc(model.weekday)} · ${esc(model.ruler)} · ${model.focus.length ? `질문 초점 ${esc(model.focus.join(' / '))}` : 'Taksa 8영역 전체'}</b>
+      <span>${model.nowPosition ? `오늘의 요일 행성은 출생 Taksa의 ${esc(model.nowPosition)} 영역 · ` : ''}카드 결론을 대신하지 않는 질문별 구조 보조. 눌러서 다시 계산할 수 있어.</span>`;
     box.onclick = runForCurrentQuestion;
+    bridgeState.renderSignature = signature;
 
     const button = $(BUTTON_ID);
     if (button) {
       button.removeAttribute('aria-busy');
       button.textContent = '🇹🇭 Thai 포함됨';
     }
+    return true;
   }
 
   function promptBlock() {
@@ -242,9 +277,11 @@ ${now ? `- 현재 요일 행성 ${d.current_day?.ruler?.key || ''}(${d.current_d
       bridgeState.question = question;
       bridgeState.topic = topic;
       bridgeState.result = data;
-      renderInline();
+      bridgeState.renderSignature = '';
+      renderInline({force:true});
     } catch (error) {
       bridgeState.result = null;
+      bridgeState.renderSignature = '';
       const message = error?.message || String(error || 'unknown error');
       alert('Thai Taksa 계산 실패: ' + message);
       if (button) button.textContent = '🇹🇭 Thai 보조';
@@ -280,23 +317,35 @@ ${now ? `- 현재 요일 행성 ${d.current_day?.ruler?.key || ''}(${d.current_d
     const timer = setInterval(() => {
       tries += 1;
       ensureQuestionScope();
-      injectButton();
-      if (!W.__LUNEA_THAI_TAROT_PROMPT_WRAPPED_V32__) installPromptBridge();
-      if (tries > 240) clearInterval(timer);
+      const buttonReady = injectButton();
+      const promptReady = W.__LUNEA_THAI_TAROT_PROMPT_WRAPPED_V32__ || installPromptBridge();
+      if ((buttonReady && promptReady) || tries > 80) clearInterval(timer);
     }, 250);
 
-    const bodyObserver = new MutationObserver(() => {
-      ensureQuestionScope();
-      injectButton();
-      renderInline();
-    });
-    if (document.body) bodyObserver.observe(document.body, {childList:true,subtree:true});
+    let maintenanceQueued = false;
+    const queueMaintenance = () => {
+      if (maintenanceQueued) return;
+      maintenanceQueued = true;
+      const run = () => {
+        maintenanceQueued = false;
+        ensureQuestionScope();
+        injectButton();
+        if (bridgeState.result && !$(INLINE_ID)) renderInline();
+      };
+      if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+      else setTimeout(run, 16);
+    };
+
+    const observerTarget = $('spreadOverlay') || document.body;
+    const spreadObserver = new MutationObserver(queueMaintenance);
+    if (observerTarget) spreadObserver.observe(observerTarget, {childList:true,subtree:true});
   }
 
   W.LUNEA_THAI_TAROT_BRIDGE_V32 = {
-    version:'32.0',
+    version:'32.1',
     run:runForCurrentQuestion,
     clear:clearResult,
+    render:renderInline,
     getResult:() => bridgeState.result,
     getQuestion:() => bridgeState.question,
     inferTopic,
