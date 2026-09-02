@@ -4,13 +4,13 @@ import { execFileSync } from 'node:child_process';
 
 const read = path => fs.readFileSync(path, 'utf8');
 const spread = read('lunea-fixed-spread-depth-v30.js');
-const horary = read('lunea-horary-balance-v19-4.js');
+const horary = read('lunea-horary-balance-v19-5.js');
 const generalOrder = read('lunea-general-order-v30-5.js');
 const loader = read('lunea-structural-routing-v4.js');
 
 for (const file of [
   'lunea-fixed-spread-depth-v30.js',
-  'lunea-horary-balance-v19-4.js',
+  'lunea-horary-balance-v19-5.js',
   'lunea-general-order-v30-5.js',
   'lunea-structural-routing-v4.js'
 ]) {
@@ -72,13 +72,18 @@ assert.match(generalOrder, /version:30\.5/, 'GENERAL order V30.5 export missing'
 for (const topic of ['reconciliation','contact','relationship','exam','career','stock','money','home','health','legal','friend','travel','contract','purchase','communication']) {
   assert.ok(horary.includes(`return '${topic}'`), `Horary auto topic missing: ${topic}`);
 }
-assert.match(horary, /version:19\.4/, 'Horary V19.4 export missing');
-assert.match(horary, /balance_v3/, 'Horary V3 UI bridge missing');
-assert.match(horary, /HORARY BALANCE V3 · 최종 판정 근거/, 'Horary Gemini prompt must use V3 evidence');
-assert.doesNotMatch(horary, /HORARY BALANCE V2 · 최종 판정/, 'V19.4 must not append the old V2 prompt block');
+assert.match(horary, /version:19\.5/, 'Horary V19.5 export missing');
+assert.match(horary, /balance_v31/, 'Horary V3.1 UI bridge missing');
+assert.match(horary, /balance_v3/, 'Horary V3 fallback missing');
+assert.match(horary, /BALANCE V3\.1/, 'Horary Gemini/UI bridge must expose V3.1 evidence');
+assert.match(horary, /translation_of_light/, 'Translation of Light prompt/UI bridge missing');
+assert.match(horary, /collection_of_light/, 'Collection of Light prompt/UI bridge missing');
+assert.match(horary, /confirmed_obstructions/, 'confirmed obstruction bridge missing');
+assert.match(horary, /reception_v31/, 'V3.1 reception bridge missing');
+assert.doesNotMatch(horary, /HORARY BALANCE V2 · 최종 판정/, 'V19.5 must not append the old V2 prompt block');
 assert.match(horary, /support_score/, 'Horary support score rendering missing');
 assert.match(horary, /constraint_score/, 'Horary constraint score rendering missing');
-assert.match(horary, /luneaTopicManualV194/, 'manual topic override guard missing');
+assert.match(horary, /luneaTopicManualV195/, 'manual topic override guard missing');
 
 // Subject-specific houses must win before the generic action word "연락".
 const inferStart = horary.indexOf('function inferTopic');
@@ -92,7 +97,8 @@ for (const topic of ['friend', 'contract', 'exam', 'career', 'stock', 'money', '
 assert.ok(inferBlock.indexOf("return 'reconciliation'") < contactIdx, 'reconciliation must route before contact');
 assert.ok(inferBlock.indexOf("return 'communication'") < contactIdx, 'document/news route must win before generic contact');
 
-assert.match(loader, /lunea-horary-balance-v19-4\.js\?v=1904/, 'V19.4 cache URL missing');
+assert.match(loader, /lunea-horary-balance-v19-5\.js\?v=1905/, 'V19.5 cache URL missing');
+assert.doesNotMatch(loader, /lunea-horary-balance-v19-4\.js\?v=1904/, 'legacy V19.4 bridge must be inactive');
 assert.doesNotMatch(loader, /lunea-horary-balance-v18\.js\?v=1803/, 'legacy V18 bridge must be inactive');
 assert.doesNotMatch(loader, /lunea-horary-balance-v19\.js\?v=1903/, 'legacy V19.3 bridge must be inactive');
 assert.match(loader, /lunea-fixed-spread-depth-v30\.js\?v=3003/, 'V30.3 cache URL missing');
@@ -106,4 +112,4 @@ assert.ok(revealIndex > generalOrderIndex, 'boot reveal must run after final GEN
 assert.match(generalOrder, /manual\.dataset\.title\s*=\s*'직접 입력 배열'/, 'manual GENERAL title metadata repair missing');
 assert.match(generalOrder, /manual\.dataset\.cat\s*=\s*'GENERAL'/, 'manual GENERAL category metadata repair missing');
 
-console.log('V30.5 GENERAL priority / Horary V19.4 contract tests passed');
+console.log('V30.5 GENERAL priority / Horary V19.5 V3.1 contract tests passed');
