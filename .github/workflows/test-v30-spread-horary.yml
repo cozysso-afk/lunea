@@ -19,5 +19,10 @@ jobs:
           node --check lunea-fixed-spread-depth-v30.js
           node --check lunea-horary-balance-v19.js
           node --check lunea-structural-routing-v4.js
-      - name: V30 contract tests
-        run: node tests/v30-spread-horary-contract.test.mjs
+      - name: Full LUNEA regression tests
+        run: |
+          set -e
+          for test in tests/*.test.mjs; do
+            echo "==> $test"
+            node "$test"
+          done
