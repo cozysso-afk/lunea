@@ -208,9 +208,11 @@ assert.match(back.querySelector(':scope > img').getAttribute('src') || '', /back
 assert.ok(!source.includes("root.querySelectorAll?.('#cards .tarot-card .back')"), 'broken ancestor-qualified subtree selector returned');
 assert.match(source, /root\.querySelectorAll\?\.\('\.tarot-card \.back'\)/, 'relative subtree selector missing');
 
-// Every Pages release must now bust the nested card-back repair URL too.
-assert.match(workflow, /cardback_pattern/);
-assert.match(workflow, /cardback_count != 2/);
+// Every Pages release must bust the nested card-back repair URL too. The
+// workflow now stamps all behavior-critical nested assets in one shared loop.
+assert.match(workflow, /'lunea-cardback-restore-v19\.js'/);
+assert.match(workflow, /if count != 2:/);
+assert.match(workflow, /Could not stamp both nested loader paths for \{asset\}/);
 assert.match(workflow, /lunea-structural-routing-v4\.js/);
 
 console.log('Tarot card-back dynamic restore V19.1 regression tests: PASS');

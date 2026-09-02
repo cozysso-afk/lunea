@@ -26,7 +26,7 @@ jobs:
           s = p.read_text(encoding='utf-8')
 
           # Every human/code change receives unique URLs for behavior-critical
-          # loaders so iOS/PWA cannot keep an older request watchdog in cache.
+          # top-level loaders so iOS/PWA cannot keep an older build in cache.
           for asset in (
               'lunea-structural-routing-v4.js',
               'lunea-astro-stability-v2.js',
@@ -38,17 +38,20 @@ jobs:
               if count != 1:
                   raise SystemExit(f'Could not stamp required loader: {asset}')
 
-          # The category card-back repair is loaded from inside the structural
-          # loader (twice: parser path + sequential fallback). Give it the same
-          # release key so iOS/PWA cannot keep an older V19 repair script after
-          # a card-back hotfix.
+          # Behavior-critical scripts loaded from inside the structural loader
+          # appear twice (parser path + sequential fallback). Stamp both paths so
+          # iOS/PWA cannot keep an older repair/prompt policy after a release.
           loader_path = Path('lunea-structural-routing-v4.js')
           loader = loader_path.read_text(encoding='utf-8')
-          cardback_pattern = r'lunea-cardback-restore-v19\.js\?v=[^"\']+'
-          cardback_replacement = f'lunea-cardback-restore-v19.js?v={build}'
-          loader, cardback_count = re.subn(cardback_pattern, cardback_replacement, loader)
-          if cardback_count != 2:
-              raise SystemExit(f'Could not stamp both card-back loader paths: {cardback_count}')
+          for asset in (
+              'lunea-cardback-restore-v19.js',
+              'lunea-final-prompt-priority-v1.js',
+          ):
+              pattern = re.escape(asset) + r'\?v=[^"\']+'
+              replacement = f'{asset}?v={build}'
+              loader, count = re.subn(pattern, replacement, loader)
+              if count != 2:
+                  raise SystemExit(f'Could not stamp both nested loader paths for {asset}: {count}')
           loader_path.write_text(loader, encoding='utf-8')
 
           # Canonical iOS Home Screen artwork: original selected #4 opal tarot card.
@@ -96,7 +99,7 @@ jobs:
               json.dumps({'version': build}, ensure_ascii=False) + '\n',
               encoding='utf-8',
           )
-          print('Stamped LUNEA build, card-back repair, request watchdog loaders, and canonical Home Screen icon:', build)
+          print('Stamped LUNEA build, nested repairs/prompt policy, request watchdog loaders, and canonical Home Screen icon:', build)
           PY
 
       - name: Commit build stamp
