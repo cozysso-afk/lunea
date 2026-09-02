@@ -12,7 +12,8 @@ const standalone = fs.readFileSync(new URL('../lunea-thai-standalone-v24.js', im
 execFileSync(process.execPath, ['--check', bridgePath], {stdio:'pipe'});
 
 assert.match(source, /LUNEA_THAI_TAROT_BRIDGE_V32/);
-assert.match(source, /version:'32\.0'/);
+assert.match(source, /V32\.1 performance repair/);
+assert.match(source, /version:'32\.1'/);
 assert.match(source, /luneaThaiTarotBridgeBtn/);
 assert.match(source, /🇹🇭 Thai 보조/);
 assert.match(source, /\/v1\/thai\/taksa/);
@@ -30,6 +31,17 @@ assert.match(source, /bridgeState\.question !== currentQuestion\(\)/);
 assert.match(source, /question !== currentQuestion\(\)/);
 assert.match(source, /clearResult\(\)/);
 
+// Performance regression guard: the old bridge rewrote innerHTML on every body
+// mutation and recursively woke its own MutationObserver. V32.1 must memoize the
+// rendered payload, scope the observer, RAF-throttle maintenance, and only
+// recreate the inline card if it has actually disappeared.
+assert.match(source, /renderSignature/);
+assert.match(source, /bridgeState\.renderSignature === signature/);
+assert.match(source, /const observerTarget = \$\('spreadOverlay'\) \|\| document\.body/);
+assert.match(source, /requestAnimationFrame\(run\)/);
+assert.match(source, /bridgeState\.result && !\$\(INLINE_ID\)\) renderInline\(\)/);
+assert.ok(!source.includes("const bodyObserver = new MutationObserver(() => {\n      ensureQuestionScope();\n      injectButton();\n      renderInline();"), 'recursive body-wide render loop returned');
+
 // Cards stay primary and Thai remains a supporting, non-timing layer.
 assert.match(source, /실제 RWS 카드와 각 카드 포지션이 본체다/);
 assert.match(source, /사건 발생일이나 결과 확정 근거로 쓰지 않는다/);
@@ -40,16 +52,20 @@ assert.match(source, /Western Astrology, Saju, Thai Astrology/);
 assert.ok(source.indexOf("return '시험'") < source.indexOf("return '연락'"), 'exam/contact routing priority regressed');
 assert.ok(source.indexOf("return '직장'") < source.indexOf("return '연락'"), 'career/contact routing priority regressed');
 
-// Load the bridge before the final prompt policy so V2 can see the Thai block.
-const bridgeToken = 'lunea-thai-tarot-bridge-v32.js?v=3201';
+// Load the bridge before Thai Range and Final Priority so all Thai computed
+// blocks are visible to the final evidence-policy wrapper.
+const bridgeToken = 'lunea-thai-tarot-bridge-v32.js?v=3202';
+const rangeToken = 'lunea-thai-range-v33.js?v=3301';
 const finalToken = 'lunea-final-prompt-priority-v1.js?v=';
 assert.equal(loader.split(bridgeToken).length - 1, 2, 'bridge must exist in both structural loader paths');
-const firstBridge = loader.indexOf(bridgeToken);
-const firstFinal = loader.indexOf(finalToken);
-const secondBridge = loader.indexOf(bridgeToken, firstBridge + 1);
-const secondFinal = loader.indexOf(finalToken, firstFinal + 1);
-assert.ok(firstBridge >= 0 && firstBridge < firstFinal, 'parser-path bridge must load before final prompt policy');
-assert.ok(secondBridge >= 0 && secondBridge < secondFinal, 'sequential bridge must load before final prompt policy');
+assert.equal(loader.split(rangeToken).length - 1, 2, 'Thai range must exist in both structural loader paths');
+for (let offset = 0, i = 0; i < 2; i += 1) {
+  const bridgeIndex = loader.indexOf(bridgeToken, offset);
+  const rangeIndex = loader.indexOf(rangeToken, bridgeIndex + 1);
+  const finalIndex = loader.indexOf(finalToken, rangeIndex + 1);
+  assert.ok(bridgeIndex >= 0 && bridgeIndex < rangeIndex && rangeIndex < finalIndex, `Thai prompt load order regressed on path ${i+1}`);
+  offset = finalIndex + 1;
+}
 
 // The standalone Thai experience remains present and independent.
 assert.match(loader, /lunea-thai-standalone-v24\.js\?v=2401/);
@@ -57,4 +73,4 @@ assert.match(standalone, /LUNEA THAI ASTROLOGY STANDALONE V24/);
 assert.match(standalone, /luneaThaiHomeTileV24/);
 assert.match(standalone, /오늘의 Taksa 계산/);
 
-console.log('Thai standalone + optional tarot bridge V32 regression tests: PASS');
+console.log('Thai standalone + optional tarot bridge V32.1 regression tests: PASS');
