@@ -181,7 +181,8 @@
     const focus = (d.question?.focus_rows || []).map(row => `${row.position}(${row.position_ko})`).join(', ');
     const now = d.current_day?.falls_in_natal_taksa;
 
-    return `[THAI ASTROLOGY · MAHA TAKSA · 현재 타로 질문 보조 계산]
+    return `[THAI ASTROLOGY · MAHA TAKSA 계산 결과]
+- 연결 모드: 현재 타로 질문 보조
 - 연결 질문: ${bridgeState.question}
 - 질문 분류: ${bridgeState.topic}
 - 출생요일: ${d.birth?.weekday_label || ''}
