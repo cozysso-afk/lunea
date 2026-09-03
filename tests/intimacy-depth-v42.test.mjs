@@ -31,12 +31,13 @@ const api = window.LUNEA_INTIMACY_DEPTH_V42;
 
 test('exposes stable intimacy taxonomy', () => {
   assert.ok(api);
-  assert.equal(api.version, '42.0');
+  assert.equal(api.version, '42.1');
   assert.equal(api.classify('우리는 성적으로 잘 맞을까?', ''), 'physical_compatibility');
   assert.equal(api.classify('상대는 나에게 신체적으로 끌리는 걸까?', ''), 'attraction');
   assert.equal(api.classify('상대는 어떤 방식의 친밀감을 원할까?', ''), 'desire_style');
   assert.equal(api.classify('둘의 리듬과 경계는 어디서 어긋나?', ''), 'rhythm_boundary');
   assert.equal(api.classify('이 텐션이 실제 행동으로 이어질까?', ''), 'tension_action');
+  assert.equal(api.classify('둘이 가까워졌을 때 실제 만족도는 어떨까?', ''), 'satisfaction');
   assert.equal(api.classify('관계 후 상대에게 애착이나 여운이 남을까?', ''), 'attachment_afterglow');
   assert.equal(api.classify('다시 만나면 친밀감은 예전과 달라질까?', '재회 후 친밀감'), 'reunion_intimacy');
   assert.equal(api.classify('A와 B 중 누구와 속궁합이 더 자연스럽게 맞아?', ''), 'comparison');
