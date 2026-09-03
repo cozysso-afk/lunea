@@ -1,0 +1,54 @@
+name: Finalize INTIMACY binaries v2
+
+on:
+  push:
+    branches: [work/intimacy-final-assets-20260903]
+    paths: ['.github/workflows/finalize-intimacy-binaries-v2.yml']
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download original artwork with gdown
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet 'gdown==5.2.0'
+          mkdir -p assets/intimacy-oracle
+          gdown '1N62OZTszNEQ_7IGhwYjFu4ihnogYJZNT' -O assets/intimacy-oracle/back_intimacy_final.jpg
+          gdown '1-OsEfKLXXfT9z6ZuX3tussZwg7p3l99Z' -O assets/intimacy-oracle/intimacy_sector_final.jpg
+          gdown '1_Ig4SSBjK8Y0gd0BRfLp00WMz5eyBVfa' -O assets/intimacy-oracle/oracle_atlas_final.jpg
+      - name: Validate exact JPEG bytes
+        shell: python
+        run: |
+          from pathlib import Path
+          import hashlib
+          expected = {
+            'assets/intimacy-oracle/back_intimacy_final.jpg': ('d06cd37f08dee24201bbd8d513b9e88da0d6ff11cf7636344f120e406890fddb', 141583),
+            'assets/intimacy-oracle/intimacy_sector_final.jpg': ('f6da0f1161343ca93a5947db596cb03a16e084cf2de01d8e61de27b3feaacd4a', 57299),
+            'assets/intimacy-oracle/oracle_atlas_final.jpg': ('1551c2911ece7e2e9f08e14e4712561172569297eb5919a8ad3310d7005c6092', 344645),
+          }
+          for name, (sha, size) in expected.items():
+              data = Path(name).read_bytes()
+              assert data[:3] == b'\xff\xd8\xff', (name, data[:8])
+              assert data[-2:] == b'\xff\xd9', (name, data[-8:])
+              assert len(data) == size, (name, len(data), size)
+              actual = hashlib.sha256(data).hexdigest()
+              assert actual == sha, (name, actual, sha)
+              print(name, len(data), actual)
+      - name: Commit verified binaries and remove one-shot workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/intimacy-oracle/back_intimacy_final.jpg assets/intimacy-oracle/intimacy_sector_final.jpg assets/intimacy-oracle/oracle_atlas_final.jpg
+          git rm .github/workflows/finalize-intimacy-binaries-v2.yml
+          git commit -m 'fix(intimacy): commit verified final artwork binaries'
+          git push origin HEAD:work/intimacy-final-assets-20260903
+
+# gdown trigger 2026-09-04

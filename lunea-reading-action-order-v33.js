@@ -54,6 +54,7 @@
   const BOTTOM_STYLE_ID = 'luneaBottomReadingActionsStyle';
   const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
   const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
+  const INTIMACY_FINAL_ASSETS_LOADER_ID = 'luneaIntimacyFinalAssetsV41Loader';
 
   function actionBar() {
     return document.querySelector('#spreadOverlay .actionbar');
@@ -202,11 +203,23 @@
     return true;
   }
 
+  function ensureIntimacyFinalAssets() {
+    if (document.getElementById(INTIMACY_FINAL_ASSETS_LOADER_ID)) return true;
+    const script = document.createElement('script');
+    script.id = INTIMACY_FINAL_ASSETS_LOADER_ID;
+    script.src = `./lunea-intimacy-final-assets-v41.js?v=${encodeURIComponent(SELF_VERSION)}`;
+    script.async = false;
+    script.onerror = () => console.error('[LUNEA] Failed to load INTIMACY final assets V41');
+    document.head.appendChild(script);
+    return true;
+  }
+
   function boot() {
     reorder();
     ensureBottomActions();
     ensureIntimacyCleanUi();
     ensureIntimacyBurgundyUi();
+    ensureIntimacyFinalAssets();
 
     let queued = false;
     const bar = actionBar();
@@ -233,6 +246,7 @@
       ensureBottomActions();
       ensureIntimacyCleanUi();
       ensureIntimacyBurgundyUi();
+      ensureIntimacyFinalAssets();
       const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
       if ((ready && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
     }, 250);
@@ -246,6 +260,7 @@
     syncBottomButtons,
     ensureIntimacyCleanUi,
     ensureIntimacyBurgundyUi,
+    ensureIntimacyFinalAssets,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
