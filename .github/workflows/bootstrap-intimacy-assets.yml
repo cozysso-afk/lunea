@@ -30,7 +30,7 @@ jobs:
                   raise SystemExit(f'{label}: expected 1 match, got {count}')
               return text.replace(old, new, 1)
 
-          # V40 owns INTIMACY burgundy chrome / tarot face polish only.
+          # V40 owns burgundy chrome / Tarot face polish only.
           # It must never force an Oracle back onto Tarot cards.
           p = Path('lunea-intimacy-burgundy-v40.js')
           s = p.read_text()
@@ -69,6 +69,16 @@ jobs:
               'v36 overlay repair')
           p.write_text(s)
 
+          # Update only the stale Oracle-back path assertion. Other legacy
+          # secure-draw / A-B / helper / JPEG/SVG checks stay intact.
+          p = Path('tests/intimacy-oracle-ui-v36.test.mjs')
+          s = p.read_text()
+          s = replace_once(s,
+              "assert.match(source,/back_intimacy\\.svg/);",
+              "assert.match(source,/back_intimacy_final\\.jpg/);",
+              'v36 stale back-path assertion')
+          p.write_text(s)
+
           test = Path('tests/intimacy-asset-routing-v43.test.mjs')
           test.write_text("""import fs from 'node:fs';\nimport assert from 'node:assert/strict';\n\nconst v36 = fs.readFileSync('lunea-intimacy-oracle-ui-v36.js','utf8');\nconst v40 = fs.readFileSync('lunea-intimacy-burgundy-v40.js','utf8');\nconst v43 = fs.readFileSync('lunea-intimacy-repair-v43.js','utf8');\n\nassert.match(v36, /BACK_ASSET='\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.jpg'/);\nassert.match(v36, /function repairIntimacyTarotBacks\\(\\)\\{return false\\}/);\nassert.match(v36, /function patchTarotBack\\(\\)\\{return false\\}/);\nassert.doesNotMatch(v36, /if\\(intimacy\\(\\)\\)return'assets\\/intimacy-oracle\\/back_intimacy'/);\nassert.doesNotMatch(v40, /CARD_BACK_SRC/);\nassert.doesNotMatch(v40, /background-image[^\\n]*back_intimacy/);\nassert.match(v43, /FINAL_ORACLE_ATLAS = '\\.\\/assets\\/intimacy-oracle\\/oracle_atlas_final\\.jpg'/);\nassert.match(v43, /FINAL_ORACLE_BACK = '\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.jpg'/);\nassert.match(v43, /#luneaManualPanel/);\nconsole.log('INTIMACY V43 asset routing contract OK');\n""")
 
@@ -86,7 +96,10 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lunea-intimacy-oracle-ui-v36.js lunea-intimacy-burgundy-v40.js tests/intimacy-asset-routing-v43.test.mjs
+          git add lunea-intimacy-oracle-ui-v36.js \
+                  lunea-intimacy-burgundy-v40.js \
+                  tests/intimacy-oracle-ui-v36.test.mjs \
+                  tests/intimacy-asset-routing-v43.test.mjs
           git rm .github/workflows/bootstrap-intimacy-assets.yml
-          git commit -m 'fix(intimacy): separate tarot and oracle asset routing'
+          git commit -m 'fix(intimacy): separate Tarot and Oracle asset routing'
           git push origin HEAD:work/intimacy-repair-20260904
