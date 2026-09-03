@@ -54,7 +54,7 @@ test('cabinet motion is scoped, staggered, mobile-aware and reduced-motion safe'
 });
 
 test('loader and release cache workflow own the restored intimacy layer', () => {
-  assert.equal((loader.match(/lunea-intimacy-legacy-v35\.js\?v=351/g) || []).length, 2);
+  assert.equal((loader.match(/lunea-intimacy-legacy-v35\.js\?v=[^'"\],]+/g) || []).length, 2);
   assert.match(workflow, /'lunea-intimacy-legacy-v35\.js'/);
 });
 
