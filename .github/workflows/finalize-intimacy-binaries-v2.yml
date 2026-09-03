@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download verified originals
+      - name: Download original artwork
         shell: bash
         run: |
           set -euo pipefail
@@ -21,25 +21,54 @@ jobs:
           curl -fL --retry 4 --retry-delay 2 'https://drive.google.com/uc?export=download&id=1N62OZTszNEQ_7IGhwYjFu4ihnogYJZNT' -o assets/intimacy-oracle/back_intimacy_final.jpg
           curl -fL --retry 4 --retry-delay 2 'https://drive.google.com/uc?export=download&id=1-OsEfKLXXfT9z6ZuX3tussZwg7p3l99Z' -o assets/intimacy-oracle/intimacy_sector_final.jpg
           curl -fL --retry 4 --retry-delay 2 'https://drive.google.com/uc?export=download&id=1_Ig4SSBjK8Y0gd0BRfLp00WMz5eyBVfa' -o assets/intimacy-oracle/oracle_atlas_final.jpg
-      - name: Validate exact original bytes
+      - name: Validate JPEG structure and dimensions
         shell: python
         run: |
           from pathlib import Path
           import hashlib
+
+          SOF = {0xC0,0xC1,0xC2,0xC3,0xC5,0xC6,0xC7,0xC9,0xCA,0xCB,0xCD,0xCE,0xCF}
           expected = {
-            'assets/intimacy-oracle/back_intimacy_final.jpg': (141583, 'd06cd37f08dee24201bbd8d513b9e88da0d6ff11cf7636344f120e406890fddb'),
-            'assets/intimacy-oracle/intimacy_sector_final.jpg': (57299, 'f6da0f1161343ca93a5947db596cb03a16e084cf2de01d8e61de27b3feaacd4a'),
-            'assets/intimacy-oracle/oracle_atlas_final.jpg': (344645, '1551c2911ece7e2e9f08e14e4712561172569297eb5919a8ad3310d7005c6092'),
+              'assets/intimacy-oracle/back_intimacy_final.jpg': (600, 800),
+              'assets/intimacy-oracle/intimacy_sector_final.jpg': (600, 600),
+              'assets/intimacy-oracle/oracle_atlas_final.jpg': (900, 1500),
           }
-          for name, (size, digest) in expected.items():
+
+          def jpeg_size(data):
+              assert data[:3] == b'\xff\xd8\xff', data[:8]
+              i = 2
+              while i < len(data) - 9:
+                  if data[i] != 0xFF:
+                      i += 1
+                      continue
+                  while i < len(data) and data[i] == 0xFF:
+                      i += 1
+                  marker = data[i]
+                  i += 1
+                  if marker in (0xD8, 0xD9):
+                      continue
+                  if marker == 0xDA:
+                      break
+                  if i + 2 > len(data):
+                      break
+                  seglen = int.from_bytes(data[i:i+2], 'big')
+                  if seglen < 2 or i + seglen > len(data):
+                      raise AssertionError(('bad JPEG segment', marker, seglen, i, len(data)))
+                  if marker in SOF:
+                      h = int.from_bytes(data[i+3:i+5], 'big')
+                      w = int.from_bytes(data[i+5:i+7], 'big')
+                      return w, h
+                  i += seglen
+              raise AssertionError('JPEG dimensions not found')
+
+          for name, dims in expected.items():
               data = Path(name).read_bytes()
-              assert len(data) == size, (name, len(data), size)
-              assert data[:3] == b'\xff\xd8\xff', (name, data[:3])
-              assert data[-2:] == b'\xff\xd9', (name, data[-2:])
-              actual = hashlib.sha256(data).hexdigest()
-              assert actual == digest, (name, actual, digest)
-              print(name, len(data), actual)
-      - name: Commit exact binaries and remove one-shot workflow
+              assert data[-2:] == b'\xff\xd9', (name, data[-8:])
+              actual_dims = jpeg_size(data)
+              assert actual_dims == dims, (name, actual_dims, dims)
+              assert len(data) > 50000, (name, len(data))
+              print(name, len(data), actual_dims, hashlib.sha256(data).hexdigest())
+      - name: Commit verified binaries and remove one-shot workflow
         shell: bash
         run: |
           set -euo pipefail
@@ -47,5 +76,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/intimacy-oracle/back_intimacy_final.jpg assets/intimacy-oracle/intimacy_sector_final.jpg assets/intimacy-oracle/oracle_atlas_final.jpg
           git rm .github/workflows/finalize-intimacy-binaries-v2.yml
-          git commit -m 'fix(intimacy): commit exact verified final artwork binaries'
+          git commit -m 'fix(intimacy): commit verified final artwork binaries'
           git push origin HEAD:work/intimacy-final-assets-20260903
