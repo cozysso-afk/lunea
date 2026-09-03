@@ -6,7 +6,7 @@ const source = fs.readFileSync(new URL('../lunea-intimacy-final-assets-v41.js', 
 const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
 
 test('final art layer keeps tarot, oracle back, and oracle faces separate', () => {
-  assert.match(source, /const RELEASE = '41\.1'/);
+  assert.match(source, /const RELEASE = '41\.2'/);
   assert.match(source, /tarot_back_final\.png/);
   assert.match(source, /oracle_back_final\.png/);
   assert.match(source, /oracle_atlas_final\.png/);
@@ -26,13 +26,16 @@ test('oracle remains hidden until revealed and then uses 6x6 final atlas', () =>
 
 test('final art patch is scoped to INTIMACY and observes reveal class changes', () => {
   assert.match(source, /lunea-intimacy-reading/);
-  assert.match(source, /category \|\| ''\)\.toUpperCase\(\) === 'INTIMACY'/);
+  assert.match(source, /currentReadingState/);
+  assert.match(source, /typeof state !== 'undefined'/);
   assert.match(source, /attributeFilter: \['class'\]/);
   assert.doesNotMatch(source, /querySelectorAll\('\.tarot-card \.back'\)/, 'must not patch every category globally');
 });
 
-test('reading action loader installs final art layer', () => {
+test('reading action loader installs final art layer and V41 chains the depth router', () => {
   assert.match(order, /luneaIntimacyFinalAssetsV41Loader/);
   assert.match(order, /lunea-intimacy-final-assets-v41\.js/);
   assert.match(order, /ensureIntimacyFinalAssets/);
+  assert.match(source, /lunea-intimacy-depth-v42\.js/);
+  assert.match(source, /ensureDepthLayer/);
 });
