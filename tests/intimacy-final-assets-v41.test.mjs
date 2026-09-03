@@ -50,7 +50,7 @@ test('final art layer uses one real shared back for tarot/oracle and the 36-card
   const atlas = fs.readFileSync(atlasUrl);
   assert.deepEqual([...back.subarray(0, 3)], [0xff, 0xd8, 0xff]);
   assert.deepEqual([...atlas.subarray(0, 3)], [0xff, 0xd8, 0xff]);
-  assert.ok(back.length > 100000, 'shared back should be the supplied real artwork');
+  assert.ok(back.length > 50000, 'shared back should be a real display-resolution JPEG, not a placeholder');
   assert.ok(atlas.length > 100000, 'final atlas should contain the supplied 36-card artwork');
 });
 

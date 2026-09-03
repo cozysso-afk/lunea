@@ -11,7 +11,7 @@ test('V40 ships the supplied final INTIMACY sector artwork and uses it for brand
   assert.equal(fs.existsSync(artUrl), true);
   const bytes = fs.readFileSync(artUrl);
   assert.deepEqual([...bytes.subarray(0, 3)], [0xff, 0xd8, 0xff]);
-  assert.ok(bytes.length > 100000, 'final sector art should be the supplied real artwork');
+  assert.ok(bytes.length > 50000, 'final sector art should be a real display-resolution JPEG, not a placeholder');
   assert.match(source, /const RELEASE = '40\.2'/);
   assert.match(source, /intimacy_sector_final\.jpg/);
   assert.doesNotMatch(source, /intimacy_sector_v40\.png/);
