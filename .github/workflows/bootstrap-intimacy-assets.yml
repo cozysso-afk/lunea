@@ -1,4 +1,4 @@
-name: Bootstrap verified INTIMACY assets
+name: Repair INTIMACY asset routing
 
 on:
   push:
@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 jobs:
-  bootstrap:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,44 +19,77 @@ jobs:
           ref: work/intimacy-repair-20260904
           fetch-depth: 0
 
-      - name: Download exact source binaries
+      - name: Separate Tarot and Oracle asset ownership
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(text, old, new, label):
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{label}: expected 1 match, got {count}')
+              return text.replace(old, new, 1)
+
+          # V40 owns INTIMACY burgundy chrome / tarot face polish only.
+          # It must never force an Oracle back onto Tarot cards.
+          p = Path('lunea-intimacy-burgundy-v40.js')
+          s = p.read_text()
+          s = replace_once(s, "const RELEASE = '40.1';", "const RELEASE = '40.3';", 'v40 release')
+          s = replace_once(s, "return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4010';", "return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4030';", 'v40 version')
+          s = replace_once(s, "  const CARD_BACK_SRC = `./assets/intimacy-oracle/back_intimacy.svg?v=${encodeURIComponent(SELF_VERSION)}`;\n", "", 'v40 oracle back const')
+          s = replace_once(s,
+          """      #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back{\n        background:#250915 url('${CARD_BACK_SRC}') center/cover no-repeat!important;\n        border:1px solid rgba(235,151,183,.45)!important;\n      }\n""",
+          """      #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back{\n        border:1px solid rgba(235,151,183,.45)!important;\n      }\n""", 'v40 tarot back css')
+          s = replace_once(s,
+          """    const back = $('.back', wrapper);\n    if (back) {\n      back.style.setProperty('background-image', `url(\"${CARD_BACK_SRC}\")`, 'important');\n      back.style.setProperty('background-size', 'cover', 'important');\n      back.style.setProperty('background-position', 'center', 'important');\n      let img = $(':scope > img', back);\n      if (!img) {\n        img = document.createElement('img');\n        img.alt = '';\n        back.prepend(img);\n      }\n      img.removeAttribute('onerror');\n      img.style.removeProperty('display');\n      img.style.removeProperty('opacity');\n      img.dataset.luneaIntimacyCardback = RELEASE;\n      if (img.getAttribute('src') !== CARD_BACK_SRC) img.setAttribute('src', CARD_BACK_SRC);\n    }\n\n""",
+          """    /* Tarot back ownership deliberately stays with the core/category back system.\n       INTIMACY Oracle assets must never be injected into Tarot backs here. */\n\n""", 'v40 tarot back mutation')
+          s = replace_once(s, "    cardBack:CARD_BACK_SRC,\n", "    cardBack:null,\n", 'v40 exported back')
+          p.write_text(s)
+
+          # V36 owns Oracle draw/UI. Keep its back strictly Oracle-only.
+          p = Path('lunea-intimacy-oracle-ui-v36.js')
+          s = p.read_text()
+          s = replace_once(s,
+              "const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/back_intimacy.svg';",
+              "const RELEASE='36.2',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/back_intimacy_final.jpg';",
+              'v36 final oracle back')
+          s = replace_once(s,
+              "function repairIntimacyTarotBacks(){if(!intimacy())return;document.querySelectorAll('#cards .tarot-card .back').forEach(back=>{back.style.setProperty('background-image',`url(\"${BACK_ASSET}\")`,'important');const img=back.querySelector('img');if(img){img.src=BACK_ASSET;img.style.display='block'}})}",
+              "function repairIntimacyTarotBacks(){return false}",
+              'v36 tarot back mutation')
+          s = replace_once(s,
+              "function patchTarotBack(){if(typeof deckBackPrefix==='function'&&!deckBackPrefix.__lio36){const base=deckBackPrefix,fn=function(){if(intimacy())return'assets/intimacy-oracle/back_intimacy';return base()};fn.__lio36=1;deckBackPrefix=fn}}",
+              "function patchTarotBack(){return false}",
+              'v36 deck prefix mutation')
+          s = replace_once(s,
+              "function patchStart(){if(typeof startSpread==='function'&&!startSpread.__lio36){const base=startSpread,fn=function(...args){const r=base.apply(this,args);setTimeout(()=>{if(intimacy()){performOracleDraw();repairIntimacyTarotBacks()}},0);return r};fn.__lio36=1;startSpread=fn}}",
+              "function patchStart(){if(typeof startSpread==='function'&&!startSpread.__lio36){const base=startSpread,fn=function(...args){const r=base.apply(this,args);setTimeout(()=>{if(intimacy())performOracleDraw()},0);return r};fn.__lio36=1;startSpread=fn}}",
+              'v36 start spread')
+          s = replace_once(s,
+              "const mo=new MutationObserver(()=>{if($('spreadOverlay')?.classList.contains('show')){ensurePanel();repairIntimacyTarotBacks();setTimeout(restoreSidecar,50)}});",
+              "const mo=new MutationObserver(()=>{if($('spreadOverlay')?.classList.contains('show')){ensurePanel();setTimeout(restoreSidecar,50)}});",
+              'v36 overlay repair')
+          p.write_text(s)
+
+          # Contract test: Oracle art may never be assigned to Tarot backs.
+          test = Path('tests/intimacy-asset-routing-v43.test.mjs')
+          test.write_text("""import fs from 'node:fs';\nimport assert from 'node:assert/strict';\n\nconst v36 = fs.readFileSync('lunea-intimacy-oracle-ui-v36.js','utf8');\nconst v40 = fs.readFileSync('lunea-intimacy-burgundy-v40.js','utf8');\nconst v43 = fs.readFileSync('lunea-intimacy-repair-v43.js','utf8');\n\nassert.match(v36, /BACK_ASSET='\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.jpg'/);\nassert.match(v36, /function repairIntimacyTarotBacks\\(\\)\\{return false\\}/);\nassert.match(v36, /function patchTarotBack\\(\\)\\{return false\\}/);\nassert.doesNotMatch(v36, /if\\(intimacy\\(\\)\\)return'assets\\/intimacy-oracle\\/back_intimacy'/);\nassert.doesNotMatch(v40, /CARD_BACK_SRC/);\nassert.doesNotMatch(v40, /background-image[^\\n]*back_intimacy/);\nassert.match(v43, /FINAL_ORACLE_ATLAS = '\\.\\/assets\\/intimacy-oracle\\/oracle_atlas_final\\.jpg'/);\nassert.match(v43, /FINAL_ORACLE_BACK = '\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.jpg'/);\nassert.match(v43, /#luneaManualPanel/);\nconsole.log('INTIMACY V43 asset routing contract OK');\n""")
+
+      - name: Run focused contracts
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --quiet gdown
-          mkdir -p assets/intimacy-oracle
-          gdown '1N62OZTszNEQ_7IGhwYjFu4ihnogYJZNT' -O assets/intimacy-oracle/back_intimacy_final.jpg
-          gdown '1-OsEfKLXXfT9z6ZuX3tussZwg7p3l99Z' -O assets/intimacy-oracle/intimacy_sector_final.jpg
-          gdown '1_Ig4SSBjK8Y0gd0BRfLp00WMz5eyBVfa' -O assets/intimacy-oracle/oracle_atlas_final.jpg
+          node tests/intimacy-asset-routing-v43.test.mjs
+          node tests/intimacy-oracle-ui-v36.test.mjs
+          node tests/intimacy-burgundy-v40.test.mjs
 
-      - name: Verify byte identity before Git write
-        shell: python
-        run: |
-          import hashlib, pathlib, sys
-          expected = {
-              'assets/intimacy-oracle/back_intimacy_final.jpg': (141583, 'd06cd37f08dee24201bbd8d513b9e88da0d6ff11cf7636344f120e406890fddb'),
-              'assets/intimacy-oracle/intimacy_sector_final.jpg': (57299, 'f6da0f1161343ca93a5947db596cb03a16e084cf2de01d8e61de27b3feaacd4a'),
-              'assets/intimacy-oracle/oracle_atlas_final.jpg': (344645, '1551c2911ece7e2e9f08e14e4712561172569297eb5919a8ad3310d7005c6092'),
-          }
-          for name, (size, sha) in expected.items():
-              p = pathlib.Path(name)
-              data = p.read_bytes()
-              got = hashlib.sha256(data).hexdigest()
-              print(name, len(data), got)
-              if len(data) != size or got != sha:
-                  sys.exit(f'BYTE MISMATCH: {name}')
-              if not data.startswith(b'\xff\xd8') or not data.endswith(b'\xff\xd9'):
-                  sys.exit(f'JPEG BOUNDARY MISMATCH: {name}')
-
-      - name: Commit verified binaries and remove bootstrap workflow
+      - name: Commit repair and remove one-shot workflow
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/intimacy-oracle/back_intimacy_final.jpg \
-                  assets/intimacy-oracle/intimacy_sector_final.jpg \
-                  assets/intimacy-oracle/oracle_atlas_final.jpg
+          git add lunea-intimacy-oracle-ui-v36.js lunea-intimacy-burgundy-v40.js tests/intimacy-asset-routing-v43.test.mjs
           git rm .github/workflows/bootstrap-intimacy-assets.yml
-          git commit -m 'fix(intimacy): add verified final oracle assets'
+          git commit -m 'fix(intimacy): separate tarot and oracle asset routing'
           git push origin HEAD:work/intimacy-repair-20260904
