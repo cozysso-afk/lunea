@@ -1,13 +1,20 @@
 'use strict';
 
-/* LUNEA INTIMACY mobile readability + category-style artwork V36.1 */
+/* LUNEA INTIMACY mobile readability + category-style artwork V36.2 */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_READABILITY_V36__) return;
   W.__LUNEA_INTIMACY_READABILITY_V36__ = true;
 
-  const RELEASE = '36.1';
-  const ICON_SRC = './assets/intimacy-oracle/intimacy_sector_v37.svg';
+  const RELEASE = '36.2';
+  const SCRIPT_VERSION = (() => {
+    try {
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3620';
+    } catch {
+      return '3620';
+    }
+  })();
+  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SCRIPT_VERSION)}`;
   const $ = (selector, root = document) => root.querySelector(selector);
 
   function addStyles() {
@@ -203,7 +210,10 @@
     const icon = $('.cat-icon', category);
     if (!icon) return;
     const existing = $('.lunea-intimacy-sector-art-v37', icon);
-    if (existing) return;
+    if (existing) {
+      if (existing.getAttribute('src') !== ICON_SRC) existing.setAttribute('src', ICON_SRC);
+      return;
+    }
     icon.innerHTML = '';
     const img = document.createElement('img');
     img.className = 'lunea-intimacy-sector-art-v37';
@@ -211,6 +221,17 @@
     img.alt = '';
     img.setAttribute('aria-hidden', 'true');
     icon.appendChild(img);
+  }
+
+  function guardIcon(category) {
+    const icon = $('.cat-icon', category);
+    if (!icon || icon.dataset.intimacyLogoGuard === '1') return;
+    icon.dataset.intimacyLogoGuard = '1';
+    const observer = new MutationObserver(() => {
+      const art = $('.lunea-intimacy-sector-art-v37', icon);
+      if (!art || art.getAttribute('src') !== ICON_SRC) installIcon(category);
+    });
+    observer.observe(icon, { childList: true, subtree: false });
   }
 
   function classifyCounts(category) {
@@ -225,6 +246,7 @@
     const category = $('.lunea-intimacy-category');
     if (!category) return false;
     installIcon(category);
+    guardIcon(category);
     classifyCounts(category);
     return true;
   }
