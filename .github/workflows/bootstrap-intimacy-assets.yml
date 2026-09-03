@@ -25,9 +25,9 @@ jobs:
           set -euo pipefail
           python -m pip install --quiet gdown
           mkdir -p assets/intimacy-oracle
-          gdown --id '1N62OZTszNEQ_7IGhwYjFu4ihnogYJZNT' -O assets/intimacy-oracle/back_intimacy_final.jpg
-          gdown --id '1-OsEfKLXXfT9z6ZuX3tussZwg7p3l99Z' -O assets/intimacy-oracle/intimacy_sector_final.jpg
-          gdown --id '1_Ig4SSBjK8Y0gd0BRfLp00WMz5eyBVfa' -O assets/intimacy-oracle/oracle_atlas_final.jpg
+          gdown '1N62OZTszNEQ_7IGhwYjFu4ihnogYJZNT' -O assets/intimacy-oracle/back_intimacy_final.jpg
+          gdown '1-OsEfKLXXfT9z6ZuX3tussZwg7p3l99Z' -O assets/intimacy-oracle/intimacy_sector_final.jpg
+          gdown '1_Ig4SSBjK8Y0gd0BRfLp00WMz5eyBVfa' -O assets/intimacy-oracle/oracle_atlas_final.jpg
 
       - name: Verify byte identity before Git write
         shell: python
