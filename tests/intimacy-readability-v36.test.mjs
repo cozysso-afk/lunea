@@ -13,8 +13,9 @@ test('INTIMACY uses a category-style rounded-square celestial artwork asset', ()
   assert.match(source, /border-radius:22px!important/);
   assert.match(source, /object-fit:cover!important/);
   assert.match(icon, /viewBox="0 0 180 180"/);
-  assert.match(icon, /radialGradient id="opal"/);
-  assert.match(icon, /linearGradient id="roseGold"/);
+  assert.match(icon, /radialGradient id="pearl"/);
+  assert.match(icon, /linearGradient id="cres"/);
+  assert.match(icon, /A49 49 0 1 0/);
 });
 
 test('mobile spread cards reserve space for count pills instead of overlapping text', () => {
