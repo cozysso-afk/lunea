@@ -8,20 +8,27 @@ const workflow = fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader
 const icon = fs.readFileSync(new URL('../assets/intimacy-oracle/intimacy_sector_v37.svg', import.meta.url), 'utf8');
 
 test('V37 uses a fresh runtime sentinel so stale V36 sessions cannot suppress the repair', () => {
-  assert.match(source, /const RELEASE = '37\.0'/);
+  assert.match(source, /const RELEASE = '37\.1'/);
   assert.match(source, /__LUNEA_INTIMACY_UI_V37__/);
   assert.doesNotMatch(source, /__LUNEA_INTIMACY_READABILITY_V36__/);
 });
 
-test('INTIMACY uses the square celestial artwork with both img and CSS fallback', () => {
+test('INTIMACY uses the square celestial artwork with img and CSS fallback', () => {
   assert.match(source, /intimacy_sector_v37\.svg\?v=/);
   assert.match(source, /lunea-intimacy-sector-art-v37/);
   assert.match(source, /background:#181329 url\('\$\{ICON_SRC\}'\) center\/cover no-repeat!important/);
-  assert.match(source, /icon\.replaceChildren\(img\)/);
+  assert.match(source, /icon\.replaceChildren\(img, sentinel\)/);
   assert.match(source, /object-fit:cover!important/);
   assert.match(icon, /viewBox="0 0 180 180"/);
   assert.match(icon, /radialGradient id="pearl"/);
   assert.match(icon, /linearGradient id="cres"/);
+});
+
+test('legacy V35 cannot overwrite the V37 logo after its delayed installer runs', () => {
+  assert.match(source, /lunea-intimacy-sector-mark-v37-sentinel/);
+  assert.match(source, /lunea-intimacy-sector-mark lunea-intimacy-sector-mark-v37-sentinel/);
+  assert.match(source, /display:none!important/);
+  assert.match(source, /late legacy timers cannot overwrite V37 artwork/);
 });
 
 test('INTIMACY artwork inherits the cache-busted loader build token', () => {
@@ -71,4 +78,4 @@ test('repair is loaded after legacy INTIMACY in both loader paths', () => {
   assert.ok(loader.lastIndexOf(repair) > loader.lastIndexOf(legacy));
 });
 
-console.log('LUNEA INTIMACY stable sector-aligned UI V37.0: PASS');
+console.log('LUNEA INTIMACY stable sector-aligned UI V37.1: PASS');

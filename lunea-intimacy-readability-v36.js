@@ -1,17 +1,17 @@
 'use strict';
 
-/* LUNEA INTIMACY stable sector-aligned UI V37.0 */
+/* LUNEA INTIMACY stable sector-aligned UI V37.1 */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_UI_V37__) return;
   W.__LUNEA_INTIMACY_UI_V37__ = true;
 
-  const RELEASE = '37.0';
+  const RELEASE = '37.1';
   const SCRIPT_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3700';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3710';
     } catch {
-      return '3700';
+      return '3710';
     }
   })();
   const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SCRIPT_VERSION)}`;
@@ -56,6 +56,9 @@
       .lunea-intimacy-category .lunea-intimacy-sector-art-v37{
         width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;
         border-radius:17px!important;pointer-events:none!important
+      }
+      .lunea-intimacy-category .lunea-intimacy-sector-mark-v37-sentinel{
+        display:none!important;width:0!important;height:0!important;overflow:hidden!important;position:absolute!important
       }
       .lunea-intimacy-category .category-content{
         padding:9px 12px 14px!important;
@@ -127,7 +130,14 @@
     img.src = ICON_SRC;
     img.alt = '';
     img.setAttribute('aria-hidden', 'true');
-    icon.replaceChildren(img);
+
+    // legacy-v35 only injects its old orbit mark when this class is absent.
+    // Keep a hidden sentinel with the legacy class so late legacy timers cannot overwrite V37 artwork.
+    const sentinel = document.createElement('span');
+    sentinel.className = 'lunea-intimacy-sector-mark lunea-intimacy-sector-mark-v37-sentinel';
+    sentinel.setAttribute('aria-hidden', 'true');
+
+    icon.replaceChildren(img, sentinel);
     icon.classList.add('lunea-intimacy-v37-icon');
   }
 
@@ -166,7 +176,6 @@
       if (apply() || tries >= 80) clearInterval(timer);
     }, 50);
   } else {
-    // One-shot late repair for UI layers that finish during the same boot frame.
     setTimeout(() => {
       const category = $('.lunea-intimacy-category');
       if (category) {
