@@ -21,7 +21,7 @@ test('restores the original 9-card intimacy spread verbatim', () => {
   assert.match(source, /const RELEASE = '35\.1'/);
   assert.match(source, /const TITLE = '속궁합 · 19\+'/);
   for (const position of positions) assert.ok(source.includes(position), `missing legacy position: ${position}`);
-  assert.match(source, /data\.count = '9'/);
+  assert.match(source, /dataset\.count = '9'/);
   assert.match(source, /ORIGINAL · 9/);
 });
 
