@@ -26,6 +26,14 @@
   if (W.__LUNEA_READING_ACTION_ORDER_V33__) return;
   W.__LUNEA_READING_ACTION_ORDER_V33__ = true;
 
+  const SELF_VERSION = (() => {
+    try {
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3302';
+    } catch {
+      return '3302';
+    }
+  })();
+
   const ORDER = [
     'aiRead',
     'saveReading',
@@ -44,6 +52,7 @@
   const BOTTOM_AI_ID = 'luneaBottomAiRead';
   const BOTTOM_SAVE_ID = 'luneaBottomSaveReading';
   const BOTTOM_STYLE_ID = 'luneaBottomReadingActionsStyle';
+  const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
 
   function actionBar() {
     return document.querySelector('#spreadOverlay .actionbar');
@@ -170,9 +179,21 @@
     return true;
   }
 
+  function ensureIntimacyCleanUi() {
+    if (document.getElementById(INTIMACY_CLEAN_LOADER_ID)) return true;
+    const script = document.createElement('script');
+    script.id = INTIMACY_CLEAN_LOADER_ID;
+    script.src = `./lunea-intimacy-clean-v39.js?v=${encodeURIComponent(SELF_VERSION)}`;
+    script.async = false;
+    script.onerror = () => console.error('[LUNEA] Failed to load INTIMACY clean UI V39');
+    document.head.appendChild(script);
+    return true;
+  }
+
   function boot() {
     reorder();
     ensureBottomActions();
+    ensureIntimacyCleanUi();
 
     let queued = false;
     const bar = actionBar();
@@ -197,6 +218,7 @@
       tries += 1;
       reorder();
       ensureBottomActions();
+      ensureIntimacyCleanUi();
       const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
       if ((ready && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
     }, 250);
@@ -208,6 +230,7 @@
     reorder,
     ensureBottomActions,
     syncBottomButtons,
+    ensureIntimacyCleanUi,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
