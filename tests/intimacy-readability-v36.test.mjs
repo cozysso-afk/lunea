@@ -8,15 +8,14 @@ const workflow = fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader
 const icon = fs.readFileSync(new URL('../assets/intimacy-oracle/intimacy_sector_v37.svg', import.meta.url), 'utf8');
 
 test('INTIMACY uses a category-style rounded-square celestial artwork asset', () => {
-  assert.match(source, /const RELEASE = '36\.4'/);
+  assert.match(source, /const RELEASE = '36\.5'/);
   assert.match(source, /intimacy_sector_v37\.svg\?v=/);
   assert.match(source, /lunea-intimacy-sector-art-v37/);
-  assert.match(source, /border-radius:22px!important/);
+  assert.match(source, /border-radius:20px!important/);
   assert.match(source, /object-fit:cover!important/);
   assert.match(icon, /viewBox="0 0 180 180"/);
   assert.match(icon, /radialGradient id="pearl"/);
   assert.match(icon, /linearGradient id="cres"/);
-  assert.match(icon, /A49 49 0 1 0/);
 });
 
 test('INTIMACY artwork inherits the cache-busted loader build token', () => {
@@ -26,33 +25,32 @@ test('INTIMACY artwork inherits the cache-busted loader build token', () => {
   assert.match(workflow, /'lunea-intimacy-readability-v36\.js'/);
 });
 
-test('INTIMACY logo guard repairs any later overwrite of the category artwork', () => {
-  assert.match(source, /function guardIcon\(category\)/);
-  assert.match(source, /new MutationObserver/);
-  assert.match(source, /observer\.observe\(icon, \{ childList: true, subtree: false \}\)/);
+test('touch targets stay interactive and decorative children cannot steal taps', () => {
+  assert.match(source, /pointer-events:auto!important/);
+  assert.match(source, /touch-action:manipulation!important/);
+  assert.match(source, /reading-item > \*/);
+  assert.match(source, /cat-icon > \*/);
+  assert.match(source, /pointer-events:none!important/);
 });
 
-test('mobile readability is led by spacing and hierarchy rather than oversized type', () => {
-  assert.match(source, /padding:16px 48px 16px 16px!important/);
-  assert.match(source, /gap:12px!important/);
-  assert.match(source, /font-size:15\.9px!important/);
-  assert.match(source, /font-size:12\.2px!important/);
-  assert.match(source, /line-height:1\.62!important/);
-  assert.match(source, /margin-bottom:8px!important/);
+test('readability layer is static and does not mutate live spread copy or observe the icon forever', () => {
+  assert.doesNotMatch(source, /MutationObserver/);
+  assert.doesNotMatch(source, /function guardIcon/);
+  assert.doesNotMatch(source, /DISPLAY_COPY/);
+  assert.doesNotMatch(source, /function polishCopy/);
+});
+
+test('mobile layout stays compact and uses spacing instead of oversized type', () => {
+  assert.match(source, /padding:13px 46px 13px 13px!important/);
+  assert.match(source, /gap:8px!important/);
+  assert.match(source, /font-size:14\.3px!important/);
+  assert.match(source, /font-size:10\.8px!important/);
+  assert.match(source, /line-height:1\.52!important/);
   assert.match(source, /-webkit-line-clamp:unset!important/);
 });
 
-test('mobile spread copy is shortened into scannable evidence labels', () => {
-  assert.match(source, /const DISPLAY_COPY/);
-  assert.match(source, /굵기\/압박감/);
-  assert.match(source, /내가 원하는 방식\/리듬/);
-  assert.match(source, /실제 케미\/긴장/);
-  assert.match(source, /INTIMACY · 고정 배열/);
-  assert.match(source, /function polishCopy\(category\)/);
-});
-
-test('count and action pills stay quiet and out of the text flow', () => {
-  assert.match(source, /top:16px!important/);
+test('count and action pills stay outside the text flow', () => {
+  assert.match(source, /top:13px!important/);
   assert.match(source, /width:28px!important/);
   assert.match(source, /height:28px!important/);
   assert.match(source, /lunea-count-label/);
@@ -72,4 +70,4 @@ test('structural loader loads readability repair after legacy INTIMACY layer in 
   assert.ok(lastLegacy >= 0 && lastRepair > lastLegacy);
 });
 
-console.log('LUNEA INTIMACY readability / category artwork V36.4: PASS');
+console.log('LUNEA INTIMACY touch-safe layout V36.5: PASS');
