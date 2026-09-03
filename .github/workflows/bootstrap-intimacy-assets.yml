@@ -1,0 +1,62 @@
+name: Bootstrap verified INTIMACY assets
+
+on:
+  push:
+    branches:
+      - work/intimacy-repair-20260904
+    paths:
+      - .github/workflows/bootstrap-intimacy-assets.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/intimacy-repair-20260904
+          fetch-depth: 0
+
+      - name: Download exact source binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet gdown
+          mkdir -p assets/intimacy-oracle
+          gdown --id '1N62OZTszNEQ_7IGhwYjFu4ihnogYJZNT' -O assets/intimacy-oracle/back_intimacy_final.jpg
+          gdown --id '1-OsEfKLXXfT9z6ZuX3tussZwg7p3l99Z' -O assets/intimacy-oracle/intimacy_sector_final.jpg
+          gdown --id '1_Ig4SSBjK8Y0gd0BRfLp00WMz5eyBVfa' -O assets/intimacy-oracle/oracle_atlas_final.jpg
+
+      - name: Verify byte identity before Git write
+        shell: python
+        run: |
+          import hashlib, pathlib, sys
+          expected = {
+              'assets/intimacy-oracle/back_intimacy_final.jpg': (141583, 'd06cd37f08dee24201bbd8d513b9e88da0d6ff11cf7636344f120e406890fddb'),
+              'assets/intimacy-oracle/intimacy_sector_final.jpg': (57299, 'f6da0f1161343ca93a5947db596cb03a16e084cf2de01d8e61de27b3feaacd4a'),
+              'assets/intimacy-oracle/oracle_atlas_final.jpg': (344645, '1551c2911ece7e2e9f08e14e4712561172569297eb5919a8ad3310d7005c6092'),
+          }
+          for name, (size, sha) in expected.items():
+              p = pathlib.Path(name)
+              data = p.read_bytes()
+              got = hashlib.sha256(data).hexdigest()
+              print(name, len(data), got)
+              if len(data) != size or got != sha:
+                  sys.exit(f'BYTE MISMATCH: {name}')
+              if not data.startswith(b'\xff\xd8') or not data.endswith(b'\xff\xd9'):
+                  sys.exit(f'JPEG BOUNDARY MISMATCH: {name}')
+
+      - name: Commit verified binaries and remove bootstrap workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/intimacy-oracle/back_intimacy_final.jpg \
+                  assets/intimacy-oracle/intimacy_sector_final.jpg \
+                  assets/intimacy-oracle/oracle_atlas_final.jpg
+          git rm .github/workflows/bootstrap-intimacy-assets.yml
+          git commit -m 'fix(intimacy): add verified final oracle assets'
+          git push origin HEAD:work/intimacy-repair-20260904
