@@ -5,13 +5,16 @@ import test from 'node:test';
 const source = fs.readFileSync(new URL('../lunea-intimacy-burgundy-v40.js', import.meta.url), 'utf8');
 const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
 
-const pngUrl = new URL('../assets/intimacy-oracle/intimacy_sector_v40.png', import.meta.url);
+const artUrl = new URL('../assets/intimacy-oracle/intimacy_sector_final.jpg', import.meta.url);
 
-test('V40 ships a real PNG and uses it for INTIMACY branding', () => {
-  assert.equal(fs.existsSync(pngUrl), true);
-  const bytes = fs.readFileSync(pngUrl);
-  assert.equal(bytes.subarray(1, 4).toString('ascii'), 'PNG');
-  assert.match(source, /intimacy_sector_v40\.png/);
+test('V40 ships the supplied final INTIMACY sector artwork and uses it for branding', () => {
+  assert.equal(fs.existsSync(artUrl), true);
+  const bytes = fs.readFileSync(artUrl);
+  assert.deepEqual([...bytes.subarray(0, 3)], [0xff, 0xd8, 0xff]);
+  assert.ok(bytes.length > 100000, 'final sector art should be the supplied real artwork');
+  assert.match(source, /const RELEASE = '40\.2'/);
+  assert.match(source, /intimacy_sector_final\.jpg/);
+  assert.doesNotMatch(source, /intimacy_sector_v40\.png/);
   assert.match(source, /forceIcon\(\$\('\.cat-icon'/);
   assert.match(source, /lunea-v8-tile\[data-key="intimacy"\]/);
 });
