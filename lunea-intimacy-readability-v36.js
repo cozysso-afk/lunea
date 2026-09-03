@@ -1,17 +1,17 @@
 'use strict';
 
-/* LUNEA INTIMACY mobile readability + category-style artwork V36.3 */
+/* LUNEA INTIMACY mobile readability + category-style artwork V36.4 */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_READABILITY_V36__) return;
   W.__LUNEA_INTIMACY_READABILITY_V36__ = true;
 
-  const RELEASE = '36.3';
+  const RELEASE = '36.4';
   const SCRIPT_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3630';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3640';
     } catch {
-      return '3630';
+      return '3640';
     }
   })();
   const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SCRIPT_VERSION)}`;
@@ -63,13 +63,13 @@
       .lunea-intimacy-category.active .cat-icon{animation:luneaIntimacyBreath 3.8s ease-in-out infinite}
 
       .lunea-intimacy-category .category-content{
-        padding:14px 14px 18px!important;
-        gap:12px!important;
+        padding:12px 13px 16px!important;
+        gap:11px!important;
       }
       .lunea-intimacy-category .reading-item{
         min-height:0!important;
-        padding:17px 54px 17px 17px!important;
-        border-radius:17px!important;
+        padding:15px 50px 15px 16px!important;
+        border-radius:16px!important;
         border-color:rgba(232,174,200,.18)!important;
       }
       .lunea-intimacy-category .reading-item > div:first-child{
@@ -77,20 +77,20 @@
         max-width:100%!important;
       }
       .lunea-intimacy-category .reading-item h4{
-        margin:0 0 8px!important;
-        font-size:16.6px!important;
+        margin:0 0 7px!important;
+        font-size:15.5px!important;
         font-weight:700!important;
-        line-height:1.3!important;
-        letter-spacing:-.14px!important;
+        line-height:1.34!important;
+        letter-spacing:-.12px!important;
         color:#fffafd!important;
       }
       .lunea-intimacy-category .reading-item p{
         display:block!important;
         margin:0!important;
-        color:rgba(239,231,241,.88)!important;
-        font-size:12.9px!important;
+        color:rgba(235,227,239,.86)!important;
+        font-size:11.9px!important;
         font-weight:400!important;
-        line-height:1.62!important;
+        line-height:1.6!important;
         -webkit-line-clamp:unset!important;
         -webkit-box-orient:initial!important;
         overflow:visible!important;
@@ -98,54 +98,54 @@
         word-break:keep-all!important;
       }
       .lunea-intimacy-category .reading-item .count{
-        top:16px!important;
-        right:15px!important;
+        top:15px!important;
+        right:13px!important;
         transform:none!important;
-        width:30px!important;
-        height:30px!important;
-        min-width:30px!important;
-        font-size:11.4px!important;
-        border-color:rgba(239,168,198,.34)!important;
-        background:rgba(121,66,105,.18)!important;
+        width:28px!important;
+        height:28px!important;
+        min-width:28px!important;
+        font-size:10.8px!important;
+        border-color:rgba(239,168,198,.32)!important;
+        background:rgba(121,66,105,.15)!important;
         color:#fff1f7!important;
         z-index:2;
       }
       .lunea-intimacy-category .reading-item .count.lunea-count-label{
         width:auto!important;
-        min-width:42px!important;
-        height:30px!important;
-        padding:0 9px!important;
+        min-width:40px!important;
+        height:28px!important;
+        padding:0 8px!important;
         border-radius:999px!important;
-        font-size:10.8px!important;
+        font-size:10.2px!important;
       }
       .lunea-intimacy-category .reading-item.lunea-intimacy-legacy9{
         min-height:0!important;
-        padding-top:18px!important;
-        padding-bottom:18px!important;
+        padding-top:16px!important;
+        padding-bottom:16px!important;
       }
       .lunea-intimacy-category .reading-item.lunea-intimacy-legacy9 h4{
         display:flex!important;
         flex-wrap:wrap!important;
         align-items:center!important;
-        gap:7px!important;
+        gap:6px!important;
       }
       .lunea-intimacy-category .lunea-intimacy-legacy-badge{
         margin-left:0!important;
-        padding:4px 8px!important;
-        font-size:9.4px!important;
-        letter-spacing:.7px!important;
+        padding:3px 7px!important;
+        font-size:8.8px!important;
+        letter-spacing:.65px!important;
       }
       .lunea-intimacy-category .lunea-intimacy-list-label{
-        margin:12px 6px 1px!important;
-        color:rgba(247,204,224,.9)!important;
-        font-size:10.2px!important;
+        margin:11px 5px 2px!important;
+        color:rgba(244,200,221,.88)!important;
+        font-size:9.8px!important;
         font-weight:700!important;
         line-height:1.35!important;
-        letter-spacing:1.18px!important;
+        letter-spacing:1.12px!important;
       }
 
       @media(max-width:430px){
-        .lunea-intimacy-category .category-header{min-height:116px!important}
+        .lunea-intimacy-category .category-header{min-height:114px!important}
         .lunea-intimacy-category .cat-icon{
           min-width:72px!important;
           min-height:72px!important;
@@ -156,56 +156,56 @@
         .lunea-intimacy-category .cat-icon::after,
         .lunea-intimacy-category .lunea-intimacy-sector-art-v37{border-radius:19px!important}
         .lunea-intimacy-category .cat-text h3{
-          font-size:19.5px!important;
+          font-size:18.4px!important;
           line-height:1.16!important;
         }
         .lunea-intimacy-category .cat-text p{
-          margin-top:7px!important;
-          font-size:12.5px!important;
-          line-height:1.52!important;
-          color:rgba(233,225,236,.86)!important;
+          margin-top:6px!important;
+          font-size:11.8px!important;
+          line-height:1.5!important;
+          color:rgba(228,220,233,.82)!important;
         }
         .lunea-intimacy-category .category-content{
-          padding:14px 13px 18px!important;
+          padding:13px 12px 17px!important;
           gap:12px!important;
         }
         .lunea-intimacy-category .reading-item{
           min-height:0!important;
-          padding:18px 50px 18px 17px!important;
-          border-radius:17px!important;
+          padding:16px 48px 16px 16px!important;
+          border-radius:16px!important;
         }
         .lunea-intimacy-category .reading-item h4{
-          margin-bottom:9px!important;
-          font-size:17.4px!important;
-          line-height:1.28!important;
+          margin-bottom:8px!important;
+          font-size:15.9px!important;
+          line-height:1.32!important;
         }
         .lunea-intimacy-category .reading-item p{
-          font-size:13.4px!important;
-          line-height:1.65!important;
-          color:rgba(244,236,246,.9)!important;
+          font-size:12.2px!important;
+          line-height:1.62!important;
+          color:rgba(238,230,242,.88)!important;
         }
         .lunea-intimacy-category .reading-item .count{
-          top:17px!important;
-          right:13px!important;
-          width:30px!important;
-          height:30px!important;
-          min-width:30px!important;
+          top:16px!important;
+          right:12px!important;
+          width:28px!important;
+          height:28px!important;
+          min-width:28px!important;
         }
         .lunea-intimacy-category .reading-item .count.lunea-count-label{
-          min-width:42px!important;
-          height:30px!important;
-          padding:0 8px!important;
-          font-size:10.7px!important;
+          min-width:40px!important;
+          height:28px!important;
+          padding:0 7px!important;
+          font-size:10.1px!important;
         }
         .lunea-intimacy-category .reading-item.lunea-intimacy-legacy9{
           min-height:0!important;
-          padding-top:19px!important;
-          padding-bottom:19px!important;
+          padding-top:17px!important;
+          padding-bottom:17px!important;
         }
         .lunea-intimacy-category .lunea-intimacy-list-label{
-          margin:13px 6px 2px!important;
-          font-size:10.6px!important;
-          letter-spacing:1.1px!important;
+          margin:12px 5px 2px!important;
+          font-size:10px!important;
+          letter-spacing:1.05px!important;
         }
       }
 
@@ -219,12 +219,12 @@
         }
         .lunea-intimacy-category .cat-icon::after,
         .lunea-intimacy-category .lunea-intimacy-sector-art-v37{border-radius:17px!important}
-        .lunea-intimacy-category .cat-text h3{font-size:18.3px!important}
-        .lunea-intimacy-category .cat-text p{font-size:12.1px!important}
-        .lunea-intimacy-category .reading-item{padding:17px 48px 17px 15px!important}
-        .lunea-intimacy-category .reading-item h4{font-size:16.7px!important}
-        .lunea-intimacy-category .reading-item p{font-size:13px!important;line-height:1.63!important}
-        .lunea-intimacy-category .reading-item .count{right:11px!important}
+        .lunea-intimacy-category .cat-text h3{font-size:17.6px!important}
+        .lunea-intimacy-category .cat-text p{font-size:11.4px!important}
+        .lunea-intimacy-category .reading-item{padding:15px 46px 15px 14px!important}
+        .lunea-intimacy-category .reading-item h4{font-size:15.4px!important}
+        .lunea-intimacy-category .reading-item p{font-size:11.9px!important;line-height:1.6!important}
+        .lunea-intimacy-category .reading-item .count{right:10px!important}
       }
       @media(prefers-reduced-motion:reduce){
         .lunea-intimacy-category .cat-icon{animation:none!important}
