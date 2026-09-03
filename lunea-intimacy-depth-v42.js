@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA INTIMACY DEPTH V42.0
+  LUNEA INTIMACY DEPTH V42.1
   ==========================
   A thin interpretation-depth layer over the existing V34 78-card database.
 
@@ -14,7 +14,7 @@
   if (W.__LUNEA_INTIMACY_DEPTH_V42__) return;
   W.__LUNEA_INTIMACY_DEPTH_V42__ = true;
 
-  const RELEASE = '42.0';
+  const RELEASE = '42.1';
   const MARKER = '[LUNEA INTIMACY DEPTH ROUTER';
 
   const TYPES = Object.freeze({
@@ -75,7 +75,7 @@
     if (W.__LUNEA_INTIMACY_ACTIVE__) return true;
     if (document.body?.classList?.contains('lunea-intimacy-reading')) return true;
     if (W.LUNEA_INTIMACY_V34?.getSpread?.(t)) return true;
-    return /속궁합|잠자리|섹스|성적\s*(?:궁합|끌림|욕구|텐션)|신체적\s*(?:궁합|끌림|밀착)|육체적\s*(?:궁합|끌림|케미)|친밀감|스킨십|욕구\s*(?:방식|차이)|애프터글로|관계\s*후\s*(?:감정|여운|애착)/i.test(q);
+    return /속궁합|잠자리|섹스|성적\s*(?:궁합|끌림|욕구|텐션)|신체적\s*(?:궁합|끌림|밀착)|육체적\s*(?:궁합|끌림|케미)|(?:성적|신체적|육체적)(?:으로)?\s*끌리|친밀감|스킨십|욕구\s*(?:방식|차이)|애프터글로|관계\s*후\s*(?:감정|여운|애착)/i.test(q);
   }
 
   function looksLikeComparison(q, title) {
@@ -93,12 +93,12 @@
     if (looksLikeComparison(q, t)) return 'comparison';
     if (/재회|다시\s*(?:만나|이어|가까워|잠자리|관계)|헤어(?:진|졌다).*친밀|전(?:남친|여친|애인)/i.test(s)) return 'reunion_intimacy';
     if (/관계\s*후|끝난\s*뒤|후의\s*(?:감정|여운|애착)|애착|여운|afterglow/i.test(s)) return 'attachment_afterglow';
-    if (/만족|만족도|충족|잘\s*맞(?:아|을까)|속궁합/i.test(s)) return 'physical_compatibility';
+    if (/속궁합|성적\s*궁합|신체적\s*궁합|육체적\s*궁합|(?:성적|신체적|육체적).{0,8}잘\s*맞|우리.{0,8}잘\s*맞(?:아|을까)/i.test(s)) return 'physical_compatibility';
     if (/리듬|템포|완급|속도|경계|조율|맞춰|엇갈|어긋/i.test(s)) return 'rhythm_boundary';
     if (/욕구\s*(?:방식|스타일|차이)|어떤\s*방식|리드|주도|수용|먼저\s*(?:다가|시작)/i.test(s)) return 'desire_style';
     if (/텐션|행동으로|실제로\s*(?:다가|움직)|참고\s*있|억누|유혹/i.test(s)) return 'tension_action';
-    if (/만족|충족/i.test(s)) return 'satisfaction';
-    if (/끌림|매력|원하|욕망|성적\s*관심/i.test(s)) return 'attraction';
+    if (/만족|만족도|충족/i.test(s)) return 'satisfaction';
+    if (/끌림|끌리|매력|원하|욕망|성적\s*관심/i.test(s)) return 'attraction';
     return 'general_intimacy';
   }
 
@@ -135,6 +135,7 @@
       ],
       satisfaction: [
         '- 만족은 mutuality와 satisfaction뿐 아니라 emotionalSafety·communication·boundary 위험까지 확인한 뒤 결론낸다.',
+        '- 만족 신호가 높아도 attraction/desire가 낮으면 “편안하지만 강한 텐션은 약한 조합”처럼 분리해서 표현한다.',
       ],
       attachment_afterglow: [
         '- 관계 후 가까워짐, 안도감, 집착, 후퇴를 같은 “애착”으로 묶지 않는다. attachment / obsession / avoidance를 따로 본다.',
