@@ -53,6 +53,7 @@
   const BOTTOM_SAVE_ID = 'luneaBottomSaveReading';
   const BOTTOM_STYLE_ID = 'luneaBottomReadingActionsStyle';
   const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
+  const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
 
   function actionBar() {
     return document.querySelector('#spreadOverlay .actionbar');
@@ -190,10 +191,22 @@
     return true;
   }
 
+  function ensureIntimacyBurgundyUi() {
+    if (document.getElementById(INTIMACY_BURGUNDY_LOADER_ID)) return true;
+    const script = document.createElement('script');
+    script.id = INTIMACY_BURGUNDY_LOADER_ID;
+    script.src = `./lunea-intimacy-burgundy-v40.js?v=${encodeURIComponent(SELF_VERSION)}`;
+    script.async = false;
+    script.onerror = () => console.error('[LUNEA] Failed to load INTIMACY burgundy UI V40');
+    document.head.appendChild(script);
+    return true;
+  }
+
   function boot() {
     reorder();
     ensureBottomActions();
     ensureIntimacyCleanUi();
+    ensureIntimacyBurgundyUi();
 
     let queued = false;
     const bar = actionBar();
@@ -219,6 +232,7 @@
       reorder();
       ensureBottomActions();
       ensureIntimacyCleanUi();
+      ensureIntimacyBurgundyUi();
       const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
       if ((ready && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
     }, 250);
@@ -231,6 +245,7 @@
     ensureBottomActions,
     syncBottomButtons,
     ensureIntimacyCleanUi,
+    ensureIntimacyBurgundyUi,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
