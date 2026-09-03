@@ -52,6 +52,7 @@ jobs:
               'lunea-intimacy-v34.js',
               'lunea-intimacy-ai-bridge-v34.js',
               'lunea-intimacy-legacy-v35.js',
+              'lunea-intimacy-readability-v36.js',
           ):
               pattern = re.escape(asset) + r'\?v=[^"\']+'
               replacement = f'{asset}?v={build}'
