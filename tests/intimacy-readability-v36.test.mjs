@@ -8,7 +8,7 @@ const workflow = fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader
 const icon = fs.readFileSync(new URL('../assets/intimacy-oracle/intimacy_sector_v37.svg', import.meta.url), 'utf8');
 
 test('INTIMACY uses a category-style rounded-square celestial artwork asset', () => {
-  assert.match(source, /const RELEASE = '36\.3'/);
+  assert.match(source, /const RELEASE = '36\.4'/);
   assert.match(source, /intimacy_sector_v37\.svg\?v=/);
   assert.match(source, /lunea-intimacy-sector-art-v37/);
   assert.match(source, /border-radius:22px!important/);
@@ -32,12 +32,13 @@ test('INTIMACY logo guard repairs any later overwrite of the category artwork', 
   assert.match(source, /observer\.observe\(icon, \{ childList: true, subtree: false \}\)/);
 });
 
-test('mobile spread typography is genuinely readable instead of 11px gray copy', () => {
-  assert.match(source, /padding:18px 50px 18px 17px!important/);
-  assert.match(source, /font-size:17\.4px!important/);
-  assert.match(source, /font-size:13\.4px!important/);
-  assert.match(source, /line-height:1\.65!important/);
-  assert.match(source, /rgba\(244,236,246,\.9\)/);
+test('mobile readability is led by spacing and hierarchy rather than oversized type', () => {
+  assert.match(source, /padding:16px 48px 16px 16px!important/);
+  assert.match(source, /gap:12px!important/);
+  assert.match(source, /font-size:15\.9px!important/);
+  assert.match(source, /font-size:12\.2px!important/);
+  assert.match(source, /line-height:1\.62!important/);
+  assert.match(source, /margin-bottom:8px!important/);
   assert.match(source, /-webkit-line-clamp:unset!important/);
 });
 
@@ -50,12 +51,12 @@ test('mobile spread copy is shortened into scannable evidence labels', () => {
   assert.match(source, /function polishCopy\(category\)/);
 });
 
-test('count and action pills are smaller than the reading copy and stay top-right', () => {
-  assert.match(source, /top:17px!important/);
-  assert.match(source, /width:30px!important/);
-  assert.match(source, /height:30px!important/);
+test('count and action pills stay quiet and out of the text flow', () => {
+  assert.match(source, /top:16px!important/);
+  assert.match(source, /width:28px!important/);
+  assert.match(source, /height:28px!important/);
   assert.match(source, /lunea-count-label/);
-  assert.match(source, /min-width:42px!important/);
+  assert.match(source, /min-width:40px!important/);
   assert.match(source, /!\/\^\\d\+\$\//);
 });
 
@@ -71,4 +72,4 @@ test('structural loader loads readability repair after legacy INTIMACY layer in 
   assert.ok(lastLegacy >= 0 && lastRepair > lastLegacy);
 });
 
-console.log('LUNEA INTIMACY readability / category artwork V36.3: PASS');
+console.log('LUNEA INTIMACY readability / category artwork V36.4: PASS');
