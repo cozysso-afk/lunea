@@ -4,13 +4,17 @@ import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('../lunea-intimacy-readability-v36.js', import.meta.url), 'utf8');
 const loader = fs.readFileSync(new URL('../lunea-structural-routing-v4.js', import.meta.url), 'utf8');
+const icon = fs.readFileSync(new URL('../assets/intimacy-oracle/intimacy_sector_v37.svg', import.meta.url), 'utf8');
 
-test('INTIMACY readability layer has the legible interlocked-orbit sector mark', () => {
-  assert.match(source, /const RELEASE = '36\.0'/);
-  assert.match(source, /lunea-intimacy-sector-mark-v36/);
-  assert.match(source, /<ellipse class="lunea-intimacy-orbit orbit-a"/);
-  assert.match(source, /<ellipse class="lunea-intimacy-orbit orbit-b"/);
-  assert.match(source, /stroke-width:2\.8!important/);
+test('INTIMACY uses a category-style rounded-square celestial artwork asset', () => {
+  assert.match(source, /const RELEASE = '36\.1'/);
+  assert.match(source, /intimacy_sector_v37\.svg/);
+  assert.match(source, /lunea-intimacy-sector-art-v37/);
+  assert.match(source, /border-radius:22px!important/);
+  assert.match(source, /object-fit:cover!important/);
+  assert.match(icon, /viewBox="0 0 180 180"/);
+  assert.match(icon, /radialGradient id="opal"/);
+  assert.match(icon, /linearGradient id="roseGold"/);
 });
 
 test('mobile spread cards reserve space for count pills instead of overlapping text', () => {
@@ -39,4 +43,4 @@ test('structural loader loads readability repair after legacy INTIMACY layer in 
   assert.ok(lastLegacy >= 0 && lastRepair > lastLegacy);
 });
 
-console.log('LUNEA INTIMACY readability / icon repair V36.0: PASS');
+console.log('LUNEA INTIMACY readability / category artwork V36.1: PASS');
