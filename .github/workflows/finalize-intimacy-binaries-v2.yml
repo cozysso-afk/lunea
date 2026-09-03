@@ -78,3 +78,5 @@ jobs:
           git rm .github/workflows/finalize-intimacy-binaries-v2.yml
           git commit -m 'fix(intimacy): commit verified final artwork binaries'
           git push origin HEAD:work/intimacy-final-assets-20260903
+
+# trigger 2026-09-04 final binary repair
