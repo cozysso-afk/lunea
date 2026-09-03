@@ -49,7 +49,11 @@ assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3610/);
 assert.match(bridge,/__LUNEA_READING_ACTION_ORDER_V33__/);
 assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 
-for(const file of ['oracle_atlas_v36.jpg','back_intimacy.svg']){
-  assert.ok(fs.existsSync(new URL(`../assets/intimacy-oracle/${file}`, import.meta.url)),`missing ${file}`);
-}
+const jpg = fs.readFileSync(new URL('../assets/intimacy-oracle/oracle_atlas_v36.jpg', import.meta.url));
+assert.ok(jpg.length > 10000,'oracle atlas is unexpectedly small');
+assert.deepEqual([...jpg.subarray(0,3)],[0xff,0xd8,0xff],'oracle atlas must be a valid JPEG header');
+assert.deepEqual([...jpg.subarray(-2)],[0xff,0xd9],'oracle atlas must end with JPEG EOI');
+const svg = fs.readFileSync(new URL('../assets/intimacy-oracle/back_intimacy.svg', import.meta.url),'utf8');
+assert.match(svg,/<svg[\s>]/);
+assert.match(svg,/LUNEA/);
 console.log('LUNEA INTIMACY ORACLE UI V36 secure draw / A-B / helper / asset contract: PASS');
