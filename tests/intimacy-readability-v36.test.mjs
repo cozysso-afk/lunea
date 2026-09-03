@@ -7,10 +7,12 @@ const loader = fs.readFileSync(new URL('../lunea-structural-routing-v4.js', impo
 const workflow = fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader-413.yml', import.meta.url), 'utf8');
 const icon = fs.readFileSync(new URL('../assets/intimacy-oracle/intimacy_sector_v37.svg', import.meta.url), 'utf8');
 
-test('V37 uses a fresh runtime sentinel so stale V36 sessions cannot suppress the repair', () => {
-  assert.match(source, /const RELEASE = '37\.1'/);
-  assert.match(source, /__LUNEA_INTIMACY_UI_V37__/);
-  assert.doesNotMatch(source, /__LUNEA_INTIMACY_READABILITY_V36__/);
+test('V38 runtime guard is release-aware so an older open PWA session cannot suppress a newer repair', () => {
+  assert.match(source, /const RELEASE = '38\.0'/);
+  assert.match(source, /const RUNTIME_KEY = '__LUNEA_INTIMACY_UI_RELEASE__'/);
+  assert.match(source, /if \(W\[RUNTIME_KEY\] === RELEASE\) return/);
+  assert.match(source, /W\[RUNTIME_KEY\] = RELEASE/);
+  assert.doesNotMatch(source, /if \(W\.__LUNEA_INTIMACY_UI_V37__\) return/);
 });
 
 test('INTIMACY uses the square celestial artwork with img and CSS fallback', () => {
@@ -24,7 +26,7 @@ test('INTIMACY uses the square celestial artwork with img and CSS fallback', () 
   assert.match(icon, /linearGradient id="cres"/);
 });
 
-test('legacy V35 cannot overwrite the V37 logo after its delayed installer runs', () => {
+test('legacy V35 cannot overwrite the square logo after its delayed installer runs', () => {
   assert.match(source, /lunea-intimacy-sector-mark-v37-sentinel/);
   assert.match(source, /lunea-intimacy-sector-mark lunea-intimacy-sector-mark-v37-sentinel/);
   assert.match(source, /display:none!important/);
@@ -38,11 +40,18 @@ test('INTIMACY artwork inherits the cache-busted loader build token', () => {
   assert.match(workflow, /'lunea-intimacy-readability-v36\.js'/);
 });
 
+test('PWA resume and late boot paths re-apply the current release without observers', () => {
+  assert.match(source, /\[350, 1200, 3000\]\.forEach/);
+  assert.match(source, /addEventListener\('pageshow'/);
+  assert.match(source, /visibilitychange/);
+  assert.match(source, /dataset\.luneaIntimacyUiRelease = RELEASE/);
+  assert.doesNotMatch(source, /MutationObserver/);
+});
+
 test('touch targets remain native and decoration cannot steal taps', () => {
   assert.match(source, /pointer-events:auto!important/);
   assert.match(source, /touch-action:manipulation!important/);
   assert.match(source, /pointer-events:none!important/);
-  assert.doesNotMatch(source, /MutationObserver/);
 });
 
 test('fixed spread copy is normalized once into concise scannable labels', () => {
@@ -78,4 +87,4 @@ test('repair is loaded after legacy INTIMACY in both loader paths', () => {
   assert.ok(loader.lastIndexOf(repair) > loader.lastIndexOf(legacy));
 });
 
-console.log('LUNEA INTIMACY stable sector-aligned UI V37.1: PASS');
+console.log('LUNEA INTIMACY stable sector-aligned UI V38.0: PASS');

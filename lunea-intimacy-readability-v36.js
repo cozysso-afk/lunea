@@ -1,17 +1,18 @@
 'use strict';
 
-/* LUNEA INTIMACY stable sector-aligned UI V37.1 */
+/* LUNEA INTIMACY stable sector-aligned UI V38.0 */
 (() => {
   const W = window;
-  if (W.__LUNEA_INTIMACY_UI_V37__) return;
-  W.__LUNEA_INTIMACY_UI_V37__ = true;
+  const RELEASE = '38.0';
+  const RUNTIME_KEY = '__LUNEA_INTIMACY_UI_RELEASE__';
+  if (W[RUNTIME_KEY] === RELEASE) return;
+  W[RUNTIME_KEY] = RELEASE;
 
-  const RELEASE = '37.1';
   const SCRIPT_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3710';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3800';
     } catch {
-      return '3710';
+      return '3800';
     }
   })();
   const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SCRIPT_VERSION)}`;
@@ -162,6 +163,7 @@
   function apply() {
     const category = $('.lunea-intimacy-category');
     if (!category) return false;
+    category.dataset.luneaIntimacyUiRelease = RELEASE;
     addStyles();
     installIcon(category);
     normalizeCopy(category);
@@ -175,16 +177,13 @@
       tries += 1;
       if (apply() || tries >= 80) clearInterval(timer);
     }, 50);
-  } else {
-    setTimeout(() => {
-      const category = $('.lunea-intimacy-category');
-      if (category) {
-        installIcon(category);
-        normalizeCopy(category);
-        classifyCounts(category);
-      }
-    }, 350);
   }
+
+  [350, 1200, 3000].forEach(ms => setTimeout(apply, ms));
+  W.addEventListener('pageshow', () => setTimeout(apply, 40));
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) setTimeout(apply, 40);
+  });
 
   console.info(`🌹 LUNEA INTIMACY stable UI V${RELEASE} ready`);
 })();
