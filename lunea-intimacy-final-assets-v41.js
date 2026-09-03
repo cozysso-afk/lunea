@@ -1,36 +1,38 @@
 'use strict';
 
 /*
-  LUNEA INTIMACY FINAL ASSETS V41.0
+  LUNEA INTIMACY FINAL ASSETS V41.1
   =================================
   Final-art integration layer.
 
-  Goals:
-  - prefer the user's final INTIMACY tarot back when the asset exists;
-  - prefer the user's final 6x6 Oracle artwork atlas when the asset exists;
-  - keep the current V40/V36 assets as a safe fallback until final binaries land;
-  - avoid touching GENERAL/LOVE/etc. tarot visuals.
-
-  Expected final binary assets:
+  Final binary assets are deliberately separated by role:
   - assets/intimacy-oracle/tarot_back_final.png
-  - assets/intimacy-oracle/oracle_atlas_final.png  (6 columns x 6 rows, O01..O36)
+  - assets/intimacy-oracle/oracle_back_final.png
+  - assets/intimacy-oracle/oracle_atlas_final.png (6 x 6, O01..O36)
+
+  If any final binary is missing, the existing production asset is used as a
+  safe fallback. GENERAL/LOVE/etc. tarot visuals are never modified.
 */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_FINAL_ASSETS_V41__) return;
   W.__LUNEA_INTIMACY_FINAL_ASSETS_V41__ = true;
 
-  const RELEASE = '41.0';
+  const RELEASE = '41.1';
   const FINAL_TAROT_BACK = './assets/intimacy-oracle/tarot_back_final.png';
+  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_final.png';
   const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.png';
   const FALLBACK_TAROT_BACK = './assets/intimacy-oracle/back_intimacy.svg';
+  const FALLBACK_ORACLE_BACK = './assets/intimacy-oracle/back_intimacy.svg';
   const FALLBACK_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_v36.jpg';
   const STYLE_ID = 'luneaIntimacyFinalAssetsV41Style';
 
   const state = {
     tarotBack: FALLBACK_TAROT_BACK,
+    oracleBack: FALLBACK_ORACLE_BACK,
     oracleAtlas: FALLBACK_ORACLE_ATLAS,
     finalTarotReady: false,
+    finalOracleBackReady: false,
     finalOracleReady: false,
   };
 
@@ -94,7 +96,7 @@
       back.style.setProperty('background-position', 'center', 'important');
       const img = back.querySelector(':scope > img');
       if (img) {
-        img.src = state.tarotBack;
+        if (img.getAttribute('src') !== state.tarotBack) img.setAttribute('src', state.tarotBack);
         img.style.setProperty('display', 'block', 'important');
         img.style.setProperty('opacity', '1', 'important');
         img.style.setProperty('object-fit', 'cover', 'important');
@@ -107,12 +109,34 @@
 
   function oracleIndexFromNode(cardNode) {
     const title = cardNode.querySelector('span strong')?.textContent?.trim();
-    if (!title) return -1;
-    const cards = Object.values(W.LUNEA_INTIMACY_ORACLE_V35?.cards || {});
-    const idx = cards.findIndex(card => String(card.enTitle || '').trim() === title);
-    if (idx >= 0) return idx;
     const ko = cardNode.querySelector('span small')?.textContent?.trim();
-    return cards.findIndex(card => String(card.koTitle || '').trim() === ko);
+    const cards = Object.values(W.LUNEA_INTIMACY_ORACLE_V35?.cards || {});
+    if (title) {
+      const byTitle = cards.findIndex(card => String(card.enTitle || '').trim() === title);
+      if (byTitle >= 0) return byTitle;
+    }
+    if (ko) return cards.findIndex(card => String(card.koTitle || '').trim() === ko);
+    return -1;
+  }
+
+  function paintOracleBack(face) {
+    face.style.setProperty('background-image', `url("${state.oracleBack}")`, 'important');
+    face.style.setProperty('background-size', 'cover', 'important');
+    face.style.setProperty('background-position', 'center', 'important');
+    face.style.setProperty('background-repeat', 'no-repeat', 'important');
+    face.dataset.luneaIntimacyFinalOracleBack = state.finalOracleBackReady ? RELEASE : 'fallback';
+    delete face.dataset.luneaIntimacyFinalAtlas;
+  }
+
+  function paintOracleFront(face, idx) {
+    const col = idx % 6;
+    const row = Math.floor(idx / 6);
+    face.style.setProperty('background-image', `url("${state.oracleAtlas}")`, 'important');
+    face.style.setProperty('background-size', '600% 600%', 'important');
+    face.style.setProperty('background-position', `${col / 5 * 100}% ${row / 5 * 100}%`, 'important');
+    face.style.setProperty('background-repeat', 'no-repeat', 'important');
+    face.dataset.luneaIntimacyFinalAtlas = state.finalOracleReady ? RELEASE : 'fallback';
+    delete face.dataset.luneaIntimacyFinalOracleBack;
   }
 
   function patchOracleFaces(root = document) {
@@ -123,14 +147,9 @@
       if (!face) return;
       const idx = oracleIndexFromNode(node);
       if (idx < 0 || idx > 35) return;
-      const col = idx % 6;
-      const row = Math.floor(idx / 6);
-      face.style.setProperty('background-image', `url("${state.oracleAtlas}")`, 'important');
-      face.style.setProperty('background-size', '600% 600%', 'important');
-      face.style.setProperty('background-position', `${col / 5 * 100}% ${row / 5 * 100}%`, 'important');
-      face.style.setProperty('background-repeat', 'no-repeat', 'important');
       face.dataset.luneaIntimacyOracleIndex = String(idx + 1).padStart(2, '0');
-      face.dataset.luneaIntimacyFinalAtlas = state.finalOracleReady ? RELEASE : 'fallback';
+      if (node.classList.contains('revealed')) paintOracleFront(face, idx);
+      else paintOracleBack(face);
     });
     return nodes.length > 0;
   }
@@ -145,22 +164,31 @@
       if (!intimacyActive()) return;
       requestAnimationFrame(patchVisible);
     });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class'],
+    });
     return observer;
   }
 
   async function resolveFinalAssets() {
-    const [tarot, oracle] = await Promise.all([
+    const [tarot, oracleBack, oracle] = await Promise.all([
       assetExists(FINAL_TAROT_BACK),
+      assetExists(FINAL_ORACLE_BACK),
       assetExists(FINAL_ORACLE_ATLAS),
     ]);
     state.finalTarotReady = tarot;
+    state.finalOracleBackReady = oracleBack;
     state.finalOracleReady = oracle;
     state.tarotBack = tarot ? FINAL_TAROT_BACK : FALLBACK_TAROT_BACK;
+    state.oracleBack = oracleBack ? FINAL_ORACLE_BACK : FALLBACK_ORACLE_BACK;
     state.oracleAtlas = oracle ? FINAL_ORACLE_ATLAS : FALLBACK_ORACLE_ATLAS;
     ensureStyle();
     patchVisible();
     document.documentElement.dataset.luneaIntimacyFinalTarot = tarot ? '1' : '0';
+    document.documentElement.dataset.luneaIntimacyFinalOracleBack = oracleBack ? '1' : '0';
     document.documentElement.dataset.luneaIntimacyFinalOracle = oracle ? '1' : '0';
     return { ...state };
   }
@@ -178,8 +206,10 @@
   W.LUNEA_INTIMACY_FINAL_ASSETS_V41 = Object.freeze({
     version: RELEASE,
     finalTarotBack: FINAL_TAROT_BACK,
+    finalOracleBack: FINAL_ORACLE_BACK,
     finalOracleAtlas: FINAL_ORACLE_ATLAS,
     fallbackTarotBack: FALLBACK_TAROT_BACK,
+    fallbackOracleBack: FALLBACK_ORACLE_BACK,
     fallbackOracleAtlas: FALLBACK_ORACLE_ATLAS,
     get status() { return { ...state }; },
     resolveFinalAssets,
