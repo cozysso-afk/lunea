@@ -100,7 +100,7 @@ test('adult/minor and interpretation safety contract is explicit', () => {
 });
 
 test('structural loader and cache-stamp workflow include INTIMACY V34', () => {
-  assert.equal((loader.match(/lunea-intimacy-v34\.js\?v=3401/g) || []).length, 2, 'loader must include V34 in both paths');
+  assert.equal((loader.match(/lunea-intimacy-v34\.js\?v=(?:3401|[0-9a-f]{12})/g) || []).length, 2, 'loader must include V34 in both paths');
   assert.match(workflow, /'lunea-intimacy-v34\.js'/, 'cache stamp workflow must include V34');
 });
 

@@ -1,6 +1,6 @@
 'use strict';
 
-/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + shared dynamic Gemini model picker + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + safe slower tarot flip / Moon Dial timing redesign + celestial-object home portal + final home/timing polish + category artwork thumbnails + mobile reading action/timing-card usability + opal moonlight reading polish + reading readability/A-B symmetry repair + unified Timing Moon Dial visuals + persistent A/B Timing inline results + static PNG Home Screen icon + sequential whole-reading reveal + Structural V4 + Manual Spread + reusable library + last-reading recovery + reading journal/verification + question casebook/web patterns/ranker + local user-correction learning + optional private cloud learning sync + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + optional Thai Taksa tarot bridge V32.1 + Thai Taksa period calendar V33 + final evidence/Saju prompt priority + manual spreads up to 20 cards + single Horary Balance V3.1 bridge V19.5 + category tarot card-back restore V19 + universal category AI spread studio / opal light V20 + INTIMACY 18+ tarot layer / AI bridge V34 + post-draw learning success gate + six-axis DAILY ORBIT / weekday trading V21 + cinematic celestial Daily home V22 + persistent Transit/Return auto-resume V23 + standalone Thai Maha Taksa home V24 + generated Thai celestial artwork V25 + small-tile Thai artwork polish V26 + mobile long-question / journal visual repair V27 + subtle sector color identity V28 + flicker-free boot reveal V29 + fixed-spread depth V30.3 + final GENERAL priority order V30.5 + stale Timing Oracle reading-boundary reset V31.1 + stable reading action order V33. */
+/* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + shared dynamic Gemini model picker + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + safe slower tarot flip / Moon Dial timing redesign + celestial-object home portal + final home/timing polish + category artwork thumbnails + mobile reading action/timing-card usability + opal moonlight reading polish + reading readability/A-B symmetry repair + unified Timing Moon Dial visuals + persistent A/B Timing inline results + static PNG Home Screen icon + sequential whole-reading reveal + Structural V4 + Manual Spread + reusable library + last-reading recovery + reading journal/verification + archive advanced search/date filters + question casebook/web patterns/ranker + local user-correction learning + optional private cloud learning sync + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + optional Thai Taksa tarot bridge V32.1 + Thai Taksa period calendar V33 + final evidence/Saju prompt priority + manual spreads up to 20 cards + single Horary Balance V3.1 bridge V19.5 + category tarot card-back restore V19 + universal category AI spread studio / opal light V20 + INTIMACY 18+ tarot layer / AI bridge V34 + original 9-card intimacy restore / cabinet polish V35.1 + post-draw learning success gate + six-axis DAILY ORBIT / weekday trading V21 + cinematic celestial Daily home V22 + persistent Transit/Return auto-resume V23 + standalone Thai Maha Taksa home V24 + generated Thai celestial artwork V25 + small-tile Thai artwork polish V26 + mobile long-question / journal visual repair V27 + subtle sector color identity V28 + flicker-free boot reveal V29 + fixed-spread depth V30.3 + final GENERAL priority order V30.5 + stale Timing Oracle reading-boundary reset V31.1 + stable reading action order V33. */
 (() => {
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -22,6 +22,7 @@
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-journal-v2.js?v=201"><\/script>');
+    document.write('<script src="./lunea-archive-search-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-flip-all-fix-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-question-casebook-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-question-casebook-web-v1.js?v=101"><\/script>');
@@ -56,6 +57,7 @@
     document.write('<script src="./lunea-universal-ai-opal-v20.js?v=2002"><\/script>');
     document.write('<script src="./lunea-intimacy-v34.js?v=fb7260f1859f"><\/script>');
     document.write('<script src="./lunea-intimacy-ai-bridge-v34.js?v=fb7260f1859f"><\/script>');
+    document.write('<script src="./lunea-intimacy-legacy-v35.js?v=351"><\/script>');
     document.write('<script src="./lunea-learning-success-gate-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-daily-orbit6-v21.js?v=2101"><\/script>');
     document.write('<script src="./lunea-daily-celestial-v22.js?v=2201"><\/script>');
@@ -85,6 +87,7 @@
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
     './lunea-reading-journal-v2.js?v=201',
+    './lunea-archive-search-v1.js?v=101',
     './lunea-flip-all-fix-v1.js?v=102',
     './lunea-question-casebook-v1.js?v=101',
     './lunea-question-casebook-web-v1.js?v=101',
@@ -119,6 +122,7 @@
     './lunea-universal-ai-opal-v20.js?v=2002',
     './lunea-intimacy-v34.js?v=fb7260f1859f',
     './lunea-intimacy-ai-bridge-v34.js?v=fb7260f1859f',
+    './lunea-intimacy-legacy-v35.js?v=351',
     './lunea-learning-success-gate-v1.js?v=101',
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-celestial-v22.js?v=2201',

@@ -25,6 +25,6 @@ test('intimacy detector avoids exam-grade false positive',()=>{
 });
 
 test('existing structural loader and cache workflow still own the bridge',()=>{
-  assert.equal((loader.match(/lunea-intimacy-ai-bridge-v34\.js\?v=3402/g)||[]).length,2);
+  assert.equal((loader.match(/lunea-intimacy-ai-bridge-v34\.js\?v=(?:3402|[0-9a-f]{12})/g)||[]).length,2);
   assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 });
