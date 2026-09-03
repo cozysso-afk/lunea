@@ -34,8 +34,6 @@ jobs:
           # It must never force an Oracle back onto Tarot cards.
           p = Path('lunea-intimacy-burgundy-v40.js')
           s = p.read_text()
-          s = replace_once(s, "const RELEASE = '40.1';", "const RELEASE = '40.3';", 'v40 release')
-          s = replace_once(s, "return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4010';", "return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4030';", 'v40 version')
           s = replace_once(s, "  const CARD_BACK_SRC = `./assets/intimacy-oracle/back_intimacy.svg?v=${encodeURIComponent(SELF_VERSION)}`;\n", "", 'v40 oracle back const')
           s = replace_once(s,
           """      #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back{\n        background:#250915 url('${CARD_BACK_SRC}') center/cover no-repeat!important;\n        border:1px solid rgba(235,151,183,.45)!important;\n      }\n""",
@@ -51,7 +49,7 @@ jobs:
           s = p.read_text()
           s = replace_once(s,
               "const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/back_intimacy.svg';",
-              "const RELEASE='36.2',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/back_intimacy_final.jpg';",
+              "const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/back_intimacy_final.jpg';",
               'v36 final oracle back')
           s = replace_once(s,
               "function repairIntimacyTarotBacks(){if(!intimacy())return;document.querySelectorAll('#cards .tarot-card .back').forEach(back=>{back.style.setProperty('background-image',`url(\"${BACK_ASSET}\")`,'important');const img=back.querySelector('img');if(img){img.src=BACK_ASSET;img.style.display='block'}})}",
@@ -71,7 +69,6 @@ jobs:
               'v36 overlay repair')
           p.write_text(s)
 
-          # Contract test: Oracle art may never be assigned to Tarot backs.
           test = Path('tests/intimacy-asset-routing-v43.test.mjs')
           test.write_text("""import fs from 'node:fs';\nimport assert from 'node:assert/strict';\n\nconst v36 = fs.readFileSync('lunea-intimacy-oracle-ui-v36.js','utf8');\nconst v40 = fs.readFileSync('lunea-intimacy-burgundy-v40.js','utf8');\nconst v43 = fs.readFileSync('lunea-intimacy-repair-v43.js','utf8');\n\nassert.match(v36, /BACK_ASSET='\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.jpg'/);\nassert.match(v36, /function repairIntimacyTarotBacks\\(\\)\\{return false\\}/);\nassert.match(v36, /function patchTarotBack\\(\\)\\{return false\\}/);\nassert.doesNotMatch(v36, /if\\(intimacy\\(\\)\\)return'assets\\/intimacy-oracle\\/back_intimacy'/);\nassert.doesNotMatch(v40, /CARD_BACK_SRC/);\nassert.doesNotMatch(v40, /background-image[^\\n]*back_intimacy/);\nassert.match(v43, /FINAL_ORACLE_ATLAS = '\\.\\/assets\\/intimacy-oracle\\/oracle_atlas_final\\.jpg'/);\nassert.match(v43, /FINAL_ORACLE_BACK = '\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.jpg'/);\nassert.match(v43, /#luneaManualPanel/);\nconsole.log('INTIMACY V43 asset routing contract OK');\n""")
 
