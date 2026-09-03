@@ -1,16 +1,15 @@
 'use strict';
 
 /*
-  LUNEA INTIMACY FINAL ASSETS V41.2
+  LUNEA INTIMACY FINAL ASSETS V41.3
   =================================
   Final-art integration layer.
 
-  Final binary assets are deliberately separated by role:
-  - assets/intimacy-oracle/tarot_back_final.png
-  - assets/intimacy-oracle/oracle_back_final.png
-  - assets/intimacy-oracle/oracle_atlas_final.png (6 x 6, O01..O36)
+  Final binary assets:
+  - assets/intimacy-oracle/back_intimacy_final.jpg (shared Tarot + Oracle back)
+  - assets/intimacy-oracle/oracle_atlas_final.jpg (6 x 6, O01..O36)
 
-  If any final binary is missing, the existing production asset is used as a
+  If a final binary is missing, the existing production asset is used as a
   safe fallback. GENERAL/LOVE/etc. tarot visuals are never modified.
 */
 (() => {
@@ -18,10 +17,11 @@
   if (W.__LUNEA_INTIMACY_FINAL_ASSETS_V41__) return;
   W.__LUNEA_INTIMACY_FINAL_ASSETS_V41__ = true;
 
-  const RELEASE = '41.2';
-  const FINAL_TAROT_BACK = './assets/intimacy-oracle/tarot_back_final.png';
-  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_final.png';
-  const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.png';
+  const RELEASE = '41.3';
+  const FINAL_SHARED_BACK = './assets/intimacy-oracle/back_intimacy_final.jpg';
+  const FINAL_TAROT_BACK = FINAL_SHARED_BACK;
+  const FINAL_ORACLE_BACK = FINAL_SHARED_BACK;
+  const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.jpg';
   const FALLBACK_TAROT_BACK = './assets/intimacy-oracle/back_intimacy.svg';
   const FALLBACK_ORACLE_BACK = './assets/intimacy-oracle/back_intimacy.svg';
   const FALLBACK_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_v36.jpg';
@@ -195,21 +195,20 @@
   }
 
   async function resolveFinalAssets() {
-    const [tarot, oracleBack, oracle] = await Promise.all([
-      assetExists(FINAL_TAROT_BACK),
-      assetExists(FINAL_ORACLE_BACK),
+    const [sharedBack, oracle] = await Promise.all([
+      assetExists(FINAL_SHARED_BACK),
       assetExists(FINAL_ORACLE_ATLAS),
     ]);
-    stateAssets.finalTarotReady = tarot;
-    stateAssets.finalOracleBackReady = oracleBack;
+    stateAssets.finalTarotReady = sharedBack;
+    stateAssets.finalOracleBackReady = sharedBack;
     stateAssets.finalOracleReady = oracle;
-    stateAssets.tarotBack = tarot ? FINAL_TAROT_BACK : FALLBACK_TAROT_BACK;
-    stateAssets.oracleBack = oracleBack ? FINAL_ORACLE_BACK : FALLBACK_ORACLE_BACK;
+    stateAssets.tarotBack = sharedBack ? FINAL_TAROT_BACK : FALLBACK_TAROT_BACK;
+    stateAssets.oracleBack = sharedBack ? FINAL_ORACLE_BACK : FALLBACK_ORACLE_BACK;
     stateAssets.oracleAtlas = oracle ? FINAL_ORACLE_ATLAS : FALLBACK_ORACLE_ATLAS;
     ensureStyle();
     patchVisible();
-    document.documentElement.dataset.luneaIntimacyFinalTarot = tarot ? '1' : '0';
-    document.documentElement.dataset.luneaIntimacyFinalOracleBack = oracleBack ? '1' : '0';
+    document.documentElement.dataset.luneaIntimacyFinalTarot = sharedBack ? '1' : '0';
+    document.documentElement.dataset.luneaIntimacyFinalOracleBack = sharedBack ? '1' : '0';
     document.documentElement.dataset.luneaIntimacyFinalOracle = oracle ? '1' : '0';
     return { ...stateAssets };
   }
@@ -233,6 +232,7 @@
 
   W.LUNEA_INTIMACY_FINAL_ASSETS_V41 = Object.freeze({
     version: RELEASE,
+    finalSharedBack: FINAL_SHARED_BACK,
     finalTarotBack: FINAL_TAROT_BACK,
     finalOracleBack: FINAL_ORACLE_BACK,
     finalOracleAtlas: FINAL_ORACLE_ATLAS,
