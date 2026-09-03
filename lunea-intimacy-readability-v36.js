@@ -1,30 +1,14 @@
 'use strict';
 
-/* LUNEA INTIMACY mobile readability + icon repair V36.0 */
+/* LUNEA INTIMACY mobile readability + category-style artwork V36.1 */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_READABILITY_V36__) return;
   W.__LUNEA_INTIMACY_READABILITY_V36__ = true;
 
-  const RELEASE = '36.0';
+  const RELEASE = '36.1';
+  const ICON_SRC = './assets/intimacy-oracle/intimacy_sector_v37.svg';
   const $ = (selector, root = document) => root.querySelector(selector);
-
-  const SECTOR_MARK = `
-    <svg class="lunea-intimacy-sector-mark lunea-intimacy-sector-mark-v36" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="luneaIntimacyRoseV36" x1="8" y1="10" x2="56" y2="54" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#ffe6dc"/>
-          <stop offset=".38" stop-color="#f4b2c6"/>
-          <stop offset=".72" stop-color="#d8a0d0"/>
-          <stop offset="1" stop-color="#b9a4f1"/>
-        </linearGradient>
-      </defs>
-      <ellipse class="lunea-intimacy-orbit orbit-a" cx="26.5" cy="32" rx="14.5" ry="20.5"/>
-      <ellipse class="lunea-intimacy-orbit orbit-b" cx="37.5" cy="32" rx="14.5" ry="20.5"/>
-      <path class="lunea-intimacy-star" d="M32 23.7 34.3 29.7 40.3 32l-6 2.3-2.3 6-2.3-6-6-2.3 6-2.3L32 23.7Z"/>
-      <circle class="lunea-intimacy-dot dot-a" cx="32" cy="14.3" r="1.45"/>
-      <circle class="lunea-intimacy-dot dot-b" cx="32" cy="49.7" r="1.45"/>
-    </svg>`;
 
   function addStyles() {
     if ($('#luneaIntimacyReadabilityV36Style')) return;
@@ -34,26 +18,32 @@
       .lunea-intimacy-category .cat-icon{
         min-width:78px!important;
         min-height:78px!important;
+        width:78px!important;
+        height:78px!important;
+        padding:0!important;
+        overflow:hidden!important;
+        border-radius:22px!important;
+        border:1px solid rgba(239,185,211,.34)!important;
+        background:#181329!important;
+        box-shadow:0 0 0 3px rgba(222,160,192,.04),0 0 24px rgba(175,107,159,.15),inset 0 1px rgba(255,255,255,.05)!important;
       }
-      .lunea-intimacy-category .lunea-intimacy-sector-mark-v36{
-        width:78%!important;
-        height:78%!important;
-        filter:drop-shadow(0 0 7px rgba(239,164,193,.24))!important;
+      .lunea-intimacy-category .cat-icon::after{
+        inset:0!important;
+        border-radius:21px!important;
+        border:1px solid rgba(255,223,236,.08)!important;
+        box-shadow:inset 0 0 16px rgba(229,176,210,.05)!important;
       }
-      .lunea-intimacy-category .lunea-intimacy-sector-mark-v36 .lunea-intimacy-orbit{
-        fill:none!important;
-        stroke:url(#luneaIntimacyRoseV36)!important;
-        stroke-width:2.8!important;
-        opacity:.96!important;
+      .lunea-intimacy-category .lunea-intimacy-sector-art-v37{
+        display:block!important;
+        width:100%!important;
+        height:100%!important;
+        object-fit:cover!important;
+        border-radius:21px!important;
+        transform:scale(1.01);
+        filter:saturate(.98) contrast(1.03) brightness(1.02);
       }
-      .lunea-intimacy-category .lunea-intimacy-sector-mark-v36 .orbit-b{opacity:.82!important}
-      .lunea-intimacy-category .lunea-intimacy-sector-mark-v36 .lunea-intimacy-star{
-        fill:#ffe5dc!important;
-        filter:drop-shadow(0 0 5px rgba(239,164,193,.58))!important;
-      }
-      .lunea-intimacy-category .lunea-intimacy-sector-mark-v36 .lunea-intimacy-dot{
-        fill:#eeb5ca!important;
-        opacity:.9!important;
+      .lunea-intimacy-category.active .cat-icon{
+        animation:luneaIntimacyBreath 3.8s ease-in-out infinite;
       }
       .lunea-intimacy-category .category-content{
         padding:12px 13px 16px!important;
@@ -134,7 +124,10 @@
           min-height:72px!important;
           width:72px!important;
           height:72px!important;
+          border-radius:20px!important;
         }
+        .lunea-intimacy-category .cat-icon::after,
+        .lunea-intimacy-category .lunea-intimacy-sector-art-v37{border-radius:19px!important}
         .lunea-intimacy-category .cat-text h3{
           font-size:18.5px!important;
           line-height:1.15!important;
@@ -176,9 +169,7 @@
           min-width:44px!important;
           padding:0 8px!important;
         }
-        .lunea-intimacy-category .reading-item.lunea-intimacy-legacy9{
-          min-height:104px!important;
-        }
+        .lunea-intimacy-category .reading-item.lunea-intimacy-legacy9{min-height:104px!important}
         .lunea-intimacy-category .lunea-intimacy-list-label{
           margin:10px 5px 1px!important;
           font-size:9.3px!important;
@@ -190,18 +181,19 @@
           min-height:66px!important;
           width:66px!important;
           height:66px!important;
+          border-radius:18px!important;
         }
+        .lunea-intimacy-category .cat-icon::after,
+        .lunea-intimacy-category .lunea-intimacy-sector-art-v37{border-radius:17px!important}
         .lunea-intimacy-category .cat-text h3{font-size:17.5px!important}
         .lunea-intimacy-category .cat-text p{font-size:11.2px!important}
-        .lunea-intimacy-category .reading-item{
-          padding:14px 54px 14px 14px!important;
-        }
+        .lunea-intimacy-category .reading-item{padding:14px 54px 14px 14px!important}
         .lunea-intimacy-category .reading-item h4{font-size:15px!important}
         .lunea-intimacy-category .reading-item p{font-size:11.25px!important;line-height:1.55!important}
         .lunea-intimacy-category .reading-item .count{right:10px!important}
       }
       @media(prefers-reduced-motion:reduce){
-        .lunea-intimacy-category .lunea-intimacy-sector-mark-v36 *{animation:none!important}
+        .lunea-intimacy-category .cat-icon{animation:none!important}
       }
     `;
     document.head.appendChild(style);
@@ -210,7 +202,15 @@
   function installIcon(category) {
     const icon = $('.cat-icon', category);
     if (!icon) return;
-    if (!$('.lunea-intimacy-sector-mark-v36', icon)) icon.innerHTML = SECTOR_MARK;
+    const existing = $('.lunea-intimacy-sector-art-v37', icon);
+    if (existing) return;
+    icon.innerHTML = '';
+    const img = document.createElement('img');
+    img.className = 'lunea-intimacy-sector-art-v37';
+    img.src = ICON_SRC;
+    img.alt = '';
+    img.setAttribute('aria-hidden', 'true');
+    icon.appendChild(img);
   }
 
   function classifyCounts(category) {
