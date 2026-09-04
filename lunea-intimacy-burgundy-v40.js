@@ -1,9 +1,9 @@
 'use strict';
 
-/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.4 */
+/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.5 */
 (() => {
   const W = window;
-  const RELEASE = '40.4';
+  const RELEASE = '40.5';
   const KEY = '__LUNEA_INTIMACY_BURGUNDY_V40__';
   W[KEY] = RELEASE;
 
@@ -14,7 +14,8 @@
       return '4020';
     }
   })();
-  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
+  const HOME_ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
+  const CATEGORY_ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SELF_VERSION)}`;
   const TAROT_BACK_SRC = `./assets/intimacy-oracle/tarot_back_intimacy_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
   const STYLE_ID = 'luneaIntimacyBurgundyV40Style';
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -76,7 +77,7 @@
       }
       .lunea-intimacy-category .cat-icon img{
         width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;object-position:center!important;
-        transform:scale(1.20)!important;transform-origin:center!important;
+        transform:none!important;transform-origin:center!important;
         border-radius:inherit!important;pointer-events:none!important
       }
       .lunea-intimacy-category .cat-text h3{color:#fff2f6!important}
@@ -142,7 +143,7 @@
     `;
   }
 
-  function forceIcon(root) {
+  function forceIcon(root, src) {
     if (!root) return false;
     let img = root.querySelector('img');
     if (!img) {
@@ -151,7 +152,7 @@
       img.setAttribute('aria-hidden', 'true');
       root.replaceChildren(img);
     }
-    if (img.getAttribute('src') !== ICON_SRC) img.setAttribute('src', ICON_SRC);
+    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
     return true;
   }
 
@@ -230,13 +231,13 @@
     const category = $('.lunea-intimacy-category');
     if (category) {
       category.dataset.luneaIntimacyBurgundyRelease = RELEASE;
-      forceIcon($('.cat-icon', category));
+      forceIcon($('.cat-icon', category), CATEGORY_ICON_SRC);
     }
 
     const tile = $('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
     if (tile) {
       tile.dataset.luneaIntimacyBurgundyRelease = RELEASE;
-      forceIcon($('.lunea-v8-object', tile));
+      forceIcon($('.lunea-v8-object', tile), HOME_ICON_SRC);
     }
 
     repairTarotCards();
@@ -278,7 +279,8 @@
 
   W.LUNEA_INTIMACY_BURGUNDY_V40 = {
     version:RELEASE,
-    icon:ICON_SRC,
+    icon:HOME_ICON_SRC,
+    categoryIcon:CATEGORY_ICON_SRC,
     cardBack:TAROT_BACK_SRC,
     apply,
     repairTarotCards,

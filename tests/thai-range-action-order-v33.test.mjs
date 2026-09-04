@@ -48,8 +48,8 @@ assert.match(rangeSource, /tarotState\.renderSignature === signature/);
 
 // Stable reading action order requested for the 3-column mobile grid.
 const expectedOrder = [
-  'aiRead','saveReading','retry',
-  'flipAll','extraCard','timingSupportBtn',
+  'flipAll','aiRead','saveReading',
+  'retry','extraCard','timingSupportBtn',
   'astroTransitBtn','luneaThaiTarotBridgeBtn','luneaThaiTarotRangeBtn',
   'astroReturnBtn','astroHoraryBtn'
 ];
@@ -61,8 +61,8 @@ assert.match(orderSource, /const desired = \[\.\.\.known\.map\(x => x\.node\), \
 assert.match(orderSource, /if \(already\) return true/);
 
 // Long spreads get small convenience controls immediately after the prompt-copy box.
-assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.2/);
-assert.match(orderSource, /version:'33\.2'/);
+assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.4/);
+assert.match(orderSource, /version:'33\.4'/);
 assert.match(orderSource, /luneaBottomReadingActions/);
 assert.match(orderSource, /luneaBottomAiRead/);
 assert.match(orderSource, /luneaBottomSaveReading/);
@@ -100,4 +100,4 @@ for (const asset of [
   assert.match(workflow, new RegExp(asset.replaceAll('.', '\\.')));
 }
 
-console.log('Thai range V33 + reading action order V33.2 regression tests: PASS');
+console.log('Thai range V33 + reading action order V33.4 regression tests: PASS');

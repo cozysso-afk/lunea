@@ -71,7 +71,7 @@
     document.write('<script src="./lunea-fixed-spread-depth-v30.js?v=3003"><\/script>');
     document.write('<script src="./lunea-general-order-v30-5.js?v=3005"><\/script>');
     document.write('<script src="./lunea-reading-boundary-reset-v31.js?v=3102"><\/script>');
-    document.write('<script src="./lunea-reading-action-order-v33.js?v=b6d6dbf9d7fb"><\/script>');
+    document.write('<script src="./lunea-reading-action-order-v33.js?v=3404"><\/script>');
     document.write('<script src="./lunea-boot-reveal-v29.js?v=2902"><\/script>');
     return;
   }
@@ -137,7 +137,7 @@
     './lunea-fixed-spread-depth-v30.js?v=3003',
     './lunea-general-order-v30-5.js?v=3005',
     './lunea-reading-boundary-reset-v31.js?v=3102',
-    './lunea-reading-action-order-v33.js?v=b6d6dbf9d7fb',
+    './lunea-reading-action-order-v33.js?v=3404',
     './lunea-boot-reveal-v29.js?v=2902'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();

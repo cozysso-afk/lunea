@@ -1,18 +1,21 @@
 'use strict';
 
 /*
-  LUNEA READING ACTION ORDER V33.3
+  LUNEA READING ACTION ORDER V33.4
   ================================
   Keeps the reading action grid in a stable, task-oriented order even though
   several buttons are injected by independent feature modules.
 
   Row intent (3-column mobile grid):
-  1) AI 해석 · 저장 · 다시 뽑기
-  2) 전체 뒤집기 · 추가 카드 · 시기 오라클
+  1) 전체 뒤집기 · AI 해석 · 저장
+  2) 다시 뽑기 · 추가 카드 · 시기 오라클
   3) Astro Timing · Thai 보조 · Thai 기간
   4) Returns · Horary
 
-  Also adds small AI 해석 / 저장 shortcuts directly below the prompt-copy
+  Also mirrors the master prompt-copy control above the action grid for every
+  sector/spread/question, while keeping the existing bottom copy control.
+
+  Small AI 해석 / 저장 shortcuts remain directly below the bottom prompt-copy
   control for long spreads. These shortcuts delegate to the existing source
   buttons; they never duplicate interpretation or persistence logic.
 
@@ -20,7 +23,8 @@
   not overflow their grid tracks or collide in the middle of the modal.
 
   V33.3 loads the isolated INTIMACY V43 repair layer after the existing clean
-  and burgundy layers. It does not change RNG, AI interpretation, or storage.
+  and burgundy layers. V33.4 only changes reading-control placement; it does
+  not change RNG, AI interpretation, prompt generation, or storage.
 
   Unknown/future buttons are preserved after the known controls.
 */
@@ -38,10 +42,10 @@
   })();
 
   const ORDER = [
+    'flipAll',
     'aiRead',
     'saveReading',
     'retry',
-    'flipAll',
     'extraCard',
     'timingSupportBtn',
     'astroTransitBtn',
@@ -51,6 +55,8 @@
     'astroHoraryBtn',
   ];
 
+  const TOP_COPYBOX_ID = 'luneaTopPromptCopyBox';
+  const TOP_COPY_ID = 'luneaTopCopyPrompt';
   const BOTTOM_ID = 'luneaBottomReadingActions';
   const BOTTOM_AI_ID = 'luneaBottomAiRead';
   const BOTTOM_SAVE_ID = 'luneaBottomSaveReading';
@@ -92,6 +98,24 @@
     const style = document.createElement('style');
     style.id = BOTTOM_STYLE_ID;
     style.textContent = `
+      #${TOP_COPYBOX_ID}{
+        margin:10px 0 9px!important;padding:0!important;
+      }
+      #${TOP_COPY_ID}{
+        width:100%!important;min-height:43px!important;margin:0!important;padding:10px 12px!important;
+        border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
+        background:linear-gradient(145deg,rgba(167,145,217,.10),rgba(91,125,168,.06))!important;
+        color:#e9e3ef!important;font:650 11.5px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif!important;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+        -webkit-tap-highlight-color:transparent;
+      }
+      #${TOP_COPY_ID}:active{transform:translateY(1px);opacity:.84}
+      #${TOP_COPY_ID}:disabled{opacity:.42;pointer-events:none}
+      body.lunea-intimacy-reading #${TOP_COPY_ID}{
+        color:#f8edf2!important;border-color:rgba(225,132,168,.22)!important;
+        background:linear-gradient(145deg,rgba(112,34,69,.16),rgba(67,22,55,.09))!important;
+      }
+
       #${BOTTOM_ID}{
         display:grid;grid-template-columns:1fr 1fr;gap:8px;
         max-width:360px;margin:8px auto 2px;padding:0 2px;
@@ -127,6 +151,47 @@
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function syncTopPromptCopy() {
+    const top = document.getElementById(TOP_COPY_ID);
+    const source = document.getElementById('copyPrompt');
+    if (top) top.disabled = !source || !!source.disabled;
+  }
+
+  function ensureTopPromptCopy() {
+    ensureBottomStyle();
+    const source = document.getElementById('copyPrompt');
+    const bar = actionBar();
+    if (!source || !bar || !bar.parentNode) return false;
+
+    let box = document.getElementById(TOP_COPYBOX_ID);
+    let top = document.getElementById(TOP_COPY_ID);
+    if (!box || !top) {
+      box = document.createElement('div');
+      box.id = TOP_COPYBOX_ID;
+      box.className = 'copybox lunea-top-prompt-copybox';
+      box.setAttribute('aria-label', '상단 마스터 리딩 프롬프트 복사');
+
+      top = document.createElement('button');
+      top.id = TOP_COPY_ID;
+      top.type = 'button';
+      top.className = 'primary full-btn';
+      top.textContent = '📋 마스터 리딩 프롬프트 복사';
+      top.title = '아래 프롬프트 복사와 같은 내용';
+      top.addEventListener('click', () => {
+        const live = document.getElementById('copyPrompt');
+        if (!live || live.disabled) return;
+        live.click();
+      });
+      box.appendChild(top);
+    }
+
+    if (box.parentNode !== bar.parentNode || box.nextElementSibling !== bar) {
+      bar.parentNode.insertBefore(box, bar);
+    }
+    syncTopPromptCopy();
+    return true;
   }
 
   function clickSource(id) {
@@ -205,6 +270,7 @@
 
   function boot() {
     reorder();
+    ensureTopPromptCopy();
     ensureBottomActions();
     ensureIntimacyCleanUi();
     ensureIntimacyBurgundyUi();
@@ -219,6 +285,7 @@
         const run = () => {
           queued = false;
           reorder();
+          syncTopPromptCopy();
           syncBottomButtons();
         };
         if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
@@ -231,19 +298,22 @@
     const timer = setInterval(() => {
       tries += 1;
       reorder();
+      ensureTopPromptCopy();
       ensureBottomActions();
       ensureIntimacyCleanUi();
       ensureIntimacyBurgundyUi();
       ensureIntimacyRepairUi();
       const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
-      if ((ready && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
+      if ((ready && document.getElementById(TOP_COPY_ID) && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
     }, 250);
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
-    version:'33.3',
+    version:'33.4',
     order:[...ORDER],
     reorder,
+    ensureTopPromptCopy,
+    syncTopPromptCopy,
     ensureBottomActions,
     syncBottomButtons,
     ensureIntimacyCleanUi,
