@@ -14,7 +14,7 @@ const cards = Object.fromEntries(Array.from({length:36},(_,i)=>{
 const window={LUNEA_INTIMACY_ORACLE_V35:{cards}}; window.window=window;
 vm.runInNewContext(source,{window,console,crypto:webcrypto,Uint32Array,Object,Array,Set,String,Number,RegExp,Math,JSON});
 const core=window.LUNEA_INTIMACY_ORACLE_UI_V36_CORE;
-assert.ok(core); assert.equal(core.version,'36.2'); assert.equal(core.flipGap,110);
+assert.ok(core); assert.equal(core.version,'36.3'); assert.equal(core.flipGap,110);
 assert.doesNotMatch(source,/Math\.random\s*\(/);
 assert.match(source,/crypto\.getRandomValues/);
 
@@ -41,7 +41,7 @@ assert.doesNotMatch(source,/responseMimeType/);
 assert.match(source,/LUNEA_INTIMACY_ORACLE_DRAFT_V1/);
 assert.match(source,/intimacyOracle/);
 assert.match(source,/buildOraclePromptLayer/);
-assert.equal(core.backAsset,'./assets/intimacy-oracle/oracle_back_intimacy_final.png');
+assert.equal(core.backAsset,'./assets/intimacy-oracle/oracle_back_v2.png');
 assert.equal(core.cardRoot,'./assets/intimacy-oracle/cards');
 assert.doesNotMatch(source,/tarot_back_intimacy_final\.png/);
 
@@ -51,7 +51,7 @@ assert.match(bridge,/__LUNEA_READING_ACTION_ORDER_V33__/);
 assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 
 const pngSig=[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];
-const oracleBack = fs.readFileSync(new URL('../assets/intimacy-oracle/oracle_back_intimacy_final.png', import.meta.url));
+const oracleBack = fs.readFileSync(new URL('../assets/intimacy-oracle/oracle_back_v2.png', import.meta.url));
 assert.ok(oracleBack.length > 100_000,'Oracle back is unexpectedly small');
 assert.deepEqual([...oracleBack.subarray(0,8)],pngSig,'Oracle back must be PNG');
 for(let i=1;i<=36;i++){
