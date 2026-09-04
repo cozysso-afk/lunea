@@ -64,6 +64,10 @@
       : `[USER MANUAL SPREAD] · 사용자 직접 지정 · 포지션 ${p.positions.length}개 · AI 재설계 금지`;
 
     try {
+      const originCategory = String(state?.__luneaManualOriginCategory || state?.category || 'GENERAL').trim().toUpperCase() || 'GENERAL';
+      state.__luneaManualOriginCategory = originCategory;
+      state.category = originCategory;
+      state.__luneaIntimacyReading = originCategory === 'INTIMACY';
       state.__luneaManualReading = true;
       state.question = question || '현재 나에게 필요한 흐름';
       state.positions = [...p.positions];
