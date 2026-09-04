@@ -1,7 +1,7 @@
 'use strict';
 (()=>{
 const W=window;if(W.__LUNEA_INTIMACY_ORACLE_UI_V36__)return;W.__LUNEA_INTIMACY_ORACLE_UI_V36__=1;
-const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/back_intimacy_final.png',ATLAS_ASSET='./assets/intimacy-oracle/oracle_atlas_final.png';
+const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/oracle_back_intimacy_final.png',ATLAS_ASSET='./assets/intimacy-oracle/oracle_atlas_final.png';
 const api=()=>W.LUNEA_INTIMACY_ORACLE_V35||null;
 function secureRandomInt(max){if(!Number.isSafeInteger(max)||max<1)throw new RangeError('invalid max');const range=0x100000000,limit=range-range%max,b=new Uint32Array(1);let x;do{crypto.getRandomValues(b);x=b[0]}while(x>=limit);return x%max}
 function lensesFor(n){return n===3?['끌림·욕구 렌즈','리듬·경계 렌즈','유대·여운 렌즈']:n===1?['전체 리딩 렌즈']:[]}
