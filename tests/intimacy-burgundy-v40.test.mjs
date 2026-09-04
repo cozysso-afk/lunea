@@ -23,8 +23,9 @@ test('V40 gives the INTIMACY tile a dedicated burgundy wine palette', () => {
   assert.match(source, /luneaIntimacyBurgundyV40Style/);
 });
 
-test('late action-order module loads V40 with the release cache token', () => {
+test('late action-order module loads V40 through the shared cache-token loader', () => {
   assert.match(order, /INTIMACY_BURGUNDY_LOADER_ID/);
-  assert.match(order, /lunea-intimacy-burgundy-v40\.js\?v=\$\{encodeURIComponent\(SELF_VERSION\)\}/);
+  assert.match(order, /ensureScript\(INTIMACY_BURGUNDY_LOADER_ID, '\.\/lunea-intimacy-burgundy-v40\.js'/);
+  assert.match(order, /script\.src = `\$\{src\}\?v=\$\{encodeURIComponent\(SELF_VERSION\)\}`/);
   assert.match(order, /ensureIntimacyBurgundyUi\(\)/);
 });
