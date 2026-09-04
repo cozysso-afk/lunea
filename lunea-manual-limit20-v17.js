@@ -63,8 +63,8 @@
       ? `[USER MANUAL SPREAD] · 사용자 직접 지정 · A/B same axes, same order · 축 ${p.axes.length}개 · AI 재설계 금지`
       : `[USER MANUAL SPREAD] · 사용자 직접 지정 · 포지션 ${p.positions.length}개 · AI 재설계 금지`;
 
+    const originCategory = String(state?.__luneaManualOriginCategory || state?.category || 'GENERAL').trim().toUpperCase() || 'GENERAL';
     try {
-      const originCategory = String(state?.__luneaManualOriginCategory || state?.category || 'GENERAL').trim().toUpperCase() || 'GENERAL';
       state.__luneaManualOriginCategory = originCategory;
       state.category = originCategory;
       state.__luneaIntimacyReading = originCategory === 'INTIMACY';
@@ -123,7 +123,8 @@
           spreadTitle:title,
           positions:p.positions,
           symmetric:!!p.symmetric,
-          axes:p.axes
+          axes:p.axes,
+          category:originCategory
         });
       } catch (error) {
         console.warn('[LUNEA Manual 20] manual spread learning failed', error);

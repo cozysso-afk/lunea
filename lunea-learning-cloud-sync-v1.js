@@ -23,8 +23,10 @@
   const localKey=()=>learning()?.key||'LUNEA_SPREAD_CORRECTION_MEMORY_V1';
   function localRows(){const api=learning();if(typeof api?.list==='function')return api.list().slice(0,MAX);const x=readJSON(localKey(),[]);return Array.isArray(x)?x.slice(0,MAX):[]}
   function rowTime(row){const n=Number(row?.updatedAt||row?.createdAt||0);return Number.isFinite(n)&&n>0?n:0}
-  function questionKey(row){const k=clean(row?.questionKey);if(k)return k.slice(0,1024);return clean(row?.question).toLowerCase().replace(/[^0-9a-z가-힣]+/g,'').slice(0,1024)}
-  const validRow=row=>!!row&&typeof row==='object'&&!!questionKey(row)&&Array.isArray(row.positions)&&row.positions.length>=2;
+  function rawQuestionKey(row){const k=clean(row?.questionKey);if(k)return k.slice(0,980);return clean(row?.question).toLowerCase().replace(/[^0-9a-z가-힣]+/g,'').slice(0,980)}
+  function rowCategory(row){const direct=clean(row?.category).toUpperCase();if(['GENERAL','LOVE','INTIMACY','CAREER','STOCK'].includes(direct))return direct;const domain=clean(row?.structureProfile?.domain).toLowerCase();if(domain==='intimacy')return'INTIMACY';if(domain==='relationship')return'LOVE';if(domain==='stock')return'STOCK';if(['career','study','money'].includes(domain))return'CAREER';return'GENERAL'}
+  function questionKey(row){const raw=rawQuestionKey(row);return `${rowCategory(row)}::${raw}`.slice(0,1024)}
+  const validRow=row=>!!row&&typeof row==='object'&&!!rawQuestionKey(row)&&Array.isArray(row.positions)&&row.positions.length>=2;
 
   function writeLocal(rows){
     let kept=rows.filter(validRow).sort((a,b)=>rowTime(b)-rowTime(a)).slice(0,MAX);
@@ -37,7 +39,10 @@
   }
   function normalizeCloudRow(remote){
     const payload=remote?.payload&&typeof remote.payload==='object'?{...remote.payload}:{};
-    payload.questionKey=clean(remote?.question_key||payload.questionKey).slice(0,1024);
+    const remoteKey=clean(remote?.question_key);
+    const sep=remoteKey.indexOf('::');
+    if(!payload.category&&sep>0)payload.category=remoteKey.slice(0,sep).toUpperCase();
+    if(!payload.questionKey){const raw=sep>0?remoteKey.slice(sep+2):remoteKey;payload.questionKey=clean(raw).slice(0,980)}
     payload.source=remote?.source==='manual'||payload.source==='manual'?'manual':'ai_correction';
     const serverMs=Date.parse(remote?.updated_at||'')||0;
     if(!rowTime(payload)||serverMs>rowTime(payload))payload.updatedAt=serverMs||Date.now();
@@ -46,7 +51,7 @@
   function mergeRows(local,remote){
     const map=new Map();
     for(const raw of Array.isArray(remote)?remote:[]){const row=normalizeCloudRow(raw),k=questionKey(row);if(!k||!validRow(row))continue;const old=map.get(k);if(!old||rowTime(row)>rowTime(old))map.set(k,row)}
-    for(const raw of Array.isArray(local)?local:[]){const k=questionKey(raw);if(!k||!validRow(raw))continue;const old=map.get(k);if(!old||rowTime(raw)>=rowTime(old))map.set(k,{...raw,questionKey:k})}
+    for(const raw of Array.isArray(local)?local:[]){const k=questionKey(raw);if(!k||!validRow(raw))continue;const old=map.get(k);if(!old||rowTime(raw)>=rowTime(old))map.set(k,{...raw,questionKey:rawQuestionKey(raw),category:rowCategory(raw)})}
     return [...map.values()].sort((a,b)=>rowTime(b)-rowTime(a)).slice(0,MAX);
   }
 
@@ -72,7 +77,7 @@
   async function pullRemote(s){const data=await jsonRequest(`${URL}/rest/v1/${TABLE}?select=question_key,source,payload,updated_at&order=updated_at.desc&limit=${MAX}`,{method:'GET',headers:{...headers(s.access_token,false),Accept:'application/json'}});return Array.isArray(data)?data:[]}
   async function pushBatch(s,rows){
     if(!rows.length)return;
-    const body=rows.map(row=>{const updated=rowTime(row)||Date.now(),k=questionKey(row);return{user_id:s.user.id,question_key:k,source:row.source==='manual'?'manual':'ai_correction',payload:{...row,questionKey:k,updatedAt:updated},updated_at:new Date(updated).toISOString()}});
+    const body=rows.map(row=>{const updated=rowTime(row)||Date.now(),k=questionKey(row);return{user_id:s.user.id,question_key:k,source:row.source==='manual'?'manual':'ai_correction',payload:{...row,questionKey:rawQuestionKey(row),category:rowCategory(row),updatedAt:updated},updated_at:new Date(updated).toISOString()}});
     const res=await fetch(`${URL}/rest/v1/${TABLE}?on_conflict=user_id,question_key`,{method:'POST',headers:{...headers(s.access_token,true),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)});
     if(!res.ok){let data=null;try{data=await res.json()}catch{}throw new Error(errorText(data,res.status))}
   }

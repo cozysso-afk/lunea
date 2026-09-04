@@ -385,6 +385,7 @@
           try {
             W.LUNEA_SPREAD_LEARNING_V1.record({
               question,
+              category:String(getState()?.category||'GENERAL').trim().toUpperCase()||'GENERAL',
               originalSpread:{spreadTitle:baseline.spreadTitle, positions:baseline.positions},
               correctedSpread:{spreadTitle:finalTitle, positions:numbered},
               meta:current?._luneaPreflight || {}
