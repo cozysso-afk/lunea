@@ -10,7 +10,7 @@
   W.__LUNEA_SECTOR_COLOR_SYSTEM_V28__ = true;
 
   const $ = id => document.getElementById(id);
-  const SECTORS = ['general','career','love','stock','timing','horary','daily','thai'];
+  const SECTORS = ['general','career','love','stock','timing','horary','daily','thai','intimacy'];
 
   function normalize(raw='') {
     const s = String(raw || '').trim().toLowerCase();
@@ -19,6 +19,7 @@
     if (/horary|호라리/.test(s)) return 'horary';
     if (/timing|타이밍|시기/.test(s)) return 'timing';
     if (/stock|trading|주식|매수|매도/.test(s)) return 'stock';
+    if (/intimacy|속궁합|친밀감|신체적\s*궁합|성적\s*(?:궁합|끌림)/.test(s)) return 'intimacy';
     if (/love|heart|연애|재회|관계|속마음/.test(s)) return 'love';
     if (/career|exam|직장|시험|진로|취업/.test(s)) return 'career';
     if (/general|ai|자유/.test(s)) return 'general';
@@ -75,6 +76,7 @@
       [data-lunea-sector="general"]{--sec-rgb:132,234,220;--sec2-rgb:198,179,255;--sec-text:#dffcf7}
       [data-lunea-sector="career"]{--sec-rgb:241,201,126;--sec2-rgb:104,154,219;--sec-text:#ffedc5}
       [data-lunea-sector="love"]{--sec-rgb:255,145,191;--sec2-rgb:190,153,242;--sec-text:#ffdceb}
+      [data-lunea-sector="intimacy"]{--sec-rgb:211,91,139;--sec2-rgb:119,41,82;--sec-text:#ffe6ef}
       [data-lunea-sector="stock"]{--sec-rgb:95,224,211;--sec2-rgb:105,181,238;--sec-text:#d8fffa}
       [data-lunea-sector="timing"]{--sec-rgb:192,171,255;--sec2-rgb:185,215,238;--sec-text:#eee7ff}
       [data-lunea-sector="horary"]{--sec-rgb:104,197,219;--sec2-rgb:125,116,225;--sec-text:#dcf8ff}
