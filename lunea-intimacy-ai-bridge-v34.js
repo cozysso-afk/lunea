@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA INTIMACY AI BRIDGE V34.2
+  LUNEA INTIMACY AI BRIDGE V34.3
   ===============================
   Integration bridge for the existing V34 78-card intimacy layer.
 
@@ -9,6 +9,7 @@
   - preserves INTIMACY interpretation after the AI designer replaces the title;
   - recognizes restored AI intimacy readings from their question text;
   - keeps the legacy anatomical 9-card reading hidden;
+  - clears INTIMACY-only Oracle UI immediately when another sector opens;
   - loads the canonical V35.2 Oracle data + V36 runtime only after the late
     reading-action wrappers are installed, preserving final wrapper order.
 */
@@ -17,7 +18,7 @@
   if (W.__LUNEA_INTIMACY_AI_BRIDGE_V34__) return;
   W.__LUNEA_INTIMACY_AI_BRIDGE_V34__ = true;
 
-  const RELEASE = '34.2';
+  const RELEASE = '34.3';
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
   const ORACLE_SOURCES = Object.freeze([
     './lunea-intimacy-oracle-v35.js?v=352',
@@ -49,6 +50,16 @@
       const fixed = !!api()?.getSpread?.(title);
       return active || String(state?.category || '').toUpperCase() === 'INTIMACY' || fixed || isIntimacyQuestion(state?.question || '');
     } catch { return active; }
+  }
+
+  function clearOracleVisualResidue() {
+    const panel = document.getElementById('luneaIntimacyOraclePanel');
+    if (panel) {
+      panel.hidden = true;
+      panel.replaceChildren();
+    }
+    const tools = document.getElementById('luneaIntimacyOracleTools');
+    if (tools) tools.style.display = 'none';
   }
 
   function hideLegacy() {
@@ -97,6 +108,7 @@
       if (!item) return;
       const isIntimacy = String(item.dataset.cat || '').toUpperCase() === 'INTIMACY';
       setActive(isIntimacy);
+      if (!isIntimacy) clearOracleVisualResidue();
       if (isIntimacy) {
         try { state.category = 'INTIMACY'; } catch {}
       }
