@@ -1,11 +1,11 @@
 'use strict';
 
-/* LUNEA INTIMACY REPAIR V43.1
+/* LUNEA INTIMACY REPAIR V43.2
    Clean repair layer for the 2026-09-04 recovery branch.
    - Keeps INTIMACY state detection robust for manual spreads.
    - Restyles the shared manual spread editor in burgundy / rose-gold.
    - Routes visible INTIMACY ORACLE cards to the final PNG 6x6 atlas.
-   - Keeps the ORACLE back separate from the Tarot back concept.
+   - Keeps the ORACLE back separate from the Tarot back asset.
    - Simplifies Oracle controls to Tarot / 1-card / 3-card choices only.
    This file does not call Gemini and does not change RNG. */
 (() => {
@@ -13,10 +13,10 @@
   if (W.__LUNEA_INTIMACY_REPAIR_V43__) return;
   W.__LUNEA_INTIMACY_REPAIR_V43__ = true;
 
-  const RELEASE = '43.1';
+  const RELEASE = '43.2';
   const STYLE_ID = 'luneaIntimacyRepairV43Style';
   const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.png';
-  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/back_intimacy_final.png';
+  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_intimacy_final.png';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -115,7 +115,7 @@
       face.style.setProperty('background-size', 'cover', 'important');
       face.style.setProperty('background-position', 'center', 'important');
       face.style.setProperty('background-repeat', 'no-repeat', 'important');
-      face.dataset.luneaIntimacyOracleAsset = 'final-png-back-v43';
+      face.dataset.luneaIntimacyOracleAsset = 'final-png-oracle-back-v43';
       return true;
     }
     const col = idx % 6;
