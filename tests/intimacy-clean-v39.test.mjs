@@ -42,7 +42,8 @@ test('only the dedicated INTIMACY AI entry gets a contained panel', () => {
 
 test('V39 is loaded after late feature modules and inherits the stamped action-order build token', () => {
   assert.match(order, /SELF_VERSION/);
-  assert.match(order, /lunea-intimacy-clean-v39\.js\?v=\$\{encodeURIComponent\(SELF_VERSION\)\}/);
+  assert.match(order, /ensureScript\(INTIMACY_CLEAN_LOADER_ID, '\.\/lunea-intimacy-clean-v39\.js', 'INTIMACY clean UI V39'\)/);
+  assert.match(order, /script\.src = `\$\{src\}\?v=\$\{encodeURIComponent\(SELF_VERSION\)\}`/);
   assert.match(order, /ensureIntimacyCleanUi\(\)/);
   const boot = order.indexOf('function boot()');
   const call = order.indexOf('ensureIntimacyCleanUi();', boot);

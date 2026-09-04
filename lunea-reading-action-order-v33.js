@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA READING ACTION ORDER V33.2
+  LUNEA READING ACTION ORDER V33.3
   ================================
   Keeps the reading action grid in a stable, task-oriented order even though
   several buttons are injected by independent feature modules.
@@ -19,6 +19,9 @@
   V33.2 also hardens the Thai period date grid on iOS so native date inputs do
   not overflow their grid tracks or collide in the middle of the modal.
 
+  V33.3 loads the isolated INTIMACY V43 repair layer after the existing clean
+  and burgundy layers. It does not change RNG, AI interpretation, or storage.
+
   Unknown/future buttons are preserved after the known controls.
 */
 (() => {
@@ -28,9 +31,9 @@
 
   const SELF_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3302';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3303';
     } catch {
-      return '3302';
+      return '3303';
     }
   })();
 
@@ -54,6 +57,7 @@
   const BOTTOM_STYLE_ID = 'luneaBottomReadingActionsStyle';
   const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
   const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
+  const INTIMACY_REPAIR_LOADER_ID = 'luneaIntimacyRepairV43Loader';
 
   function actionBar() {
     return document.querySelector('#spreadOverlay .actionbar');
@@ -79,7 +83,6 @@
     const already = desired.length === children.length && desired.every((node, index) => node === children[index]);
     if (already) return true;
 
-    // appendChild only moves existing nodes; listeners and button state survive.
     desired.forEach(node => bar.appendChild(node));
     return true;
   }
@@ -104,9 +107,6 @@
       #${BOTTOM_ID} button:active{transform:translateY(1px);opacity:.82}
       #${BOTTOM_ID} button:disabled{opacity:.42;pointer-events:none}
 
-      /* iOS native date inputs can contribute a large min-content width inside
-         CSS Grid. Force both Thai period columns and fields to shrink inside the
-         modal instead of visually overlapping at the center seam. */
       .thai-v33-dates{
         grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
         gap:10px!important;
@@ -180,26 +180,27 @@
     return true;
   }
 
-  function ensureIntimacyCleanUi() {
-    if (document.getElementById(INTIMACY_CLEAN_LOADER_ID)) return true;
+  function ensureScript(id, src, label) {
+    if (document.getElementById(id)) return true;
     const script = document.createElement('script');
-    script.id = INTIMACY_CLEAN_LOADER_ID;
-    script.src = `./lunea-intimacy-clean-v39.js?v=${encodeURIComponent(SELF_VERSION)}`;
+    script.id = id;
+    script.src = `${src}?v=${encodeURIComponent(SELF_VERSION)}`;
     script.async = false;
-    script.onerror = () => console.error('[LUNEA] Failed to load INTIMACY clean UI V39');
+    script.onerror = () => console.error(`[LUNEA] Failed to load ${label}`);
     document.head.appendChild(script);
     return true;
   }
 
+  function ensureIntimacyCleanUi() {
+    return ensureScript(INTIMACY_CLEAN_LOADER_ID, './lunea-intimacy-clean-v39.js', 'INTIMACY clean UI V39');
+  }
+
   function ensureIntimacyBurgundyUi() {
-    if (document.getElementById(INTIMACY_BURGUNDY_LOADER_ID)) return true;
-    const script = document.createElement('script');
-    script.id = INTIMACY_BURGUNDY_LOADER_ID;
-    script.src = `./lunea-intimacy-burgundy-v40.js?v=${encodeURIComponent(SELF_VERSION)}`;
-    script.async = false;
-    script.onerror = () => console.error('[LUNEA] Failed to load INTIMACY burgundy UI V40');
-    document.head.appendChild(script);
-    return true;
+    return ensureScript(INTIMACY_BURGUNDY_LOADER_ID, './lunea-intimacy-burgundy-v40.js', 'INTIMACY burgundy UI V40');
+  }
+
+  function ensureIntimacyRepairUi() {
+    return ensureScript(INTIMACY_REPAIR_LOADER_ID, './lunea-intimacy-repair-v43.js', 'INTIMACY repair UI V43');
   }
 
   function boot() {
@@ -207,6 +208,7 @@
     ensureBottomActions();
     ensureIntimacyCleanUi();
     ensureIntimacyBurgundyUi();
+    ensureIntimacyRepairUi();
 
     let queued = false;
     const bar = actionBar();
@@ -225,7 +227,6 @@
       observer.observe(bar, {childList:true,attributes:true,attributeFilter:['disabled']});
     }
 
-    // Some feature buttons may arrive a little after the structural loader.
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
@@ -233,19 +234,21 @@
       ensureBottomActions();
       ensureIntimacyCleanUi();
       ensureIntimacyBurgundyUi();
+      ensureIntimacyRepairUi();
       const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
       if ((ready && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
     }, 250);
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
-    version:'33.2',
+    version:'33.3',
     order:[...ORDER],
     reorder,
     ensureBottomActions,
     syncBottomButtons,
     ensureIntimacyCleanUi,
     ensureIntimacyBurgundyUi,
+    ensureIntimacyRepairUi,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();

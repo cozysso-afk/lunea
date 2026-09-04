@@ -21,7 +21,7 @@
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
   const ORACLE_SOURCES = Object.freeze([
     './lunea-intimacy-oracle-v35.js?v=352',
-    './lunea-intimacy-oracle-ui-v36.js?v=3610'
+    './lunea-intimacy-oracle-ui-v36.js?v=3612'
   ]);
   let active = false;
   let oracleLoadPromise = null;
@@ -47,7 +47,7 @@
     try {
       const title = String(state?.title || '');
       const fixed = !!api()?.getSpread?.(title);
-      return active || fixed || isIntimacyQuestion(state?.question || '');
+      return active || String(state?.category || '').toUpperCase() === 'INTIMACY' || fixed || isIntimacyQuestion(state?.question || '');
     } catch { return active; }
   }
 
@@ -76,7 +76,11 @@
       if (!requestAdultAcknowledgement()) return;
       setActive(true);
       if (typeof openSheet !== 'function') return;
-      openSheet('LOVE', item.dataset.title, item.dataset.desc, 0);
+      openSheet('INTIMACY', item.dataset.title, item.dataset.desc, 0);
+      try {
+        state.category = 'INTIMACY';
+        state.__luneaIntimacyReading = true;
+      } catch {}
       const sheetCat = document.getElementById('sheetCat');
       if (sheetCat) sheetCat.textContent = 'INTIMACY 18+';
     };
@@ -91,7 +95,11 @@
     document.addEventListener('click', event => {
       const item = event.target?.closest?.('.reading-item');
       if (!item) return;
-      setActive(String(item.dataset.cat || '').toUpperCase() === 'INTIMACY');
+      const isIntimacy = String(item.dataset.cat || '').toUpperCase() === 'INTIMACY';
+      setActive(isIntimacy);
+      if (isIntimacy) {
+        try { state.category = 'INTIMACY'; } catch {}
+      }
     }, true);
   }
 
