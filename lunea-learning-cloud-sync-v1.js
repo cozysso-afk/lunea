@@ -20,6 +20,7 @@
   const clean=v=>String(v||'').normalize('NFKC').replace(/\s+/g,' ').trim();
   function readJSON(key,fallback){try{const x=JSON.parse(localStorage.getItem(key)||'null');return x==null?fallback:x}catch{return fallback}}
   const learning=()=>W.LUNEA_SPREAD_LEARNING_V1||null;
+  function upgradeRow(row){const api=learning();return typeof api?.upgradeRow==='function'?api.upgradeRow(row):row}
   const localKey=()=>learning()?.key||'LUNEA_SPREAD_CORRECTION_MEMORY_V1';
   function localRows(){const api=learning();if(typeof api?.list==='function')return api.list().slice(0,MAX);const x=readJSON(localKey(),[]);return Array.isArray(x)?x.slice(0,MAX):[]}
   function rowTime(row){const n=Number(row?.updatedAt||row?.createdAt||0);return Number.isFinite(n)&&n>0?n:0}
@@ -46,12 +47,12 @@
     payload.source=remote?.source==='manual'||payload.source==='manual'?'manual':'ai_correction';
     const serverMs=Date.parse(remote?.updated_at||'')||0;
     if(!rowTime(payload)||serverMs>rowTime(payload))payload.updatedAt=serverMs||Date.now();
-    return payload;
+    return upgradeRow(payload);
   }
   function mergeRows(local,remote){
     const map=new Map();
     for(const raw of Array.isArray(remote)?remote:[]){const row=normalizeCloudRow(raw),k=questionKey(row);if(!k||!validRow(row))continue;const old=map.get(k);if(!old||rowTime(row)>rowTime(old))map.set(k,row)}
-    for(const raw of Array.isArray(local)?local:[]){const k=questionKey(raw);if(!k||!validRow(raw))continue;const old=map.get(k);if(!old||rowTime(raw)>=rowTime(old))map.set(k,{...raw,questionKey:rawQuestionKey(raw),category:rowCategory(raw)})}
+    for(const raw0 of Array.isArray(local)?local:[]){const raw=upgradeRow(raw0),k=questionKey(raw);if(!k||!validRow(raw))continue;const old=map.get(k);if(!old||rowTime(raw)>=rowTime(old))map.set(k,{...raw,questionKey:rawQuestionKey(raw),category:rowCategory(raw)})}
     return [...map.values()].sort((a,b)=>rowTime(b)-rowTime(a)).slice(0,MAX);
   }
 
@@ -77,11 +78,11 @@
   async function pullRemote(s){const data=await jsonRequest(`${URL}/rest/v1/${TABLE}?select=question_key,source,payload,updated_at&order=updated_at.desc&limit=${MAX}`,{method:'GET',headers:{...headers(s.access_token,false),Accept:'application/json'}});return Array.isArray(data)?data:[]}
   async function pushBatch(s,rows){
     if(!rows.length)return;
-    const body=rows.map(row=>{const updated=rowTime(row)||Date.now(),k=questionKey(row);return{user_id:s.user.id,question_key:k,source:row.source==='manual'?'manual':'ai_correction',payload:{...row,questionKey:rawQuestionKey(row),category:rowCategory(row),updatedAt:updated},updated_at:new Date(updated).toISOString()}});
+    const body=rows.map(raw=>{const row=upgradeRow(raw),updated=rowTime(row)||Date.now(),k=questionKey(row);return{user_id:s.user.id,question_key:k,source:row.source==='manual'?'manual':'ai_correction',payload:{...row,questionKey:rawQuestionKey(row),category:rowCategory(row),updatedAt:updated},updated_at:new Date(updated).toISOString()}});
     const res=await fetch(`${URL}/rest/v1/${TABLE}?on_conflict=user_id,question_key`,{method:'POST',headers:{...headers(s.access_token,true),Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify(body)});
     if(!res.ok){let data=null;try{data=await res.json()}catch{}throw new Error(errorText(data,res.status))}
   }
-  async function pushRows(s,rows){const safe=rows.filter(validRow).slice(0,MAX);for(let i=0;i<safe.length;i+=100)await pushBatch(s,safe.slice(i,i+100))}
+  async function pushRows(s,rows){const safe=rows.map(upgradeRow).filter(validRow).slice(0,MAX);for(let i=0;i<safe.length;i+=100)await pushBatch(s,safe.slice(i,i+100))}
   async function syncAll(options={}){
     if(syncing)return syncing;
     syncing=(async()=>{
@@ -123,7 +124,7 @@
   async function handleSignUp(){setBusy(true,'계정 만드는 중…');try{const c=credentials(),r=await signUp(c.email,c.password);if(r.session){lastMessage='계정 생성 + 로그인 완료. 학습을 동기화할게.';updateUI(lastMessage);await syncAll()}else{lastMessage='계정을 만들었어. 확인 메일이 왔다면 인증한 뒤 여기서 로그인해줘.';updateUI(lastMessage)}}catch(e){lastMessage=`가입 실패 · ${e.message||e}`;updateUI(lastMessage,true)}finally{setBusy(false)}}
   async function boot(){ensureUI();let tries=0;const t=setInterval(()=>{tries++;if(hookLearning()||tries>160)clearInterval(t);updateUI()},80);hookLearning();const s=await userSession();updateUI();if(s?.user?.id)syncAll({silent:true})}
 
-  W.LUNEA_LEARNING_CLOUD_SYNC_V1={version:1,max:MAX,mergeRows,normalizeCloudRow,questionKey,localRows,session:userSession,signIn,signUp,signOut,sync:syncAll,open:openModal};
+  W.LUNEA_LEARNING_CLOUD_SYNC_V1={version:2,max:MAX,upgradeRow,mergeRows,normalizeCloudRow,questionKey,localRows,session:userSession,signIn,signUp,signOut,sync:syncAll,open:openModal};
   if(document.readyState==='loading')W.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
   console.info('☁️ LUNEA Learning Cloud Sync V1 loaded · opt-in account sync · successful records only · RLS owner-only · no remote delete');
 })();

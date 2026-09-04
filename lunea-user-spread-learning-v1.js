@@ -118,17 +118,18 @@
     return {blocked:false,boost,reason:'compatible'};
   }
 
+  function upgradeRow(row){
+    if(!row||typeof row!=='object')return row;
+    const category=rowCategory(row);
+    const meta={intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category};
+    const structureProfile=!row.structureProfile||Number(row.structureProfile.version||0)<3?profile(row.question||'',meta):row.structureProfile;
+    return {...row,category,structureProfile};
+  }
   function read(){
     try{
       const x=JSON.parse(localStorage.getItem(KEY)||'[]');
       if(!Array.isArray(x))return[];
-      return x.map(row=>{
-        if(!row||typeof row!=='object')return row;
-        const category=rowCategory(row);
-        const meta={intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category};
-        const structureProfile=!row.structureProfile||Number(row.structureProfile.version||0)<3?profile(row.question||'',meta):row.structureProfile;
-        return {...row,category,structureProfile};
-      });
+      return x.map(upgradeRow);
     }catch{return[]}
   }
   function write(rows){
@@ -340,6 +341,7 @@
     profile,
     compatibility,
     formatForPrompt,
+    upgradeRow,
     categoryOf:rowCategory,
     list:()=>read().slice(),
     count:()=>read().length,
