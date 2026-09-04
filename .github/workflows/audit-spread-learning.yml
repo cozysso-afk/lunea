@@ -1,0 +1,39 @@
+name: Spread learning audit
+
+on:
+  push:
+    branches:
+      - audit/spread-learning-20260904
+    paths:
+      - .github/workflows/audit-spread-learning.yml
+      - tests/audit-spread-learning-runtime.test.mjs
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run spread learning and manual integration audit
+        shell: bash
+        run: |
+          set +e
+          failed=0
+          tests=(
+            tests/spread-learning.test.mjs
+            tests/spread-learning-bridge.test.mjs
+            tests/spread-learning-retention.test.mjs
+            tests/spread-learning-success-gate.test.mjs
+            tests/spread-learning-cloud-sync.test.mjs
+            tests/spread-learning-integration-contract.test.mjs
+            tests/manual-category-preservation.test.mjs
+            tests/intimacy-manual-oracle-back-integration.test.mjs
+            tests/audit-spread-learning-runtime.test.mjs
+          )
+          for t in "${tests[@]}"; do
+            echo "===== $t ====="
+            node "$t" || failed=1
+          done
+          exit $failed
