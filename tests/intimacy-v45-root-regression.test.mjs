@@ -28,8 +28,8 @@ test('all live cabinet layers point at the same final sector PNG',()=>{
   assert.doesNotMatch(v39,/intimacy_sector_v37\.svg/);
 });
 test('Oracle cards use normalized assets without CSS crop or double grading',()=>{
-  assert.match(oracle,/CARD_ASSET_VERSION='v45'/);
-  assert.match(oracle,/backgroundSize='contain'/);
+  assert.match(oracle,/CARD_ASSET_VERSION='v46'/);
+  assert.match(oracle,/backgroundSize='100% 100%'/);
   assert.match(oracle,/filter:none/);
   assert.doesNotMatch(oracle,/brightness\(1\.12\)/);
 });
