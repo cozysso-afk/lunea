@@ -13,7 +13,7 @@ vm.runInNewContext(source,{window,document,console,Object,Array,String,Number,Bo
 test('AI bridge detector and runtime loader contract',()=>{
   assert.match(source,/const RELEASE = '34\.2'/);
   assert.match(source,/lunea-intimacy-oracle-v35\.js\?v=352/);
-  assert.match(source,/lunea-intimacy-oracle-ui-v36\.js\?v=3612/);
+  assert.match(source,/lunea-intimacy-oracle-ui-v36\.js\?v=3613/);
   assert.match(source,/__LUNEA_READING_ACTION_ORDER_V33__/);
   assert.match(source,/ensureOracleRuntime/);
 });
