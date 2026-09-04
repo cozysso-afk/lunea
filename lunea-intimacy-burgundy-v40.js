@@ -1,20 +1,20 @@
 'use strict';
 
-/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.1 */
+/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.2 */
 (() => {
   const W = window;
-  const RELEASE = '40.1';
+  const RELEASE = '40.2';
   const KEY = '__LUNEA_INTIMACY_BURGUNDY_V40__';
   W[KEY] = RELEASE;
 
   const SELF_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4010';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4020';
     } catch {
-      return '4010';
+      return '4020';
     }
   })();
-  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v40.png?v=${encodeURIComponent(SELF_VERSION)}`;
+  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
   const STYLE_ID = 'luneaIntimacyBurgundyV40Style';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -89,7 +89,6 @@
         border-color:rgba(237,148,184,.18)!important;background:linear-gradient(145deg,rgba(128,31,73,.17),rgba(77,37,77,.08))!important
       }
 
-      /* INTIMACY tarot: dedicated light-weight back + full uncropped Rider-Waite face. */
       #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .tarot-card{
         box-shadow:0 7px 18px rgba(15,2,10,.58),0 0 0 1px rgba(205,111,148,.10)!important;
       }
@@ -214,7 +213,7 @@
 
   W.addEventListener('pageshow', () => setTimeout(apply, 80));
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) setTimeout(apply, 80);
+    if (!document.hidden) setTimeout(apply, 80));
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
