@@ -5,6 +5,7 @@ on:
     paths:
       - tools/patch-cloud-profile-v3.py
       - tests/cloud-profile-reprofiling-v3.test.mjs
+      - tests/spread-learning-integration-contract.test.mjs
       - .github/workflows/cloud-profile-v3-patch.yml
 permissions:
   contents: write
