@@ -5,6 +5,7 @@ on:
     paths:
       - tools/patch-learning-retrieval-hardening-v7.py
       - tests/learning-retrieval-hardening-v7.test.mjs
+      - tests/spread-learning-v5-runtime.test.mjs
       - .github/workflows/learning-retrieval-hardening-v7.yml
 permissions:
   contents: write
