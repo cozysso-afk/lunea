@@ -1,4 +1,4 @@
-name: Finalize INTIMACY Oracle PNGs
+name: Validate INTIMACY Repair
 
 on:
   push:
@@ -8,132 +8,58 @@ on:
       - '.github/workflows/unpack-intimacy-oracle-assets.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  finalize:
+  validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repair branch
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Verify 36 individual Oracle PNGs
+      - name: Validate final PNG assets
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          files = sorted(Path('assets/intimacy-oracle/cards').glob('oracle_*.png'))
-          expected = [f'oracle_{i:02d}.png' for i in range(1,37)]
-          assert len(files) == 36, f'expected 36 cards, got {len(files)}'
-          assert [p.name for p in files] == expected
           sig = bytes([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])
-          for p in files:
+          fixed = {
+              Path('assets/intimacy-oracle/oracle_back_intimacy_final.png'): 100_000,
+              Path('assets/intimacy-oracle/tarot_back_intimacy_final.png'): 100_000,
+              Path('assets/intimacy-oracle/intimacy_sector_final.png'): 100_000,
+          }
+          for p, minimum in fixed.items():
               data = p.read_bytes()
-              assert data[:8] == sig, f'{p} is not PNG'
-              assert len(data) > 5000, f'{p} unexpectedly small: {len(data)}'
-          print('verified 36 individual Oracle PNGs')
+              assert data[:8] == sig, f'{p} must be PNG'
+              assert len(data) > minimum, f'{p} unexpectedly small: {len(data)}'
+          cards = sorted(Path('assets/intimacy-oracle/cards').glob('oracle_*.png'))
+          expected = [f'oracle_{i:02d}.png' for i in range(1,37)]
+          assert [p.name for p in cards] == expected, f'Oracle set mismatch: {[p.name for p in cards]}'
+          for p in cards:
+              data = p.read_bytes()
+              assert data[:8] == sig, f'{p} must be PNG'
+              assert len(data) > 5_000, f'{p} unexpectedly small: {len(data)}'
+          print('PNG assets: PASS')
           PY
-
-      - name: Remove atlas dependency from active Oracle renderer
+      - name: Syntax-check changed runtime files
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          from pathlib import Path
-
-          def replace_once(path, old, new):
-              p = Path(path)
-              text = p.read_text(encoding='utf-8')
-              if old not in text:
-                  raise SystemExit(f'missing expected text in {path}: {old[:100]}')
-              text = text.replace(old, new, 1)
-              p.write_text(text, encoding='utf-8')
-
-          replace_once(
-              'lunea-intimacy-oracle-v35.js',
-              "asset:`${ROOT}/oracle_atlas_v36.jpg`,sprite:Object.freeze({column:i%6,row:Math.floor(i/6),columns:6,rows:6})",
-              "asset:`${ROOT}/cards/oracle_${String(i+1).padStart(2,'0')}.png`,sprite:Object.freeze({column:i%6,row:Math.floor(i/6),columns:6,rows:6})"
-          )
-
-          replace_once(
-              'lunea-intimacy-oracle-ui-v36.js',
-              "const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/oracle_back_intimacy_final.png',ATLAS_ASSET='./assets/intimacy-oracle/oracle_atlas_final.png';",
-              "const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/oracle_back_intimacy_final.png',CARD_ROOT='./assets/intimacy-oracle/cards';"
-          )
-          replace_once(
-              'lunea-intimacy-oracle-ui-v36.js',
-              "W.LUNEA_INTIMACY_ORACLE_UI_V36_CORE=Object.freeze({version:RELEASE,secureRandomInt,drawOracleCards,assignOracleForTarotIndex,fallbackQuestions,lensesFor,backAsset:BACK_ASSET,atlasAsset:ATLAS_ASSET});",
-              "W.LUNEA_INTIMACY_ORACLE_UI_V36_CORE=Object.freeze({version:RELEASE,secureRandomInt,drawOracleCards,assignOracleForTarotIndex,fallbackQuestions,lensesFor,backAsset:BACK_ASSET,cardRoot:CARD_ROOT});"
-          )
-          replace_once(
-              'lunea-intimacy-oracle-ui-v36.js',
-              "function cardVisual(card){const d=document.createElement('div');d.className='lio-card-face';const {columns=6,rows=6,column=0,row=0}=card.sprite||{};d.style.backgroundImage=`url(\"${ATLAS_ASSET}\")`;d.style.backgroundSize=`${columns*100}% ${rows*100}%`;d.style.backgroundPosition=`${columns>1?column/(columns-1)*100:0}% ${rows>1?row/(rows-1)*100:0}%`;d.style.backgroundRepeat='no-repeat';return d}",
-              "function cardVisual(card){const d=document.createElement('div');d.className='lio-card-face';const n=String(card?.code||'').match(/^O(\\d{2})$/)?.[1];const src=n?`${CARD_ROOT}/oracle_${n}.png`:'';d.style.backgroundImage=src?`url(\"${src}\")`:'none';d.style.backgroundSize='cover';d.style.backgroundPosition='center';d.style.backgroundRepeat='no-repeat';return d}"
-          )
-          replace_once('lunea-intimacy-oracle-ui-v36.js', 'aspect-ratio:3/4;', 'aspect-ratio:3/5;')
-
-          replace_once('lunea-intimacy-repair-v43.js', 'Routes visible INTIMACY ORACLE cards to the final PNG 6x6 atlas.', 'Routes visible INTIMACY ORACLE cards to their individual final PNG files.')
-          replace_once(
-              'lunea-intimacy-repair-v43.js',
-              "  const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.png';",
-              "  const ORACLE_CARD_ROOT = './assets/intimacy-oracle/cards';"
-          )
-          replace_once(
-              'lunea-intimacy-repair-v43.js',
-              "    const col = idx % 6;\n    const row = Math.floor(idx / 6);\n    face.style.setProperty('background-image', `url(\"${FINAL_ORACLE_ATLAS}\")`, 'important');\n    face.style.setProperty('background-size', '600% 600%', 'important');\n    face.style.setProperty('background-position', `${col / 5 * 100}% ${row / 5 * 100}%`, 'important');\n    face.style.setProperty('background-repeat', 'no-repeat', 'important');\n    face.dataset.luneaIntimacyOracleAsset = 'final-png-atlas-v43';",
-              "    const cardNo = String(idx + 1).padStart(2, '0');\n    face.style.setProperty('background-image', `url(\"${ORACLE_CARD_ROOT}/oracle_${cardNo}.png\")`, 'important');\n    face.style.setProperty('background-size', 'cover', 'important');\n    face.style.setProperty('background-position', 'center', 'important');\n    face.style.setProperty('background-repeat', 'no-repeat', 'important');\n    face.dataset.luneaIntimacyOracleAsset = 'individual-png-v43';"
-          )
-          replace_once('lunea-intimacy-repair-v43.js', '    finalOracleAtlas: FINAL_ORACLE_ATLAS,', '    oracleCardRoot: ORACLE_CARD_ROOT,')
-
-          replace_once(
-              'tests/intimacy-oracle-v35.test.mjs',
-              "  assert.match(card.asset,/assets\\/intimacy-oracle\\/oracle_atlas_v36\\.jpg$/);",
-              "  assert.equal(card.asset,`./assets/intimacy-oracle/cards/oracle_${card.code.slice(1)}.png`);"
-          )
-
-          p = Path('tests/intimacy-oracle-ui-v36.test.mjs')
-          t = p.read_text(encoding='utf-8')
-          t = t.replace("asset:'./assets/intimacy-oracle/oracle_atlas_final.png'", "asset:`./assets/intimacy-oracle/cards/oracle_${String(i+1).padStart(2,'0')}.png`")
-          t = t.replace("assert.equal(core.atlasAsset,'./assets/intimacy-oracle/oracle_atlas_final.png');", "assert.equal(core.cardRoot,'./assets/intimacy-oracle/cards');")
-          old_block = "for (const [name,minBytes] of [\n  ['oracle_atlas_final.png',300_000],\n  ['oracle_back_intimacy_final.png',100_000],\n]) {\n  const png = fs.readFileSync(new URL(`../assets/intimacy-oracle/${name}`, import.meta.url));\n  assert.ok(png.length > minBytes,`${name} is unexpectedly small`);\n  assert.deepEqual([...png.subarray(0,8)],[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a],`${name} must be a valid PNG`);\n}\n"
-          new_block = "const pngSig=[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];\nconst oracleBack = fs.readFileSync(new URL('../assets/intimacy-oracle/oracle_back_intimacy_final.png', import.meta.url));\nassert.ok(oracleBack.length > 100_000,'Oracle back is unexpectedly small');\nassert.deepEqual([...oracleBack.subarray(0,8)],pngSig,'Oracle back must be PNG');\nfor(let i=1;i<=36;i++){\n  const name=`oracle_${String(i).padStart(2,'0')}.png`;\n  const png=fs.readFileSync(new URL(`../assets/intimacy-oracle/cards/${name}`, import.meta.url));\n  assert.ok(png.length>5_000,`${name} is unexpectedly small`);\n  assert.deepEqual([...png.subarray(0,8)],pngSig,`${name} must be PNG`);\n}\nassert.doesNotMatch(source,/oracle_atlas_final/);\n"
-          if old_block not in t:
-              raise SystemExit('missing old V36 asset test block')
-          t = t.replace(old_block, new_block, 1)
-          p.write_text(t, encoding='utf-8')
-
-          p = Path('tests/intimacy-asset-routing-v43.test.mjs')
-          t = p.read_text(encoding='utf-8')
-          t = t.replace("assert.match(v36, /ATLAS_ASSET='\\.\\/assets\\/intimacy-oracle\\/oracle_atlas_final\\.png'/);", "assert.match(v36, /CARD_ROOT='\\.\\/assets\\/intimacy-oracle\\/cards'/);")
-          t = t.replace("assert.doesNotMatch(v36, /back_intimacy_final\\.png/);", "assert.doesNotMatch(v36, /BACK_ASSET='\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.png'/);")
-          t = t.replace("assert.match(v43, /FINAL_ORACLE_ATLAS = '\\.\\/assets\\/intimacy-oracle\\/oracle_atlas_final\\.png'/);", "assert.match(v43, /ORACLE_CARD_ROOT = '\\.\\/assets\\/intimacy-oracle\\/cards'/);")
-          t = t.replace("console.log('INTIMACY separate Tarot/Oracle PNG routing contract OK');", "assert.doesNotMatch(v36,/oracle_atlas_final/);\nassert.doesNotMatch(v43,/oracle_atlas_final/);\nconsole.log('INTIMACY separate Tarot/Oracle individual-PNG routing contract OK');")
-          p.write_text(t, encoding='utf-8')
-
-          print('patched Oracle runtime and tests to individual PNG assets')
-          PY
-
-      - name: Run focused Oracle routing tests
+          node --check lunea-intimacy-ai-bridge-v34.js
+          node --check lunea-intimacy-burgundy-v40.js
+          node --check lunea-intimacy-oracle-v35.js
+          node --check lunea-intimacy-oracle-ui-v36.js
+          node --check lunea-intimacy-repair-v43.js
+          node --check lunea-reading-action-order-v33.js
+      - name: Run INTIMACY regression tests
         shell: bash
         run: |
           set -euo pipefail
           node tests/intimacy-oracle-v35.test.mjs
           node tests/intimacy-oracle-ui-v36.test.mjs
           node tests/intimacy-asset-routing-v43.test.mjs
-
-      - name: Commit individual-PNG routing to repair branch
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lunea-intimacy-oracle-v35.js lunea-intimacy-oracle-ui-v36.js lunea-intimacy-repair-v43.js tests/intimacy-oracle-v35.test.mjs tests/intimacy-oracle-ui-v36.test.mjs tests/intimacy-asset-routing-v43.test.mjs
-          if git diff --cached --quiet; then
-            echo 'No renderer changes to commit.'
-            exit 0
-          fi
-          git commit -m 'fix(intimacy): render Oracle cards from 36 individual PNGs'
-          git push origin HEAD:work/intimacy-repair-20260904
+          node tests/intimacy-burgundy-v40.test.mjs
+          node tests/intimacy-tarot-visual-v40.test.mjs
+          node tests/intimacy-ai-bridge-v34.test.mjs
+          node tests/intimacy-readability-v36.test.mjs
+          node tests/intimacy-clean-v39.test.mjs
