@@ -1,11 +1,11 @@
 'use strict';
 
-/* LUNEA INTIMACY REPAIR V43.0
+/* LUNEA INTIMACY REPAIR V43.1
    Clean repair layer for the 2026-09-04 recovery branch.
    - Keeps INTIMACY state detection robust for manual spreads.
    - Restyles the shared manual spread editor in burgundy / rose-gold.
-   - Routes visible INTIMACY ORACLE cards to the verified final 6x6 atlas.
-   - Keeps the verified ORACLE back separate from the Tarot back concept.
+   - Routes visible INTIMACY ORACLE cards to the final PNG 6x6 atlas.
+   - Keeps the ORACLE back separate from the Tarot back concept.
    - Simplifies Oracle controls to Tarot / 1-card / 3-card choices only.
    This file does not call Gemini and does not change RNG. */
 (() => {
@@ -13,10 +13,10 @@
   if (W.__LUNEA_INTIMACY_REPAIR_V43__) return;
   W.__LUNEA_INTIMACY_REPAIR_V43__ = true;
 
-  const RELEASE = '43.0';
+  const RELEASE = '43.1';
   const STYLE_ID = 'luneaIntimacyRepairV43Style';
-  const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.jpg';
-  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/back_intimacy_final.jpg';
+  const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.png';
+  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/back_intimacy_final.png';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -115,7 +115,7 @@
       face.style.setProperty('background-size', 'cover', 'important');
       face.style.setProperty('background-position', 'center', 'important');
       face.style.setProperty('background-repeat', 'no-repeat', 'important');
-      face.dataset.luneaIntimacyOracleAsset = 'verified-back-v43';
+      face.dataset.luneaIntimacyOracleAsset = 'final-png-back-v43';
       return true;
     }
     const col = idx % 6;
@@ -124,7 +124,7 @@
     face.style.setProperty('background-size', '600% 600%', 'important');
     face.style.setProperty('background-position', `${col / 5 * 100}% ${row / 5 * 100}%`, 'important');
     face.style.setProperty('background-repeat', 'no-repeat', 'important');
-    face.dataset.luneaIntimacyOracleAsset = 'verified-atlas-v43';
+    face.dataset.luneaIntimacyOracleAsset = 'final-png-atlas-v43';
     return true;
   }
 
