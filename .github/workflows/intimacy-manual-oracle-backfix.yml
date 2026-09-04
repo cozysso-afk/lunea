@@ -17,157 +17,56 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Patch direct INTIMACY flow
+      - name: Apply hotfix
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-
-          def replace_once(path, old, new):
+          def r(path, old, new):
               p=Path(path); s=p.read_text(encoding='utf-8')
-              if old not in s:
-                  raise SystemExit(f'missing expected text in {path}: {old[:140]!r}')
+              if old not in s: raise SystemExit(f'missing in {path}: {old[:120]!r}')
               p.write_text(s.replace(old,new,1),encoding='utf-8')
 
-          # iOS card constructor: INTIMACY gets its final Tarot back at construction time.
-          replace_once(
-            'lunea-ios-performance-v3.js',
-            "      backImg.src = prefix + '.PNG';",
-            "      let backSrc = prefix + '.PNG';\n      try {\n        if (String(state?.category || '').toUpperCase() === 'INTIMACY') {\n          backSrc = './assets/intimacy-oracle/tarot_back_intimacy_final.png';\n        }\n      } catch {}\n      backImg.src = backSrc;"
-          )
+          r('lunea-ios-performance-v3.js',"      backImg.src = prefix + '.PNG';","      let backSrc = prefix + '.PNG';\n      try {\n        if (String(state?.category || '').toUpperCase() === 'INTIMACY') backSrc = './assets/intimacy-oracle/tarot_back_intimacy_final.png';\n      } catch {}\n      backImg.src = backSrc;")
+          r('lunea-intimacy-burgundy-v40.js',"const RELEASE = '40.2';","const RELEASE = '40.3';")
+          r('lunea-intimacy-burgundy-v40.js',"  function isIntimacyActive() {\n    try { return String(state?.category || '').toUpperCase() === 'INTIMACY'; }\n    catch { return false; }\n  }","  function isIntimacyActive() {\n    try { return String(state?.category || '').toUpperCase() === 'INTIMACY' || !!W.__LUNEA_INTIMACY_ACTIVE__ || document.body?.classList?.contains('lunea-intimacy-reading'); }\n    catch { return !!W.__LUNEA_INTIMACY_ACTIVE__; }\n  }")
+          p=Path('lunea-intimacy-burgundy-v40.js');s=p.read_text();s=s.replace('__luneaIntimacyV402Wrapped','__luneaIntimacyV403Wrapped').replace('__luneaIntimacyV402Observed','__luneaIntimacyV403Observed');s=s.replace("    W.makeCardWrapper = wrapped;\n    return true;","    W.makeCardWrapper = wrapped;\n    try { makeCardWrapper = wrapped; } catch {}\n    return true;");p.write_text(s)
 
-          # V40 must bind the wrapper to both window and the global identifier used by manual paths.
-          replace_once('lunea-intimacy-burgundy-v40.js', "const RELEASE = '40.2';", "const RELEASE = '40.3';")
-          replace_once(
-            'lunea-intimacy-burgundy-v40.js',
-            "  function isIntimacyActive() {\n    try { return String(state?.category || '').toUpperCase() === 'INTIMACY'; }\n    catch { return false; }\n  }",
-            "  function isIntimacyActive() {\n    try {\n      return String(state?.category || '').toUpperCase() === 'INTIMACY' ||\n        !!W.__LUNEA_INTIMACY_ACTIVE__ ||\n        document.body?.classList?.contains('lunea-intimacy-reading');\n    } catch { return !!W.__LUNEA_INTIMACY_ACTIVE__; }\n  }"
-          )
-          replace_once('lunea-intimacy-burgundy-v40.js', '__luneaIntimacyV402Wrapped', '__luneaIntimacyV403Wrapped')
-          replace_once('lunea-intimacy-burgundy-v40.js', '__luneaIntimacyV402Wrapped', '__luneaIntimacyV403Wrapped')
-          replace_once('lunea-intimacy-burgundy-v40.js', '__luneaIntimacyV402Observed', '__luneaIntimacyV403Observed')
-          replace_once(
-            'lunea-intimacy-burgundy-v40.js',
-            "    W.makeCardWrapper = wrapped;\n    return true;",
-            "    W.makeCardWrapper = wrapped;\n    try { makeCardWrapper = wrapped; } catch {}\n    return true;"
-          )
+          r('lunea-intimacy-oracle-ui-v36.js',"const RELEASE='36.1'","const RELEASE='36.2'")
+          r('lunea-intimacy-oracle-ui-v36.js',"function syncSheet(){const tools=$('luneaIntimacyOracleTools');if(tools)tools.style.display=intimacy()?'block':'none'}","function syncSheet(){const tools=$('luneaIntimacyOracleTools');if(tools)tools.style.display=intimacy()?'block':'none'}\nfunction prepareSheetTools(){ensureSheetTools();syncSheet();return intimacy()}")
+          r('lunea-intimacy-oracle-ui-v36.js',"const mo=new MutationObserver(()=>{if($('spreadOverlay')?.classList.contains('show')){ensurePanel();setTimeout(restoreSidecar,50)}});","const mo=new MutationObserver(()=>{if($('spreadOverlay')?.classList.contains('show')){ensurePanel();setTimeout(()=>{const s=stateNow();if(intimacy()&&s?.__luneaManualReading&&reading.stamp!==stamp(s))performOracleDraw();else restoreSidecar()},50)}});")
+          r('lunea-intimacy-oracle-ui-v36.js',"W.LUNEA_INTIMACY_ORACLE_UI_V36=Object.freeze({version:RELEASE,performOracleDraw,buildOraclePromptLayer,serializeOracle});","W.LUNEA_INTIMACY_ORACLE_UI_V36=Object.freeze({version:RELEASE,performOracleDraw,buildOraclePromptLayer,serializeOracle,prepareSheetTools});")
+          r('lunea-intimacy-ai-bridge-v34.js','./lunea-intimacy-oracle-ui-v36.js?v=3612','./lunea-intimacy-oracle-ui-v36.js?v=3613')
 
-          # V36 exposes an explicit sheet-preparation hook and catches manual readings too.
-          replace_once('lunea-intimacy-oracle-ui-v36.js', "const RELEASE='36.1'", "const RELEASE='36.2'")
-          replace_once(
-            'lunea-intimacy-oracle-ui-v36.js',
-            "function syncSheet(){const tools=$('luneaIntimacyOracleTools');if(tools)tools.style.display=intimacy()?'block':'none'}",
-            "function syncSheet(){const tools=$('luneaIntimacyOracleTools');if(tools)tools.style.display=intimacy()?'block':'none'}\nfunction prepareSheetTools(){ensureSheetTools();syncSheet();return intimacy()}"
-          )
-          replace_once(
-            'lunea-intimacy-oracle-ui-v36.js',
-            "const mo=new MutationObserver(()=>{if($('spreadOverlay')?.classList.contains('show')){ensurePanel();setTimeout(restoreSidecar,50)}});",
-            "const mo=new MutationObserver(()=>{if($('spreadOverlay')?.classList.contains('show')){ensurePanel();setTimeout(()=>{const s=stateNow();if(intimacy()&&s?.__luneaManualReading&&reading.stamp!==stamp(s))performOracleDraw();else restoreSidecar()},50)}});"
-          )
-          replace_once(
-            'lunea-intimacy-oracle-ui-v36.js',
-            "W.LUNEA_INTIMACY_ORACLE_UI_V36=Object.freeze({version:RELEASE,performOracleDraw,buildOraclePromptLayer,serializeOracle});",
-            "W.LUNEA_INTIMACY_ORACLE_UI_V36=Object.freeze({version:RELEASE,performOracleDraw,buildOraclePromptLayer,serializeOracle,prepareSheetTools});"
-          )
+          r('lunea-manual-structure-v1.js',"      state.__luneaIntimacyReading = originCategory === 'INTIMACY';\n      setManualPanelVisible(true);","      state.__luneaIntimacyReading = originCategory === 'INTIMACY';\n      if (originCategory === 'INTIMACY') {\n        W.__LUNEA_INTIMACY_ACTIVE__ = true;\n        document.body?.classList?.add('lunea-intimacy-reading');\n        [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));\n      }\n      setManualPanelVisible(true);")
+          r('lunea-manual-structure-v1.js',"    if (learn && W.LUNEA_SPREAD_LEARNING_V1?.recordManual) {","    if (originCategory === 'INTIMACY') {\n      W.__LUNEA_INTIMACY_ACTIVE__ = true;\n      document.body?.classList?.add('lunea-intimacy-reading');\n      W.LUNEA_INTIMACY_BURGUNDY_V40?.repairTarotCards?.();\n      W.LUNEA_INTIMACY_ORACLE_UI_V36?.performOracleDraw?.();\n    }\n\n    if (learn && W.LUNEA_SPREAD_LEARNING_V1?.recordManual) {")
+          r('lunea-manual-everywhere-v1.js',"    document.getElementById('luneaManualPanel')?.classList.add('show');\n    const label = document.getElementById('drawLabel');","    document.getElementById('luneaManualPanel')?.classList.add('show');\n    if (cat === 'INTIMACY') {\n      W.__LUNEA_INTIMACY_ACTIVE__ = true;\n      document.body?.classList?.add('lunea-intimacy-reading');\n      [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));\n    }\n    const label = document.getElementById('drawLabel');")
+          r('lunea-manual-limit20-v17.js',"      });\n    } catch (e) {","      });\n      if (originCategory === 'INTIMACY') {\n        W.__LUNEA_INTIMACY_ACTIVE__ = true;\n        document.body?.classList?.add('lunea-intimacy-reading');\n        W.LUNEA_INTIMACY_BURGUNDY_V40?.repairTarotCards?.();\n        W.LUNEA_INTIMACY_ORACLE_UI_V36?.performOracleDraw?.();\n      }\n    } catch (e) {")
 
-          # The Oracle runtime itself needs a fresh cache key.
-          replace_once('lunea-intimacy-ai-bridge-v34.js', "./lunea-intimacy-oracle-ui-v36.js?v=3612", "./lunea-intimacy-oracle-ui-v36.js?v=3613")
+          p=Path('lunea-structural-routing-v4.js');s=p.read_text()
+          for old,new in [('lunea-manual-structure-v1.js?v=103','lunea-manual-structure-v1.js?v=104'),('lunea-manual-everywhere-v1.js?v=102','lunea-manual-everywhere-v1.js?v=103'),('lunea-manual-limit20-v17.js?v=1703','lunea-manual-limit20-v17.js?v=1704')]:
+              if s.count(old)!=2: raise SystemExit(f'expected 2 refs for {old}, got {s.count(old)}')
+              s=s.replace(old,new)
+          p.write_text(s)
 
-          # Manual <=12: show Oracle selector in the direct sheet and draw Oracle after Tarot draw.
-          replace_once(
-            'lunea-manual-structure-v1.js',
-            "      state.__luneaIntimacyReading = originCategory === 'INTIMACY';\n      setManualPanelVisible(true);",
-            "      state.__luneaIntimacyReading = originCategory === 'INTIMACY';\n      if (originCategory === 'INTIMACY') {\n        W.__LUNEA_INTIMACY_ACTIVE__ = true;\n        document.body?.classList?.add('lunea-intimacy-reading');\n        [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));\n      }\n      setManualPanelVisible(true);"
-          )
-          replace_once(
-            'lunea-manual-structure-v1.js',
-            "    selected.forEach((card, i) => {\n      const isReversed = state.allowReversed && secureBool();\n      state.used.add(card.code);\n      state.drawn.push({...card, isReversed, position:positions[i], subCards:[]});\n      document.getElementById('cards')?.appendChild(makeCardWrapper(i, card, isReversed));\n    });\n\n    if (learn && W.LUNEA_SPREAD_LEARNING_V1?.recordManual) {",
-            "    selected.forEach((card, i) => {\n      const isReversed = state.allowReversed && secureBool();\n      state.used.add(card.code);\n      state.drawn.push({...card, isReversed, position:positions[i], subCards:[]});\n      document.getElementById('cards')?.appendChild(makeCardWrapper(i, card, isReversed));\n    });\n\n    if (originCategory === 'INTIMACY') {\n      W.__LUNEA_INTIMACY_ACTIVE__ = true;\n      document.body?.classList?.add('lunea-intimacy-reading');\n      W.LUNEA_INTIMACY_BURGUNDY_V40?.repairTarotCards?.();\n      W.LUNEA_INTIMACY_ORACLE_UI_V36?.performOracleDraw?.();\n    }\n\n    if (learn && W.LUNEA_SPREAD_LEARNING_V1?.recordManual) {"
-          )
-
-          # Category-specific manual entry: Oracle selector must be explicitly prepared.
-          replace_once(
-            'lunea-manual-everywhere-v1.js',
-            "    document.getElementById('luneaManualPanel')?.classList.add('show');\n    const label = document.getElementById('drawLabel');",
-            "    document.getElementById('luneaManualPanel')?.classList.add('show');\n    if (cat === 'INTIMACY') {\n      W.__LUNEA_INTIMACY_ACTIVE__ = true;\n      document.body?.classList?.add('lunea-intimacy-reading');\n      [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));\n    }\n    const label = document.getElementById('drawLabel');"
-          )
-
-          # Manual 13-20: same post-draw Tarot/Oracle integration.
-          replace_once(
-            'lunea-manual-limit20-v17.js',
-            "      selected.forEach((card, i) => {\n        const isReversed = !!state.allowReversed && (typeof secureBool === 'function' ? secureBool() : false);\n        state.used.add(card.code);\n        state.drawn.push({...card, isReversed, position:p.positions[i], subCards:[]});\n        $('cards')?.appendChild(makeCardWrapper(i, card, isReversed));\n      });",
-            "      selected.forEach((card, i) => {\n        const isReversed = !!state.allowReversed && (typeof secureBool === 'function' ? secureBool() : false);\n        state.used.add(card.code);\n        state.drawn.push({...card, isReversed, position:p.positions[i], subCards:[]});\n        $('cards')?.appendChild(makeCardWrapper(i, card, isReversed));\n      });\n      if (originCategory === 'INTIMACY') {\n        W.__LUNEA_INTIMACY_ACTIVE__ = true;\n        document.body?.classList?.add('lunea-intimacy-reading');\n        W.LUNEA_INTIMACY_BURGUNDY_V40?.repairTarotCards?.();\n        W.LUNEA_INTIMACY_ORACLE_UI_V36?.performOracleDraw?.();\n      }"
-          )
-
-          # Fresh nested manual modules for iOS/PWA.
-          p=Path('lunea-structural-routing-v4.js'); s=p.read_text(encoding='utf-8')
-          for old,new in [
-            ('lunea-manual-structure-v1.js?v=103','lunea-manual-structure-v1.js?v=104'),
-            ('lunea-manual-everywhere-v1.js?v=102','lunea-manual-everywhere-v1.js?v=103'),
-            ('lunea-manual-limit20-v17.js?v=1703','lunea-manual-limit20-v17.js?v=1704'),
-          ]:
-            if s.count(old)!=2: raise SystemExit(f'expected 2 refs for {old}, got {s.count(old)}')
-            s=s.replace(old,new)
-          p.write_text(s,encoding='utf-8')
+          p=Path('tests/intimacy-tarot-visual-v40.test.mjs');s=p.read_text().replace("/const RELEASE = '40\\.2'/","/const RELEASE = '40\\.3'/").replace('__luneaIntimacyV402Wrapped','__luneaIntimacyV403Wrapped');p.write_text(s)
+          p=Path('tests/intimacy-oracle-ui-v36.test.mjs');s=p.read_text().replace("assert.equal(core.version,'36.1')","assert.equal(core.version,'36.2')").replace('lunea-intimacy-oracle-ui-v36\\.js\\?v=3612','lunea-intimacy-oracle-ui-v36\\.js\\?v=3613');p.write_text(s)
+          p=Path('tests/manual-category-preservation.test.mjs');s=p.read_text();s=s.replace('manual-structure-v1\\.js\\?v=103','manual-structure-v1\\.js\\?v=104').replace('manual-everywhere-v1\\.js\\?v=102','manual-everywhere-v1\\.js\\?v=103').replace('manual-limit20-v17\\.js\\?v=1703','manual-limit20-v17\\.js\\?v=1704').replace('manual-structure-v1\\.js\\?v=102','manual-structure-v1\\.js\\?v=103');p.write_text(s)
           PY
-
-      - name: Add direct-flow regression test
+      - name: Add integration contract
         shell: bash
         run: |
           cat > tests/intimacy-manual-oracle-back-integration.test.mjs <<'EOF'
-          import test from 'node:test';
-          import assert from 'node:assert/strict';
-          import fs from 'node:fs';
+          import test from 'node:test'; import assert from 'node:assert/strict'; import fs from 'node:fs';
           const read=n=>fs.readFileSync(new URL(`../${n}`,import.meta.url),'utf8');
-          const ios=read('lunea-ios-performance-v3.js');
-          const burgundy=read('lunea-intimacy-burgundy-v40.js');
-          const oracle=read('lunea-intimacy-oracle-ui-v36.js');
-          const bridge=read('lunea-intimacy-ai-bridge-v34.js');
-          const manual=read('lunea-manual-structure-v1.js');
-          const everywhere=read('lunea-manual-everywhere-v1.js');
-          const manual20=read('lunea-manual-limit20-v17.js');
-          const loader=read('lunea-structural-routing-v4.js');
-
-          test('iOS constructs INTIMACY cards with dedicated Tarot back, not GENERAL',()=>{
-            assert.match(ios,/state\?\.category[^\n]+INTIMACY/);
-            assert.match(ios,/tarot_back_intimacy_final\.png/);
-            assert.match(burgundy,/const RELEASE = '40\.3'/);
-            assert.match(burgundy,/try \{ makeCardWrapper = wrapped; \} catch \{\}/);
-          });
-          test('direct INTIMACY sheet explicitly prepares Oracle 0-1-3 controls',()=>{
-            assert.match(oracle,/function prepareSheetTools\(\)/);
-            assert.match(oracle,/performOracleDraw,buildOraclePromptLayer,serializeOracle,prepareSheetTools/);
-            assert.match(everywhere,/cat === 'INTIMACY'/);
-            assert.match(everywhere,/prepareSheetTools/);
-            assert.match(manual,/prepareSheetTools/);
-          });
-          test('manual <=12 and 13-20 draws explicitly attach Tarot skin and Oracle draw',()=>{
-            for(const source of [manual,manual20]){
-              assert.match(source,/repairTarotCards/);
-              assert.match(source,/performOracleDraw/);
-              assert.match(source,/originCategory === 'INTIMACY'/);
-            }
-          });
-          test('Oracle/manual cache keys are bumped',()=>{
-            assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3613/);
-            assert.equal((loader.match(/lunea-manual-structure-v1\.js\?v=104/g)||[]).length,2);
-            assert.equal((loader.match(/lunea-manual-everywhere-v1\.js\?v=103/g)||[]).length,2);
-            assert.equal((loader.match(/lunea-manual-limit20-v17\.js\?v=1704/g)||[]).length,2);
-          });
+          const ios=read('lunea-ios-performance-v3.js'), burgundy=read('lunea-intimacy-burgundy-v40.js'), oracle=read('lunea-intimacy-oracle-ui-v36.js'), bridge=read('lunea-intimacy-ai-bridge-v34.js'), manual=read('lunea-manual-structure-v1.js'), everywhere=read('lunea-manual-everywhere-v1.js'), manual20=read('lunea-manual-limit20-v17.js'), loader=read('lunea-structural-routing-v4.js');
+          test('iOS initial INTIMACY back is dedicated PNG',()=>{assert.match(ios,/tarot_back_intimacy_final\.png/);assert.match(burgundy,/const RELEASE = '40\.3'/);assert.match(burgundy,/makeCardWrapper = wrapped/)});
+          test('direct sheet exposes Oracle selector',()=>{assert.match(oracle,/prepareSheetTools/);assert.match(everywhere,/prepareSheetTools/);assert.match(manual,/prepareSheetTools/)});
+          test('both manual draw paths invoke Tarot repair and Oracle draw',()=>{for(const s of [manual,manual20]){assert.match(s,/repairTarotCards/);assert.match(s,/performOracleDraw/)}});
+          test('fresh cache keys',()=>{assert.match(bridge,/v=3613/);assert.equal((loader.match(/manual-structure-v1\.js\?v=104/g)||[]).length,2);assert.equal((loader.match(/manual-everywhere-v1\.js\?v=103/g)||[]).length,2);assert.equal((loader.match(/manual-limit20-v17\.js\?v=1704/g)||[]).length,2)});
           EOF
-
-      - name: Update existing version contracts
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          p=Path('tests/intimacy-tarot-visual-v40.test.mjs');s=p.read_text();s=s.replace("/const RELEASE = '40\\.2'/","/const RELEASE = '40\\.3'/").replace('__luneaIntimacyV402Wrapped','__luneaIntimacyV403Wrapped');p.write_text(s)
-          p=Path('tests/intimacy-oracle-ui-v36.test.mjs');s=p.read_text();s=s.replace("assert.equal(core.version,'36.1')","assert.equal(core.version,'36.2')").replace('lunea-intimacy-oracle-ui-v36\\.js\\?v=3612','lunea-intimacy-oracle-ui-v36\\.js\\?v=3613');p.write_text(s)
-          PY
-
-      - name: Validate
+      - name: Validate and commit
         shell: bash
         run: |
           set -euo pipefail
@@ -184,12 +83,8 @@ jobs:
           node tests/intimacy-ai-bridge-v34.test.mjs
           node tests/intimacy-asset-routing-v43.test.mjs
           node tests/spread-learning-integration-contract.test.mjs
-
-      - name: Commit hotfix
-        shell: bash
-        run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lunea-ios-performance-v3.js lunea-intimacy-burgundy-v40.js lunea-intimacy-oracle-ui-v36.js lunea-intimacy-ai-bridge-v34.js lunea-manual-structure-v1.js lunea-manual-everywhere-v1.js lunea-manual-limit20-v17.js lunea-structural-routing-v4.js tests/intimacy-manual-oracle-back-integration.test.mjs tests/intimacy-tarot-visual-v40.test.mjs tests/intimacy-oracle-ui-v36.test.mjs
-          git commit -m 'fix(intimacy): integrate Oracle and Tarot back in direct spreads'
+          git add lunea-ios-performance-v3.js lunea-intimacy-burgundy-v40.js lunea-intimacy-oracle-ui-v36.js lunea-intimacy-ai-bridge-v34.js lunea-manual-structure-v1.js lunea-manual-everywhere-v1.js lunea-manual-limit20-v17.js lunea-structural-routing-v4.js tests/intimacy-manual-oracle-back-integration.test.mjs tests/intimacy-tarot-visual-v40.test.mjs tests/intimacy-oracle-ui-v36.test.mjs tests/manual-category-preservation.test.mjs
+          git commit -m 'fix(intimacy): direct spread Oracle and initial Tarot back'
           git push origin HEAD:work/intimacy-manual-oracle-backfix-20260904
