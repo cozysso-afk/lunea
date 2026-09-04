@@ -104,6 +104,12 @@
         state.drawn.push({...card, isReversed, position:p.positions[i], subCards:[]});
         $('cards')?.appendChild(makeCardWrapper(i, card, isReversed));
       });
+      if (originCategory === 'INTIMACY') {
+        W.__LUNEA_INTIMACY_ACTIVE__ = true;
+        document.body?.classList?.add('lunea-intimacy-reading');
+        W.LUNEA_INTIMACY_BURGUNDY_V40?.repairTarotCards?.();
+        W.LUNEA_INTIMACY_ORACLE_UI_V36?.performOracleDraw?.();
+      }
     } catch (e) {
       console.error('[LUNEA Manual 20] draw failed', e);
       alert('수동 배열을 펼치는 중 문제가 생겼어. 페이지를 새로고침한 뒤 다시 시도해줘.');

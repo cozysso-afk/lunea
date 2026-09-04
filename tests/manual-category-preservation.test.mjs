@@ -30,8 +30,8 @@ test('13-20 card manual path preserves origin category', () => {
 });
 
 test('nested loader cache keys are bumped in parser and sequential paths', () => {
-  assert.equal((loader.match(/lunea-manual-structure-v1\.js\?v=103/g) || []).length, 2);
-  assert.equal((loader.match(/lunea-manual-everywhere-v1\.js\?v=102/g) || []).length, 2);
-  assert.equal((loader.match(/lunea-manual-limit20-v17\.js\?v=1703/g) || []).length, 2);
-  assert.doesNotMatch(loader, /lunea-manual-structure-v1\.js\?v=102/);
+  assert.equal((loader.match(/lunea-manual-structure-v1\.js\?v=104/g) || []).length, 2);
+  assert.equal((loader.match(/lunea-manual-everywhere-v1\.js\?v=103/g) || []).length, 2);
+  assert.equal((loader.match(/lunea-manual-limit20-v17\.js\?v=1704/g) || []).length, 2);
+  assert.doesNotMatch(loader, /lunea-manual-structure-v1\.js\?v=103/);
 });
