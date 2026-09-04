@@ -6,6 +6,7 @@
    - Restyles the shared manual spread editor in burgundy / rose-gold.
    - Routes visible INTIMACY ORACLE cards to the verified final 6x6 atlas.
    - Keeps the verified ORACLE back separate from the Tarot back concept.
+   - Simplifies Oracle controls to Tarot / 1-card / 3-card choices only.
    This file does not call Gemini and does not change RNG. */
 (() => {
   const W = window;
@@ -78,6 +79,10 @@
         border-color:rgba(234,145,178,.34)!important;
         background:rgba(133,36,75,.20)!important;
       }
+      #luneaIntimacyOracleTools[data-lunea-clean-oracle="1"] .lio-mode{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+      #luneaIntimacyOracleTools .lunea-oracle-hint{
+        margin:0 0 7px;color:rgba(232,202,214,.74);font-size:10px;line-height:1.35;text-align:left;
+      }
 
       /* Oracle imagery only. Never use this selector for Tarot backs. */
       body.lunea-intimacy-reading .lio-card:not(.revealed) .lio-card-face{
@@ -130,6 +135,26 @@
     return cards.length > 0;
   }
 
+  function simplifyOracleTools() {
+    const tools = document.getElementById('luneaIntimacyOracleTools');
+    if (!tools) return false;
+    tools.dataset.luneaCleanOracle = '1';
+    tools.querySelector('.lio-qrow')?.remove();
+    tools.querySelector('.lio-suggestions')?.remove();
+    const labels = {0:'타로만',1:'오라클 1장',3:'오라클 3장'};
+    tools.querySelectorAll('[data-lio-mode]').forEach(button => {
+      const label = labels[Number(button.dataset.lioMode)];
+      if (label) button.textContent = label;
+    });
+    if (!tools.querySelector('.lunea-oracle-hint')) {
+      const hint = document.createElement('div');
+      hint.className = 'lunea-oracle-hint';
+      hint.textContent = 'INTIMACY 리딩에 함께 사용할 오라클 수';
+      tools.prepend(hint);
+    }
+    return true;
+  }
+
   function clearManualContext() {
     const panel = document.getElementById('luneaManualPanel');
     if (!panel) return false;
@@ -164,6 +189,7 @@
     }
     document.body?.classList?.add('lunea-intimacy-reading');
     markManualContext();
+    simplifyOracleTools();
     patchOracleCards();
     return true;
   }
@@ -188,6 +214,7 @@
     intimacyActive,
     apply,
     patchOracleCards,
+    simplifyOracleTools,
     markManualContext,
     clearManualContext,
   });
