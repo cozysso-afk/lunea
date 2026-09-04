@@ -38,7 +38,7 @@ jobs:
           node tests/intimacy-manual-oracle-back-integration.test.mjs
           node tests/intimacy-tarot-visual-v40.test.mjs
           python - <<'PY'
-          from PIL import Image, ImageDraw
+          from PIL import Image
           from pathlib import Path
           import numpy as np, statistics
           root=Path('assets/intimacy-oracle/cards')
@@ -46,7 +46,7 @@ jobs:
           for i in range(1,37):
               p=root/f'oracle_{i:02d}.png'
               im=Image.open(p).convert('RGB')
-              assert im.size==(150,250),(p,im.size)
+              assert im.size==(150,250), f'{p.name} wrong size {im.size}'
               a=np.asarray(im).astype(np.float32)/255.0
               art=a[5:210,5:145]
               lum=.2126*art[:,:,0]+.7152*art[:,:,1]+.0722*art[:,:,2]
@@ -55,14 +55,17 @@ jobs:
               lums.append(float(lum.mean())); sats.append(float(sat.mean()))
               footers.append(a[218:244,8:142].mean(axis=(0,1)))
           footer=np.asarray(footers)
-          print('V46 luminance',min(lums),max(lums),'sd',statistics.pstdev(lums))
-          print('V46 saturation sd',statistics.pstdev(sats))
-          print('V46 footer RGB spread',np.ptp(footer,axis=0))
-          assert statistics.pstdev(lums)<.022
-          assert max(lums)-min(lums)<.085
-          assert statistics.pstdev(sats)<.04
-          assert float(np.ptp(footer))<1e-7
-          # Contact sheet is an artifact only, never part of the runtime repo.
+          lum_sd=statistics.pstdev(lums)
+          lum_range=max(lums)-min(lums)
+          sat_sd=statistics.pstdev(sats)
+          footer_spread=np.ptp(footer,axis=0)
+          print('V46 luminance',min(lums),max(lums),'range',lum_range,'sd',lum_sd)
+          print('V46 saturation sd',sat_sd)
+          print('V46 footer RGB spread',footer_spread)
+          assert lum_sd < .012, f'luminance SD too high: {lum_sd}'
+          assert lum_range < .055, f'luminance range too wide: {lum_range}'
+          assert sat_sd < .03, f'saturation SD too high: {sat_sd}'
+          assert np.allclose(footer_spread,0,atol=1e-7), f'footer colors differ: {footer_spread}'
           sheet=Image.new('RGB',(900,1500),(8,4,8))
           for j in range(36):
               sheet.paste(Image.open(root/f'oracle_{j+1:02d}.png').convert('RGB'),((j%6)*150,(j//6)*250))
