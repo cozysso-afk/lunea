@@ -23,9 +23,10 @@
   let baseDraw = null;
 
   function getState(){ try{return state}catch{return null} }
+  function activeCategory(){const c=String(getState()?.category||'GENERAL').trim().toUpperCase();return ['GENERAL','LOVE','INTIMACY','CAREER','STOCK'].includes(c)?c:'GENERAL'}
   function clean(v){return String(v||'').normalize('NFKC').replace(/\s+/g,' ').trim()}
   function stripNum(v){return String(v||'').replace(/^\s*\d{1,2}\s*[.)]\s*/,'').trim()}
-  function plainPositions(items){return (Array.isArray(items)?items:[]).map(stripNum).filter(Boolean).slice(0,12)}
+  function plainPositions(items){return (Array.isArray(items)?items:[]).map(stripNum).filter(Boolean).slice(0,20)}
   function samePlainPositions(a,b){const A=plainPositions(a),B=plainPositions(b);return A.length===B.length&&A.every((x,i)=>x===B[i])}
   function normalizePositions(items){
     const out=[];
@@ -39,7 +40,7 @@
       spreadTitle:String(sp?.spreadTitle||''),
       designRationale:String(sp?.designRationale||''),
       layoutType:String(sp?.layoutType||''),
-      positions:(sp?.positions||[]).map(String).slice(0,12)
+      positions:(sp?.positions||[]).map(String).slice(0,20)
     };
   }
   function isStructural(sp){
@@ -51,7 +52,7 @@
     try{
       const book=W.LUNEA_QUESTION_CASEBOOK_V1;
       const learning=W.LUNEA_SPREAD_LEARNING_V1;
-      const learned=learning&&typeof learning.find==='function'?learning.find(question,3):[];
+      const learned=learning&&typeof learning.find==='function'?learning.find(question,3,{category:activeCategory()}):[];
       if(book&&typeof book.formatForPrompt==='function'){
         return {
           text:book.formatForPrompt(question,4),
@@ -156,9 +157,27 @@
     return out;
   }
 
+  function learnedLongSpread(question){
+    const learning=W.LUNEA_SPREAD_LEARNING_V1;
+    if(!learning||typeof learning.find!=='function')return null;
+    const hit=learning.find(question,1,{category:activeCategory()})?.[0];
+    const row=hit?.row;
+    const positions=Array.isArray(row?.positions)?row.positions.map(stripNum).filter(Boolean).slice(0,20):[];
+    if(positions.length<13||positions.length>20)return null;
+    if(!hit.exact&&Number(hit.score||0)<1.10)return null;
+    return {
+      spreadTitle:String(row.spreadTitle||`학습된 직접 배열 · ${positions.length}카드`),
+      designRationale:`[LEARNED LONG SPREAD V5] · 사용자 확정 ${positions.length}장 구조 재사용 · category=${activeCategory()} · similarity=${Number(hit.score||0).toFixed(2)}`,
+      layoutType:'learned-user-spread-v5',
+      positions:positions.map((x,i)=>`${i+1}. ${x}`),
+      _luneaPreflight:{version:2,intentSummary:'과거에 사용자가 직접 확정한 긴 배열과 높은 구조 유사도',primaryIntent:String(row.primaryIntent||'사용자 학습 배열 재사용'),targetStructure:String(row.targetStructure||'사용자 확정 구조'),requestedAxes:Array.isArray(row.requestedAxes)?row.requestedAxes.slice(0,20):positions,timeScope:'미지정',usedBaseline:false,usedLearnedLong:true,learnedMatches:[{id:row.id||'',score:Number(hit.score||0),question:String(row.question||''),spreadTitle:String(row.spreadTitle||''),profile:hit.rowProfile||row.structureProfile||{}}],casebookMatches:[],casebookStats:{learned:1,totalLearned:typeof learning.count==='function'?learning.count():0}}
+    };
+  }
+
   async function smartDesign(question,options={}){
     const q=clean(question);
     if(!q||typeof baseDesign!=='function')return baseDesign?.call(this,q);
+    if(!options.regenerate){const learned=learnedLongSpread(q);if(learned){W.LUNEA_AI_SPREAD_PREFLIGHT_LAST={question:q,baseline:null,ai:null,result:safeBaseline(learned)};return learned}}
     const baseline=await baseDesign.call(this,q);
     if(!baseline||!Array.isArray(baseline.positions)||!baseline.positions.length)return baseline;
     const ai=await askEditor(q,baseline,options);
@@ -200,7 +219,7 @@
     </div>`;
     document.body.appendChild(o); return o;
   }
-  function textareaLines(){return String($('luneaSpreadPreviewPositions')?.value||'').split(/\n+/).map(stripNum).filter(Boolean).slice(0,12)}
+  function textareaLines(){return String($('luneaSpreadPreviewPositions')?.value||'').split(/\n+/).map(stripNum).filter(Boolean).slice(0,20)}
   function updateCount(){const a=textareaLines(); if($('luneaSpreadPreviewCount'))$('luneaSpreadPreviewCount').textContent=`총 ${a.length}장 · 확정 전 카드 추출 없음`}
   function fill(sp){
     const m=sp?._luneaPreflight||{};
@@ -230,6 +249,7 @@
         const changed=title!==baseline.spreadTitle||!samePlainPositions(baseline.positions,lines);
         const pending=changed?{
           question,
+          category:activeCategory(),
           originalSpread:{spreadTitle:baseline.spreadTitle,positions:baseline.positions},
           correctedSpread:{spreadTitle:title,positions:numbered},
           meta:current?._luneaPreflight||{}
@@ -275,7 +295,7 @@
       finally{drawBtn.disabled=false;if(label)label.textContent='질문 분석 & 맞춤 배열 설계'}
     };
     ensurePreview(); installed=true;
-    W.LUNEA_AI_SPREAD_PREFLIGHT={version:2,design:smartDesign,getLast:()=>W.LUNEA_AI_SPREAD_PREFLIGHT_LAST||null,casebook:()=>W.LUNEA_QUESTION_CASEBOOK_V1||null};
+    W.LUNEA_AI_SPREAD_PREFLIGHT={version:2,design:smartDesign,learnedLong:learnedLongSpread,getLast:()=>W.LUNEA_AI_SPREAD_PREFLIGHT_LAST||null,casebook:()=>W.LUNEA_QUESTION_CASEBOOK_V1||null};
     console.info('🧠 LUNEA AI Spread Preflight V2 installed · casebook-grounded semantic QA + pre-draw preview + post-draw learning commit');
     return true;
   }

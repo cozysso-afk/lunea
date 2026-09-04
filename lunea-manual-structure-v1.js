@@ -281,7 +281,8 @@
           spreadTitle:title,
           positions,
           symmetric:!!document.getElementById('luneaManualAB')?.checked,
-          axes:parseManualPositions().axes
+          axes:parseManualPositions().axes,
+          category:originCategory
         });
       } catch (error) {
         console.warn('[LUNEA Manual V1] manual spread learning failed', error);

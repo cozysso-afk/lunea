@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA USER SPREAD LEARNING V1.4
+  LUNEA USER SPREAD LEARNING V1.5
   =============================
   Local-only correction memory for AI spread preflight.
 
@@ -37,17 +37,33 @@
   function positions(v){return (Array.isArray(v)?v:[]).map(stripNum).filter(Boolean).slice(0,MAX_POSITIONS)}
   function lines(v){return String(v||'').split(/\n+/).map(stripNum).filter(Boolean).slice(0,MAX_POSITIONS)}
   function samePositions(a,b){const A=positions(a),B=positions(b);return A.length===B.length&&A.every((x,i)=>x===B[i])}
+  const KNOWN_CATEGORIES=new Set(['GENERAL','LOVE','INTIMACY','CAREER','STOCK']);
+  function explicitCategory(v){const c=clean(v).toUpperCase();return KNOWN_CATEGORIES.has(c)?c:''}
+  function inferredCategory(question,meta={}){
+    const explicit=explicitCategory(meta.category||meta.cat);
+    if(explicit)return explicit;
+    const p=profile(question,meta);
+    if(p.domain==='intimacy')return 'INTIMACY';
+    if(p.domain==='relationship')return 'LOVE';
+    if(p.domain==='stock')return 'STOCK';
+    if(['career','study','money'].includes(p.domain))return 'CAREER';
+    return 'GENERAL';
+  }
+  function currentCategory(){try{return explicitCategory(state?.category)||''}catch{return ''}}
+  function rowCategory(row){return explicitCategory(row?.category)||inferredCategory(row?.question||'',{intentSummary:row?.intentSummary,primaryIntent:row?.primaryIntent,targetStructure:row?.targetStructure,requestedAxes:row?.requestedAxes})}
 
   function profile(question,meta={}){
     const q=clean(question).toLowerCase();
+    const categoryHint=explicitCategory(meta.category||meta.cat);
     const hint=[meta.intentSummary,meta.primaryIntent,meta.targetStructure,...(Array.isArray(meta.requestedAxes)?meta.requestedAxes:[])].map(clean).join(' ').toLowerCase();
     const all=`${q} ${hint}`;
-    const domain=/(주식|종목|매수|매도|익절|손절|추매|보유)/.test(all)?'stock'
+    const domain=categoryHint==='INTIMACY'||/(속궁합|성적\s*(?:궁합|끌림|욕구|리듬|텐션|만족)|신체적\s*(?:끌림|친밀|궁합)|성관계|섹스|키스|애무|첫\s*관계|잠자리|19\+|18\+)/.test(all)?'intimacy'
+      :/(주식|종목|매수|매도|익절|손절|추매|보유)/.test(all)?'stock'
       :/(시험|합격|공부|학습|강의|점수)/.test(all)?'study'
       :/(직장|회사|이직|퇴사|상사|동료|면접|커리어)/.test(all)?'career'
       :/(돈|금전|재정|지출|수입|부채)/.test(all)?'money'
       :/(건강|몸|컨디션|피곤|회복|수면)/.test(all)?'wellbeing'
-      :/(상대|연애|사랑|감정|마음|연락|재회|이별|썸|전남|전여|남친|여친)/.test(all)?'relationship'
+      :categoryHint==='LOVE'||/(상대|연애|사랑|감정|마음|연락|재회|이별|썸|전남|전여|남친|여친)/.test(all)?'relationship'
       :'general';
 
     const explicitPair=/(?:\ba\s*(?:와|과|랑|\/|·|vs|및|그리고)\s*b\b|a와b|a\/b|a·b|두\s*(?:사람|명|인연|상대|대상)|2\s*(?:사람|명|인연|상대|대상)|대칭\s*비교)/i.test(all);
@@ -74,7 +90,7 @@
       :/(예정|잡혀|앞두|내일\s*(?:만나|면접)|모레\s*(?:만나|면접))/.test(q)?'scheduled'
       :/(들어올|생길|잡힐|아직\s*(?:없|안)|기회)/.test(q)?'before_opportunity'
       :'current_or_unspecified';
-    return {version:1,domain,target,modes:[...new Set(modes)].sort(),stage};
+    return {version:2,domain,target,modes:[...new Set(modes)].sort(),stage};
   }
 
   function compatibility(queryProfile,rowProfile){
@@ -101,7 +117,14 @@
   function read(){
     try{
       const x=JSON.parse(localStorage.getItem(KEY)||'[]');
-      return Array.isArray(x)?x:[];
+      if(!Array.isArray(x))return[];
+      return x.map(row=>{
+        if(!row||typeof row!=='object')return row;
+        const category=rowCategory(row);
+        const meta={intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category};
+        const structureProfile=!row.structureProfile||Number(row.structureProfile.version||0)<2?profile(row.question||'',meta):row.structureProfile;
+        return {...row,category,structureProfile};
+      });
     }catch{return[]}
   }
   function write(rows){
@@ -127,11 +150,13 @@
     if(!changed)return {saved:false,reason:'unchanged'};
 
     const meta=payload.meta||corrected._luneaPreflight||{};
+    const category=explicitCategory(payload.category||meta.category)||inferredCategory(q,meta);
     const now=Date.now();
     const row={
       id:`u_${now.toString(36)}_${Math.random().toString(36).slice(2,7)}`,
       question:q,
       questionKey:compact(q),
+      category,
       spreadTitle:title||'사용자 교정 배열',
       positions:finalPos,
       originalTitle:clean(original.spreadTitle),
@@ -140,13 +165,13 @@
       primaryIntent:clean(meta.primaryIntent),
       targetStructure:clean(meta.targetStructure),
       requestedAxes:Array.isArray(meta.requestedAxes)?meta.requestedAxes.map(clean).filter(Boolean).slice(0,MAX_POSITIONS):[],
-      structureProfile:profile(q,meta),
+      structureProfile:profile(q,{...meta,category}),
       source:payload.source==='manual'?'manual':'ai_correction',
       createdAt:now,
       updatedAt:now
     };
     const rows=read();
-    const idx=rows.findIndex(x=>x&&x.questionKey===row.questionKey);
+    const idx=rows.findIndex(x=>x&&x.questionKey===row.questionKey&&rowCategory(x)===row.category);
     if(idx>=0){
       row.id=rows[idx].id||row.id;
       row.createdAt=rows[idx].createdAt||now;
@@ -166,7 +191,9 @@
       originalSpread:{spreadTitle:'',positions:[]},
       correctedSpread:{spreadTitle:clean(payload.spreadTitle)||'사용자 직접 배열',positions:finalPos},
       source:'manual',
+      category:payload.category,
       meta:{
+        category:payload.category,
         intentSummary:'사용자가 질문에 맞춰 처음부터 직접 설계한 최종 배열',
         primaryIntent:'사용자 직접 설계 배열',
         targetStructure:payload.symmetric?'두 사람 A/B 대칭 비교':'사용자 지정 대상 구조',
@@ -175,30 +202,34 @@
     });
   }
 
-  function score(q,row){
+  function score(q,row,options={}){
     const exact=compact(q)===String(row.questionKey||'')?3:0;
     const q3=grams(q,3),q4=grams(q,4),qw=words(q);
     const r3=grams(row.question,3),r4=grams(row.question,4),rw=words(row.question);
     const base=jac(q3,r3)*1.0+jac(q4,r4)*.72+overlap(qw,rw)*.42;
     const axes=[row.intentSummary,row.primaryIntent,row.targetStructure,...(row.requestedAxes||[]),...(row.positions||[])].join(' ');
     const semantic=jac(q3,grams(axes,3))*.30;
-    const queryProfile=profile(q);
-    const rowProfile=row.structureProfile||profile(row.question,{intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes});
+    const requestedCategory=explicitCategory(options.category);
+    const storedCategory=rowCategory(row);
+    if(requestedCategory&&storedCategory!==requestedCategory)return {value:-99,blocked:true,reason:'category_mismatch',queryProfile:profile(q,{category:requestedCategory}),rowProfile:row.structureProfile,exact:!!exact};
+    const queryProfile=profile(q,{category:requestedCategory});
+    const rowProfile=!row.structureProfile||Number(row.structureProfile.version||0)<2?profile(row.question,{intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category:storedCategory}):row.structureProfile;
     const fit=compatibility(queryProfile,rowProfile);
-    return {value:exact+base+semantic+fit.boost,blocked:fit.blocked,reason:fit.reason,queryProfile,rowProfile};
+    return {value:exact+base+semantic+fit.boost,blocked:fit.blocked,reason:fit.reason,queryProfile,rowProfile,exact:!!exact};
   }
 
-  function find(question,limit=3){
+  function find(question,limit=3,options={}){
     const q=clean(question);if(!q)return[];
-    return read().map(row=>{const ranked=score(q,row);return {row,score:ranked.value,blocked:ranked.blocked,reason:ranked.reason,queryProfile:ranked.queryProfile,rowProfile:ranked.rowProfile}})
+    const opts=typeof options==='string'?{category:options}:(options||{});
+    return read().map(row=>{const ranked=score(q,row,opts);return {row,score:ranked.value,blocked:ranked.blocked,reason:ranked.reason,queryProfile:ranked.queryProfile,rowProfile:ranked.rowProfile,exact:ranked.exact}})
       .filter(x=>!x.blocked)
       .sort((a,b)=>b.score-a.score)
       .slice(0,Math.max(1,Math.min(5,Number(limit)||3)))
       .filter(x=>x.score>.20);
   }
 
-  function formatForPrompt(question,limit=3){
-    const rows=find(question,limit);
+  function formatForPrompt(question,limit=3,options={}){
+    const rows=find(question,limit,options);
     if(!rows.length)return '사용자 교정 사례 없음';
     return rows.map((x,i)=>{
       const r=x.row;
@@ -214,7 +245,7 @@
     if(!book||typeof book.formatForPrompt!=='function'||book.__luneaLearningBridge)return false;
     const baseFormat=book.formatForPrompt.bind(book);
     book.formatForPrompt=(question,limit=4)=>{
-      const learned=formatForPrompt(question,Math.min(3,limit));
+      const learned=formatForPrompt(question,Math.min(3,limit),{category:currentCategory()});
       const staticCases=baseFormat(question,limit);
       if(learned==='사용자 교정 사례 없음')return staticCases;
       return `[최우선 · 이 사용자가 직접 고친 과거 정답]\n아래 사용자 교정 사례가 현재 질문과 충분히 유사하면 정적 사례보다 우선 참고한다.\n질문 구조가 다르면 포지션 문구를 그대로 복사하지 않는다.\n\n${learned}\n\n[정적 LUNEA 사례집]\n${staticCases}`;
@@ -295,7 +326,7 @@
   }
 
   W.LUNEA_SPREAD_LEARNING_V1={
-    version:4,
+    version:5,
     key:KEY,
     max:MAX,
     maxPositions:MAX_POSITIONS,
@@ -305,6 +336,7 @@
     profile,
     compatibility,
     formatForPrompt,
+    categoryOf:rowCategory,
     list:()=>read().slice(),
     count:()=>read().length,
     clear:()=>{localStorage.removeItem(KEY);return true}
@@ -312,5 +344,5 @@
 
   if(document.readyState==='complete')setTimeout(boot,0);
   else W.addEventListener('load',boot,{once:true});
-  console.info(`🧠 LUNEA User Spread Learning V1.4 loaded · ${read().length}/${MAX} learned corrections · AI edits + manual spreads · structural small-data matching`);
+  console.info(`🧠 LUNEA User Spread Learning V1.5 loaded · ${read().length}/${MAX} learned corrections · AI edits + manual spreads · structural small-data matching`);
 })();

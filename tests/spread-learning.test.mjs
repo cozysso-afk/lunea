@@ -30,7 +30,7 @@ vm.runInNewContext(source, {
 
 const learning = window.LUNEA_SPREAD_LEARNING_V1;
 assert.ok(learning, 'learning API should be exposed');
-assert.equal(learning.version, 4);
+assert.equal(learning.version, 5);
 assert.equal(learning.max, 1000);
 
 const scenario = learning.record({
