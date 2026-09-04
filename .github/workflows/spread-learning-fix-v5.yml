@@ -6,6 +6,7 @@ permissions:
   contents: write
 jobs:
   fix-and-test:
+    if: ${{ !contains(github.event.head_commit.message, 'fix(learning): isolate categories and reuse strong long spreads') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -13,7 +14,9 @@ jobs:
           ref: work/spread-learning-fix-v5-20260904
           fetch-depth: 0
       - name: Apply deterministic patch
-        run: python3 tools/apply_spread_learning_fix_v5.py
+        run: |
+          python3 tools/apply_spread_learning_fix_v5.py
+          python3 tools/apply_spread_learning_fix_v5_followup.py
       - name: Syntax checks
         run: |
           node --check lunea-user-spread-learning-v1.js
