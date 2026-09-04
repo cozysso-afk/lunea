@@ -9,7 +9,7 @@ const workflow = fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader
 
 const cards = Object.fromEntries(Array.from({length:36},(_,i)=>{
   const code=`O${String(i+1).padStart(2,'0')}`;
-  return [code,{code,enTitle:`CARD_${i+1}`,koTitle:`카드${i+1}`,family:'spark',tone:'supportive',pace:'steady',asset:'./assets/intimacy-oracle/oracle_atlas_v36.jpg',sprite:{column:i%6,row:Math.floor(i/6),columns:6,rows:6}}];
+  return [code,{code,enTitle:`CARD_${i+1}`,koTitle:`카드${i+1}`,family:'spark',tone:'supportive',pace:'steady',asset:'./assets/intimacy-oracle/oracle_atlas_final.png',sprite:{column:i%6,row:Math.floor(i/6),columns:6,rows:6}}];
 }));
 const window={LUNEA_INTIMACY_ORACLE_V35:{cards}}; window.window=window;
 vm.runInNewContext(source,{window,console,crypto:webcrypto,Uint32Array,Object,Array,Set,String,Number,RegExp,Math,JSON});
@@ -34,26 +34,30 @@ assert.equal(core.assignOracleForTarotIndex(6,9,'A/B 친밀감 비교',3),2);
 
 const questions=core.fallbackQuestions('A/B 친밀감 비교');
 assert.equal(questions.length,3); assert.ok(questions.every(q=>q.length>=20));
-assert.match(source,/AI 질문 추천/);
-assert.match(source,/버튼을 눌렀을 때만 API 사용/);
-assert.match(source,/responseMimeType:'application\/json'/);
-assert.match(source,/AI 오류 fallback/);
+
+// Paid question generation was removed. Oracle draw itself must never call Gemini.
+assert.doesNotMatch(source,/AI 질문 추천/);
+assert.doesNotMatch(source,/generativelanguage\.googleapis\.com/);
+assert.doesNotMatch(source,/responseMimeType/);
 assert.match(source,/LUNEA_INTIMACY_ORACLE_DRAFT_V1/);
 assert.match(source,/intimacyOracle/);
 assert.match(source,/buildOraclePromptLayer/);
-assert.match(source,/back_intimacy_final\.jpg/);
-assert.match(source,/backgroundSize = `\$\{columns \* 100\}% \$\{rows \* 100\}%`/);
+assert.equal(core.backAsset,'./assets/intimacy-oracle/back_intimacy_final.png');
+assert.equal(core.atlasAsset,'./assets/intimacy-oracle/oracle_atlas_final.png');
+assert.match(source,/ATLAS_ASSET/);
 
 assert.match(bridge,/lunea-intimacy-oracle-v35\.js\?v=352/);
 assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3610/);
 assert.match(bridge,/__LUNEA_READING_ACTION_ORDER_V33__/);
 assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 
-const jpg = fs.readFileSync(new URL('../assets/intimacy-oracle/oracle_atlas_v36.jpg', import.meta.url));
-assert.ok(jpg.length > 5000,'oracle atlas is unexpectedly small');
-assert.deepEqual([...jpg.subarray(0,3)],[0xff,0xd8,0xff],'oracle atlas must be a valid JPEG header');
-assert.deepEqual([...jpg.subarray(-2)],[0xff,0xd9],'oracle atlas must end with JPEG EOI');
-const svg = fs.readFileSync(new URL('../assets/intimacy-oracle/back_intimacy.svg', import.meta.url),'utf8');
-assert.match(svg,/<svg[\s>]/);
-assert.match(svg,/LUNEA/);
-console.log('LUNEA INTIMACY ORACLE UI V36 secure draw / A-B / helper / asset contract: PASS');
+for (const [name,minBytes] of [
+  ['oracle_atlas_final.png',300_000],
+  ['back_intimacy_final.png',100_000],
+]) {
+  const png = fs.readFileSync(new URL(`../assets/intimacy-oracle/${name}`, import.meta.url));
+  assert.ok(png.length > minBytes,`${name} is unexpectedly small`);
+  assert.deepEqual([...png.subarray(0,8)],[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a],`${name} must be a valid PNG`);
+}
+
+console.log('LUNEA INTIMACY ORACLE UI V36 secure draw / A-B / PNG asset contract: PASS');
