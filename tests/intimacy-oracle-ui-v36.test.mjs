@@ -35,16 +35,15 @@ assert.equal(core.assignOracleForTarotIndex(6,9,'A/B 친밀감 비교',3),2);
 const questions=core.fallbackQuestions('A/B 친밀감 비교');
 assert.equal(questions.length,3); assert.ok(questions.every(q=>q.length>=20));
 
-// Paid question generation was removed. Oracle draw itself must never call Gemini.
 assert.doesNotMatch(source,/AI 질문 추천/);
 assert.doesNotMatch(source,/generativelanguage\.googleapis\.com/);
 assert.doesNotMatch(source,/responseMimeType/);
 assert.match(source,/LUNEA_INTIMACY_ORACLE_DRAFT_V1/);
 assert.match(source,/intimacyOracle/);
 assert.match(source,/buildOraclePromptLayer/);
-assert.equal(core.backAsset,'./assets/intimacy-oracle/back_intimacy_final.png');
+assert.equal(core.backAsset,'./assets/intimacy-oracle/oracle_back_intimacy_final.png');
 assert.equal(core.atlasAsset,'./assets/intimacy-oracle/oracle_atlas_final.png');
-assert.match(source,/ATLAS_ASSET/);
+assert.doesNotMatch(source,/tarot_back_intimacy_final\.png/);
 
 assert.match(bridge,/lunea-intimacy-oracle-v35\.js\?v=352/);
 assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3611/);
@@ -53,11 +52,11 @@ assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 
 for (const [name,minBytes] of [
   ['oracle_atlas_final.png',300_000],
-  ['back_intimacy_final.png',100_000],
+  ['oracle_back_intimacy_final.png',100_000],
 ]) {
   const png = fs.readFileSync(new URL(`../assets/intimacy-oracle/${name}`, import.meta.url));
   assert.ok(png.length > minBytes,`${name} is unexpectedly small`);
   assert.deepEqual([...png.subarray(0,8)],[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a],`${name} must be a valid PNG`);
 }
 
-console.log('LUNEA INTIMACY ORACLE UI V36 secure draw / A-B / PNG asset contract: PASS');
+console.log('LUNEA INTIMACY ORACLE UI V36 secure draw / A-B / explicit Oracle PNG contract: PASS');
