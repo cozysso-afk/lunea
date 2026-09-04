@@ -46,7 +46,7 @@ assert.equal(core.atlasAsset,'./assets/intimacy-oracle/oracle_atlas_final.png');
 assert.doesNotMatch(source,/tarot_back_intimacy_final\.png/);
 
 assert.match(bridge,/lunea-intimacy-oracle-v35\.js\?v=352/);
-assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3611/);
+assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3612/);
 assert.match(bridge,/__LUNEA_READING_ACTION_ORDER_V33__/);
 assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 
