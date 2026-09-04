@@ -186,7 +186,11 @@
       back.className = 'back';
 
       const backImg = document.createElement('img');
-      backImg.src = prefix + '.PNG';
+      let backSrc = prefix + '.PNG';
+      try {
+        if (String(state?.category || '').toUpperCase() === 'INTIMACY') backSrc = './assets/intimacy-oracle/tarot_back_intimacy_final.png';
+      } catch {}
+      backImg.src = backSrc;
       backImg.alt = '';
       tuneImg(backImg);
       backImg.addEventListener('error', () => {

@@ -44,6 +44,11 @@
     } catch {}
 
     document.getElementById('luneaManualPanel')?.classList.add('show');
+    if (cat === 'INTIMACY') {
+      W.__LUNEA_INTIMACY_ACTIVE__ = true;
+      document.body?.classList?.add('lunea-intimacy-reading');
+      [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));
+    }
     const label = document.getElementById('drawLabel');
     if (label) label.textContent = '직접 배열로 카드 펼치기';
     setTimeout(() => document.getElementById('luneaManualPositions')?.focus(), 0);

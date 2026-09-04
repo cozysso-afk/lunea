@@ -267,6 +267,13 @@
       document.getElementById('cards')?.appendChild(makeCardWrapper(i, card, isReversed));
     });
 
+    if (originCategory === 'INTIMACY') {
+      W.__LUNEA_INTIMACY_ACTIVE__ = true;
+      document.body?.classList?.add('lunea-intimacy-reading');
+      W.LUNEA_INTIMACY_BURGUNDY_V40?.repairTarotCards?.();
+      W.LUNEA_INTIMACY_ORACLE_UI_V36?.performOracleDraw?.();
+    }
+
     if (learn && W.LUNEA_SPREAD_LEARNING_V1?.recordManual) {
       try {
         W.LUNEA_SPREAD_LEARNING_V1.recordManual({
@@ -379,6 +386,11 @@
       state.__luneaManualOriginCategory = originCategory;
       state.category = originCategory;
       state.__luneaIntimacyReading = originCategory === 'INTIMACY';
+      if (originCategory === 'INTIMACY') {
+        W.__LUNEA_INTIMACY_ACTIVE__ = true;
+        document.body?.classList?.add('lunea-intimacy-reading');
+        [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));
+      }
       setManualPanelVisible(true);
       const label = document.getElementById('drawLabel');
       if (label) label.textContent = '직접 배열로 카드 펼치기';

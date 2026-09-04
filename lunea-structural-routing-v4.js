@@ -17,8 +17,8 @@
     document.write('<script src="./lunea-top-spacing-v4.js?v=401"><\/script>');
     document.write('<script src="./lunea-gemini-model-picker-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-structural-routing-v4-base.js?v=412"><\/script>');
-    document.write('<script src="./lunea-manual-structure-v1.js?v=103"><\/script>');
-    document.write('<script src="./lunea-manual-everywhere-v1.js?v=102"><\/script>');
+    document.write('<script src="./lunea-manual-structure-v1.js?v=104"><\/script>');
+    document.write('<script src="./lunea-manual-everywhere-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-journal-v2.js?v=201"><\/script>');
@@ -51,7 +51,7 @@
     document.write('<script src="./lunea-reading-polish-v14.js?v=1401"><\/script>');
     document.write('<script src="./lunea-timing-moondial-sync-v15.js?v=1501"><\/script>');
     document.write('<script src="./lunea-timing-ab-inline-v16.js?v=1601"><\/script>');
-    document.write('<script src="./lunea-manual-limit20-v17.js?v=1703"><\/script>');
+    document.write('<script src="./lunea-manual-limit20-v17.js?v=1704"><\/script>');
     document.write('<script src="./lunea-horary-balance-v19-5.js?v=1905"><\/script>');
     document.write('<script src="./lunea-cardback-restore-v19.js?v=6a5471da654d"><\/script>');
     document.write('<script src="./lunea-universal-ai-opal-v20.js?v=2002"><\/script>');
@@ -83,8 +83,8 @@
     './lunea-top-spacing-v4.js?v=401',
     './lunea-gemini-model-picker-v1.js?v=101',
     './lunea-structural-routing-v4-base.js?v=412',
-    './lunea-manual-structure-v1.js?v=103',
-    './lunea-manual-everywhere-v1.js?v=102',
+    './lunea-manual-structure-v1.js?v=104',
+    './lunea-manual-everywhere-v1.js?v=103',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
     './lunea-reading-journal-v2.js?v=201',
@@ -117,7 +117,7 @@
     './lunea-reading-polish-v14.js?v=1401',
     './lunea-timing-moondial-sync-v15.js?v=1501',
     './lunea-timing-ab-inline-v16.js?v=1601',
-    './lunea-manual-limit20-v17.js?v=1703',
+    './lunea-manual-limit20-v17.js?v=1704',
     './lunea-horary-balance-v19-5.js?v=1905',
     './lunea-cardback-restore-v19.js?v=6a5471da654d',
     './lunea-universal-ai-opal-v20.js?v=2002',

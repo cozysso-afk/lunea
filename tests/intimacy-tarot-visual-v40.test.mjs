@@ -7,7 +7,7 @@ const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', im
 const tarotBack = new URL('../assets/intimacy-oracle/tarot_back_intimacy_final.png', import.meta.url);
 
 test('INTIMACY tarot uses its dedicated final PNG back instead of GENERAL or Oracle fallback', () => {
-  assert.match(source, /const RELEASE = '40\.2'/);
+  assert.match(source, /const RELEASE = '40\.3'/);
   assert.match(source, /tarot_back_intimacy_final\.png/);
   assert.match(source, /TAROT_BACK_SRC/);
   assert.doesNotMatch(source, /back_intimacy\.svg/);
@@ -32,7 +32,7 @@ test('INTIMACY tarot fronts keep the complete Rider-Waite artwork visible and re
 
 test('card factory and dynamic 20-card draws are repaired after iOS creates them', () => {
   assert.match(source, /wrapCardFactory/);
-  assert.match(source, /__luneaIntimacyV402Wrapped/);
+  assert.match(source, /__luneaIntimacyV403Wrapped/);
   assert.match(source, /new MutationObserver/);
   assert.match(source, /childList:true, subtree:true/);
   assert.match(source, /requestAnimationFrame\(repairTarotCards\)/);

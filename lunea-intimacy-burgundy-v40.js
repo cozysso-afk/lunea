@@ -3,7 +3,7 @@
 /* LUNEA INTIMACY burgundy cabinet + tarot skin V40.2 */
 (() => {
   const W = window;
-  const RELEASE = '40.2';
+  const RELEASE = '40.3';
   const KEY = '__LUNEA_INTIMACY_BURGUNDY_V40__';
   W[KEY] = RELEASE;
 
@@ -21,8 +21,8 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
   function isIntimacyActive() {
-    try { return String(state?.category || '').toUpperCase() === 'INTIMACY'; }
-    catch { return false; }
+    try { return String(state?.category || '').toUpperCase() === 'INTIMACY' || !!W.__LUNEA_INTIMACY_ACTIVE__ || document.body?.classList?.contains('lunea-intimacy-reading'); }
+    catch { return !!W.__LUNEA_INTIMACY_ACTIVE__; }
   }
 
   function ensureStyle() {
@@ -175,22 +175,23 @@
   function wrapCardFactory() {
     const current = W.makeCardWrapper;
     if (typeof current !== 'function') return false;
-    if (current.__luneaIntimacyV402Wrapped) return true;
+    if (current.__luneaIntimacyV403Wrapped) return true;
     const wrapped = function(...args) {
       const wrapper = current.apply(this, args);
       if (isIntimacyActive()) repairTarotWrapper(wrapper);
       return wrapper;
     };
-    wrapped.__luneaIntimacyV402Wrapped = true;
+    wrapped.__luneaIntimacyV403Wrapped = true;
     wrapped.__luneaPriorMakeCardWrapper = current;
     W.makeCardWrapper = wrapped;
+    try { makeCardWrapper = wrapped; } catch {}
     return true;
   }
 
   function observeCards() {
     const cards = document.getElementById('cards');
-    if (!cards || cards.__luneaIntimacyV402Observed) return;
-    cards.__luneaIntimacyV402Observed = true;
+    if (!cards || cards.__luneaIntimacyV403Observed) return;
+    cards.__luneaIntimacyV403Observed = true;
     new MutationObserver(() => requestAnimationFrame(repairTarotCards)).observe(cards, {childList:true, subtree:true});
   }
 
