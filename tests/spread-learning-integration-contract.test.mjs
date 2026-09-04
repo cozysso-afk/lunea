@@ -35,7 +35,8 @@ assert.match(preflight, /QUESTION SEGMENT FALLBACK V6/, 'detailed questions need
 assert.match(loader, /lunea-ai-spread-preflight-v2\.js\?v=105/, 'preflight cache must be bumped for V6 behavior');
 assert.match(learning, /const MAX=1000/, 'local learning cap must be 1000');
 assert.match(cloud, /const MAX=1000/, 'cloud learning cap must match local 1000');
-assert.match(loader, /lunea-learning-cloud-sync-v1\.js\?v=103/, 'agreed optional private cloud sync must remain loaded');
+assert.match(loader, /lunea-learning-cloud-sync-v1\.js\?v=104/, 'optional private cloud sync must load the v3 reprofiling path');
+assert.match(loader, /lunea-user-spread-learning-v1\.js\?v=108/, 'learning engine cache must load canonical v3 row upgrader');
 
 assert.match(migration, /offset 1000/, 'release migration must raise server retention to 1000');
 assert.match(migration, /spread_learning_common_candidates/, 'release migration must prepare separated common-promotion candidates');
