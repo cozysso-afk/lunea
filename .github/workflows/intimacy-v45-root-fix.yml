@@ -14,7 +14,9 @@ jobs:
       - name: Install image tooling
         run: python -m pip install --quiet pillow numpy
       - name: Apply deterministic repair
-        run: python scripts/intimacy_v45_root_fix.py
+        run: |
+          python scripts/intimacy_v45_root_fix.py
+          python scripts/intimacy_v45_test_contract.py
       - name: Validate runtime and normalized assets
         shell: bash
         run: |
@@ -60,6 +62,6 @@ jobs:
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lunea-cardback-restore-v19.js lunea-ios-performance-v3.js lunea-intimacy-burgundy-v40.js lunea-intimacy-readability-v36.js lunea-intimacy-clean-v39.js lunea-intimacy-oracle-ui-v36.js tests/intimacy-v45-root-regression.test.mjs tests/intimacy-readability-v36.test.mjs tests/intimacy-clean-v39.test.mjs tests/intimacy-visual-cohesion-v44.test.mjs assets/intimacy-oracle/cards/oracle_*.png
+          git add lunea-cardback-restore-v19.js lunea-ios-performance-v3.js lunea-intimacy-burgundy-v40.js lunea-intimacy-readability-v36.js lunea-intimacy-clean-v39.js lunea-intimacy-oracle-ui-v36.js tests/intimacy-v45-root-regression.test.mjs tests/intimacy-readability-v36.test.mjs tests/intimacy-clean-v39.test.mjs tests/intimacy-visual-cohesion-v44.test.mjs tests/intimacy-tarot-visual-v40.test.mjs assets/intimacy-oracle/cards/oracle_*.png
           git commit -m 'fix(intimacy): remove general-back flash and normalize Oracle art'
           git push origin HEAD:work/intimacy-visual-assets-v45-20260904
