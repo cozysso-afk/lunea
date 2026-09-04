@@ -21,7 +21,7 @@
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
   const ORACLE_SOURCES = Object.freeze([
     './lunea-intimacy-oracle-v35.js?v=352',
-    './lunea-intimacy-oracle-ui-v36.js?v=3610'
+    './lunea-intimacy-oracle-ui-v36.js?v=3611'
   ]);
   let active = false;
   let oracleLoadPromise = null;
@@ -76,8 +76,6 @@
       if (!requestAdultAcknowledgement()) return;
       setActive(true);
       if (typeof openSheet !== 'function') return;
-      // Preserve the real category. LOVE here used to make automatic INTIMACY
-      // spreads fall back into LOVE styling/card-back routing.
       openSheet('INTIMACY', item.dataset.title, item.dataset.desc, 0);
       try {
         state.category = 'INTIMACY';
