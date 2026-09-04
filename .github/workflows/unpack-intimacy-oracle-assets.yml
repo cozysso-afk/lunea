@@ -63,3 +63,4 @@ jobs:
           node tests/intimacy-ai-bridge-v34.test.mjs
           node tests/intimacy-readability-v36.test.mjs
           node tests/intimacy-clean-v39.test.mjs
+# final predeploy rerun after loader-test repair
