@@ -41,7 +41,7 @@ assert.match(source,/AI 오류 fallback/);
 assert.match(source,/LUNEA_INTIMACY_ORACLE_DRAFT_V1/);
 assert.match(source,/intimacyOracle/);
 assert.match(source,/buildOraclePromptLayer/);
-assert.match(source,/back_intimacy\.svg/);
+assert.match(source,/back_intimacy_final\.jpg/);
 assert.match(source,/backgroundSize = `\$\{columns \* 100\}% \$\{rows \* 100\}%`/);
 
 assert.match(bridge,/lunea-intimacy-oracle-v35\.js\?v=352/);

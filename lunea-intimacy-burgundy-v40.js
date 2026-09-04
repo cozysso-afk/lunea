@@ -15,7 +15,6 @@
     }
   })();
   const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v40.png?v=${encodeURIComponent(SELF_VERSION)}`;
-  const CARD_BACK_SRC = `./assets/intimacy-oracle/back_intimacy.svg?v=${encodeURIComponent(SELF_VERSION)}`;
   const STYLE_ID = 'luneaIntimacyBurgundyV40Style';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -95,7 +94,6 @@
         box-shadow:0 7px 18px rgba(15,2,10,.58),0 0 0 1px rgba(205,111,148,.10)!important;
       }
       #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back{
-        background:#250915 url('${CARD_BACK_SRC}') center/cover no-repeat!important;
         border:1px solid rgba(235,151,183,.45)!important;
       }
       #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back::after{display:none!important}
@@ -137,23 +135,8 @@
     wrapper.classList.add('lunea-intimacy-tarot-card');
     wrapper.dataset.luneaIntimacyTarotRelease = RELEASE;
 
-    const back = $('.back', wrapper);
-    if (back) {
-      back.style.setProperty('background-image', `url("${CARD_BACK_SRC}")`, 'important');
-      back.style.setProperty('background-size', 'cover', 'important');
-      back.style.setProperty('background-position', 'center', 'important');
-      let img = $(':scope > img', back);
-      if (!img) {
-        img = document.createElement('img');
-        img.alt = '';
-        back.prepend(img);
-      }
-      img.removeAttribute('onerror');
-      img.style.removeProperty('display');
-      img.style.removeProperty('opacity');
-      img.dataset.luneaIntimacyCardback = RELEASE;
-      if (img.getAttribute('src') !== CARD_BACK_SRC) img.setAttribute('src', CARD_BACK_SRC);
-    }
+    /* Tarot back ownership deliberately stays with the core/category back system.
+       INTIMACY Oracle assets must never be injected into Tarot backs here. */
 
     const frontImg = $('.front > img', wrapper);
     if (frontImg) {
@@ -240,7 +223,7 @@
   W.LUNEA_INTIMACY_BURGUNDY_V40 = {
     version:RELEASE,
     icon:ICON_SRC,
-    cardBack:CARD_BACK_SRC,
+    cardBack:null,
     apply,
     repairTarotCards,
     repairTarotWrapper,
