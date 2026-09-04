@@ -5,17 +5,28 @@ import test from 'node:test';
 const source = fs.readFileSync(new URL('../lunea-intimacy-burgundy-v40.js', import.meta.url), 'utf8');
 const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
 
-const pngUrl = new URL('../assets/intimacy-oracle/intimacy_sector_final.png', import.meta.url);
+const sectorUrl = new URL('../assets/intimacy-oracle/intimacy_sector_final.png', import.meta.url);
+const tarotBackUrl = new URL('../assets/intimacy-oracle/tarot_back_intimacy_final.png', import.meta.url);
 
-test('V40 ships the final PNG and uses it for INTIMACY branding', () => {
-  assert.equal(fs.existsSync(pngUrl), true);
-  const bytes = fs.readFileSync(pngUrl);
-  assert.equal(bytes.subarray(1, 4).toString('ascii'), 'PNG');
-  assert.ok(bytes.length > 100_000, 'final sector PNG must not be a tiny placeholder');
+test('V40 uses separate final PNGs for branding and Tarot back', () => {
+  assert.equal(fs.existsSync(sectorUrl), true);
+  assert.equal(fs.existsSync(tarotBackUrl), true);
+  for (const url of [sectorUrl, tarotBackUrl]) {
+    const bytes = fs.readFileSync(url);
+    assert.deepEqual([...bytes.subarray(0,8)],[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]);
+    assert.ok(bytes.length > 100_000, 'final PNG must not be a tiny placeholder');
+  }
   assert.match(source, /intimacy_sector_final\.png/);
-  assert.doesNotMatch(source, /intimacy_sector_v40\.png/);
-  assert.match(source, /forceIcon\(\$\('\.cat-icon'/);
-  assert.match(source, /lunea-v8-tile\[data-key="intimacy"\]/);
+  assert.match(source, /tarot_back_intimacy_final\.png/);
+  assert.doesNotMatch(source, /oracle_back_intimacy_final\.png/);
+  assert.match(source, /backImg\.setAttribute\('src', TAROT_BACK_SRC\)/);
+});
+
+test('shared back restore runs first and INTIMACY Tarot back wins last', () => {
+  const restoreAt = source.indexOf('repairVisibleReading?.()');
+  const applyAt = source.indexOf('wrappers.forEach(repairTarotWrapper)', restoreAt);
+  assert.ok(restoreAt >= 0);
+  assert.ok(applyAt > restoreAt);
 });
 
 test('V40 gives the INTIMACY tile a dedicated burgundy wine palette', () => {
