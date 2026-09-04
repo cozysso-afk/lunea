@@ -1,0 +1,70 @@
+name: Question routing V2 patch
+
+on:
+  push:
+    branches: [audit/lunea-benchmark-v1-20260904]
+    paths:
+      - tools/patch-question-routing-v2.py
+      - .github/workflows/question-routing-v2-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: audit/lunea-benchmark-v1-20260904
+          fetch-depth: 0
+      - name: Apply routing patch
+        run: python3 tools/patch-question-routing-v2.py
+      - name: Syntax check
+        run: node --check lunea-user-spread-learning-v1.js
+      - name: Run standalone 20-question benchmark
+        run: node tests/lunea-benchmark-question-routing-v1.mjs
+      - name: Run production-context 20-question benchmark
+        run: |
+          cp tests/lunea-benchmark-question-routing-v1.mjs /tmp/lunea-benchmark-prod.mjs
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('/tmp/lunea-benchmark-prod.mjs')
+          s=p.read_text()
+          # The copied test runs from /tmp, so point its source loader back to the checkout.
+          s=s.replace("const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');", "const read = name => fs.readFileSync(new URL(`file://${process.cwd()}/${name}`), 'utf8');")
+          for marker in [
+            "name:'단순 감정'", "name:'감정↔행동'", "name:'조건부 연락'", "name:'두 사람 감정 비교'", "name:'비선택 대칭 인식'",
+            "name:'연락 중단 원인'", "name:'사후 사건 인식'", "name:'관계 변화 시기'", "name:'YES/NO 연락 시기'", "name:'1인 다중 시나리오'",
+            "name:'장문 복합 관계'", "name:'A/B 복합 대칭'", "name:'무행동 조건 관계'", "name:'극장문 스트레스'"
+          ]:
+            i=s.find(marker)
+            if i<0: continue
+            j=s.find('}',i)
+            if "category:'" not in s[i:j]: s=s[:j]+",category:'LOVE'"+s[j:]
+          for marker,cat in [("name:'커리어 선택 비교'",'CAREER'),("name:'시험 병목'",'CAREER'),("name:'투자 근거/반증'",'STOCK')]:
+            i=s.find(marker)
+            if i<0: continue
+            j=s.find('}',i)
+            if "category:'" not in s[i:j]: s=s[:j]+f",category:'{cat}'"+s[j:]
+          p.write_text(s)
+          PY
+          node /tmp/lunea-benchmark-prod.mjs
+      - name: Run learning and INTIMACY regression tests
+        run: |
+          node --test tests/spread-learning-v5-runtime.test.mjs
+          node --test tests/spread-learning-integration-contract.test.mjs
+          node --test tests/manual-category-preservation.test.mjs
+          node --test tests/intimacy-manual-oracle-back-integration.test.mjs
+          node --test tests/intimacy-ai-bridge-v34.test.mjs
+      - name: Commit verified runtime patch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lunea-user-spread-learning-v1.js
+          if git diff --cached --quiet; then
+            echo "No runtime changes to commit"
+          else
+            git commit -m "fix(learning): strengthen natural-language question routing"
+            git push origin HEAD:audit/lunea-benchmark-v1-20260904
+          fi
