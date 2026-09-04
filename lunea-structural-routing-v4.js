@@ -29,7 +29,7 @@
     document.write('<script src="./lunea-question-casebook-ranker-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-user-spread-learning-v1.js?v=107"><\/script>');
     document.write('<script src="./lunea-learning-cloud-sync-v1.js?v=103"><\/script>');
-    document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=104"><\/script>');
+    document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=105"><\/script>');
     document.write('<script src="./lunea-reading-flow-v5.js?v=501"><\/script>');
     document.write('<script src="./lunea-transit-range-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-transit-long-run-v1.js?v=102"><\/script>');
@@ -95,7 +95,7 @@
     './lunea-question-casebook-ranker-v1.js?v=101',
     './lunea-user-spread-learning-v1.js?v=107',
     './lunea-learning-cloud-sync-v1.js?v=103',
-    './lunea-ai-spread-preflight-v2.js?v=104',
+    './lunea-ai-spread-preflight-v2.js?v=105',
     './lunea-reading-flow-v5.js?v=501',
     './lunea-transit-range-v1.js?v=103',
     './lunea-transit-long-run-v1.js?v=102',

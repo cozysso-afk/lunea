@@ -60,19 +60,27 @@ test('legacy local memories are retained and assigned a category instead of bein
   assert.equal(learning.list()[0].structureProfile.domain,'intimacy');
 });
 
-test('preflight resolves only strong 13-20 learned structures and preserves category filter', () => {
-  let source=read('lunea-ai-spread-preflight-v2.js').replace(/\n\}\)\(\);\s*$/, '\nwindow.__auditLong=learnedLongSpread;\n})();');
-  let seenOptions=null; let score=1.25;
-  const state={category:'INTIMACY'};
-  const row={id:'long1',spreadTitle:'사용자 15장 구조',positions:Array.from({length:15},(_,i)=>`축 ${i+1}`),primaryIntent:'깊은 친밀감 구조',targetStructure:'특정 1인',requestedAxes:[],question:'비슷한 질문'};
-  const window={addEventListener(){},LUNEA_SPREAD_LEARNING_V1:{find(q,l,o){seenOptions=o;return[{row,score,exact:false,rowProfile:{domain:'intimacy'}}]},count(){return 7}}}; window.window=window;
-  vm.runInNewContext(source,{window,state,localStorage:{getItem(){return null}},document:{readyState:'loading',getElementById(){return null},addEventListener(){},head:{appendChild(){}},body:{appendChild(){},classList:{add(){},remove(){}}}},console:{info(){},warn(){},error(){}},setInterval(){return 0},clearInterval(){},setTimeout(){return 0},fetch(){throw new Error('must not fetch')},JSON,String,Array,Number,Error});
-  const out=window.__auditLong('비슷한 질문');
-  assert.equal(out.positions.length,15);
-  assert.equal(out._luneaPreflight.usedLearnedLong,true);
-  assert.equal(seenOptions.category,'INTIMACY');
-  score=.7;
-  assert.equal(window.__auditLong('약한 유사 질문'),null,'weak similarity must not force a long learned spread');
+test('preflight uses learned memory as classified guidance instead of direct spread copying', () => {
+  const source=read('lunea-ai-spread-preflight-v2.js');
+  assert.doesNotMatch(source,/learnedLongSpread|LEARNED LONG SPREAD V5/,'learned long spreads must not bypass AI classification');
+  assert.match(source,/사용자가 과거에 확정한 학습 사례 — 복사 금지/);
+  assert.match(source,/과거 포지션 문구나 카드 수를 통째로 따라 하지 않는다/);
+  assert.match(source,/cases\.learnedText/);
+});
+
+test('detailed question fallback splits explicit requirements when normal spread design is insufficient', () => {
+  let source=read('lunea-ai-spread-preflight-v2.js').replace(/\n\}\)\(\);\s*$/, '\nwindow.__auditSegments=questionSegments;window.__auditFallback=detailedFallback;\n})();');
+  const state={category:'LOVE'};
+  const window={addEventListener(){}};window.window=window;
+  vm.runInNewContext(source,{window,state,localStorage:{getItem(){return null}},document:{readyState:'loading',getElementById(){return null},addEventListener(){},head:{appendChild(){}},body:{appendChild(){},classList:{add(){},remove(){}}}},console:{info(){},warn(){},error(){}},setInterval(){return 0},clearInterval(){},setTimeout(){return 0},fetch(){throw new Error('network should not run')},JSON,String,Array,Number,Error,Set});
+  const q='A가 지금 나를 어떻게 생각하는지, 그리고 아직 감정이 남았는지, 추가로 실제 연락 의도가 있는지, 마지막으로 연락을 막는 현실적 이유가 무엇인지 알고 싶다';
+  const seg=window.__auditSegments(q);
+  assert.ok(seg.length>=4,`expected >=4 semantic segments, got ${seg.length}`);
+  const base={spreadTitle:'기본',positions:['현재 상황','숨은 변수','핵심 조언']};
+  const fallback=window.__auditFallback(q,base,'test');
+  assert.equal(fallback.layoutType,'question-segment-fallback-v6');
+  assert.ok(fallback.positions.length>=4&&fallback.positions.length<=20);
+  assert.equal(fallback._luneaPreflight.category,'LOVE');
 });
 
 test('cloud sync key separates same question by category', () => {

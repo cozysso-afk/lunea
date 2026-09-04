@@ -29,6 +29,10 @@ assert.match(loader, /lunea-universal-ai-opal-v20\.js[\s\S]*lunea-learning-succe
 
 assert.match(preflight, /book\.formatForPrompt\(question,4\)/, 'AI preflight must consume the casebook bridge that includes learned corrections');
 assert.match(preflight, /totalLearned/, 'AI preflight should carry cumulative learning stats');
+assert.match(preflight, /learnedText/, 'AI preflight must expose learned cases as classified guidance');
+assert.doesNotMatch(preflight, /learnedLongSpread|LEARNED LONG SPREAD V5/, 'learned layouts must not bypass classification by direct copy');
+assert.match(preflight, /QUESTION SEGMENT FALLBACK V6/, 'detailed questions need a no-extra-API segmentation fallback');
+assert.match(loader, /lunea-ai-spread-preflight-v2\.js\?v=105/, 'preflight cache must be bumped for V6 behavior');
 assert.match(learning, /const MAX=1000/, 'local learning cap must be 1000');
 assert.match(cloud, /const MAX=1000/, 'cloud learning cap must match local 1000');
 assert.match(loader, /lunea-learning-cloud-sync-v1\.js\?v=103/, 'agreed optional private cloud sync must remain loaded');

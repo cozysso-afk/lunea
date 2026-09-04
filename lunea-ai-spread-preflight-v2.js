@@ -28,12 +28,13 @@
   function stripNum(v){return String(v||'').replace(/^\s*\d{1,2}\s*[.)]\s*/,'').trim()}
   function plainPositions(items){return (Array.isArray(items)?items:[]).map(stripNum).filter(Boolean).slice(0,20)}
   function samePlainPositions(a,b){const A=plainPositions(a),B=plainPositions(b);return A.length===B.length&&A.every((x,i)=>x===B[i])}
-  function normalizePositions(items){
+  function normalizePositions(items,max=20){
     const out=[];
     for(const x of Array.isArray(items)?items:[]){
       const t=stripNum(x); if(!t||out.includes(t))continue; out.push(t);
     }
-    return out.slice(0,12).map((x,i)=>`${i+1}. ${x}`);
+    const cap=Math.max(2,Math.min(20,Number(max)||20));
+    return out.slice(0,cap).map((x,i)=>`${i+1}. ${x}`);
   }
   function safeBaseline(sp){
     return {
@@ -48,27 +49,75 @@
     if(sp._luneaStructuralV4||sp.routerV8)return true;
     return /STRUCTURAL ROUTING|A\/B same axes|대칭 비교|parallel_comparison|target_count=2/i.test(String(sp.designRationale||''));
   }
+  function questionSegments(question){
+    const q=clean(question);
+    if(!q)return[];
+    let prepared=q
+      .replace(/\r?\n+/g,'\n')
+      .replace(/\s+(?:그리고|또한|추가로|마지막으로|그다음(?:으로)?|한편)\s+/g,'\n');
+    let chunks=prepared.split(/\n+|[?？!！;；]+/).map(clean).filter(Boolean);
+    const expanded=[];
+    for(const chunk of chunks){
+      if(chunk.length>120&&chunk.includes(','))expanded.push(...chunk.split(/,\s*/).map(clean).filter(Boolean));
+      else expanded.push(chunk);
+    }
+    if(expanded.length<2&&q.length>=90){
+      chunks=q.split(/,\s*|\s+(?:그리고|또한|추가로|마지막으로|그다음(?:으로)?|반면|반대로)\s+/).map(clean).filter(Boolean);
+    }else chunks=expanded;
+    const out=[],seen=new Set();
+    for(let item of chunks){
+      item=clean(item.replace(/^[-*•·\s]+/,'').replace(/^\d{1,2}\s*[.)]\s*/,''));
+      item=item.replace(/[?？]+$/,'').trim();
+      if(item.length<4)continue;
+      const key=item.toLowerCase().replace(/[^0-9a-z가-힣]+/g,'');
+      if(!key||seen.has(key))continue;
+      seen.add(key);out.push(item.slice(0,120));
+      if(out.length>=20)break;
+    }
+    return out;
+  }
+  function baselineLooksGeneric(sp){
+    const pos=plainPositions(sp?.positions||[]);
+    if(!pos.length)return true;
+    const generic=/^(현재\s*(?:상황|흐름)|숨은\s*변수|핵심\s*조언|미래\s*(?:결과|흐름)|전체\s*흐름|과거|현재|미래)$/;
+    return pos.filter(x=>generic.test(clean(x))).length>=Math.min(2,pos.length);
+  }
+  function detailedFallback(question,baseline=null,reason='fallback'){
+    const segments=questionSegments(question);
+    if(segments.length<2)return baseline;
+    const basePos=plainPositions(baseline?.positions||[]);
+    const needsFallback=!basePos.length||(segments.length>=4&&(basePos.length<Math.min(segments.length,4)||baselineLooksGeneric(baseline)));
+    if(!needsFallback)return baseline;
+    const positions=segments.slice(0,20).map((x,i)=>`${i+1}. ${x}`);
+    return {
+      ...(baseline||{}),
+      spreadTitle:String(baseline?.spreadTitle||'질문 분해 맞춤 배열'),
+      designRationale:`[QUESTION SEGMENT FALLBACK V6] · 상세 질문 요구축 ${positions.length}개 보존 · reason=${reason}`,
+      layoutType:'question-segment-fallback-v6',
+      positions,
+      _luneaPreflight:{
+        version:2,category:activeCategory(),intentSummary:'상세 질문을 의미 단위로 분해해 누락 없이 배열화',primaryIntent:'질문 원문의 명시 요구축 보존',targetStructure:'질문 분해 fallback',requestedAxes:segments.slice(0,20),timeScope:'미지정',usedBaseline:false,usedQuestionSegments:true,casebookMatches:[],learnedMatches:[],casebookStats:{}
+      }
+    };
+  }
+
   function caseContext(question){
     try{
       const book=W.LUNEA_QUESTION_CASEBOOK_V1;
       const learning=W.LUNEA_SPREAD_LEARNING_V1;
       const learned=learning&&typeof learning.find==='function'?learning.find(question,3,{category:activeCategory()}):[];
-      if(book&&typeof book.formatForPrompt==='function'){
-        return {
-          text:book.formatForPrompt(question,4),
-          matches:typeof book.find==='function'?book.find(question,4):[],
-          learnedMatches:learned.map(x=>({
-            id:x.row?.id||'',
-            score:Number(x.score||0),
-            question:String(x.row?.question||''),
-            spreadTitle:String(x.row?.spreadTitle||''),
-            profile:x.rowProfile||x.row?.structureProfile||{}
-          })),
-          stats:{families:book.familyCount||0,utterances:book.utteranceCount||0,learned:learned.length,totalLearned:typeof learning?.count==='function'?learning.count():0}
-        };
-      }
+      const learnedMatches=learned.map(x=>({
+        id:x.row?.id||'',score:Number(x.score||0),exact:!!x.exact,question:String(x.row?.question||''),spreadTitle:String(x.row?.spreadTitle||''),category:String(x.row?.category||activeCategory()),source:String(x.row?.source||''),targetStructure:String(x.row?.targetStructure||''),requestedAxes:Array.isArray(x.row?.requestedAxes)?x.row.requestedAxes.slice(0,20):[],positions:Array.isArray(x.row?.positions)?x.row.positions.slice(0,20):[],profile:x.rowProfile||x.row?.structureProfile||{}
+      }));
+      const learnedText=learnedMatches.length?learnedMatches.map((x,i)=>{
+        const axes=x.requestedAxes.length?x.requestedAxes:x.positions;
+        return `[사용자 학습 참고 ${i+1} · 유사도 ${x.score.toFixed(2)} · ${x.category}]\n과거 질문: ${x.question}\n당시 구조명: ${x.spreadTitle}\n대상 구조: ${x.targetStructure||'미지정'}\n참고 가능한 축: ${axes.join(' / ')||'없음'}\n당시 카드 수: ${x.positions.length}`;
+      }).join('\n\n'):'사용자 학습 사례 없음';
+      const text=book&&typeof book.formatForPrompt==='function'?book.formatForPrompt(question,4):'관련 사례 없음';
+      const matches=book&&typeof book.find==='function'?book.find(question,4):[];
+      return {text,matches,learnedText,learnedMatches,stats:{families:book?.familyCount||0,utterances:book?.utteranceCount||0,learned:learned.length,totalLearned:typeof learning?.count==='function'?learning.count():0}};
     }catch(e){console.warn('[LUNEA Preflight V2] casebook lookup failed',e)}
-    return {text:'관련 사례 없음',matches:[],learnedMatches:[],stats:{families:0,utterances:0,learned:0,totalLearned:0}};
+    return {text:'관련 사례 없음',learnedText:'사용자 학습 사례 없음',matches:[],learnedMatches:[],stats:{families:0,utterances:0,learned:0,totalLearned:0}};
   }
   function schema(){
     return {
@@ -96,7 +145,7 @@
     const cases=caseContext(question);
     const structural=isStructural(baseline);
     const avoid=Array.isArray(options.avoid)?options.avoid.join(' / '):'';
-    const prompt=`너는 LUNEA의 타로 해석자가 아니라 '질문 분류기 + 스프레드 편집장'이다.\n\n[질문 원문 — 문장을 예쁘게 고치는 것이 목적이 아니다. 의미와 요구축만 정확히 이해할 것]\n${question}\n\n[현재 LUNEA 후보]\n${JSON.stringify(safeBaseline(baseline),null,2)}\n\n[이 질문과 가까운 LUNEA 내부 사례집]\n${cases.text}\n\n사례는 정답을 복사하라는 뜻이 아니다. 사례의 '대상 구조 / 보존할 축 / 금지 오분류'를 참고해 현재 질문을 독립적으로 판정한다.\n\n[판정 순서]\n1. 사건 단계: 아직 기회 전 / 이미 예정 / 이미 발생 후 / 현재 진행 중을 먼저 구분한다.\n2. 대상 구조: 한 사람 / 두 사람 / 대상 수 미정 / 선택지 / 한 사람에 대한 여러 시나리오를 구분한다.\n3. 질문 기능: 사실·관찰 / 인식 / 감정 / 행동 / 원인 / 시기 / 결과 / 조언 / 비교 / 선택 / 복합을 구분한다.\n4. 사용자가 직접 요구한 정보축을 requestedAxes에 빠짐없이 적는다.\n5. 현재 후보가 그 구조를 정확히 덮으면 keepBaseline=true. 아니면 false로 하고 더 좋은 배열을 작성한다.\n\n[강제 규칙]\n- 오타, 반말, 줄임말, 문장 파편을 허용한다. 문법이 나빠도 핵심 의도를 버리지 않는다.\n- '각각'만으로 두 사람이라 판정하지 않는다.\n- A라는 한 사람 + 지금/몇 시간 뒤/내일/더 늦게 = 한 사람에 대한 시간 시나리오 비교다.\n- 답장 길게/짧게/이모티콘, 카톡/DM/전화처럼 방식이 여러 개여도 사람이 한 명이면 다중 인물이 아니다.\n- A/B 두 사람이 명시된 비교는 선택을 요구하지 않는 한 '누가 더 낫나'로 바꾸지 않는다. 동일 축 대칭을 지킨다.\n- 감정, 생각, 행동 의도, 실제 행동은 서로 다른 축이다.\n- '봤나/읽었나/들었나/그 계정이 그 사람인가' 같은 사실 불확실 질문은 지지 신호와 반대 신호를 모두 둔다.\n- 사용자가 직접 나열한 항목은 최소 한 포지션씩 보존한다.\n- 질문에 없는 재회, 제3자, 연락, 조언, 운명, 미래를 자동 추가하지 않는다.\n- '현재 상황 / 숨은 변수 / 핵심 조언 / 미래 결과' 같은 범용 자리를 원문 요구축 대신 쓰지 않는다.\n- 시기 질문은 날짜를 창작하지 않는다. 사용자가 준 기간·시나리오는 그대로 보존한다.\n- 사건이 이미 끝났다면 사전 조언 배열로 되돌리지 않는다. 아직 일정도 없다면 사후 평가 배열을 쓰지 않는다.\n- 건강은 진단·예후가 아니라 체감 부담, 생활 리듬, 회복 자원, 객관적 확인 기준만 다룬다.\n- 투자 질문은 가격 예언보다 근거·반증·리스크·판단 기준을 다룬다.\n- 2~12장. 복잡도 때문에 필요한 경우만 늘리고 같은 뜻 반복은 금지한다.\n${structural?`- 현재 후보는 LUNEA 구조 강제 결과다. 대상 수/대칭 topology가 맞으면 카드 수를 바꾸지 말고 같은 수의 더 정확한 포지션으로 교정한다.`:''}\n${avoid?`\n[이번 재생성에서 피할 직전 포지션]\n${avoid}\n말만 바꾼 반복 배열을 만들지 않는다.`:''}\n\n최종 positions는 번호 없는 한국어 문자열 배열로 반환한다. JSON만 출력한다.`;
+    const prompt=`너는 LUNEA의 타로 해석자가 아니라 '질문 분류기 + 스프레드 편집장'이다.\n\n[질문 원문 — 문장을 예쁘게 고치는 것이 목적이 아니다. 의미와 요구축만 정확히 이해할 것]\n${question}\n\n[현재 LUNEA 후보]\n${JSON.stringify(safeBaseline(baseline),null,2)}\n\n[이 질문과 가까운 LUNEA 내부 사례집]\n${cases.text}\n\n[사용자가 과거에 확정한 학습 사례 — 복사 금지]\n${cases.learnedText}\n\n사례는 정답 템플릿이 아니다. 먼저 현재 질문을 독립적으로 분류하고, 과거 사례에서는 현재 질문과 실제로 겹치는 '대상 구조 / 필요한 축 / 대칭 방식 / 카드 수 경향'만 취사선택한다. 과거 포지션 문구나 카드 수를 통째로 따라 하지 않는다.\n\n[판정 순서]\n1. 사건 단계: 아직 기회 전 / 이미 예정 / 이미 발생 후 / 현재 진행 중을 먼저 구분한다.\n2. 대상 구조: 한 사람 / 두 사람 / 대상 수 미정 / 선택지 / 한 사람에 대한 여러 시나리오를 구분한다.\n3. 질문 기능: 사실·관찰 / 인식 / 감정 / 행동 / 원인 / 시기 / 결과 / 조언 / 비교 / 선택 / 복합을 구분한다.\n4. 사용자가 직접 요구한 정보축을 requestedAxes에 빠짐없이 적는다.\n5. 현재 후보가 그 구조를 정확히 덮으면 keepBaseline=true. 아니면 false로 하고 더 좋은 배열을 작성한다.\n\n[강제 규칙]\n- 오타, 반말, 줄임말, 문장 파편을 허용한다. 문법이 나빠도 핵심 의도를 버리지 않는다.\n- '각각'만으로 두 사람이라 판정하지 않는다.\n- A라는 한 사람 + 지금/몇 시간 뒤/내일/더 늦게 = 한 사람에 대한 시간 시나리오 비교다.\n- 답장 길게/짧게/이모티콘, 카톡/DM/전화처럼 방식이 여러 개여도 사람이 한 명이면 다중 인물이 아니다.\n- A/B 두 사람이 명시된 비교는 선택을 요구하지 않는 한 '누가 더 낫나'로 바꾸지 않는다. 동일 축 대칭을 지킨다.\n- 감정, 생각, 행동 의도, 실제 행동은 서로 다른 축이다.\n- '봤나/읽었나/들었나/그 계정이 그 사람인가' 같은 사실 불확실 질문은 지지 신호와 반대 신호를 모두 둔다.\n- 사용자가 직접 나열한 항목은 최소 한 포지션씩 보존한다.\n- 질문에 없는 재회, 제3자, 연락, 조언, 운명, 미래를 자동 추가하지 않는다.\n- '현재 상황 / 숨은 변수 / 핵심 조언 / 미래 결과' 같은 범용 자리를 원문 요구축 대신 쓰지 않는다.\n- 시기 질문은 날짜를 창작하지 않는다. 사용자가 준 기간·시나리오는 그대로 보존한다.\n- 사건이 이미 끝났다면 사전 조언 배열로 되돌리지 않는다. 아직 일정도 없다면 사후 평가 배열을 쓰지 않는다.\n- 건강은 진단·예후가 아니라 체감 부담, 생활 리듬, 회복 자원, 객관적 확인 기준만 다룬다.\n- 투자 질문은 가격 예언보다 근거·반증·리스크·판단 기준을 다룬다.\n- 과거 학습 배열은 '정답 복사본'이 아니다. 현재 질문에 필요한 축만 선택하고 불필요한 축은 버린다.\n- 질문이 길고 여러 요구를 포함하면 먼저 의미 단위로 쪼개 requestedAxes를 만든 뒤 포지션에 배치한다. 명시된 요구를 카드 수 제한 때문에 임의 삭제하지 않는다.\n- 기본은 2~12장. 다만 현재 질문 자체에 서로 다른 명시 요구축이 13개 이상 분명한 경우에만 최대 20장까지 허용한다. 과거에 15장/20장을 썼다는 이유만으로 긴 배열을 재사용하지 않는다.\n${structural?`- 현재 후보는 LUNEA 구조 강제 결과다. 대상 수/대칭 topology가 맞으면 카드 수를 바꾸지 말고 같은 수의 더 정확한 포지션으로 교정한다.`:''}\n${avoid?`\n[이번 재생성에서 피할 직전 포지션]\n${avoid}\n말만 바꾼 반복 배열을 만들지 않는다.`:''}\n\n최종 positions는 번호 없는 한국어 문자열 배열로 반환한다. JSON만 출력한다.`;
     try{
       const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(key)}`,{
         method:'POST',headers:{'Content-Type':'application/json'},
@@ -144,6 +193,7 @@
     };
     out._luneaPreflight={
       version:2,
+      category:activeCategory(),
       intentSummary:String(ai.intentSummary||''),
       primaryIntent:String(ai.primaryIntent||''),
       targetStructure:String(ai.targetStructure||''),
@@ -157,31 +207,20 @@
     return out;
   }
 
-  function learnedLongSpread(question){
-    const learning=W.LUNEA_SPREAD_LEARNING_V1;
-    if(!learning||typeof learning.find!=='function')return null;
-    const hit=learning.find(question,1,{category:activeCategory()})?.[0];
-    const row=hit?.row;
-    const positions=Array.isArray(row?.positions)?row.positions.map(stripNum).filter(Boolean).slice(0,20):[];
-    if(positions.length<13||positions.length>20)return null;
-    if(!hit.exact&&Number(hit.score||0)<1.10)return null;
-    return {
-      spreadTitle:String(row.spreadTitle||`학습된 직접 배열 · ${positions.length}카드`),
-      designRationale:`[LEARNED LONG SPREAD V5] · 사용자 확정 ${positions.length}장 구조 재사용 · category=${activeCategory()} · similarity=${Number(hit.score||0).toFixed(2)}`,
-      layoutType:'learned-user-spread-v5',
-      positions:positions.map((x,i)=>`${i+1}. ${x}`),
-      _luneaPreflight:{version:2,intentSummary:'과거에 사용자가 직접 확정한 긴 배열과 높은 구조 유사도',primaryIntent:String(row.primaryIntent||'사용자 학습 배열 재사용'),targetStructure:String(row.targetStructure||'사용자 확정 구조'),requestedAxes:Array.isArray(row.requestedAxes)?row.requestedAxes.slice(0,20):positions,timeScope:'미지정',usedBaseline:false,usedLearnedLong:true,learnedMatches:[{id:row.id||'',score:Number(hit.score||0),question:String(row.question||''),spreadTitle:String(row.spreadTitle||''),profile:hit.rowProfile||row.structureProfile||{}}],casebookMatches:[],casebookStats:{learned:1,totalLearned:typeof learning.count==='function'?learning.count():0}}
-    };
-  }
-
   async function smartDesign(question,options={}){
     const q=clean(question);
-    if(!q||typeof baseDesign!=='function')return baseDesign?.call(this,q);
-    if(!options.regenerate){const learned=learnedLongSpread(q);if(learned){W.LUNEA_AI_SPREAD_PREFLIGHT_LAST={question:q,baseline:null,ai:null,result:safeBaseline(learned)};return learned}}
-    const baseline=await baseDesign.call(this,q);
-    if(!baseline||!Array.isArray(baseline.positions)||!baseline.positions.length)return baseline;
-    const ai=await askEditor(q,baseline,options);
-    const result=merge(baseline,ai);
+    if(!q)return typeof baseDesign==='function'?baseDesign.call(this,q):null;
+    let baseline=null,baseError=null;
+    if(typeof baseDesign==='function'){
+      try{baseline=await baseDesign.call(this,q)}catch(err){baseError=err;console.warn('[LUNEA Preflight V2] base spread failed; trying question segmentation',err)}
+    }
+    const segmented=detailedFallback(q,baseline,baseError?'base_error':'baseline_check');
+    const editorBase=segmented||baseline||{spreadTitle:'질문 분해 맞춤 배열',designRationale:'fallback seed',layoutType:'question-segment-seed',positions:questionSegments(q).map((x,i)=>`${i+1}. ${x}`)};
+    const ai=await askEditor(q,editorBase,options);
+    let result=merge(editorBase,ai);
+    if(!result||!Array.isArray(result.positions)||result.positions.length<2)result=detailedFallback(q,baseline,'ai_invalid');
+    if(!result||!Array.isArray(result.positions)||result.positions.length<2){if(baseError)throw baseError;return baseline}
+    if(!ai&&segmented)result=segmented;
     W.LUNEA_AI_SPREAD_PREFLIGHT_LAST={question:q,baseline:safeBaseline(baseline),ai,result:safeBaseline(result)};
     return result;
   }
@@ -295,7 +334,7 @@
       finally{drawBtn.disabled=false;if(label)label.textContent='질문 분석 & 맞춤 배열 설계'}
     };
     ensurePreview(); installed=true;
-    W.LUNEA_AI_SPREAD_PREFLIGHT={version:2,design:smartDesign,learnedLong:learnedLongSpread,getLast:()=>W.LUNEA_AI_SPREAD_PREFLIGHT_LAST||null,casebook:()=>W.LUNEA_QUESTION_CASEBOOK_V1||null};
+    W.LUNEA_AI_SPREAD_PREFLIGHT={version:2,design:smartDesign,getLast:()=>W.LUNEA_AI_SPREAD_PREFLIGHT_LAST||null,casebook:()=>W.LUNEA_QUESTION_CASEBOOK_V1||null,segmentQuestion:questionSegments,fallbackSpread:detailedFallback};
     console.info('🧠 LUNEA AI Spread Preflight V2 installed · casebook-grounded semantic QA + pre-draw preview + post-draw learning commit');
     return true;
   }
