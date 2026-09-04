@@ -1,17 +1,17 @@
 'use strict';
 
-/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.2 */
+/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.1 */
 (() => {
   const W = window;
-  const RELEASE = '40.2';
+  const RELEASE = '40.1';
   const KEY = '__LUNEA_INTIMACY_BURGUNDY_V40__';
   W[KEY] = RELEASE;
 
   const SELF_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4020';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4010';
     } catch {
-      return '4020';
+      return '4010';
     }
   })();
   const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
@@ -213,7 +213,7 @@
 
   W.addEventListener('pageshow', () => setTimeout(apply, 80));
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) setTimeout(apply, 80));
+    if (!document.hidden) setTimeout(apply, 80);
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
