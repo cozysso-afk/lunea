@@ -17,9 +17,15 @@
   W.__LUNEA_MANUAL_EVERYWHERE_V1__ = true;
 
   function openManualForCategory(category) {
-    const cat = String(category || 'GENERAL').trim() || 'GENERAL';
+    const cat = (String(category || 'GENERAL').trim() || 'GENERAL').toUpperCase();
     const opener = W.openSheet || (typeof openSheet === 'function' ? openSheet : null);
     if (typeof opener !== 'function') return;
+
+    try {
+      state.__luneaManualOriginCategory = cat;
+      state.category = cat;
+      state.__luneaIntimacyReading = cat === 'INTIMACY';
+    } catch {}
 
     opener(
       cat,
@@ -32,6 +38,9 @@
       state.__luneaManualMode = true;
       state.__luneaManualReading = false;
       state.isAi = false;
+      state.__luneaManualOriginCategory = cat;
+      state.category = cat;
+      state.__luneaIntimacyReading = cat === 'INTIMACY';
     } catch {}
 
     document.getElementById('luneaManualPanel')?.classList.add('show');
@@ -62,17 +71,13 @@
     return item;
   }
 
-  function install() {
-    if (!W.LUNEA_MANUAL_SPREAD_V1 || !document.getElementById('luneaManualPanel')) {
-      setTimeout(install, 40);
-      return;
-    }
-
+  function scanCategories() {
+    if (!W.LUNEA_MANUAL_SPREAD_V1 || !document.getElementById('luneaManualPanel')) return false;
     document.querySelectorAll('.category-content').forEach(content => {
       const firstReading = content.querySelector('.reading-item[data-cat]');
       if (!firstReading) return;
 
-      const category = String(firstReading.dataset.cat || 'GENERAL').trim() || 'GENERAL';
+      const category = (String(firstReading.dataset.cat || 'GENERAL').trim() || 'GENERAL').toUpperCase();
 
       // GENERAL already receives its manual entry from Manual Structure V1.
       if (category === 'GENERAL' && content.querySelector('#luneaManualReadingItem')) return;
@@ -81,6 +86,27 @@
       const item = makeManualItem(category);
       firstReading.insertAdjacentElement('beforebegin', item);
     });
+    return true;
+  }
+
+  function install() {
+    if (!scanCategories()) {
+      setTimeout(install, 40);
+      return;
+    }
+
+    // INTIMACY and future late feature cabinets can be injected after this module's
+    // first DOMContentLoaded pass. Re-scan mutations briefly instead of silently
+    // falling back to the GENERAL manual entry.
+    let queued = false;
+    const observer = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      setTimeout(() => { queued = false; scanCategories(); }, 0);
+    });
+    if (document.body) observer.observe(document.body, {childList:true,subtree:true});
+    [80, 250, 800, 2000].forEach(ms => setTimeout(scanCategories, ms));
+    setTimeout(() => observer.disconnect(), 5000);
 
     console.info('🌙 LUNEA Manual Spread Everywhere V1 loaded');
   }

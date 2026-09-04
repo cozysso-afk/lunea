@@ -230,6 +230,10 @@
   }
 
   function startManualSpread(question, positions, title, rationale, learn=true) {
+    const originCategory = String(state?.__luneaManualOriginCategory || state?.category || 'GENERAL').trim().toUpperCase() || 'GENERAL';
+    state.__luneaManualOriginCategory = originCategory;
+    state.category = originCategory;
+    state.__luneaIntimacyReading = originCategory === 'INTIMACY';
     state.__luneaManualReading = true;
     state.question = question || '현재 나에게 필요한 흐름';
     state.positions = [...positions];
@@ -358,10 +362,23 @@
 
     const openManual = () => {
       const opener = W.openSheet || openSheet;
-      opener('GENERAL', '직접 입력 배열', 'AI 자동 배열이 마음에 안 들 때 카드 포지션을 직접 고정합니다.', 1);
+      const manualItem = document.getElementById('luneaManualReadingItem');
+      const containerCategory = String(manualItem?.closest?.('.category-content')?.querySelector?.('.reading-item[data-cat]')?.dataset?.cat || '').trim().toUpperCase();
+      let currentCategory = '';
+      try { currentCategory = String(state?.category || '').trim().toUpperCase(); } catch {}
+      const originCategory = containerCategory || currentCategory || 'GENERAL';
+      try {
+        state.__luneaManualOriginCategory = originCategory;
+        state.category = originCategory;
+        state.__luneaIntimacyReading = originCategory === 'INTIMACY';
+      } catch {}
+      opener(originCategory, '직접 입력 배열', 'AI 자동 배열이 마음에 안 들 때 카드 포지션을 직접 고정합니다.', 1);
       state.__luneaManualMode = true;
       state.__luneaManualReading = false;
       state.isAi = false;
+      state.__luneaManualOriginCategory = originCategory;
+      state.category = originCategory;
+      state.__luneaIntimacyReading = originCategory === 'INTIMACY';
       setManualPanelVisible(true);
       const label = document.getElementById('drawLabel');
       if (label) label.textContent = '직접 배열로 카드 펼치기';
