@@ -1,0 +1,17 @@
+name: LUNEA benchmark v1
+on:
+  push:
+    branches:
+      - audit/lunea-benchmark-v1-20260904
+    paths:
+      - 'tests/lunea-benchmark-question-routing-v1.mjs'
+      - '.github/workflows/lunea-benchmark-v1.yml'
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run 20-question routing benchmark
+        run: node tests/lunea-benchmark-question-routing-v1.mjs
