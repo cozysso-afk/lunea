@@ -1,0 +1,47 @@
+name: Spread learning V5 fix
+on:
+  push:
+    branches: [work/spread-learning-fix-v5-20260904]
+permissions:
+  contents: write
+jobs:
+  fix-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/spread-learning-fix-v5-20260904
+          fetch-depth: 0
+      - name: Apply deterministic patch
+        run: python3 tools/apply_spread_learning_fix_v5.py
+      - name: Syntax checks
+        run: |
+          node --check lunea-user-spread-learning-v1.js
+          node --check lunea-learning-cloud-sync-v1.js
+          node --check lunea-ai-spread-preflight-v2.js
+          node --check lunea-manual-structure-v1.js
+          node --check lunea-manual-limit20-v17.js
+          node --check lunea-universal-ai-opal-v20.js
+      - name: Learning regression suite
+        run: |
+          set -e
+          node tests/spread-learning.test.mjs
+          node tests/spread-learning-bridge.test.mjs
+          node tests/spread-learning-retention.test.mjs
+          node tests/spread-learning-success-gate.test.mjs
+          node tests/spread-learning-cloud-sync.test.mjs
+          node tests/spread-learning-integration-contract.test.mjs
+          node tests/manual-category-preservation.test.mjs
+          node tests/intimacy-manual-oracle-back-integration.test.mjs
+          node tests/spread-learning-v5-runtime.test.mjs
+      - name: Commit verified runtime fix
+        run: |
+          if git diff --quiet; then
+            echo 'No runtime changes to commit'
+            exit 0
+          fi
+          git config user.name 'cozysso-afk'
+          git config user.email 'cozysso@gmail.com'
+          git add lunea-user-spread-learning-v1.js lunea-learning-cloud-sync-v1.js lunea-ai-spread-preflight-v2.js lunea-manual-structure-v1.js lunea-manual-limit20-v17.js lunea-universal-ai-opal-v20.js lunea-structural-routing-v4.js tests/spread-learning.test.mjs tests/spread-learning-bridge.test.mjs tests/manual-category-preservation.test.mjs tests/spread-learning-integration-contract.test.mjs
+          git commit -m 'fix(learning): isolate categories and reuse strong long spreads'
+          git push origin HEAD:work/spread-learning-fix-v5-20260904
