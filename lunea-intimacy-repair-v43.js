@@ -44,49 +44,36 @@
       document.head.appendChild(style);
     }
     style.textContent = `
-      body.lunea-intimacy-reading #luneaManualPanel,
-      body:has(.lunea-intimacy-category) #luneaManualPanel{
+      #luneaManualPanel[data-lunea-intimacy-theme]{
         background:
           radial-gradient(circle at 12% 8%,rgba(196,68,113,.16),transparent 32%),
           linear-gradient(155deg,rgba(78,17,43,.76),rgba(31,10,28,.96) 52%,rgba(14,9,20,.99))!important;
         border:1px solid rgba(231,143,177,.30)!important;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 12px 28px rgba(51,7,30,.18)!important;
       }
-      body.lunea-intimacy-reading #luneaManualPanel label,
-      body:has(.lunea-intimacy-category) #luneaManualPanel label{color:#f4e9ee!important}
-      body.lunea-intimacy-reading #luneaManualPanel input,
-      body.lunea-intimacy-reading #luneaManualPanel textarea,
-      body:has(.lunea-intimacy-category) #luneaManualPanel input,
-      body:has(.lunea-intimacy-category) #luneaManualPanel textarea{
+      #luneaManualPanel[data-lunea-intimacy-theme] label{color:#f4e9ee!important}
+      #luneaManualPanel[data-lunea-intimacy-theme] input,
+      #luneaManualPanel[data-lunea-intimacy-theme] textarea{
         background:rgba(19,8,17,.82)!important;
         border-color:rgba(230,145,179,.24)!important;
         color:#fff3f7!important;
         caret-color:#efafc7!important;
       }
-      body.lunea-intimacy-reading #luneaManualPanel input:focus,
-      body.lunea-intimacy-reading #luneaManualPanel textarea:focus,
-      body:has(.lunea-intimacy-category) #luneaManualPanel input:focus,
-      body:has(.lunea-intimacy-category) #luneaManualPanel textarea:focus{
+      #luneaManualPanel[data-lunea-intimacy-theme] input:focus,
+      #luneaManualPanel[data-lunea-intimacy-theme] textarea:focus{
         border-color:rgba(245,163,195,.56)!important;
         box-shadow:0 0 0 2px rgba(171,55,103,.13)!important;
       }
-      body.lunea-intimacy-reading #luneaManualPanel .manual-check,
-      body:has(.lunea-intimacy-category) #luneaManualPanel .manual-check{
+      #luneaManualPanel[data-lunea-intimacy-theme] .manual-check{
         background:linear-gradient(145deg,rgba(137,34,75,.22),rgba(83,27,70,.14))!important;
         border-color:rgba(229,133,171,.25)!important;
       }
-      body.lunea-intimacy-reading #luneaManualPanel .manual-check input,
-      body:has(.lunea-intimacy-category) #luneaManualPanel .manual-check input{accent-color:#bf557f!important}
-      body.lunea-intimacy-reading #luneaManualPanel .manual-check b,
-      body:has(.lunea-intimacy-category) #luneaManualPanel .manual-check b{color:#ffeef4!important}
-      body.lunea-intimacy-reading #luneaManualPanel .manual-check span,
-      body.lunea-intimacy-reading #luneaManualPanel .manual-help,
-      body:has(.lunea-intimacy-category) #luneaManualPanel .manual-check span,
-      body:has(.lunea-intimacy-category) #luneaManualPanel .manual-help{color:rgba(232,202,214,.76)!important}
-      body.lunea-intimacy-reading #luneaManualCount,
-      body:has(.lunea-intimacy-category) #luneaManualCount{color:#efafc7!important}
-      body.lunea-intimacy-reading #luneaManualReadingItem .count,
-      body:has(.lunea-intimacy-category) #luneaManualReadingItem .count{
+      #luneaManualPanel[data-lunea-intimacy-theme] .manual-check input{accent-color:#bf557f!important}
+      #luneaManualPanel[data-lunea-intimacy-theme] .manual-check b{color:#ffeef4!important}
+      #luneaManualPanel[data-lunea-intimacy-theme] .manual-check span,
+      #luneaManualPanel[data-lunea-intimacy-theme] .manual-help{color:rgba(232,202,214,.76)!important}
+      #luneaManualPanel[data-lunea-intimacy-theme] #luneaManualCount{color:#efafc7!important}
+      #luneaManualPanel[data-lunea-intimacy-theme] #luneaManualReadingItem .count{
         color:#f2b4ca!important;
         border-color:rgba(234,145,178,.34)!important;
         background:rgba(133,36,75,.20)!important;
@@ -143,21 +130,38 @@
     return cards.length > 0;
   }
 
+  function clearManualContext() {
+    const panel = document.getElementById('luneaManualPanel');
+    if (!panel) return false;
+    delete panel.dataset.luneaIntimacyTheme;
+    return true;
+  }
+
   function markManualContext() {
     const panel = document.getElementById('luneaManualPanel');
-    if (!panel || !intimacyActive()) return false;
+    if (!panel) return false;
+    if (!intimacyActive()) {
+      clearManualContext();
+      return false;
+    }
     panel.dataset.luneaIntimacyTheme = RELEASE;
     document.body?.classList?.add('lunea-intimacy-reading');
     try {
       const s = currentState();
-      if (s && !s.category) s.category = 'INTIMACY';
+      if (s) {
+        s.category = 'INTIMACY';
+        s.__luneaIntimacyReading = true;
+      }
     } catch {}
     return true;
   }
 
   function apply() {
     ensureStyle();
-    if (!intimacyActive()) return false;
+    if (!intimacyActive()) {
+      clearManualContext();
+      return false;
+    }
     document.body?.classList?.add('lunea-intimacy-reading');
     markManualContext();
     patchOracleCards();
@@ -185,6 +189,7 @@
     apply,
     patchOracleCards,
     markManualContext,
+    clearManualContext,
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
