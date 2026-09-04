@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA USER SPREAD LEARNING V1.5
+  LUNEA USER SPREAD LEARNING V1.6
   =============================
   Local-only correction memory for AI spread preflight.
 
@@ -57,13 +57,15 @@
     const categoryHint=explicitCategory(meta.category||meta.cat);
     const hint=[meta.intentSummary,meta.primaryIntent,meta.targetStructure,...(Array.isArray(meta.requestedAxes)?meta.requestedAxes:[])].map(clean).join(' ').toLowerCase();
     const all=`${q} ${hint}`;
+    const relationshipSubject=/(?:\b[a-z]\b|그\s*사람|그녀|그남자|그여자).{0,24}(?:나를|내게|나와|우리)/i.test(q)
+      ||/(?:나를|내게|나와).{0,24}(?:어떻게\s*(?:생각|보|봤)|감정|마음)/.test(q);
     const domain=categoryHint==='INTIMACY'||/(속궁합|성적\s*(?:궁합|끌림|욕구|리듬|텐션|만족)|신체적\s*(?:끌림|친밀|궁합)|성관계|섹스|키스|애무|첫\s*관계|잠자리|19\+|18\+)/.test(all)?'intimacy'
       :/(주식|종목|매수|매도|익절|손절|추매|보유)/.test(all)?'stock'
       :/(시험|합격|공부|학습|강의|점수)/.test(all)?'study'
       :/(직장|회사|이직|퇴사|상사|동료|면접|커리어)/.test(all)?'career'
       :/(돈|금전|재정|지출|수입|부채)/.test(all)?'money'
       :/(건강|몸|컨디션|피곤|회복|수면)/.test(all)?'wellbeing'
-      :categoryHint==='LOVE'||/(상대|연애|사랑|감정|마음|연락|재회|이별|썸|전남|전여|남친|여친)/.test(all)?'relationship'
+      :categoryHint==='LOVE'||relationshipSubject||/(상대|연애|사랑|감정|마음|연락|재회|이별|썸|전남|전여|남친|여친|관계|답장)/.test(all)?'relationship'
       :'general';
 
     const explicitPair=/(?:\ba\s*(?:와|과|랑|\/|·|vs|및|그리고)\s*b\b|a와b|a\/b|a·b|두\s*(?:사람|명|인연|상대|대상)|2\s*(?:사람|명|인연|상대|대상)|대칭\s*비교)/i.test(all);
@@ -73,24 +75,26 @@
 
     const modes=[];
     const add=(name,re)=>re.test(all)&&modes.push(name);
-    add('observation',/봤|보았|읽었|들었|확인했|조회|염탐|정체|실제\s*여부/);
-    add('perception',/인식|추측|어떻게\s*(?:보|생각)|이미지|평판|평가/);
+    const perceptionViewing=/어떻게\s*(?:봤|보았|보는|볼|보였|느꼈|받아들)/.test(all);
+    if(!perceptionViewing)add('observation',/봤|보았|읽었|들었|확인했|조회|염탐|정체|실제\s*여부/);
+    add('perception',/인식|추측|어떻게\s*(?:보|봤|보았|보는|볼|생각|느꼈|받아들)|이미지|평판|평가/);
     add('thought',/생각|떠올|기억|의식/);
     add('feeling',/감정|마음|좋아|그리|미련|끌림/);
     add('action',/행동|움직|다가|실행|답장|연락|선톡|dm|디엠/);
-    add('timing',/언제|시기|타이밍|전조|방아쇠|지연|이번\s*주|몇\s*(?:시간|일|주|달)/);
-    add('cause',/왜|이유|원인|병목|계기/);
+    add('timing',/언제|시기|타이밍|전조|방아쇠|지연|이번\s*(?:주|달|개월|분기)|이달|다음\s*달|다음달|향후\s*\d+\s*(?:일|주|달|개월)|\d+\s*개월|몇\s*(?:시간|일|주|달|개월)/);
+    add('cause',/왜|이유|원인|병목|계기|요인|장애물|장벽|방해|걸림돌|저해|막는|막고/);
     add('compare',/비교|vs|각각|차이|a\/b|둘\s*중|두\s*(?:사람|명|대상)/i);
+    if(explicitPair&&/(?:중|더|누가|어느|각각|비교|차이|vs)/i.test(all))modes.push('compare');
     add('choice',/할까\s*말까|고를|선택|어디가\s*나|뭐가\s*나/);
     add('advice',/조언|대응|뭘\s*해야|어떻게\s*해야|행동\s*기준/);
-    add('outcome',/결과|가능성|될까|올까|성사|합격|흐름/);
+    add('outcome',/결과|가능성|될까|올까|성사|합격|흐름|정리(?:되|될|되는)|종결|종료|마무리|귀결|끝(?:날|나는|날지|나게)/);
     if(!modes.length)modes.push('general');
 
-    const stage=/(보고\s*왔|만나고\s*왔|끝났|이미\s*(?:했|옴|왔)|연락\s*(?:왔|옴)|발생\s*후)/.test(q)?'after'
+    const stage=/(보고\s*왔|만나고\s*왔|만난\s*(?:뒤|후)|만남\s*(?:뒤|후)|관계\s*(?:뒤|후)|끝났|끝난|이미\s*(?:했|옴|왔|끝)|지난\s*만남|그날\s*(?:뒤|후|이후)|연락\s*(?:왔|옴)|발생\s*후)/.test(q)?'after'
       :/(예정|잡혀|앞두|내일\s*(?:만나|면접)|모레\s*(?:만나|면접))/.test(q)?'scheduled'
       :/(들어올|생길|잡힐|아직\s*(?:없|안)|기회)/.test(q)?'before_opportunity'
       :'current_or_unspecified';
-    return {version:2,domain,target,modes:[...new Set(modes)].sort(),stage};
+    return {version:3,domain,target,modes:[...new Set(modes)].sort(),stage};
   }
 
   function compatibility(queryProfile,rowProfile){
@@ -122,7 +126,7 @@
         if(!row||typeof row!=='object')return row;
         const category=rowCategory(row);
         const meta={intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category};
-        const structureProfile=!row.structureProfile||Number(row.structureProfile.version||0)<2?profile(row.question||'',meta):row.structureProfile;
+        const structureProfile=!row.structureProfile||Number(row.structureProfile.version||0)<3?profile(row.question||'',meta):row.structureProfile;
         return {...row,category,structureProfile};
       });
     }catch{return[]}
