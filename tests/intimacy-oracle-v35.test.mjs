@@ -36,7 +36,7 @@ for(const card of cards){
   Object.values(card.risks).forEach(value=>assert.ok(value>=0&&value<=3));
   assert.ok(card.light.length>=20);
   assert.ok(card.shadow.length>=20);
-  assert.match(card.asset,/assets\/intimacy-oracle\/oracle_atlas_v36\.jpg$/);
+  assert.equal(card.asset,`./assets/intimacy-oracle/cards/oracle_${card.code.slice(1)}.png`);
   assert.equal(card.sprite.columns,6);
   assert.equal(card.sprite.rows,6);
   assert.ok(card.sprite.column>=0&&card.sprite.column<=5);

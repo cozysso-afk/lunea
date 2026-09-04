@@ -12,8 +12,8 @@ assert.match(v34, /state\.category = 'INTIMACY'/);
 
 // Oracle front/back assets are explicitly Oracle-only PNGs.
 assert.match(v36, /BACK_ASSET='\.\/assets\/intimacy-oracle\/oracle_back_intimacy_final\.png'/);
-assert.match(v36, /ATLAS_ASSET='\.\/assets\/intimacy-oracle\/oracle_atlas_final\.png'/);
-assert.doesNotMatch(v36, /back_intimacy_final\.png/);
+assert.match(v36, /CARD_ROOT='\.\/assets\/intimacy-oracle\/cards'/);
+assert.doesNotMatch(v36, /BACK_ASSET='\.\/assets\/intimacy-oracle\/back_intimacy_final\.png'/);
 assert.doesNotMatch(v36, /generativelanguage\.googleapis\.com/);
 assert.match(v36, /function repairIntimacyTarotBacks\(\)\{return false\}/);
 assert.match(v36, /function patchTarotBack\(\)\{return false\}/);
@@ -32,8 +32,10 @@ assert.match(v43, /#luneaManualPanel\[data-lunea-intimacy-theme\]/);
 assert.doesNotMatch(v43, /body:has\(\.lunea-intimacy-category\) #luneaManualPanel/);
 assert.match(v43, /function clearManualContext\(\)/);
 assert.match(v43, /s\.category = 'INTIMACY'/);
-assert.match(v43, /FINAL_ORACLE_ATLAS = '\.\/assets\/intimacy-oracle\/oracle_atlas_final\.png'/);
+assert.match(v43, /ORACLE_CARD_ROOT = '\.\/assets\/intimacy-oracle\/cards'/);
 assert.match(v43, /FINAL_ORACLE_BACK = '\.\/assets\/intimacy-oracle\/oracle_back_intimacy_final\.png'/);
 assert.doesNotMatch(v43, /tarot_back_intimacy_final\.png/);
 
-console.log('INTIMACY separate Tarot/Oracle PNG routing contract OK');
+assert.doesNotMatch(v36,/oracle_atlas_final/);
+assert.doesNotMatch(v43,/oracle_atlas_final/);
+console.log('INTIMACY separate Tarot/Oracle individual-PNG routing contract OK');

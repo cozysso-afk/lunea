@@ -4,7 +4,7 @@
    Clean repair layer for the 2026-09-04 recovery branch.
    - Keeps INTIMACY state detection robust for manual spreads.
    - Restyles the shared manual spread editor in burgundy / rose-gold.
-   - Routes visible INTIMACY ORACLE cards to the final PNG 6x6 atlas.
+   - Routes visible INTIMACY ORACLE cards to their individual final PNG files.
    - Keeps the ORACLE back separate from the Tarot back asset.
    - Simplifies Oracle controls to Tarot / 1-card / 3-card choices only.
    This file does not call Gemini and does not change RNG. */
@@ -15,7 +15,7 @@
 
   const RELEASE = '43.2';
   const STYLE_ID = 'luneaIntimacyRepairV43Style';
-  const FINAL_ORACLE_ATLAS = './assets/intimacy-oracle/oracle_atlas_final.png';
+  const ORACLE_CARD_ROOT = './assets/intimacy-oracle/cards';
   const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_intimacy_final.png';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -118,13 +118,12 @@
       face.dataset.luneaIntimacyOracleAsset = 'final-png-oracle-back-v43';
       return true;
     }
-    const col = idx % 6;
-    const row = Math.floor(idx / 6);
-    face.style.setProperty('background-image', `url("${FINAL_ORACLE_ATLAS}")`, 'important');
-    face.style.setProperty('background-size', '600% 600%', 'important');
-    face.style.setProperty('background-position', `${col / 5 * 100}% ${row / 5 * 100}%`, 'important');
+    const cardNo = String(idx + 1).padStart(2, '0');
+    face.style.setProperty('background-image', `url("${ORACLE_CARD_ROOT}/oracle_${cardNo}.png")`, 'important');
+    face.style.setProperty('background-size', 'cover', 'important');
+    face.style.setProperty('background-position', 'center', 'important');
     face.style.setProperty('background-repeat', 'no-repeat', 'important');
-    face.dataset.luneaIntimacyOracleAsset = 'final-png-atlas-v43';
+    face.dataset.luneaIntimacyOracleAsset = 'individual-png-v43';
     return true;
   }
 
@@ -209,7 +208,7 @@
 
   W.LUNEA_INTIMACY_REPAIR_V43 = Object.freeze({
     version: RELEASE,
-    finalOracleAtlas: FINAL_ORACLE_ATLAS,
+    oracleCardRoot: ORACLE_CARD_ROOT,
     finalOracleBack: FINAL_ORACLE_BACK,
     intimacyActive,
     apply,
