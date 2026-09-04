@@ -46,14 +46,13 @@ with tempfile.TemporaryDirectory() as td:
         if im.size != (150, 250):
             raise SystemExit(f'unexpected source size {src.name}: {im.size}')
 
-        # Card 01 had a uniquely tall printed title/description block. The rest
+        # Card 01 has a uniquely tall printed title/description block. The rest
         # share a lower footer boundary. Strip printed footer text before app UI
         # adds its own consistent title overlay.
         bottom = 187 if i == 1 else 207
         art = im.crop((7, 7, 143, bottom))
 
-        # Keep V45's restrained tone normalization, but calculate it from the
-        # untouched source artwork rather than from an already graded asset.
+        # First pass: restrained grading from the untouched source artwork.
         lum, sat = visual_stats(art)
         brightness = max(.78, min(1.28, .145 / max(lum, .01)))
         color = max(.90, min(1.12, .58 / max(sat, .01)))
@@ -62,9 +61,19 @@ with tempfile.TemporaryDirectory() as td:
         art = ImageEnhance.Contrast(art).enhance(1.02)
 
         # Every card gets exactly the same 140x205 artwork viewport. The crop
-        # ratios are already almost identical, so this only removes frame/footer
+        # ratios are already almost identical, so this removes frame/footer
         # geometry differences instead of arbitrarily zooming individual cards.
         art = ImageOps.fit(art, (140, 205), method=Image.Resampling.LANCZOS, centering=(.5, .5))
+
+        # Second pass: normalize *after* remounting, because resampling changes
+        # the measured visual balance. This keeps all 36 displayed artworks in a
+        # much tighter brightness/saturation band without crushing highlights.
+        lum, sat = visual_stats(art)
+        brightness2 = max(.90, min(1.12, .145 / max(lum, .01)))
+        color2 = max(.94, min(1.08, .58 / max(sat, .01)))
+        art = ImageEnhance.Brightness(art).enhance(brightness2)
+        art = ImageEnhance.Color(art).enhance(color2)
+
         canvas = Image.new('RGB', (150, 250), (20, 6, 13))
         canvas.paste(art, (5, 5))
         draw = ImageDraw.Draw(canvas)
