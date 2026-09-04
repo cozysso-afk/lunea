@@ -1,20 +1,21 @@
 'use strict';
 
-/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.1 */
+/* LUNEA INTIMACY burgundy cabinet + tarot skin V40.2 */
 (() => {
   const W = window;
-  const RELEASE = '40.1';
+  const RELEASE = '40.2';
   const KEY = '__LUNEA_INTIMACY_BURGUNDY_V40__';
   W[KEY] = RELEASE;
 
   const SELF_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4010';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '4020';
     } catch {
-      return '4010';
+      return '4020';
     }
   })();
   const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
+  const TAROT_BACK_SRC = `./assets/intimacy-oracle/tarot_back_intimacy_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
   const STYLE_ID = 'luneaIntimacyBurgundyV40Style';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
@@ -94,6 +95,7 @@
       }
       #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back{
         border:1px solid rgba(235,151,183,.45)!important;
+        background:#19070f!important;
       }
       #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back::after{display:none!important}
       #cards .tarot-card-wrapper.lunea-intimacy-tarot-card .back>img{
@@ -134,8 +136,18 @@
     wrapper.classList.add('lunea-intimacy-tarot-card');
     wrapper.dataset.luneaIntimacyTarotRelease = RELEASE;
 
-    /* Tarot back ownership deliberately stays with the core/category back system.
-       INTIMACY Oracle assets must never be injected into Tarot backs here. */
+    const back = $('.back', wrapper);
+    if (back) {
+      let backImg = $('img', back);
+      if (!backImg) {
+        backImg = document.createElement('img');
+        backImg.alt = '';
+        back.appendChild(backImg);
+      }
+      if (backImg.getAttribute('src') !== TAROT_BACK_SRC) backImg.setAttribute('src', TAROT_BACK_SRC);
+      backImg.dataset.luneaIntimacyTarotBack = RELEASE;
+      try { backImg.decoding = 'async'; backImg.loading = 'eager'; } catch {}
+    }
 
     const frontImg = $('.front > img', wrapper);
     if (frontImg) {
@@ -153,21 +165,23 @@
       wrappers.forEach(wrapper => wrapper.classList.remove('lunea-intimacy-tarot-card'));
       return false;
     }
-    wrappers.forEach(repairTarotWrapper);
+    /* Let the shared restore layer do its normal work first; INTIMACY then wins
+       with its own dedicated Tarot back as the final owner. */
     W.LUNEA_CARD_BACK_RESTORE_V19?.repairVisibleReading?.();
+    wrappers.forEach(repairTarotWrapper);
     return wrappers.length > 0;
   }
 
   function wrapCardFactory() {
     const current = W.makeCardWrapper;
     if (typeof current !== 'function') return false;
-    if (current.__luneaIntimacyV401Wrapped) return true;
+    if (current.__luneaIntimacyV402Wrapped) return true;
     const wrapped = function(...args) {
       const wrapper = current.apply(this, args);
       if (isIntimacyActive()) repairTarotWrapper(wrapper);
       return wrapper;
     };
-    wrapped.__luneaIntimacyV401Wrapped = true;
+    wrapped.__luneaIntimacyV402Wrapped = true;
     wrapped.__luneaPriorMakeCardWrapper = current;
     W.makeCardWrapper = wrapped;
     return true;
@@ -175,8 +189,8 @@
 
   function observeCards() {
     const cards = document.getElementById('cards');
-    if (!cards || cards.__luneaIntimacyV401Observed) return;
-    cards.__luneaIntimacyV401Observed = true;
+    if (!cards || cards.__luneaIntimacyV402Observed) return;
+    cards.__luneaIntimacyV402Observed = true;
     new MutationObserver(() => requestAnimationFrame(repairTarotCards)).observe(cards, {childList:true, subtree:true});
   }
 
@@ -222,7 +236,7 @@
   W.LUNEA_INTIMACY_BURGUNDY_V40 = {
     version:RELEASE,
     icon:ICON_SRC,
-    cardBack:null,
+    cardBack:TAROT_BACK_SRC,
     apply,
     repairTarotCards,
     repairTarotWrapper,
