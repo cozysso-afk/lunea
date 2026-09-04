@@ -10,9 +10,9 @@
   1) 전체 뒤집기 · AI 해석 · 저장
   2) 다시 뽑기 · 추가 카드 · 시기 오라클
   3) Astro Timing · Thai 보조 · Thai 기간
-  4) Returns · Horary
+  4) Returns · Horary · 마스터 리딩 프롬프트 복사
 
-  Also mirrors the master prompt-copy control above the action grid for every
+  The master prompt-copy shortcut occupies the final action-grid cell for every
   sector/spread/question, while keeping the existing bottom copy control.
 
   Small AI 해석 / 저장 shortcuts remain directly below the bottom prompt-copy
@@ -23,8 +23,9 @@
   not overflow their grid tracks or collide in the middle of the modal.
 
   V33.3 loads the isolated INTIMACY V43 repair layer after the existing clean
-  and burgundy layers. V33.4 only changes reading-control placement; it does
-  not change RNG, AI interpretation, prompt generation, or storage.
+  and burgundy layers. V33.4 keeps the control-order behavior stable and also
+  applies the screenshot-marked INTIMACY presentation corrections without
+  changing RNG, AI interpretation, prompt generation, or storage.
 
   Unknown/future buttons are preserved after the known controls.
 */
@@ -53,6 +54,7 @@
     'luneaThaiTarotRangeBtn',
     'astroReturnBtn',
     'astroHoraryBtn',
+    'luneaTopCopyPrompt',
   ];
 
   const TOP_COPYBOX_ID = 'luneaTopPromptCopyBox';
@@ -99,14 +101,14 @@
     style.id = BOTTOM_STYLE_ID;
     style.textContent = `
       #${TOP_COPYBOX_ID}{
-        margin:10px 0 9px!important;padding:0!important;
+        display:none!important;margin:0!important;padding:0!important;
       }
-      #${TOP_COPY_ID}{
-        width:100%!important;min-height:43px!important;margin:0!important;padding:10px 12px!important;
-        border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
+      #spreadOverlay .actionbar #${TOP_COPY_ID}{
+        width:100%!important;min-height:43px!important;margin:0!important;padding:10px 9px!important;
+        grid-column:auto!important;border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
         background:linear-gradient(145deg,rgba(167,145,217,.10),rgba(91,125,168,.06))!important;
-        color:#e9e3ef!important;font:650 11.5px/1.2 system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif!important;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+        color:#e9e3ef!important;font:650 11.5px/1.22 system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif!important;
+        white-space:normal!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
         -webkit-tap-highlight-color:transparent;
       }
       #${TOP_COPY_ID}:active{transform:translateY(1px);opacity:.84}
@@ -114,6 +116,17 @@
       body.lunea-intimacy-reading #${TOP_COPY_ID}{
         color:#f8edf2!important;border-color:rgba(225,132,168,.22)!important;
         background:linear-gradient(145deg,rgba(112,34,69,.16),rgba(67,22,55,.09))!important;
+      }
+
+      /* Screenshot-marked INTIMACY list correction: keep the expanded cabinet
+         on the same square artwork as the Home tile. V40 may still maintain its
+         legacy img node for compatibility, but the final visual is the square
+         final PNG through this higher-specificity presentation rule. */
+      html body .lunea-intimacy-category .cat-icon{
+        background:#310b20 url('./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}') center/cover no-repeat!important;
+      }
+      html body .lunea-intimacy-category .cat-icon img{
+        display:none!important;visibility:hidden!important;opacity:0!important;
       }
 
       #${BOTTOM_ID}{
@@ -190,6 +203,16 @@
     if (box.parentNode !== bar.parentNode || box.nextElementSibling !== bar) {
       bar.parentNode.insertBefore(box, bar);
     }
+
+    /* Keep the legacy wrapper in place (hidden) so long-lived pages and the
+       existing sync path remain stable, but put the actual shortcut in the
+       action grid's final open cell. */
+    box.hidden = true;
+    box.setAttribute('aria-hidden', 'true');
+    top.classList.remove('primary', 'full-btn');
+    top.classList.add('mini');
+    if (top.parentNode !== bar) bar.appendChild(top);
+    reorder();
     syncTopPromptCopy();
     return true;
   }
