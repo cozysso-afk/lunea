@@ -1,0 +1,96 @@
+name: INTIMACY V46 Oracle display repair
+
+on:
+  push:
+    branches:
+      - work/intimacy-oracle-display-v46-20260904
+    paths:
+      - .github/workflows/intimacy-v46-oracle-display.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install image tooling
+        run: python -m pip install --quiet pillow numpy
+
+      - name: Apply V46 Oracle display repair
+        run: python scripts/intimacy_v46_oracle_display.py
+
+      - name: Validate runtime and display geometry
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check lunea-intimacy-oracle-ui-v36.js
+          node --check lunea-intimacy-ai-bridge-v34.js
+          node tests/intimacy-oracle-flip-v46.test.mjs
+          node tests/intimacy-oracle-ui-v36.test.mjs
+          node tests/intimacy-ai-bridge-v34.test.mjs
+          node tests/intimacy-v45-root-regression.test.mjs
+          node tests/intimacy-visual-cohesion-v44.test.mjs
+          node tests/intimacy-manual-oracle-back-integration.test.mjs
+          node tests/intimacy-tarot-visual-v40.test.mjs
+          python - <<'PY'
+          from PIL import Image, ImageDraw
+          from pathlib import Path
+          import numpy as np, statistics
+          root=Path('assets/intimacy-oracle/cards')
+          lums=[]; sats=[]; footers=[]
+          for i in range(1,37):
+              p=root/f'oracle_{i:02d}.png'
+              im=Image.open(p).convert('RGB')
+              assert im.size==(150,250),(p,im.size)
+              a=np.asarray(im).astype(np.float32)/255.0
+              art=a[5:210,5:145]
+              lum=.2126*art[:,:,0]+.7152*art[:,:,1]+.0722*art[:,:,2]
+              mx=art.max(2); mn=art.min(2)
+              sat=np.divide(mx-mn,mx,out=np.zeros_like(mx),where=mx>1e-6)
+              lums.append(float(lum.mean())); sats.append(float(sat.mean()))
+              footers.append(a[218:244,8:142].mean(axis=(0,1)))
+          footer=np.asarray(footers)
+          print('V46 luminance',min(lums),max(lums),'sd',statistics.pstdev(lums))
+          print('V46 saturation sd',statistics.pstdev(sats))
+          print('V46 footer RGB spread',np.ptp(footer,axis=0))
+          assert statistics.pstdev(lums)<.022
+          assert max(lums)-min(lums)<.085
+          assert statistics.pstdev(sats)<.04
+          assert float(np.ptp(footer))<1e-7
+          # Contact sheet is an artifact only, never part of the runtime repo.
+          sheet=Image.new('RGB',(900,1500),(8,4,8))
+          for j in range(36):
+              sheet.paste(Image.open(root/f'oracle_{j+1:02d}.png').convert('RGB'),((j%6)*150,(j//6)*250))
+          sheet.save('/tmp/oracle-v46-contact.png')
+          PY
+
+      - name: Upload V46 visual proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: intimacy-oracle-v46-contact
+          path: /tmp/oracle-v46-contact.png
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Commit validated V46 runtime and cards
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            lunea-intimacy-oracle-ui-v36.js \
+            lunea-intimacy-ai-bridge-v34.js \
+            tests/intimacy-oracle-flip-v46.test.mjs \
+            tests/intimacy-oracle-ui-v36.test.mjs \
+            tests/intimacy-ai-bridge-v34.test.mjs \
+            tests/intimacy-v45-root-regression.test.mjs \
+            tests/intimacy-visual-cohesion-v44.test.mjs \
+            assets/intimacy-oracle/cards/oracle_*.png
+          git commit -m 'fix(intimacy): unify Oracle framing and stagger reveal animation'
+          git push origin HEAD:work/intimacy-oracle-display-v46-20260904
