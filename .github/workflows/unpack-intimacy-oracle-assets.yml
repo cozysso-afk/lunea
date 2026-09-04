@@ -52,14 +52,12 @@ jobs:
               text = text.replace(old, new, 1)
               p.write_text(text, encoding='utf-8')
 
-          # Canonical card metadata now points to each real PNG rather than the legacy atlas.
           replace_once(
               'lunea-intimacy-oracle-v35.js',
               "asset:`${ROOT}/oracle_atlas_v36.jpg`,sprite:Object.freeze({column:i%6,row:Math.floor(i/6),columns:6,rows:6})",
               "asset:`${ROOT}/cards/oracle_${String(i+1).padStart(2,'0')}.png`,sprite:Object.freeze({column:i%6,row:Math.floor(i/6),columns:6,rows:6})"
           )
 
-          # V36 renders the selected card's own PNG. No 6x6 coordinate math remains.
           replace_once(
               'lunea-intimacy-oracle-ui-v36.js',
               "const RELEASE='36.1',MODE_KEY='LUNEA_INTIMACY_ORACLE_MODE_V1',DRAFT_KEY='LUNEA_INTIMACY_ORACLE_DRAFT_V1',BACK_ASSET='./assets/intimacy-oracle/oracle_back_intimacy_final.png',ATLAS_ASSET='./assets/intimacy-oracle/oracle_atlas_final.png';",
@@ -77,7 +75,6 @@ jobs:
           )
           replace_once('lunea-intimacy-oracle-ui-v36.js', 'aspect-ratio:3/4;', 'aspect-ratio:3/5;')
 
-          # V43 late repair layer also uses the individual card file, never the atlas.
           replace_once('lunea-intimacy-repair-v43.js', 'Routes visible INTIMACY ORACLE cards to the final PNG 6x6 atlas.', 'Routes visible INTIMACY ORACLE cards to their individual final PNG files.')
           replace_once(
               'lunea-intimacy-repair-v43.js',
@@ -91,7 +88,6 @@ jobs:
           )
           replace_once('lunea-intimacy-repair-v43.js', '    finalOracleAtlas: FINAL_ORACLE_ATLAS,', '    oracleCardRoot: ORACLE_CARD_ROOT,')
 
-          # Tests: lock the individual-PNG contract and reject atlas regressions.
           replace_once(
               'tests/intimacy-oracle-v35.test.mjs',
               "  assert.match(card.asset,/assets\\/intimacy-oracle\\/oracle_atlas_v36\\.jpg$/);",
@@ -112,6 +108,7 @@ jobs:
           p = Path('tests/intimacy-asset-routing-v43.test.mjs')
           t = p.read_text(encoding='utf-8')
           t = t.replace("assert.match(v36, /ATLAS_ASSET='\\.\\/assets\\/intimacy-oracle\\/oracle_atlas_final\\.png'/);", "assert.match(v36, /CARD_ROOT='\\.\\/assets\\/intimacy-oracle\\/cards'/);")
+          t = t.replace("assert.doesNotMatch(v36, /back_intimacy_final\\.png/);", "assert.doesNotMatch(v36, /BACK_ASSET='\\.\\/assets\\/intimacy-oracle\\/back_intimacy_final\\.png'/);")
           t = t.replace("assert.match(v43, /FINAL_ORACLE_ATLAS = '\\.\\/assets\\/intimacy-oracle\\/oracle_atlas_final\\.png'/);", "assert.match(v43, /ORACLE_CARD_ROOT = '\\.\\/assets\\/intimacy-oracle\\/cards'/);")
           t = t.replace("console.log('INTIMACY separate Tarot/Oracle PNG routing contract OK');", "assert.doesNotMatch(v36,/oracle_atlas_final/);\nassert.doesNotMatch(v43,/oracle_atlas_final/);\nconsole.log('INTIMACY separate Tarot/Oracle individual-PNG routing contract OK');")
           p.write_text(t, encoding='utf-8')
