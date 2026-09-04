@@ -1,0 +1,57 @@
+name: Unpack INTIMACY Oracle PNGs
+
+on:
+  push:
+    branches:
+      - work/intimacy-repair-20260904
+    paths:
+      - '.github/workflows/unpack-intimacy-oracle-assets.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract 36 Oracle PNGs from uploaded ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:lunea-intimacy-oracle-36-cards-png.zip > /tmp/oracle.zip
+          rm -rf assets/intimacy-oracle/cards
+          mkdir -p assets/intimacy-oracle/cards
+          unzip -j /tmp/oracle.zip 'oracle_*.png' -d assets/intimacy-oracle/cards
+          python - <<'PY'
+          from pathlib import Path
+          files = sorted(Path('assets/intimacy-oracle/cards').glob('oracle_*.png'))
+          assert len(files) == 36, f'expected 36 cards, got {len(files)}'
+          sig = bytes([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a])
+          expected = [f'oracle_{i:02d}.png' for i in range(1,37)]
+          assert [p.name for p in files] == expected
+          for p in files:
+              data = p.read_bytes()
+              assert data[:8] == sig, f'{p} is not PNG'
+              assert len(data) > 5000, f'{p} unexpectedly small: {len(data)}'
+          print('verified 36 Oracle PNGs')
+          PY
+
+      - name: Commit extracted cards to repair branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/intimacy-oracle/cards/oracle_*.png
+          if git diff --cached --quiet; then
+            echo 'No card changes to commit.'
+            exit 0
+          fi
+          git commit -m 'feat(intimacy): unpack 36 Oracle PNG card faces'
+          git push origin HEAD:work/intimacy-repair-20260904
