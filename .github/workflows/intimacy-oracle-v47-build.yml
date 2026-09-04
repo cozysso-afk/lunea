@@ -1,0 +1,122 @@
+name: INTIMACY Oracle V47 build
+
+on:
+  push:
+    branches:
+      - work/intimacy-oracle-v2-assets-ui-20260905
+    paths:
+      - '.github/workflows/intimacy-oracle-v47-build.yml'
+      - '.tmp-intimacy-oracle-v47/**'
+      - 'lunea_intimacy_oracle_web_optimized_under25mb.zip'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/intimacy-oracle-v2-assets-ui-20260905
+          fetch-depth: 0
+      - name: Install and normalize assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/lunea-oracle-v47
+          mkdir -p /tmp/lunea-oracle-v47 assets/intimacy-oracle/cards
+          unzip -q -o lunea_intimacy_oracle_web_optimized_under25mb.zip -d /tmp/lunea-oracle-v47
+          for n in $(seq -w 1 36); do
+            cp "/tmp/lunea-oracle-v47/oracle_${n}.png" "assets/intimacy-oracle/cards/oracle_${n}.png"
+          done
+          # Corrected anatomy/composition and text-free finals
+          cp .tmp-intimacy-oracle-v47/corrected_03.png assets/intimacy-oracle/cards/oracle_03.png
+          cp .tmp-intimacy-oracle-v47/corrected_07.png assets/intimacy-oracle/cards/oracle_07.png
+          for n in 31 32 33 34 35 36; do
+            cp ".tmp-intimacy-oracle-v47/corrected_${n}.png" "assets/intimacy-oracle/cards/oracle_${n}.png"
+          done
+          cp .tmp-intimacy-oracle-v47/oracle_back_corrected.png assets/intimacy-oracle/oracle_back_v2.png
+      - name: Patch Oracle UI
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p=Path('lunea-intimacy-oracle-ui-v36.js')
+          s=p.read_text()
+          s=s.replace("const RELEASE='36.2'", "const RELEASE='36.3'")
+          s=s.replace("BACK_ASSET='./assets/intimacy-oracle/oracle_back_intimacy_final.png'", "BACK_ASSET='./assets/intimacy-oracle/oracle_back_v2.png'")
+          s=s.replace("CARD_ASSET_VERSION='v46'", "CARD_ASSET_VERSION='v47'")
+          s=s.replace("front.style.backgroundSize='100% 100%'", "front.style.backgroundSize='cover'")
+          s=s.replace(".lio-card-front{transform:rotateY(180deg) translateZ(1px);-webkit-transform:rotateY(180deg) translateZ(1px);filter:none}", ".lio-card-front{transform:rotateY(180deg) translateZ(1px);-webkit-transform:rotateY(180deg) translateZ(1px);filter:brightness(1.14) saturate(1.05) contrast(.99)}")
+          s=s.replace("background:rgba(31,8,18,.64);backdrop-filter:blur(5px)", "background:linear-gradient(180deg,rgba(31,8,18,.42),rgba(31,8,18,.78));backdrop-filter:blur(4px)")
+          s=s.replace("font-size:8px;opacity:.82", "font-size:8.5px;opacity:.88")
+          s=s.replace("font-size:9px;letter-spacing:.02em", "font-size:10.5px;letter-spacing:.025em")
+          s=s.replace("font-size:8px;opacity:.9", "font-size:9px;opacity:.94")
+          s=s.replace(".lio-card span{inset:auto 3px 4px;padding:4px 3px}.lio-card span em{font-size:7px}.lio-card span strong{font-size:8px}.lio-card span small{font-size:7px}", ".lio-card span{inset:auto 3px 4px;padding:5px 3px}.lio-card span em{font-size:7.5px}.lio-card span strong{font-size:9.5px}.lio-card span small{font-size:8px}")
+          p.write_text(s)
+
+          p=Path('lunea-intimacy-repair-v43.js')
+          s=p.read_text()
+          s=s.replace("const RELEASE = '43.2';", "const RELEASE = '43.3';")
+          s=s.replace("const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_intimacy_final.png';", "const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_v2.png';")
+          p.write_text(s)
+
+          p=Path('lunea-intimacy-ai-bridge-v34.js')
+          s=p.read_text().replace("./lunea-intimacy-oracle-ui-v36.js?v=3613", "./lunea-intimacy-oracle-ui-v36.js?v=3614")
+          p.write_text(s)
+      - name: Update focused tests
+        shell: python
+        run: |
+          from pathlib import Path
+          for name in ['tests/intimacy-oracle-ui-v36.test.mjs','tests/intimacy-visual-cohesion-v44.test.mjs','tests/intimacy-tarot-visual-v40.test.mjs']:
+            p=Path(name)
+            if not p.exists(): continue
+            s=p.read_text()
+            s=s.replace('./assets/intimacy-oracle/oracle_back_intimacy_final.png','./assets/intimacy-oracle/oracle_back_v2.png')
+            s=s.replace("'36.2'","'36.3'").replace("'43.2'","'43.3'")
+            s=s.replace('3613','3614')
+            p.write_text(s)
+      - name: Add V47 asset/display contract
+        shell: bash
+        run: |
+          cat > tests/intimacy-oracle-v47-assets.test.mjs <<'EOF'
+          import fs from 'node:fs';
+          import assert from 'node:assert/strict';
+          const ui=fs.readFileSync(new URL('../lunea-intimacy-oracle-ui-v36.js',import.meta.url),'utf8');
+          assert.match(ui,/oracle_back_v2\.png/);
+          assert.match(ui,/CARD_ASSET_VERSION='v47'/);
+          assert.match(ui,/backgroundSize='cover'/);
+          assert.match(ui,/brightness\(1\.14\)/);
+          for(let i=1;i<=36;i++){
+            const n=String(i).padStart(2,'0');
+            const p=new URL(`../assets/intimacy-oracle/cards/oracle_${n}.png`,import.meta.url);
+            const b=fs.readFileSync(p);
+            assert.ok(b.length>20_000,`oracle_${n}.png too small`);
+            assert.deepEqual([...b.subarray(0,8)],[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a]);
+          }
+          const back=fs.readFileSync(new URL('../assets/intimacy-oracle/oracle_back_v2.png',import.meta.url));
+          assert.ok(back.length>20_000);
+          console.log('INTIMACY Oracle V47 assets/display contract PASS');
+          EOF
+      - name: Run tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/intimacy-oracle-v47-assets.test.mjs
+          node tests/intimacy-oracle-ui-v36.test.mjs
+          node tests/intimacy-manual-oracle-back-integration.test.mjs
+          node tests/intimacy-visual-cohesion-v44.test.mjs
+      - name: Commit generated app assets and UI
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .tmp-intimacy-oracle-v47
+          rm -f .github/workflows/intimacy-oracle-v47-build.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'fix(intimacy): install Oracle V47 artwork and mobile presentation'
+          git push origin HEAD:work/intimacy-oracle-v2-assets-ui-20260905
