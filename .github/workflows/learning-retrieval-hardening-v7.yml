@@ -1,0 +1,49 @@
+name: Learning retrieval hardening V7
+on:
+  push:
+    branches: [work/learning-retrieval-hardening-v7-20260904]
+    paths:
+      - tools/patch-learning-retrieval-hardening-v7.py
+      - tests/learning-retrieval-hardening-v7.test.mjs
+      - .github/workflows/learning-retrieval-hardening-v7.yml
+permissions:
+  contents: write
+jobs:
+  patch-test-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: work/learning-retrieval-hardening-v7-20260904
+          fetch-depth: 0
+      - name: Apply hardening patch
+        run: python3 tools/patch-learning-retrieval-hardening-v7.py
+      - name: Syntax checks
+        run: |
+          node --check lunea-user-spread-learning-v1.js
+          node --check lunea-ai-spread-preflight-v2.js
+          node --check lunea-structural-routing-v4.js
+      - name: Run retrieval hardening tests
+        run: node --test tests/learning-retrieval-hardening-v7.test.mjs
+      - name: Run routing benchmark
+        run: node tests/lunea-benchmark-question-routing-v1.mjs
+      - name: Run cloud upgrade tests
+        run: node --test tests/cloud-profile-reprofiling-v3.test.mjs
+      - name: Run learning regressions
+        run: |
+          node --test tests/spread-learning-v5-runtime.test.mjs
+          node --test tests/spread-learning-integration-contract.test.mjs
+          node --test tests/manual-category-preservation.test.mjs
+          node --test tests/intimacy-manual-oracle-back-integration.test.mjs
+          node --test tests/intimacy-ai-bridge-v34.test.mjs
+      - name: Commit verified runtime changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lunea-user-spread-learning-v1.js lunea-ai-spread-preflight-v2.js lunea-structural-routing-v4.js tests/cloud-profile-reprofiling-v3.test.mjs tests/spread-learning-integration-contract.test.mjs
+          if git diff --cached --quiet; then
+            echo "No runtime changes to commit"
+          else
+            git commit -m "fix(learning): harden retrieval and named-pair routing"
+            git push origin HEAD:work/learning-retrieval-hardening-v7-20260904
+          fi
