@@ -5,7 +5,7 @@ import fs from 'node:fs';
 const source = fs.readFileSync(new URL('../lunea-intimacy-readability-v36.js', import.meta.url), 'utf8');
 const loader = fs.readFileSync(new URL('../lunea-structural-routing-v4.js', import.meta.url), 'utf8');
 const workflow = fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader-413.yml', import.meta.url), 'utf8');
-const icon = fs.readFileSync(new URL('../assets/intimacy-oracle/intimacy_sector_v37.svg', import.meta.url), 'utf8');
+const icon = fs.readFileSync(new URL('../assets/intimacy-oracle/intimacy_sector_final.png', import.meta.url));
 
 test('V38 runtime guard is release-aware so an older open PWA session cannot suppress a newer repair', () => {
   assert.match(source, /const RELEASE = '38\.0'/);
@@ -16,14 +16,12 @@ test('V38 runtime guard is release-aware so an older open PWA session cannot sup
 });
 
 test('INTIMACY uses the square celestial artwork with img and CSS fallback', () => {
-  assert.match(source, /intimacy_sector_v37\.svg\?v=/);
+  assert.match(source, /intimacy_sector_final\.png\?v=/);
   assert.match(source, /lunea-intimacy-sector-art-v37/);
   assert.match(source, /background:#181329 url\('\$\{ICON_SRC\}'\) center\/cover no-repeat!important/);
   assert.match(source, /icon\.replaceChildren\(img, sentinel\)/);
   assert.match(source, /object-fit:cover!important/);
-  assert.match(icon, /viewBox="0 0 180 180"/);
-  assert.match(icon, /radialGradient id="pearl"/);
-  assert.match(icon, /linearGradient id="cres"/);
+  assert.equal(icon.subarray(0,8).toString('hex'), '89504e470d0a1a0a');
 });
 
 test('legacy V35 cannot overwrite the square logo after its delayed installer runs', () => {

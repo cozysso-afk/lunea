@@ -31,15 +31,17 @@
     LOVE: 'back_love.PNG',
     STOCK: 'back_stock.PNG',
     CAREER: 'back_career.PNG',
-    GENERAL: 'back_general.PNG'
+    GENERAL: 'back_general.PNG',
+    INTIMACY: 'assets/intimacy-oracle/tarot_back_intimacy_final.png'
   };
 
   function categoryNow() {
     try {
+      if (W.__LUNEA_INTIMACY_ACTIVE__ || document.body?.classList?.contains('lunea-intimacy-reading') || String(state?.category || '').toUpperCase() === 'INTIMACY') return 'INTIMACY';
       const value = String(state?.category || 'GENERAL').toUpperCase();
       return FILES[value] ? value : 'GENERAL';
     } catch {
-      return 'GENERAL';
+      return W.__LUNEA_INTIMACY_ACTIVE__ ? 'INTIMACY' : 'GENERAL';
     }
   }
 

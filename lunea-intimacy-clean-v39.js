@@ -29,7 +29,7 @@
       return '3900';
     }
   })();
-  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SCRIPT_VERSION)}`;
+  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SCRIPT_VERSION)}`;
   const STYLE_ID = 'luneaIntimacyCleanV39Style';
   const HOME_TILE_ID = 'luneaIntimacyHomeTileV39';
   const $ = (selector, root = document) => root.querySelector(selector);

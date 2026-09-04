@@ -15,7 +15,7 @@
       return '3800';
     }
   })();
-  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SCRIPT_VERSION)}`;
+  const ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SCRIPT_VERSION)}`;
   const $ = (selector, root = document) => root.querySelector(selector);
 
   const COPY = Object.freeze([

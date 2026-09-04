@@ -193,9 +193,8 @@
       wrappers.forEach(wrapper => wrapper.classList.remove('lunea-intimacy-tarot-card'));
       return false;
     }
-    /* Let the shared restore layer do its normal work first; INTIMACY then wins
-       with its own dedicated Tarot back as the final owner. */
-    W.LUNEA_CARD_BACK_RESTORE_V19?.repairVisibleReading?.();
+    /* INTIMACY is already owned by the shared V19 category map. Do not run an
+       intermediate restore paint here; repair only the final wrappers. */
     wrappers.forEach(repairTarotWrapper);
     return wrappers.length > 0;
   }

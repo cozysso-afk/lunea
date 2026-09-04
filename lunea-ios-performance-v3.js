@@ -188,7 +188,7 @@
       const backImg = document.createElement('img');
       let backSrc = prefix + '.PNG';
       try {
-        if (String(state?.category || '').toUpperCase() === 'INTIMACY') backSrc = './assets/intimacy-oracle/tarot_back_intimacy_final.png';
+        if (W.__LUNEA_INTIMACY_ACTIVE__ || document.body?.classList?.contains('lunea-intimacy-reading') || String(state?.category || '').toUpperCase() === 'INTIMACY') backSrc = './assets/intimacy-oracle/tarot_back_intimacy_final.png';
       } catch {}
       backImg.src = backSrc;
       backImg.alt = '';

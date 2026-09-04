@@ -7,7 +7,7 @@ const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', im
 
 test('V39 uses the dedicated square artwork and forcibly removes the old orbit presentation', () => {
   assert.match(source, /const RELEASE = '39\.0'/);
-  assert.match(source, /intimacy_sector_v37\.svg\?v=/);
+  assert.match(source, /intimacy_sector_final\.png\?v=/);
   assert.match(source, /lunea-intimacy-sector-art-v39/);
   assert.match(source, /icon\.replaceChildren\(img\)/);
   assert.match(source, /luneaIntimacyLegacyV35Style/);

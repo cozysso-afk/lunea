@@ -38,10 +38,9 @@ test('card factory and dynamic 20-card draws are repaired after iOS creates them
   assert.match(source, /requestAnimationFrame\(repairTarotCards\)/);
 });
 
-test('shared restore cannot overwrite the final INTIMACY Tarot back', () => {
-  const restoreAt = source.indexOf('repairVisibleReading?.()');
-  const finalAt = source.indexOf('wrappers.forEach(repairTarotWrapper)', restoreAt);
-  assert.ok(restoreAt >= 0 && finalAt > restoreAt);
+test('INTIMACY Tarot back has one owner without an intermediate shared restore paint', () => {
+  const repair = source.slice(source.indexOf('function repairTarotCards'), source.indexOf('function wrapCardFactory'));
+  assert.doesNotMatch(repair, /repairVisibleReading/);
   assert.match(source, /backImg\.setAttribute\('src', TAROT_BACK_SRC\)/);
 });
 
