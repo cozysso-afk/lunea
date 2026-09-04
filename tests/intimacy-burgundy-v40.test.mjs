@@ -5,13 +5,15 @@ import test from 'node:test';
 const source = fs.readFileSync(new URL('../lunea-intimacy-burgundy-v40.js', import.meta.url), 'utf8');
 const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
 
-const pngUrl = new URL('../assets/intimacy-oracle/intimacy_sector_v40.png', import.meta.url);
+const pngUrl = new URL('../assets/intimacy-oracle/intimacy_sector_final.png', import.meta.url);
 
-test('V40 ships a real PNG and uses it for INTIMACY branding', () => {
+test('V40 ships the final PNG and uses it for INTIMACY branding', () => {
   assert.equal(fs.existsSync(pngUrl), true);
   const bytes = fs.readFileSync(pngUrl);
   assert.equal(bytes.subarray(1, 4).toString('ascii'), 'PNG');
-  assert.match(source, /intimacy_sector_v40\.png/);
+  assert.ok(bytes.length > 100_000, 'final sector PNG must not be a tiny placeholder');
+  assert.match(source, /intimacy_sector_final\.png/);
+  assert.doesNotMatch(source, /intimacy_sector_v40\.png/);
   assert.match(source, /forceIcon\(\$\('\.cat-icon'/);
   assert.match(source, /lunea-v8-tile\[data-key="intimacy"\]/);
 });
