@@ -13,10 +13,10 @@
   if (W.__LUNEA_INTIMACY_REPAIR_V43__) return;
   W.__LUNEA_INTIMACY_REPAIR_V43__ = true;
 
-  const RELEASE = '43.2';
+  const RELEASE = '43.3';
   const STYLE_ID = 'luneaIntimacyRepairV43Style';
   const ORACLE_CARD_ROOT = './assets/intimacy-oracle/cards';
-  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_intimacy_final.png';
+  const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_v2.png';
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
