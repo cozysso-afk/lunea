@@ -2,11 +2,15 @@ name: Spread learning V5 fix
 on:
   push:
     branches: [work/spread-learning-fix-v5-20260904]
+    paths:
+      - '.github/workflows/spread-learning-fix-v5.yml'
+      - 'tools/apply_spread_learning_fix_v5.py'
+      - 'tools/apply_spread_learning_fix_v5_followup.py'
+      - 'tests/spread-learning-v5-runtime.test.mjs'
 permissions:
   contents: write
 jobs:
   fix-and-test:
-    if: ${{ !contains(github.event.head_commit.message, 'fix(learning): isolate categories and reuse strong long spreads') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
