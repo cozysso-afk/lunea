@@ -7,6 +7,7 @@ const path = require('path');
 const ROOT = process.cwd();
 const PORT = Number(process.env.PORT || 10000);
 const API_ORIGIN = 'https://lunea-astro-api.onrender.com';
+const UI_BUILD = '20260905-2150-v42-direct';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -26,12 +27,19 @@ const MIME = {
   '.woff2': 'font/woff2',
 };
 
+/*
+ * IMPORTANT: these three scripts are deliberately injected directly into the
+ * Render HTML instead of depending on the legacy cache-refresh chain. That
+ * makes the bypass self-contained even when an iOS Home Screen session has an
+ * older LUNEA loader cached.
+ */
 const INJECT = `
-<script id="luneaRenderBypassV41">
+<meta name="lunea-render-build" content="${UI_BUILD}">
+<script id="luneaRenderBypassV42Bootstrap">
 (() => {
   const proxyBase = location.origin + '/__lunea_api';
   try { localStorage.setItem('LUNEA_ASTRO_API_URL', proxyBase); } catch {}
-  window.__LUNEA_RENDER_BYPASS_V41__ = true;
+  window.__LUNEA_RENDER_BYPASS_V42__ = '${UI_BUILD}';
   const nativeFetch = window.fetch.bind(window);
   window.fetch = function(input, init) {
     try {
@@ -45,7 +53,10 @@ const INJECT = `
     return nativeFetch(input, init);
   };
 })();
-</script>`;
+</script>
+<script src="./lunea-cardback-sector-v20.js?v=${UI_BUILD}" data-lunea-render-direct="cardbacks"></script>
+<script src="./lunea-timing-image-assets-v16.js?v=${UI_BUILD}" data-lunea-render-direct="timing"></script>
+<script src="./lunea-horary-mobile-stability-v42.js?v=${UI_BUILD}" data-lunea-render-direct="horary"></script>`;
 
 function safePath(urlPath) {
   let decoded;
@@ -105,13 +116,18 @@ function serveFile(file, req, res) {
     let out = data;
     if (ext === '.html') {
       let html = data.toString('utf8');
-      if (!html.includes('luneaRenderBypassV41')) {
+      if (!html.includes('luneaRenderBypassV42Bootstrap')) {
         html = html.includes('<head>') ? html.replace('<head>', '<head>' + INJECT) : INJECT + html;
       }
       out = Buffer.from(html, 'utf8');
-      res.setHeader('cache-control', 'no-store, max-age=0');
-    } else if (ext === '.js' || ext === '.json') {
-      res.setHeader('cache-control', 'no-cache, max-age=0');
+    }
+
+    // The bypass is an emergency correctness path. Prefer a fresh request over
+    // stale iOS/PWA behavior for HTML, JS, JSON and the newly uploaded artwork.
+    if (['.html', '.js', '.json', '.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
+      res.setHeader('cache-control', 'no-store, max-age=0, must-revalidate');
+      res.setHeader('pragma', 'no-cache');
+      res.setHeader('expires', '0');
     } else {
       res.setHeader('cache-control', 'public, max-age=300');
     }
@@ -119,7 +135,8 @@ function serveFile(file, req, res) {
     res.statusCode = 200;
     res.setHeader('content-type', MIME[ext] || 'application/octet-stream');
     res.setHeader('content-length', out.length);
-    res.setHeader('x-lunea-deploy', 'render-v41-bypass');
+    res.setHeader('x-lunea-deploy', 'render-v42-direct-bypass');
+    res.setHeader('x-lunea-ui-build', UI_BUILD);
     res.end(req.method === 'HEAD' ? undefined : out);
   });
 }
@@ -128,7 +145,8 @@ const server = http.createServer(async (req, res) => {
   if ((req.url || '').startsWith('/__lunea_api')) return proxy(req, res);
   if (req.url === '/__lunea_bypass_health') {
     res.setHeader('content-type', 'application/json; charset=utf-8');
-    return res.end(JSON.stringify({ ok: true, build: 'V41', proxy: true }));
+    res.setHeader('cache-control', 'no-store');
+    return res.end(JSON.stringify({ ok: true, build: UI_BUILD, proxy: true, directFixes: ['cardbacks-v20','timing-v16','horary-v42'] }));
   }
 
   const file = safePath(req.url || '/');
@@ -143,5 +161,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`LUNEA V41 Render bypass listening on ${PORT}`);
+  console.log(`LUNEA Render direct bypass ${UI_BUILD} listening on ${PORT}`);
 });
