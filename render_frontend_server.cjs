@@ -7,7 +7,7 @@ const path = require('path');
 const ROOT = process.cwd();
 const PORT = Number(process.env.PORT || 10000);
 const API_ORIGIN = 'https://lunea-astro-api.onrender.com';
-const UI_BUILD = '20260905-2150-v42-direct';
+const UI_BUILD = '20260905-2215-auth-v2';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -28,10 +28,9 @@ const MIME = {
 };
 
 /*
- * IMPORTANT: these three scripts are deliberately injected directly into the
- * Render HTML instead of depending on the legacy cache-refresh chain. That
- * makes the bypass self-contained even when an iOS Home Screen session has an
- * older LUNEA loader cached.
+ * IMPORTANT: correctness-critical scripts are deliberately injected directly
+ * into the Render HTML instead of depending on the legacy cache-refresh chain.
+ * This keeps the bypass self-contained for stale iOS Home Screen sessions.
  */
 const INJECT = `
 <meta name="lunea-render-build" content="${UI_BUILD}">
@@ -56,7 +55,8 @@ const INJECT = `
 </script>
 <script src="./lunea-cardback-sector-v20.js?v=${UI_BUILD}" data-lunea-render-direct="cardbacks"></script>
 <script src="./lunea-timing-image-assets-v16.js?v=${UI_BUILD}" data-lunea-render-direct="timing"></script>
-<script src="./lunea-horary-mobile-stability-v42.js?v=${UI_BUILD}" data-lunea-render-direct="horary"></script>`;
+<script src="./lunea-horary-mobile-stability-v42.js?v=${UI_BUILD}" data-lunea-render-direct="horary"></script>
+<script src="./lunea-learning-auth-recovery-v2.js?v=${UI_BUILD}" data-lunea-render-direct="learning-auth"></script>`;
 
 function safePath(urlPath) {
   let decoded;
@@ -123,7 +123,7 @@ function serveFile(file, req, res) {
     }
 
     // The bypass is an emergency correctness path. Prefer a fresh request over
-    // stale iOS/PWA behavior for HTML, JS, JSON and the newly uploaded artwork.
+    // stale iOS/PWA behavior for HTML, JS, JSON and uploaded artwork.
     if (['.html', '.js', '.json', '.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
       res.setHeader('cache-control', 'no-store, max-age=0, must-revalidate');
       res.setHeader('pragma', 'no-cache');
@@ -146,7 +146,7 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/__lunea_bypass_health') {
     res.setHeader('content-type', 'application/json; charset=utf-8');
     res.setHeader('cache-control', 'no-store');
-    return res.end(JSON.stringify({ ok: true, build: UI_BUILD, proxy: true, directFixes: ['cardbacks-v20','timing-v16','horary-v42'] }));
+    return res.end(JSON.stringify({ ok: true, build: UI_BUILD, proxy: true, directFixes: ['cardbacks-v20','timing-v16','horary-v42','learning-auth-recovery-v2'] }));
   }
 
   const file = safePath(req.url || '/');
