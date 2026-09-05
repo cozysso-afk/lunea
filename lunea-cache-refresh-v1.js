@@ -1,13 +1,17 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1
-  Build-scoped hotfix loader + stale-build refresh.
+  LUNEA Cache Refresh V1 · Pages V56
+  - Build-scoped hotfix loader + stale-build refresh.
+  - Loads Pages-only Astro origin failover before the user can trigger Thai/Astro.
+  - Loads hard reading-question state boundaries so old calculations cannot leak.
+  - Loads the iOS Thai period date centering repair.
 */
 (() => {
   if (window.__LUNEA_CACHE_REFRESH_V1__) return;
   window.__LUNEA_CACHE_REFRESH_V1__ = true;
 
+  const W = window;
   const BUILD_FILE = './lunea-build.json';
   const SELF_BUILD = (() => {
     try {
@@ -34,6 +38,15 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  function loadAstroOriginFailover() {
+    loadBuildScopedScript('luneaAstroOriginFailoverV56Loader', './lunea-astro-origin-failover-v56.js', 'Pages Astro v2/legacy failover V56');
+  }
+  function loadRuntimeStateV56() {
+    loadBuildScopedScript('luneaRuntimeStateV56Loader', './lunea-runtime-state-v56.js', 'reading/Astro stale-state boundary V56');
+  }
+  function loadThaiDateCenterV54() {
+    loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'iOS Thai period date centering V54');
+  }
   function loadJournalHeaderFix() {
     loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix');
   }
@@ -81,7 +94,8 @@
   async function checkBuild() {
     try {
       const res = await fetch(`${BUILD_FILE}?t=${Date.now()}`, {
-        cache: 'no-store', headers: {'cache-control':'no-cache'}
+        cache:'no-store',
+        headers:{'cache-control':'no-cache','accept':'application/json'}
       });
       if (!res.ok) return;
       const data = await res.json();
@@ -95,6 +109,12 @@
   }
 
   function boot() {
+    // Order matters: failover wraps fetch first; runtime boundary starts watching
+    // the live reading before any user-triggered auxiliary calculation.
+    loadAstroOriginFailover();
+    loadRuntimeStateV56();
+    loadThaiDateCenterV54();
+
     loadJournalHeaderFix();
     loadSectorCardBacks();
     loadTimingUploadedArt();
