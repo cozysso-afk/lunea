@@ -52,6 +52,10 @@
     loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
   }
 
+  function loadHoraryHardening() {
+    loadBuildScopedScript('luneaHoraryHardeningV38Loader', './lunea-horary-hardening-v38.js', 'Horary hardening V38');
+  }
+
   function refreshTo(build) {
     try {
       const url = new URL(location.href);
@@ -87,6 +91,7 @@
   function boot() {
     loadJournalHeaderFix();
     loadHoraryQuestionModes();
+    loadHoraryHardening();
     checkBuild();
   }
 
