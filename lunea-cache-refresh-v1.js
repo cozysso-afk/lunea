@@ -35,6 +35,9 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  function loadRuntimeStateV55() {
+    loadBuildScopedScript('luneaRuntimeStateV55Loader', './lunea-runtime-state-v55.js', 'runtime stale-state guard V55');
+  }
   function loadJournalHeaderFix() {
     loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix');
   }
@@ -105,6 +108,7 @@
   }
 
   function boot() {
+    loadRuntimeStateV55();
     loadJournalHeaderFix();
     loadJournalDetailV51();
     loadSectorCardBacks();
@@ -122,12 +126,12 @@
 
     /*
       Canonical Render already serves HTML/JS as no-store and stamps the active
-      build at response time. Re-checking lunea-build.json here can reload the
-      page after first paint and expose the previous design for a moment.
+      build at response time. Runtime V55 now watches lunea-build.json on app
+      resume, so the old immediate post-paint reload remains disabled here.
     */
     if (W.__LUNEA_RENDER_CANONICAL__) {
       W.__LUNEA_BUILD_CHECK_DONE__ = true;
-      console.info('[LUNEA cache refresh] canonical Render · redundant reload disabled');
+      console.info('[LUNEA cache refresh] canonical Render · runtime V55 watches future builds');
     } else {
       checkBuild();
     }
