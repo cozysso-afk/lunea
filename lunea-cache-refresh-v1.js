@@ -61,6 +61,12 @@
   function loadHoraryMobileStability() {
     loadBuildScopedScript('luneaHoraryMobileStabilityV42Loader', './lunea-horary-mobile-stability-v42.js', 'Horary mobile stability V42');
   }
+  function loadLearningAuthRecovery() {
+    loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2');
+  }
+  function loadEmergencyRepair() {
+    loadBuildScopedScript('luneaEmergencyRepairV43Loader', './lunea-emergency-repair-v43.js', 'emergency repair V43');
+  }
 
   function refreshTo(build) {
     try {
@@ -98,6 +104,8 @@
     loadHoraryTraditionalCore();
     loadHoraryBalanceGuard();
     loadHoraryMobileStability();
+    loadLearningAuthRecovery();
+    loadEmergencyRepair();
     checkBuild();
   }
 
