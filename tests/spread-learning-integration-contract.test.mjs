@@ -32,11 +32,11 @@ assert.match(preflight, /totalLearned/, 'AI preflight should carry cumulative le
 assert.match(preflight, /learnedText/, 'AI preflight must expose learned cases as classified guidance');
 assert.doesNotMatch(preflight, /learnedLongSpread|LEARNED LONG SPREAD V5/, 'learned layouts must not bypass classification by direct copy');
 assert.match(preflight, /QUESTION SEGMENT FALLBACK V6/, 'detailed questions need a no-extra-API segmentation fallback');
-assert.match(loader, /lunea-ai-spread-preflight-v2\.js\?v=105/, 'preflight cache must be bumped for V6 behavior');
+assert.match(loader, /lunea-ai-spread-preflight-v2\.js\?v=106/, 'preflight cache must load structure-only learning guidance');
 assert.match(learning, /const MAX=1000/, 'local learning cap must be 1000');
 assert.match(cloud, /const MAX=1000/, 'cloud learning cap must match local 1000');
-assert.match(loader, /lunea-learning-cloud-sync-v1\.js\?v=104/, 'optional private cloud sync must load the v3 reprofiling path');
-assert.match(loader, /lunea-user-spread-learning-v1\.js\?v=108/, 'learning engine cache must load canonical v3 row upgrader');
+assert.match(loader, /lunea-learning-cloud-sync-v1\.js\?v=104/, 'optional private cloud sync must remain loaded');
+assert.match(loader, /lunea-user-spread-learning-v1\.js\?v=109/, 'learning engine cache must load profile v4 hardening');
 
 assert.match(migration, /offset 1000/, 'release migration must raise server retention to 1000');
 assert.match(migration, /spread_learning_common_candidates/, 'release migration must prepare separated common-promotion candidates');
