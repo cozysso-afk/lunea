@@ -9,6 +9,7 @@ on:
       - 'lunea-horary-question-modes-v37.js'
       - 'lunea-horary-hardening-v38.js'
       - 'lunea-horary-location-button-v39.js'
+      - 'lunea-horary-traditional-core-v40.js'
       - 'lunea-cache-refresh-v1.js'
       - 'tests/*horary*.test.mjs'
       - '.github/workflows/test-horary-main.yml'
@@ -30,6 +31,7 @@ jobs:
           node --check lunea-horary-question-modes-v37.js
           node --check lunea-horary-hardening-v38.js
           node --check lunea-horary-location-button-v39.js
+          node --check lunea-horary-traditional-core-v40.js
           node --check lunea-cache-refresh-v1.js
       - name: Horary regression contracts
         run: |
@@ -37,3 +39,4 @@ jobs:
           node tests/horary-question-modes-v37.test.mjs
           node tests/horary-hardening-v38.test.mjs
           node tests/horary-location-button-v39.test.mjs
+          node tests/horary-traditional-core-v40.test.mjs
