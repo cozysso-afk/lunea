@@ -1,0 +1,190 @@
+name: LUNEA Render hotfix V56
+
+on:
+  push:
+    branches: [render-v41-bypass]
+    paths:
+      - '.render-hotfix-trigger-v56'
+
+permissions:
+  contents: write
+
+jobs:
+  hotfix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: render-v41-bypass
+
+      - name: Apply V56 runtime fixes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, re
+          from pathlib import Path
+
+          stamp = os.environ['GITHUB_SHA'][:12]
+          build = f'{stamp}-runtime-v56'
+
+          # 1) Canonical Render server must ship the hotfix directly, not only
+          #    through the cache-refresh loader. This is critical for iOS PWA.
+          p = Path('render_frontend_server.cjs')
+          s = p.read_text(encoding='utf-8')
+          s, count = re.subn(
+              r"const UI_BUILD = '[^']+';",
+              f"const UI_BUILD = '{build}';",
+              s,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not bump Render UI_BUILD')
+
+          direct_anchor = '<script src="./lunea-journal-detail-v51.js?v=${UI_BUILD}" data-lunea-render-direct="journal-detail-v51"></script>'
+          runtime_tag = '<script src="./lunea-runtime-state-v55.js?v=${UI_BUILD}" data-lunea-render-direct="runtime-state-v55"></script>'
+          date_tag = '<script src="./lunea-thai-date-center-v54.js?v=${UI_BUILD}" data-lunea-render-direct="thai-date-v54"></script>'
+          if 'data-lunea-render-direct="runtime-state-v55"' not in s:
+              if direct_anchor not in s:
+                  raise SystemExit('Could not find Render direct-script anchor')
+              s = s.replace(direct_anchor, direct_anchor + '\n' + date_tag + '\n' + runtime_tag, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 2) Stamp the HTML URLs too. This breaks any stubborn iOS resource cache
+          #    and provides a second direct load path even outside the Render inject.
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          def stamp_asset(text, asset):
+              pat = re.escape(asset) + r'\?v=[^"\']+'
+              return re.sub(pat, f'{asset}?v={stamp}', text)
+
+          for asset in (
+              'lunea-cache-refresh-v1.js',
+              'lunea-structural-routing-v4.js',
+              'lunea-astro-stability-v2.js',
+              'lunea-ios-performance-v3.js',
+              'thai-taksa-v1.js',
+              'astro-transit-v1.js',
+              'astro-return-v1.js',
+          ):
+              s = stamp_asset(s, asset)
+
+          cache_tag_match = re.search(r'<script src="\./lunea-cache-refresh-v1\.js\?v=[^"]+"></script>', s)
+          if not cache_tag_match:
+              raise SystemExit('Could not find cache-refresh script in index')
+          cache_tag = cache_tag_match.group(0)
+          direct_runtime = f'<script src="./lunea-runtime-state-v55.js?v={stamp}"></script>'
+          direct_date = f'<script src="./lunea-thai-date-center-v54.js?v={stamp}"></script>'
+          # Remove any older direct copies before inserting the stamped copies.
+          s = re.sub(r'\s*<script src="\./lunea-runtime-state-v55\.js\?v=[^"]+"></script>', '', s)
+          s = re.sub(r'\s*<script src="\./lunea-thai-date-center-v54\.js\?v=[^"]+"></script>', '', s)
+          s = s.replace(cache_tag, cache_tag + '\n' + direct_date + '\n' + direct_runtime, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 3) Stamp nested loaders that own the stale Transit state and Thai period UI.
+          p = Path('lunea-structural-routing-v4.js')
+          loader = p.read_text(encoding='utf-8')
+          for asset in (
+              'lunea-astro-resume-v23.js',
+              'lunea-astro-job-queue-v1.js',
+              'lunea-transit-long-run-v1.js',
+              'lunea-transit-range-v1.js',
+              'lunea-thai-tarot-bridge-v32.js',
+              'lunea-thai-range-v33.js',
+              'lunea-reading-action-order-v33.js',
+          ):
+              loader = stamp_asset(loader, asset)
+          p.write_text(loader, encoding='utf-8')
+
+          # 4) Core stale-question guard: an old Transit/Return job must never
+          #    auto-resume into a new tarot question.
+          p = Path('lunea-astro-resume-v23.js')
+          s = p.read_text(encoding='utf-8')
+          if 'LUNEA_ASTRO_QUESTION_BOUNDARY_V56' not in s:
+              active = """  function activeState() {\n    try { return W.LUNEA_ASTRO_JOB_QUEUE?.getState?.() || {}; }\n    catch { return {}; }\n  }\n"""
+              helper = active + """\n  // LUNEA_ASTRO_QUESTION_BOUNDARY_V56\n  function normalizeQuestion(value) {\n    return String(value || '').replace(/[“”\"']/g, '').replace(/\\s+/g, ' ').trim();\n  }\n\n  function currentReadingQuestion() {\n    let value = normalizeQuestion($('spreadQuestion')?.textContent || '');\n    if (!value) {\n      try { value = normalizeQuestion(W.state?.question || ''); } catch {}\n    }\n    return value;\n  }\n\n  function dropRowsFromOtherQuestion(rows) {\n    const live = currentReadingQuestion();\n    if (!live || !rows || typeof rows !== 'object') return false;\n    let changed = false;\n    ['transit','returns'].forEach(kind => {\n      const old = normalizeQuestion(rows?.[kind]?.question || '');\n      if (old && old !== live) {\n        delete rows[kind];\n        changed = true;\n      }\n    });\n    if (changed) {\n      writeAll(rows);\n      try { localStorage.removeItem('LUNEA_TRANSIT_LONG_RUN_V2_CHECKPOINT'); } catch {}\n      paintBadge();\n    }\n    return changed;\n  }\n"""
+              if active not in s:
+                  raise SystemExit('Could not locate activeState in astro resume')
+              s = s.replace(active, helper, 1)
+
+              needle = """  function resumePending() {\n    if (document.hidden || autoLaunching) return;\n    const rows = cleanOld(readAll());\n"""
+              repl = needle + "    dropRowsFromOtherQuestion(rows);\n"
+              if needle not in s:
+                  raise SystemExit('Could not patch resumePending question guard')
+              s = s.replace(needle, repl, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 5) Queue reset hook. Question changes can forget an obsolete running
+          #    UI job immediately; the underlying response is separately guarded.
+          p = Path('lunea-astro-job-queue-v1.js')
+          s = p.read_text(encoding='utf-8')
+          if 'function resetForQuestionBoundary' not in s:
+              marker = """  function install() {\n"""
+              helper = """  function resetForQuestionBoundary() {\n    const queued = state.queued;\n    state.queued = null;\n    state.active = null;\n    state.runningPromise = null;\n    try { queued?.resolveQueued?.(); } catch {}\n    ['transit','returns'].forEach(kind => {\n      prepareRunButton({kind});\n      const text = String($(jobs[kind].statusId)?.textContent || '');\n      if (/계산.*중|대기.*중|자동\\s*재개|복귀\\s*시/.test(text)) setStatus(kind, '');\n    });\n    dispatch();\n  }\n\n"""
+              if marker not in s:
+                  raise SystemExit('Could not locate queue install marker')
+              s = s.replace(marker, helper + marker, 1)
+              export_needle = """  W.LUNEA_ASTRO_JOB_QUEUE = {\n    getState: () => ({\n      active:state.active,\n      queued:state.queued?.kind || null,\n      installed:state.installed\n    })\n  };\n"""
+              export_repl = """  W.LUNEA_ASTRO_JOB_QUEUE = {\n    getState: () => ({\n      active:state.active,\n      queued:state.queued?.kind || null,\n      installed:state.installed\n    }),\n    resetForQuestionBoundary\n  };\n"""
+              if export_needle not in s:
+                  raise SystemExit('Could not export queue reset hook')
+              s = s.replace(export_needle, export_repl, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 6) Transit response scoping: even if an old request finishes later,
+          #    it is not allowed to paint into the new question.
+          p = Path('astro-transit-v1.js')
+          s = p.read_text(encoding='utf-8')
+          if 'questionAtStart' not in s:
+              needle = """    transitState.topic=$('astroTransitTopic').value;\n    transitState.days=+$('astroTransitDays').value;\n\n    btn.disabled=true;btn.textContent='🌌 계산 중…';\n"""
+              repl = """    transitState.topic=$('astroTransitTopic').value;\n    transitState.days=+$('astroTransitDays').value;\n    const questionAtStart=currentQuestion();\n    transitState.question=questionAtStart;\n\n    btn.disabled=true;btn.textContent='🌌 계산 중…';\n"""
+              if needle not in s:
+                  raise SystemExit('Could not add Transit question snapshot')
+              s = s.replace(needle, repl, 1)
+
+              needle = """      if(data?.schema!=='LUNEA_TRANSIT_SCAN_V1')throw new Error('Transit 응답 형식이 예상과 달라.');\n      transitState.result=data;\n"""
+              repl = """      if(data?.schema!=='LUNEA_TRANSIT_SCAN_V1')throw new Error('Transit 응답 형식이 예상과 달라.');\n      if(questionAtStart!==currentQuestion()){\n        transitState.result=null;\n        $('astroTransitStatus').textContent='';\n        return;\n      }\n      transitState.result=data;\n"""
+              if needle not in s:
+                  raise SystemExit('Could not add Transit response question gate')
+              s = s.replace(needle, repl, 1)
+
+              needle = """    }catch(err){\n      $('astroTransitStatus').textContent='계산 실패: '+(err?.message||err);\n      $('astroTransitResult').classList.remove('show');\n"""
+              repl = """    }catch(err){\n      if(questionAtStart===currentQuestion()){\n        $('astroTransitStatus').textContent='계산 실패: '+(err?.message||err);\n        $('astroTransitResult').classList.remove('show');\n      }\n"""
+              if needle not in s:
+                  raise SystemExit('Could not scope Transit error UI')
+              s = s.replace(needle, repl, 1)
+          p.write_text(s, encoding='utf-8')
+
+          # 7) Runtime state can now reset the queue too.
+          p = Path('lunea-runtime-state-v55.js')
+          s = p.read_text(encoding='utf-8')
+          if 'resetForQuestionBoundary' not in s:
+              needle = """  function clearPriorAstro(reason = 'question-change') {\n    try { W.LUNEA_ASTRO_RESUME_V23?.clear?.(); } catch {}\n"""
+              repl = """  function clearPriorAstro(reason = 'question-change') {\n    try { W.LUNEA_ASTRO_JOB_QUEUE?.resetForQuestionBoundary?.(); } catch {}\n    try { W.LUNEA_ASTRO_RESUME_V23?.clear?.(); } catch {}\n"""
+              if needle not in s:
+                  raise SystemExit('Could not connect runtime V55 to queue reset')
+              s = s.replace(needle, repl, 1)
+          p.write_text(s, encoding='utf-8')
+
+          Path('lunea-build.json').write_text(
+              json.dumps({'version': build}, ensure_ascii=False) + '\n',
+              encoding='utf-8'
+          )
+
+          print('Applied LUNEA Render runtime hotfix:', build)
+          PY
+
+      - name: Commit V56 hotfix
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo 'No V56 changes needed'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add render_frontend_server.cjs index.html lunea-build.json \
+            lunea-structural-routing-v4.js lunea-astro-resume-v23.js \
+            lunea-astro-job-queue-v1.js astro-transit-v1.js lunea-runtime-state-v55.js
+          git commit -m 'fix: enforce V56 runtime state and question boundaries'
+          git push origin HEAD:render-v41-bypass
