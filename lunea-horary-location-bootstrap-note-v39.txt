@@ -1,0 +1,1 @@
+This file is intentionally inert. It documents that lunea-horary-location-button-v39.js must be loaded by the existing Horary bootstrap chain before release. Remove after integration if desired.
