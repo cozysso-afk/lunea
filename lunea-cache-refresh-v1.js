@@ -37,6 +37,9 @@
   function loadJournalHeaderFix() {
     loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix');
   }
+  function loadJournalDetailV51() {
+    loadBuildScopedScript('luneaJournalDetailV51Loader', './lunea-journal-detail-v51.js', 'Journal full-detail + toolbar V51');
+  }
   function loadSectorCardBacks() {
     loadBuildScopedScript('luneaSectorCardBacksV20Loader', './lunea-cardback-sector-v20.js', 'uploaded sector card backs V20');
   }
@@ -96,6 +99,7 @@
 
   function boot() {
     loadJournalHeaderFix();
+    loadJournalDetailV51();
     loadSectorCardBacks();
     loadTimingUploadedArt();
     loadDailyTimingPersistence();
