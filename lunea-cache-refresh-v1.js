@@ -56,6 +56,10 @@
     loadBuildScopedScript('luneaHoraryHardeningV38Loader', './lunea-horary-hardening-v38.js', 'Horary hardening V38');
   }
 
+  function loadHoraryLocationButton() {
+    loadBuildScopedScript('luneaHoraryLocationButtonV39Loader', './lunea-horary-location-button-v39.js', 'Horary location button V39');
+  }
+
   function refreshTo(build) {
     try {
       const url = new URL(location.href);
@@ -92,6 +96,7 @@
     loadJournalHeaderFix();
     loadHoraryQuestionModes();
     loadHoraryHardening();
+    loadHoraryLocationButton();
     checkBuild();
   }
 
