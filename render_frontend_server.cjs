@@ -7,8 +7,8 @@ const crypto = require('crypto');
 
 const ROOT = process.cwd();
 const PORT = Number(process.env.PORT || 10000);
-const API_ORIGIN = 'https://lunea-astro-api.onrender.com';
-const UI_BUILD = '20260906-0058-profile-natal-v45';
+const API_ORIGIN = 'https://lunea-astro-api-v2.onrender.com';
+const UI_BUILD = '20260906-0123-backend-v2';
 const NATAL_CACHE_TTL_MS = 10 * 60 * 1000;
 const NATAL_RETRY_DELAYS_MS = [0, 1200, 3000, 6000];
 const natalCache = new Map();
@@ -123,7 +123,8 @@ async function natalUpstream(target, method, headers, body) {
       const result = await upstreamOnce(target, method, headers, body);
       last = result;
       if (![429,502,503,504].includes(result.status)) return {...result, attempts:i+1};
-      console.warn(`[LUNEA proxy] Natal upstream ${result.status}; attempt ${i+1}/${NATAL_RETRY_DELAYS_MS.length}`);
+      const bodyPreview = result.body?.toString('utf8').slice(0,240) || '';
+      console.warn(`[LUNEA proxy] Natal upstream ${result.status}; attempt ${i+1}/${NATAL_RETRY_DELAYS_MS.length}; body=${bodyPreview}`);
       if (i < NATAL_RETRY_DELAYS_MS.length-1) {
         const extra = retryAfterMs(result.headers);
         if (extra) await sleep(extra);
@@ -193,7 +194,8 @@ async function proxy(req, res) {
     const result = await promise;
     return sendProxyResult(req,res,result,{
       'x-lunea-natal-cache': joined ? 'single-flight' : 'miss',
-      'x-lunea-proxy-attempts': String(result.attempts || 1)
+      'x-lunea-proxy-attempts': String(result.attempts || 1),
+      'x-lunea-api-origin': 'v2'
     });
   } catch (err) {
     res.statusCode = 502;
@@ -231,7 +233,7 @@ function serveFile(file, req, res) {
     res.statusCode = 200;
     res.setHeader('content-type',MIME[ext] || 'application/octet-stream');
     res.setHeader('content-length',out.length);
-    res.setHeader('x-lunea-deploy','render-v45-profile-natal');
+    res.setHeader('x-lunea-deploy','render-backend-v2');
     res.setHeader('x-lunea-ui-build',UI_BUILD);
     res.end(req.method === 'HEAD' ? undefined : out);
   });
@@ -240,14 +242,12 @@ function serveFile(file, req, res) {
 const server = http.createServer(async (req,res) => {
   const url = req.url || '/';
 
-  // Never spend an upstream request merely to decide whether the same-origin
-  // proxy exists. This removes the health-probe 429 failure mode completely.
   if (/^\/__lunea_api\/health(?:\?|$)/.test(url)) {
     res.statusCode = 200;
     res.setHeader('content-type','application/json; charset=utf-8');
     res.setHeader('cache-control','no-store');
     res.setHeader('x-lunea-ui-build',UI_BUILD);
-    return res.end(JSON.stringify({ok:true,proxy:true,local_health:true,build:UI_BUILD}));
+    return res.end(JSON.stringify({ok:true,proxy:true,local_health:true,build:UI_BUILD,apiOrigin:'v2'}));
   }
 
   if (url.startsWith('/__lunea_api')) return proxy(req,res);
@@ -259,6 +259,7 @@ const server = http.createServer(async (req,res) => {
       ok:true,
       build:UI_BUILD,
       proxy:true,
+      apiOrigin:'https://lunea-astro-api-v2.onrender.com',
       directFixes:['cardbacks-v20','timing-v16','horary-v42','learning-auth-recovery-v2','emergency-v43','profile-natal-v45'],
       natalProxy:{localHealth:true,retry429:true,singleFlight:true,cacheMinutes:10}
     }));
