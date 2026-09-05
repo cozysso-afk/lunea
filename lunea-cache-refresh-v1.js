@@ -8,6 +8,7 @@
   if (window.__LUNEA_CACHE_REFRESH_V1__) return;
   window.__LUNEA_CACHE_REFRESH_V1__ = true;
 
+  const W = window;
   const BUILD_FILE = './lunea-build.json';
   const SELF_BUILD = (() => {
     try {
@@ -54,6 +55,9 @@
   }
   function loadAstroRealWarmV53() {
     loadBuildScopedScript('luneaAstroRealWarmV53Loader', './lunea-astro-warm-v53.js', 'Astro real backend warm V53');
+  }
+  function loadThaiDateCenterV54() {
+    loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'Thai period date centering V54');
   }
   function loadHoraryQuestionModes() {
     loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
@@ -107,6 +111,7 @@
     loadTimingUploadedArt();
     loadDailyTimingPersistence();
     loadDraftTimingPersistence();
+    loadThaiDateCenterV54();
     loadAstroRealWarmV53();
     loadHoraryQuestionModes();
     loadHoraryHardening();
@@ -114,7 +119,18 @@
     loadHoraryTraditionalCore();
     loadHoraryBalanceGuard();
     loadHoraryMobileStability();
-    checkBuild();
+
+    /*
+      Canonical Render already serves HTML/JS as no-store and stamps the active
+      build at response time. Re-checking lunea-build.json here can reload the
+      page after first paint and expose the previous design for a moment.
+    */
+    if (W.__LUNEA_RENDER_CANONICAL__) {
+      W.__LUNEA_BUILD_CHECK_DONE__ = true;
+      console.info('[LUNEA cache refresh] canonical Render · redundant reload disabled');
+    } else {
+      checkBuild();
+    }
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
