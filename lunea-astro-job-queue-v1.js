@@ -1,17 +1,11 @@
 'use strict';
 
 /*
-  LUNEA ASTRO JOB QUEUE V1
-  ========================
-  Prevents heavy Transit and Return calculations from competing on the
-  same Astro Core instance. A user's click is never spent: if the other
-  calculation is already running, the requested job is queued and starts
-  automatically when the active job finishes.
-
-  Load timing:
-  - This file may be parsed before the Astro buttons exist.
-  - It waits until Astro Stability V2 and Transit Long Run V2 have installed,
-    then wraps the final button handlers outermost.
+  LUNEA ASTRO JOB QUEUE V1.1
+  ==========================
+  Serializes Transit and Return calculations and exposes a hard reset hook for
+  reading-question boundaries. A job from question A must never keep question B
+  visually busy or auto-launch a queued request after the reading changed.
 */
 (() => {
   const W = window;
@@ -40,7 +34,8 @@
     active: null,
     queued: null,
     runningPromise: null,
-    installed: false
+    installed: false,
+    generation: 0
   };
 
   function setStatus(kind, text) {
@@ -51,7 +46,7 @@
   function dispatch() {
     try {
       W.dispatchEvent(new CustomEvent('lunea:astro-job-state', {
-        detail: {active:state.active, queued:state.queued?.kind || null}
+        detail: {active:state.active, queued:state.queued?.kind || null, generation:state.generation}
       }));
     } catch {}
   }
@@ -72,8 +67,12 @@
     btn.textContent = jobs[job.kind].normalLabel;
   }
 
-  function scheduleNext(next) {
+  function scheduleNext(next, generation) {
     setTimeout(async () => {
+      if (generation !== state.generation) {
+        try { next.resolveQueued?.(); } catch {}
+        return;
+      }
       try {
         const value = await startJob(next);
         next.resolveQueued?.(value);
@@ -84,6 +83,7 @@
   }
 
   async function startJob(job) {
+    const generation = state.generation;
     state.active = job.kind;
     state.runningPromise = null;
     prepareRunButton(job);
@@ -93,6 +93,8 @@
       state.runningPromise = Promise.resolve(job.original.call(job.thisArg, job.event));
       return await state.runningPromise;
     } finally {
+      if (generation !== state.generation) return;
+
       state.runningPromise = null;
       state.active = null;
       dispatch();
@@ -101,17 +103,12 @@
       if (next) {
         state.queued = null;
         prepareRunButton(next);
-        // Give the completed request a short paint/network turn before
-        // automatically starting the queued calculation.
-        scheduleNext(next);
+        scheduleNext(next, generation);
       }
     }
   }
 
   function enqueue(job) {
-    // With two job kinds there can only be one meaningful waiting job.
-    // Repeated taps on that waiting button reuse the same promise and never
-    // create duplicate POST requests.
     if (state.queued) {
       if (state.queued.kind === job.kind) {
         setStatus(job.kind, jobs[job.kind].waitingText);
@@ -135,12 +132,29 @@
     return promise;
   }
 
+  function resetForQuestionBoundary() {
+    state.generation += 1;
+    const queued = state.queued;
+    state.queued = null;
+    state.active = null;
+    state.runningPromise = null;
+    try { queued?.resolveQueued?.(); } catch {}
+
+    ['transit','returns'].forEach(kind => {
+      prepareRunButton({kind});
+      const text = String($(jobs[kind].statusId)?.textContent || '');
+      if (/계산.*중|대기.*중|자동\s*재개|복귀\s*시|서버.*준비|연결\s*복구/.test(text)) {
+        setStatus(kind, '');
+      }
+    });
+    dispatch();
+  }
+
   function wrap(kind) {
     const spec = jobs[kind];
     const btn = $(spec.buttonId);
     if (!btn || btn.dataset.luneaAstroJobQueueV1 === '1') return false;
 
-    // Install after the existing safety wrappers so this queue is outermost.
     if (btn.dataset.luneaAstroStabilityV2 !== '1') return false;
     if (kind === 'transit' && !btn.__luneaLongRunV2) return false;
 
@@ -167,7 +181,7 @@
     );
     if (state.installed && !W.__LUNEA_ASTRO_JOB_QUEUE_LOGGED__) {
       W.__LUNEA_ASTRO_JOB_QUEUE_LOGGED__ = true;
-      console.info('🌌 LUNEA Astro Job Queue V1 installed · Transit ↔ Return serialized');
+      console.info('🌌 LUNEA Astro Job Queue V1.1 installed · question-boundary reset ON');
     }
     return state.installed;
   }
@@ -191,7 +205,9 @@
     getState: () => ({
       active:state.active,
       queued:state.queued?.kind || null,
-      installed:state.installed
-    })
+      installed:state.installed,
+      generation:state.generation
+    }),
+    resetForQuestionBoundary
   };
 })();
