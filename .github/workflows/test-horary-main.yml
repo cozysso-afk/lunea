@@ -1,0 +1,36 @@
+name: Test Horary Main
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'astro-horary-v1.js'
+      - 'lunea-horary-balance-v19-5.js'
+      - 'lunea-horary-question-modes-v37.js'
+      - 'lunea-horary-hardening-v38.js'
+      - 'lunea-cache-refresh-v1.js'
+      - 'tests/*horary*.test.mjs'
+      - '.github/workflows/test-horary-main.yml'
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Horary JavaScript syntax
+        run: |
+          node --check astro-horary-v1.js
+          node --check lunea-horary-balance-v19-5.js
+          node --check lunea-horary-question-modes-v37.js
+          node --check lunea-horary-hardening-v38.js
+          node --check lunea-cache-refresh-v1.js
+      - name: Horary regression contracts
+        run: |
+          node tests/v30-spread-horary-contract.test.mjs
+          node tests/horary-question-modes-v37.test.mjs
+          node tests/horary-hardening-v38.test.mjs
