@@ -7,8 +7,8 @@
   If a newer build exists, it reloads once with a versioned URL so the browser
   must request the fresh HTML and versioned loader assets.
 
-  The build-stamped entry point also loads tiny UI hotfixes whose own cache key
-  must follow the current build (currently the mobile journal header entry).
+  The build-stamped entry point also loads small UI/interpretation hotfixes whose
+  own cache key must follow the current build.
 */
 (() => {
   if (window.__LUNEA_CACHE_REFRESH_V1__) return;
@@ -34,14 +34,22 @@
     }
   }
 
-  function loadJournalHeaderFix() {
-    if (document.getElementById('luneaJournalHeaderFixLoader')) return;
+  function loadBuildScopedScript(id, src, label) {
+    if (document.getElementById(id)) return;
     const script = document.createElement('script');
-    script.id = 'luneaJournalHeaderFixLoader';
-    script.src = `./lunea-journal-header-fix-v1.js?v=${encodeURIComponent(SELF_BUILD || Date.now())}`;
+    script.id = id;
+    script.src = `${src}?v=${encodeURIComponent(SELF_BUILD || Date.now())}`;
     script.async = false;
-    script.onerror = () => console.info('[LUNEA cache refresh] journal header fix skipped');
+    script.onerror = () => console.info(`[LUNEA cache refresh] ${label} skipped`);
     (document.head || document.documentElement).appendChild(script);
+  }
+
+  function loadJournalHeaderFix() {
+    loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix');
+  }
+
+  function loadHoraryQuestionModes() {
+    loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
   }
 
   function refreshTo(build) {
@@ -78,6 +86,7 @@
 
   function boot() {
     loadJournalHeaderFix();
+    loadHoraryQuestionModes();
     checkBuild();
   }
 
