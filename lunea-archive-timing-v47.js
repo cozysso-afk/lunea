@@ -183,8 +183,8 @@
       #luneaTimingInline .lunea-v15-time-art{display:none!important;}
       #luneaTimingInline.timing-inline>img{
         display:block!important;position:static!important;inset:auto!important;float:none!important;
-        transform:none!important;width:min(52vw,205px)!important;min-width:170px!important;
-        max-width:205px!important;height:auto!important;max-height:none!important;aspect-ratio:auto!important;
+        transform:none!important;width:min(40vw,155px)!important;min-width:135px!important;
+        max-width:155px!important;height:auto!important;max-height:none!important;aspect-ratio:auto!important;
         margin:0 auto!important;object-fit:contain!important;object-position:center!important;
         opacity:1!important;visibility:visible!important;border-radius:13px!important;
         border:1px solid rgba(239,226,200,.24)!important;background:transparent!important;
@@ -223,8 +223,8 @@
     force(box, 'grid-template-columns', 'none');
     force(box, 'width', '100%');
     force(box, 'max-width', 'none');
-    force(box, 'gap', '12px');
-    force(box, 'padding', '16px 14px 18px');
+    force(box, 'gap', '10px');
+    force(box, 'padding', '14px 14px 16px');
     force(box, 'text-align', 'center');
     force(box, 'overflow', 'hidden');
 
@@ -234,8 +234,8 @@
       force(img, 'position', 'static');
       force(img, 'left', 'auto'); force(img, 'right', 'auto'); force(img, 'top', 'auto'); force(img, 'bottom', 'auto');
       force(img, 'transform', 'none'); force(img, 'float', 'none');
-      force(img, 'width', 'min(52vw, 205px)');
-      force(img, 'min-width', '170px'); force(img, 'max-width', '205px');
+      force(img, 'width', 'min(40vw, 155px)');
+      force(img, 'min-width', '135px'); force(img, 'max-width', '155px');
       force(img, 'height', 'auto'); force(img, 'max-height', 'none'); force(img, 'aspect-ratio', 'auto');
       force(img, 'margin', '0 auto'); force(img, 'object-fit', 'contain');
     }
