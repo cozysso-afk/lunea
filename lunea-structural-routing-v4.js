@@ -38,6 +38,7 @@
     document.write('<script src="./lunea-horary-ab-v1.js?v=104"><\/script>');
     document.write('<script src="./lunea-timing-ab-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-timing-prompt-repair-v1.js?v=101"><\/script>');
+    document.write('<script src="./lunea-timing-result-copy-v35.js?v=3501"><\/script>');
     document.write('<script src="./lunea-thai-tarot-bridge-v32.js?v=30576c0398e4"><\/script>');
     document.write('<script src="./lunea-thai-range-v33.js?v=30576c0398e4"><\/script>');
     document.write('<script src="./lunea-final-prompt-priority-v1.js?v=30576c0398e4"><\/script>');
@@ -104,6 +105,7 @@
     './lunea-horary-ab-v1.js?v=104',
     './lunea-timing-ab-v1.js?v=102',
     './lunea-timing-prompt-repair-v1.js?v=101',
+    './lunea-timing-result-copy-v35.js?v=3501',
     './lunea-thai-tarot-bridge-v32.js?v=30576c0398e4',
     './lunea-thai-range-v33.js?v=30576c0398e4',
     './lunea-final-prompt-priority-v1.js?v=30576c0398e4',
