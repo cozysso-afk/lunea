@@ -8,7 +8,10 @@ const crypto = require('crypto');
 const ROOT = process.cwd();
 const PORT = Number(process.env.PORT || 10000);
 const API_ORIGIN = 'https://lunea-astro-api-v2.onrender.com';
-const UI_BUILD = '20260906-0136-archive-timing-v47';
+const LEGACY_API_ORIGIN = 'https://lunea-astro-api.onrender.com';
+const UI_BUILD = '20260906-0356-journal-astro-v52';
+const TRANSIENT_STATUSES = new Set([429, 502, 503, 504]);
+const GENERAL_RETRY_DELAYS_MS = [0, 1000, 2600, 5200];
 const NATAL_CACHE_TTL_MS = 10 * 60 * 1000;
 const NATAL_RETRY_DELAYS_MS = [0, 1200, 3000, 6000];
 const natalCache = new Map();
@@ -35,17 +38,19 @@ const MIME = {
 /* Correctness-critical scripts load directly on the canonical Render origin. */
 const INJECT = `
 <meta name="lunea-render-build" content="${UI_BUILD}">
-<script id="luneaRenderBypassV42Bootstrap">
+<script id="luneaRenderBypassV52Bootstrap">
 (() => {
   const proxyBase = location.origin + '/__lunea_api';
+  const upstreamOrigins = ['${API_ORIGIN}', '${LEGACY_API_ORIGIN}'];
   try { localStorage.setItem('LUNEA_ASTRO_API_URL', proxyBase); } catch {}
-  window.__LUNEA_RENDER_BYPASS_V42__ = '${UI_BUILD}';
+  window.__LUNEA_RENDER_BYPASS_V52__ = '${UI_BUILD}';
   const nativeFetch = window.fetch.bind(window);
   window.fetch = function(input, init) {
     try {
       const raw = typeof input === 'string' ? input : (input && input.url) || '';
-      if (raw.startsWith('${API_ORIGIN}')) {
-        const target = proxyBase + raw.slice('${API_ORIGIN}'.length);
+      const matched = upstreamOrigins.find(origin => raw.startsWith(origin));
+      if (matched) {
+        const target = proxyBase + raw.slice(matched.length);
         if (typeof input === 'string') return nativeFetch(target, init);
         return nativeFetch(new Request(target, input), init);
       }
@@ -56,11 +61,14 @@ const INJECT = `
 </script>
 <script src="./lunea-cardback-sector-v20.js?v=${UI_BUILD}" data-lunea-render-direct="cardbacks"></script>
 <script src="./lunea-timing-image-assets-v16.js?v=${UI_BUILD}" data-lunea-render-direct="timing"></script>
+<script src="./lunea-daily-timing-v49.js?v=${UI_BUILD}" data-lunea-render-direct="daily-timing-v49"></script>
+<script src="./lunea-draft-timing-v50.js?v=${UI_BUILD}" data-lunea-render-direct="draft-timing-v50"></script>
 <script src="./lunea-horary-mobile-stability-v42.js?v=${UI_BUILD}" data-lunea-render-direct="horary"></script>
 <script src="./lunea-learning-auth-recovery-v2.js?v=${UI_BUILD}" data-lunea-render-direct="learning-auth"></script>
 <script src="./lunea-emergency-repair-v43.js?v=${UI_BUILD}" data-lunea-render-direct="emergency-v43"></script>
 <script src="./lunea-profile-natal-v45.js?v=${UI_BUILD}" data-lunea-render-direct="profile-natal-v45"></script>
-<script src="./lunea-archive-timing-v47.js?v=${UI_BUILD}" data-lunea-render-direct="archive-timing-v47"></script>`;
+<script src="./lunea-archive-timing-v47.js?v=${UI_BUILD}" data-lunea-render-direct="archive-timing-v47"></script>
+<script src="./lunea-journal-detail-v51.js?v=${UI_BUILD}" data-lunea-render-direct="journal-detail-v51"></script>`;
 
 function safePath(urlPath) {
   let decoded;
@@ -73,13 +81,25 @@ function safePath(urlPath) {
 
 const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
+/*
+  Render adds x-forwarded-* / x-render-* headers to the browser -> frontend hop.
+  Forwarding those again to the backend can make a second Render edge treat the
+  request as malformed or rate-limited before FastAPI ever sees it. Keep only
+  application-level headers that the Astro API actually needs.
+*/
 function cleanProxyHeaders(raw) {
-  const headers = { ...raw };
-  delete headers.host;
-  delete headers.origin;
-  delete headers.referer;
-  delete headers['content-length'];
-  delete headers.connection;
+  const allow = new Set([
+    'content-type',
+    'accept',
+    'accept-language',
+    'authorization',
+    'user-agent',
+    'x-requested-with',
+  ]);
+  const headers = {};
+  for (const [key, value] of Object.entries(raw || {})) {
+    if (allow.has(String(key).toLowerCase()) && value != null) headers[key] = value;
+  }
   return headers;
 }
 
@@ -116,6 +136,31 @@ function retryAfterMs(headers) {
   return Number.isFinite(when) ? Math.min(8000, Math.max(500, when - Date.now())) : 0;
 }
 
+async function genericAstroUpstream(target, method, headers, body) {
+  let last = null;
+  let lastError = null;
+  for (let i = 0; i < GENERAL_RETRY_DELAYS_MS.length; i += 1) {
+    if (GENERAL_RETRY_DELAYS_MS[i]) await sleep(GENERAL_RETRY_DELAYS_MS[i]);
+    try {
+      const result = await upstreamOnce(target, method, headers, body);
+      last = result;
+      if (!TRANSIENT_STATUSES.has(result.status)) return {...result, attempts:i + 1};
+      const bodyPreview = result.body?.toString('utf8').slice(0, 240) || '';
+      console.warn(`[LUNEA proxy] Astro upstream ${result.status}; attempt ${i + 1}/${GENERAL_RETRY_DELAYS_MS.length}; ${target}; body=${bodyPreview}`);
+      if (i < GENERAL_RETRY_DELAYS_MS.length - 1) {
+        const extra = retryAfterMs(result.headers);
+        if (extra) await sleep(extra);
+      }
+    } catch (err) {
+      lastError = err;
+      console.warn(`[LUNEA proxy] Astro upstream network error; attempt ${i + 1}/${GENERAL_RETRY_DELAYS_MS.length}; ${target}: ${String(err?.message || err)}`);
+      if (i === GENERAL_RETRY_DELAYS_MS.length - 1) throw err;
+    }
+  }
+  if (last) return {...last, attempts:GENERAL_RETRY_DELAYS_MS.length};
+  throw lastError || new Error('Astro upstream request failed');
+}
+
 async function natalUpstream(target, method, headers, body) {
   let last = null;
   for (let i=0; i<NATAL_RETRY_DELAYS_MS.length; i+=1) {
@@ -123,7 +168,7 @@ async function natalUpstream(target, method, headers, body) {
     try {
       const result = await upstreamOnce(target, method, headers, body);
       last = result;
-      if (![429,502,503,504].includes(result.status)) return {...result, attempts:i+1};
+      if (!TRANSIENT_STATUSES.has(result.status)) return {...result, attempts:i+1};
       const bodyPreview = result.body?.toString('utf8').slice(0,240) || '';
       console.warn(`[LUNEA proxy] Natal upstream ${result.status}; attempt ${i+1}/${NATAL_RETRY_DELAYS_MS.length}; body=${bodyPreview}`);
       if (i < NATAL_RETRY_DELAYS_MS.length-1) {
@@ -166,11 +211,17 @@ async function proxy(req, res) {
   const headers = cleanProxyHeaders(req.headers);
   const method = req.method || 'GET';
   const isNatal = method === 'POST' && /^\/v1\/natal(?:\?|$)/.test(suffix);
+  const isAstroV1 = /^\/v1\//.test(suffix);
 
   try {
     if (!isNatal) {
-      const result = await upstreamOnce(target, method, headers, body);
-      return sendProxyResult(req,res,result);
+      const result = isAstroV1
+        ? await genericAstroUpstream(target, method, headers, body)
+        : await upstreamOnce(target, method, headers, body);
+      return sendProxyResult(req,res,result,isAstroV1 ? {
+        'x-lunea-proxy-attempts': String(result.attempts || 1),
+        'x-lunea-api-origin': 'v2'
+      } : {});
     }
 
     pruneNatalCache();
@@ -193,6 +244,10 @@ async function proxy(req, res) {
     }
 
     const result = await promise;
+    if (result.status < 200 || result.status >= 300) {
+      const bodyPreview = result.body?.toString('utf8').slice(0,320) || '';
+      console.warn(`[LUNEA proxy] Natal final upstream ${result.status}; attempts=${result.attempts || 1}; body=${bodyPreview}`);
+    }
     return sendProxyResult(req,res,result,{
       'x-lunea-natal-cache': joined ? 'single-flight' : 'miss',
       'x-lunea-proxy-attempts': String(result.attempts || 1),
@@ -217,7 +272,7 @@ function serveFile(file, req, res) {
     let out = data;
     if (ext === '.html') {
       let html = data.toString('utf8');
-      if (!html.includes('luneaRenderBypassV42Bootstrap')) {
+      if (!html.includes('luneaRenderBypassV52Bootstrap')) {
         html = html.includes('<head>') ? html.replace('<head>','<head>'+INJECT) : INJECT+html;
       }
       out = Buffer.from(html,'utf8');
@@ -234,7 +289,7 @@ function serveFile(file, req, res) {
     res.statusCode = 200;
     res.setHeader('content-type',MIME[ext] || 'application/octet-stream');
     res.setHeader('content-length',out.length);
-    res.setHeader('x-lunea-deploy','render-archive-timing-v47');
+    res.setHeader('x-lunea-deploy','render-journal-astro-v52');
     res.setHeader('x-lunea-ui-build',UI_BUILD);
     res.end(req.method === 'HEAD' ? undefined : out);
   });
@@ -260,9 +315,14 @@ const server = http.createServer(async (req,res) => {
       ok:true,
       build:UI_BUILD,
       proxy:true,
-      apiOrigin:'https://lunea-astro-api-v2.onrender.com',
-      directFixes:['cardbacks-v20','timing-v16','horary-v42','learning-auth-recovery-v2','emergency-v43','profile-natal-v45','archive-timing-v47'],
-      natalProxy:{localHealth:true,retry429:true,singleFlight:true,cacheMinutes:10}
+      apiOrigin:API_ORIGIN,
+      directFixes:[
+        'cardbacks-v20','timing-v16','daily-timing-v49','draft-timing-v50',
+        'horary-v42','learning-auth-recovery-v2','emergency-v43','profile-natal-v45',
+        'archive-timing-v47','journal-detail-v51','astro-proxy-v52'
+      ],
+      natalProxy:{localHealth:true,retry429:true,singleFlight:true,cacheMinutes:10},
+      astroProxy:{legacyOriginRewrite:true,cleanForwardedHeaders:true,retryTransient:true}
     }));
   }
 
