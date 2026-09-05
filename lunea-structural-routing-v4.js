@@ -50,7 +50,7 @@
     document.write('<script src="./lunea-mobile-reading-controls-v12.js?v=1201"><\/script>');
     document.write('<script src="./lunea-opal-light-polish-v13.js?v=1301"><\/script>');
     document.write('<script src="./lunea-reading-polish-v14.js?v=1401"><\/script>');
-    document.write('<script src="./lunea-timing-moondial-sync-v15.js?v=1501"><\/script>');
+    document.write('<script src="./lunea-timing-moondial-sync-v15.js?v=1502"><\/script>');
     document.write('<script src="./lunea-timing-ab-inline-v16.js?v=1601"><\/script>');
     document.write('<script src="./lunea-manual-limit20-v17.js?v=1705"><\/script>');
     document.write('<script src="./lunea-horary-balance-v19-5.js?v=1905"><\/script>');
@@ -117,7 +117,7 @@
     './lunea-mobile-reading-controls-v12.js?v=1201',
     './lunea-opal-light-polish-v13.js?v=1301',
     './lunea-reading-polish-v14.js?v=1401',
-    './lunea-timing-moondial-sync-v15.js?v=1501',
+    './lunea-timing-moondial-sync-v15.js?v=1502',
     './lunea-timing-ab-inline-v16.js?v=1601',
     './lunea-manual-limit20-v17.js?v=1705',
     './lunea-horary-balance-v19-5.js?v=1905',
