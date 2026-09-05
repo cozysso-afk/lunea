@@ -1,36 +1,53 @@
 'use strict';
 
-/* LUNEA ARCHIVE FULL COPY + INLINE TIMING V47
-   1) Journal/archive copy keeps Tarot AND attached astrology evidence.
-   2) Inline Timing Oracle uses the real artwork as the primary card, not the legacy moon placeholder.
+/* LUNEA RUNTIME RECOVERY V48 (kept on the V47 injected filename)
+   - preserve full archive copy through V43 unified evidence text
+   - survive Render free-tier cold starts for Transit / Returns / Thai / Horary / Natal
+   - force the inline Timing Oracle into a non-overlapping mobile layout
 */
 (() => {
   const W = window;
-  if (W.__LUNEA_ARCHIVE_TIMING_V47__) return;
-  W.__LUNEA_ARCHIVE_TIMING_V47__ = true;
+  if (W.__LUNEA_ARCHIVE_TIMING_V48__) return;
+  W.__LUNEA_ARCHIVE_TIMING_V48__ = true;
 
   const ARCHIVE_KEY = 'LUNEA_ARCHIVE_V3';
-  const DB_NAME = 'LUNEA_READING_DB';
-  const STORE = 'journal';
-  const STATUS = {
-    pending: '○ 미확인',
-    hit: '✓ 맞음',
-    partial: '△ 부분',
-    miss: '× 틀림',
-    unverifiable: '? 판정불가'
-  };
-  const norm = v => String(v ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  const ASTRO_RE = /\/v1\/(?:natal|transits\/scan|returns\/context|thai\/taksa(?:\/range)?|horary)(?:\?|$)/i;
+  const RETRYABLE = new Set([408, 425, 429, 500, 502, 503, 504]);
+  const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+  const norm = value => String(value ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
 
-  function localRows() {
+  function archiveRows() {
     try {
       const rows = JSON.parse(localStorage.getItem(ARCHIVE_KEY) || '[]');
       return Array.isArray(rows) ? rows : [];
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   }
 
-  function titleOf(item) {
+  function archiveText(row) {
+    try {
+      if (W.LUNEA_EMERGENCY_REPAIR_V43?.archiveText) {
+        return String(W.LUNEA_EMERGENCY_REPAIR_V43.archiveText(row) || '');
+      }
+    } catch {}
+    try { return JSON.stringify(row, null, 2); }
+    catch { return String(row || ''); }
+  }
+
+  async function copyText(text) {
+    const value = String(text || '');
+    if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(value);
+    const ta = document.createElement('textarea');
+    ta.value = value;
+    ta.setAttribute('readonly', '');
+    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.select();
+    const ok = document.execCommand('copy');
+    ta.remove();
+    if (!ok) throw new Error('clipboard unavailable');
+  }
+
+  function titleFromItem(item) {
     const el = item?.querySelector('.archive-title');
     if (!el) return '';
     return norm(Array.from(el.childNodes)
@@ -39,9 +56,9 @@
       .join(' '));
   }
 
-  function matchLocalRow(item) {
-    const rows = localRows().slice().sort((a, b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0));
-    const title = titleOf(item);
+  function matchRow(item) {
+    const rows = archiveRows().slice().sort((a,b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0));
+    const title = titleFromItem(item);
     const question = norm(item?.querySelector('.archive-q')?.textContent || '');
     return rows.find(row => norm(row?.title) === title && norm(row?.q) === question)
       || rows.find(row => question && norm(row?.q) === question)
@@ -49,16 +66,7 @@
       || null;
   }
 
-  function archiveText(row) {
-    try {
-      const api = W.LUNEA_EMERGENCY_REPAIR_V43;
-      if (api?.archiveText) return String(api.archiveText(row) || '');
-    } catch {}
-    try { return JSON.stringify(row, null, 2); }
-    catch { return String(row || ''); }
-  }
-
-  function validationTextFromDom(item) {
+  function validationText(item) {
     const panel = item?.querySelector('.lj-review');
     if (!panel) return '';
     const lines = [];
@@ -66,121 +74,96 @@
     if (status) lines.push(`판정: ${status}`);
     panel.querySelectorAll('.lj-field').forEach(wrap => {
       const label = norm(wrap.querySelector('label')?.textContent || '');
-      const input = wrap.querySelector('input, textarea');
-      const value = norm(input?.value || '');
+      const field = wrap.querySelector('input,textarea');
+      const value = norm(field?.value || '');
       if (label && value) lines.push(`${label}: ${value}`);
     });
     return lines.length ? `[검증]\n${lines.join('\n')}` : '';
   }
 
-  function fullItemText(item, row) {
-    return [archiveText(row), validationTextFromDom(item)].filter(Boolean).join('\n\n');
-  }
-
-  async function writeClipboard(text) {
-    const value = String(text || '');
-    if (navigator.clipboard?.writeText) return navigator.clipboard.writeText(value);
-    const ta = document.createElement('textarea');
-    ta.value = value;
-    ta.setAttribute('readonly', '');
-    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none;left:-9999px;top:0';
-    document.body.appendChild(ta);
-    ta.select();
-    const ok = document.execCommand('copy');
-    ta.remove();
-    if (!ok) throw new Error('clipboard unavailable');
-  }
-
-  function readJournalRows() {
-    return new Promise(resolve => {
-      if (!('indexedDB' in W)) return resolve([]);
-      let req;
-      try { req = indexedDB.open(DB_NAME, 1); }
-      catch { return resolve([]); }
-      req.onerror = () => resolve([]);
-      req.onupgradeneeded = () => {};
-      req.onsuccess = () => {
-        const db = req.result;
-        try {
-          if (!db.objectStoreNames.contains(STORE)) { db.close(); return resolve([]); }
-          const tx = db.transaction(STORE, 'readonly');
-          const get = tx.objectStore(STORE).getAll();
-          get.onerror = () => { db.close(); resolve([]); };
-          get.onsuccess = () => {
-            const rows = Array.isArray(get.result) ? get.result : [];
-            db.close();
-            resolve(rows.sort((a, b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0)));
-          };
-        } catch {
-          try { db.close(); } catch {}
-          resolve([]);
-        }
-      };
-    });
-  }
-
-  function validationTextFromEntry(entry) {
-    if (!entry || typeof entry !== 'object') return '';
-    const lines = [`판정: ${STATUS[entry.status] || entry.status || '○ 미확인'}`];
-    if (entry.resultDate) lines.push(`실제 결과 날짜: ${entry.resultDate}`);
-    if (entry.dueDate) lines.push(`확인 예정일: ${entry.dueDate}`);
-    if (entry.outcome) lines.push(`실제 결과: ${entry.outcome}`);
-    if (entry.note) lines.push(`메모: ${entry.note}`);
-    if (Array.isArray(entry.tags) && entry.tags.length) lines.push(`태그: ${entry.tags.join(', ')}`);
-    return `[검증]\n${lines.join('\n')}`;
-  }
-
-  async function allJournalText() {
-    const journal = await readJournalRows();
-    const local = localRows();
-    const byId = new Map(local.filter(x => x?.id).map(x => [String(x.id), x]));
-    const blocks = journal.map(entry => {
-      const reading = entry?.reading || {};
-      const rich = (entry?.sourceArchiveId && byId.get(String(entry.sourceArchiveId)))
-        || local.find(x => norm(x?.title) === norm(reading?.title) && norm(x?.q) === norm(reading?.q))
-        || reading;
-      return [archiveText(rich), validationTextFromEntry(entry)].filter(Boolean).join('\n\n');
-    }).filter(Boolean);
-    if (blocks.length) return blocks.join('\n\n────────────\n\n');
-    return local.map(archiveText).filter(Boolean).join('\n\n────────────\n\n');
-  }
-
-  document.addEventListener('click', async event => {
-    const copyButton = event.target?.closest?.('#archiveOverlay .archive-item .archive-actions button');
-    if (copyButton && !copyButton.dataset.v43 && /복사/.test(norm(copyButton.textContent))) {
-      const item = copyButton.closest('.archive-item');
-      const row = matchLocalRow(item);
-      if (row) {
+  function installArchiveCopyGuard() {
+    if (W.__LUNEA_ARCHIVE_COPY_V48__) return;
+    W.__LUNEA_ARCHIVE_COPY_V48__ = true;
+    document.addEventListener('click', async event => {
+      const itemButton = event.target?.closest?.('#archiveOverlay .archive-item .archive-actions button');
+      if (itemButton && /복사/.test(norm(itemButton.textContent))) {
+        const item = itemButton.closest('.archive-item');
+        const row = matchRow(item);
+        if (!row) return;
         event.preventDefault();
         event.stopImmediatePropagation();
         try {
-          await writeClipboard(fullItemText(item, row));
-          const old = copyButton.textContent;
-          copyButton.textContent = '✓ 전체 근거 복사됨';
-          setTimeout(() => { if (copyButton.isConnected) copyButton.textContent = old || '복사'; }, 1000);
-        } catch {
-          alert('복사 권한을 확인해줘.');
-        }
+          await copyText([archiveText(row), validationText(item)].filter(Boolean).join('\n\n'));
+          const old = itemButton.textContent;
+          itemButton.textContent = '✓ 전체 근거 복사됨';
+          setTimeout(() => { if (itemButton.isConnected) itemButton.textContent = old || '복사'; }, 1100);
+        } catch { alert('복사 권한을 확인해줘.'); }
         return;
       }
-    }
 
-    const allButton = event.target?.closest?.('#copyAllArchive');
-    if (allButton) {
+      const allButton = event.target?.closest?.('#copyAllArchive');
+      if (!allButton) return;
       event.preventDefault();
       event.stopImmediatePropagation();
       try {
-        const text = await allJournalText();
+        const text = archiveRows().map(archiveText).filter(Boolean).join('\n\n────────────\n\n');
         if (!text) return alert('복사할 기록이 없어.');
-        await writeClipboard(text);
+        await copyText(text);
         const old = allButton.textContent;
         allButton.textContent = '✓ 전체 근거 복사됨';
-        setTimeout(() => { if (allButton.isConnected) allButton.textContent = old || '전체 복사'; }, 1000);
-      } catch {
-        alert('복사 권한을 확인해줘.');
+        setTimeout(() => { if (allButton.isConnected) allButton.textContent = old || '전체 복사'; }, 1100);
+      } catch { alert('복사 권한을 확인해줘.'); }
+    }, true);
+  }
+
+  function statusNodeFor(url) {
+    if (/transits\/scan/i.test(url)) return document.getElementById('astroTransitStatus');
+    if (/returns\/context/i.test(url)) return document.getElementById('astroReturnStatus');
+    if (/thai\/taksa/i.test(url)) return document.getElementById('thaiTaksaStatus');
+    return null;
+  }
+
+  function installColdStartRetry() {
+    if (W.__LUNEA_ASTRO_COLDSTART_V48__ || typeof W.fetch !== 'function') return;
+    W.__LUNEA_ASTRO_COLDSTART_V48__ = true;
+    const prior = W.fetch.bind(W);
+    const outerDelays = [0, 3500, 7500, 13000, 19000];
+
+    W.fetch = async function(input, init) {
+      const rawUrl = typeof input === 'string' ? input : String(input?.url || '');
+      if (!ASTRO_RE.test(rawUrl)) return prior(input, init);
+
+      let lastResponse = null;
+      let lastError = null;
+      const status = statusNodeFor(rawUrl);
+
+      for (let i = 0; i < outerDelays.length; i += 1) {
+        if (outerDelays[i]) await sleep(outerDelays[i]);
+        try {
+          const response = await prior(input, init);
+          lastResponse = response;
+          if (!RETRYABLE.has(response.status)) {
+            if (status && /엔진 깨우는 중/.test(status.textContent || '')) status.textContent = '';
+            return response;
+          }
+          if (i < outerDelays.length - 1) {
+            if (status) status.textContent = '점성술 엔진 깨우는 중… 잠시만 기다려줘.';
+            continue;
+          }
+          return response;
+        } catch (error) {
+          lastError = error;
+          if (String(error?.name || '') === 'AbortError') throw error;
+          if (i < outerDelays.length - 1) {
+            if (status) status.textContent = '점성술 엔진 연결 중… 잠시만 기다려줘.';
+            continue;
+          }
+        }
       }
-    }
-  }, true);
+      if (lastResponse) return lastResponse;
+      throw lastError || new Error('Astro API 요청 실패');
+    };
+  }
 
   function installTimingStyle() {
     let style = document.getElementById('luneaArchiveTimingV47Style');
@@ -188,91 +171,112 @@
     style = document.createElement('style');
     style.id = 'luneaArchiveTimingV47Style';
     style.textContent = `
-      #luneaTimingInline.timing-inline{
-        width:100%!important;
-        max-width:none!important;
-        display:grid!important;
-        grid-template-columns:1fr!important;
-        justify-items:center!important;
-        align-items:start!important;
-        gap:14px!important;
-        padding:18px 16px!important;
-        text-align:center!important;
-      }
+      html body #spreadOverlay #luneaTimingInline.timing-inline::before,
+      html.lunea-reading-polish-v14 body #spreadOverlay #luneaTimingInline.timing-inline::before,
       #luneaTimingInline.timing-inline::before{
-        content:none!important;
-        display:none!important;
-        width:0!important;
-        height:0!important;
-        min-width:0!important;
-        min-height:0!important;
-        background:none!important;
-        border:0!important;
-        box-shadow:none!important;
+        content:none!important;display:none!important;width:0!important;height:0!important;
+        min-width:0!important;min-height:0!important;margin:0!important;padding:0!important;
+        border:0!important;background:none!important;box-shadow:none!important;
       }
+      #luneaTimingInline .lunea-inline-orb,
+      #luneaTimingInline .lunea-v7-time-art,
+      #luneaTimingInline .lunea-v15-time-art{display:none!important;}
       #luneaTimingInline.timing-inline>img{
-        display:block!important;
-        width:clamp(160px,48vw,190px)!important;
-        height:auto!important;
-        max-width:190px!important;
-        min-width:160px!important;
-        aspect-ratio:3/5!important;
-        margin:0 auto!important;
-        object-fit:contain!important;
-        object-position:center!important;
-        border-radius:14px!important;
-        border:1px solid rgba(239,226,200,.30)!important;
-        background:transparent!important;
-        box-shadow:0 14px 30px rgba(0,0,0,.34),0 0 24px rgba(190,160,228,.09)!important;
-        opacity:1!important;
-        visibility:visible!important;
+        display:block!important;position:static!important;inset:auto!important;float:none!important;
+        transform:none!important;width:min(52vw,205px)!important;min-width:170px!important;
+        max-width:205px!important;height:auto!important;max-height:none!important;aspect-ratio:auto!important;
+        margin:0 auto!important;object-fit:contain!important;object-position:center!important;
+        opacity:1!important;visibility:visible!important;border-radius:13px!important;
+        border:1px solid rgba(239,226,200,.24)!important;background:transparent!important;
+        box-shadow:0 12px 26px rgba(0,0,0,.32)!important;
       }
-      #luneaTimingInline .txt{
-        width:min(100%,330px)!important;
-        min-width:0!important;
-        max-width:330px!important;
-        text-align:center!important;
-        margin:0 auto!important;
+      #luneaTimingInline.timing-inline>.txt{
+        display:block!important;position:static!important;inset:auto!important;transform:none!important;
+        width:100%!important;max-width:330px!important;min-width:0!important;margin:0 auto!important;
+        padding:0!important;text-align:center!important;z-index:auto!important;
       }
-      #luneaTimingInline .txt small{
-        display:block!important;
-        font-size:10px!important;
-        line-height:1.45!important;
-        letter-spacing:1.4px!important;
-      }
-      #luneaTimingInline .txt b{
-        display:block!important;
-        font-size:20px!important;
-        line-height:1.38!important;
-        margin:7px 0 8px!important;
-      }
-      #luneaTimingInline .txt span{
-        display:block!important;
-        font-size:12.5px!important;
-        line-height:1.68!important;
-      }
+      #luneaTimingInline.timing-inline>.txt small{display:block!important;font-size:9.5px!important;line-height:1.45!important;letter-spacing:1.35px!important;}
+      #luneaTimingInline.timing-inline>.txt b{display:block!important;font-size:20px!important;line-height:1.35!important;margin:5px 0 6px!important;}
+      #luneaTimingInline.timing-inline>.txt span{display:block!important;font-size:12px!important;line-height:1.62!important;}
     `;
     document.head.appendChild(style);
   }
 
-  function refreshTiming() {
-    installTimingStyle();
+  function force(el, prop, value) {
+    try { el?.style?.setProperty(prop, value, 'important'); } catch {}
+  }
+
+  function normalizeTimingInline() {
+    const box = document.getElementById('luneaTimingInline');
+    if (!box) return false;
+
     try { W.LUNEA_TIMING_UPLOADED_ART_V16?.upgradeAll?.(); } catch {}
     try { W.LUNEA_EMERGENCY_REPAIR_V43?.syncTimingArt?.(); } catch {}
+
+    installTimingStyle();
+    box.querySelectorAll('.lunea-inline-orb,.lunea-v7-time-art,.lunea-v15-time-art').forEach(n => n.remove());
+
+    force(box, 'display', 'flex');
+    force(box, 'flex-direction', 'column');
+    force(box, 'align-items', 'center');
+    force(box, 'justify-content', 'flex-start');
+    force(box, 'grid-template-columns', 'none');
+    force(box, 'width', '100%');
+    force(box, 'max-width', 'none');
+    force(box, 'gap', '12px');
+    force(box, 'padding', '16px 14px 18px');
+    force(box, 'text-align', 'center');
+    force(box, 'overflow', 'hidden');
+
+    const img = box.querySelector(':scope > img');
+    if (img) {
+      force(img, 'display', 'block');
+      force(img, 'position', 'static');
+      force(img, 'left', 'auto'); force(img, 'right', 'auto'); force(img, 'top', 'auto'); force(img, 'bottom', 'auto');
+      force(img, 'transform', 'none'); force(img, 'float', 'none');
+      force(img, 'width', 'min(52vw, 205px)');
+      force(img, 'min-width', '170px'); force(img, 'max-width', '205px');
+      force(img, 'height', 'auto'); force(img, 'max-height', 'none'); force(img, 'aspect-ratio', 'auto');
+      force(img, 'margin', '0 auto'); force(img, 'object-fit', 'contain');
+    }
+
+    const txt = box.querySelector(':scope > .txt');
+    if (txt) {
+      force(txt, 'display', 'block'); force(txt, 'position', 'static'); force(txt, 'inset', 'auto');
+      force(txt, 'transform', 'none'); force(txt, 'width', '100%'); force(txt, 'max-width', '330px');
+      force(txt, 'min-width', '0'); force(txt, 'margin', '0 auto'); force(txt, 'padding', '0');
+      force(txt, 'text-align', 'center');
+    }
+    return true;
+  }
+
+  function scheduleTimingRepair() {
+    [0, 80, 220, 550, 1100, 2200].forEach(ms => setTimeout(normalizeTimingInline, ms));
   }
 
   function boot() {
-    refreshTiming();
-    [180, 550, 1200, 2400].forEach(ms => setTimeout(refreshTiming, ms));
-    const observer = new MutationObserver(() => {
-      if (document.getElementById('luneaTimingInline')) refreshTiming();
+    installArchiveCopyGuard();
+    installColdStartRetry();
+    installTimingStyle();
+    scheduleTimingRepair();
+
+    let queued = false;
+    const observer = new MutationObserver(mutations => {
+      if (!mutations.some(m => m.target?.id === 'luneaTimingInline' || m.target?.closest?.('#luneaTimingInline') || Array.from(m.addedNodes || []).some(n => n.nodeType === 1 && (n.id === 'luneaTimingInline' || n.querySelector?.('#luneaTimingInline'))))) return;
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => { queued = false; normalizeTimingInline(); });
     });
-    if (document.body) observer.observe(document.body, { childList: true, subtree: true });
-    setTimeout(() => observer.disconnect(), 15000);
-    console.info('📚 LUNEA archive full-copy + inline timing V47 loaded');
+    if (document.body) observer.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['src','class']});
+
+    document.addEventListener('click', event => {
+      if (event.target?.closest?.('#timingDraw,#timingRefine,#timingSupportBtn,#luneaTimingABPanel')) scheduleTimingRepair();
+    }, {passive:true});
+
+    console.info('📚 LUNEA runtime recovery V48 loaded');
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true });
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
-  W.addEventListener('pageshow', () => setTimeout(refreshTiming, 80), { passive: true });
+  W.addEventListener('pageshow', () => setTimeout(() => { installColdStartRetry(); scheduleTimingRepair(); }, 80), {passive:true});
 })();
