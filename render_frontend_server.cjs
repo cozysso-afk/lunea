@@ -8,7 +8,7 @@ const crypto = require('crypto');
 const ROOT = process.cwd();
 const PORT = Number(process.env.PORT || 10000);
 const API_ORIGIN = 'https://lunea-astro-api-v2.onrender.com';
-const UI_BUILD = '20260906-0123-backend-v2';
+const UI_BUILD = '20260906-0136-archive-timing-v47';
 const NATAL_CACHE_TTL_MS = 10 * 60 * 1000;
 const NATAL_RETRY_DELAYS_MS = [0, 1200, 3000, 6000];
 const natalCache = new Map();
@@ -59,7 +59,8 @@ const INJECT = `
 <script src="./lunea-horary-mobile-stability-v42.js?v=${UI_BUILD}" data-lunea-render-direct="horary"></script>
 <script src="./lunea-learning-auth-recovery-v2.js?v=${UI_BUILD}" data-lunea-render-direct="learning-auth"></script>
 <script src="./lunea-emergency-repair-v43.js?v=${UI_BUILD}" data-lunea-render-direct="emergency-v43"></script>
-<script src="./lunea-profile-natal-v45.js?v=${UI_BUILD}" data-lunea-render-direct="profile-natal-v45"></script>`;
+<script src="./lunea-profile-natal-v45.js?v=${UI_BUILD}" data-lunea-render-direct="profile-natal-v45"></script>
+<script src="./lunea-archive-timing-v47.js?v=${UI_BUILD}" data-lunea-render-direct="archive-timing-v47"></script>`;
 
 function safePath(urlPath) {
   let decoded;
@@ -233,7 +234,7 @@ function serveFile(file, req, res) {
     res.statusCode = 200;
     res.setHeader('content-type',MIME[ext] || 'application/octet-stream');
     res.setHeader('content-length',out.length);
-    res.setHeader('x-lunea-deploy','render-backend-v2');
+    res.setHeader('x-lunea-deploy','render-archive-timing-v47');
     res.setHeader('x-lunea-ui-build',UI_BUILD);
     res.end(req.method === 'HEAD' ? undefined : out);
   });
@@ -260,7 +261,7 @@ const server = http.createServer(async (req,res) => {
       build:UI_BUILD,
       proxy:true,
       apiOrigin:'https://lunea-astro-api-v2.onrender.com',
-      directFixes:['cardbacks-v20','timing-v16','horary-v42','learning-auth-recovery-v2','emergency-v43','profile-natal-v45'],
+      directFixes:['cardbacks-v20','timing-v16','horary-v42','learning-auth-recovery-v2','emergency-v43','profile-natal-v45','archive-timing-v47'],
       natalProxy:{localHealth:true,retry429:true,singleFlight:true,cacheMinutes:10}
     }));
   }
