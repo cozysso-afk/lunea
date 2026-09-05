@@ -36,4 +36,4 @@ jobs:
           node tests/v30-spread-horary-contract.test.mjs
           node tests/horary-question-modes-v37.test.mjs
           node tests/horary-hardening-v38.test.mjs
-          node tests/horary-location-button-v39b.test.mjs
+          node tests/horary-location-button-v39.test.mjs
