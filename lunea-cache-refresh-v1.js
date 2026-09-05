@@ -64,6 +64,10 @@
     loadBuildScopedScript('luneaHoraryTraditionalCoreV40Loader', './lunea-horary-traditional-core-v40.js', 'Horary Traditional Core V40');
   }
 
+  function loadHoraryBalanceGuard() {
+    loadBuildScopedScript('luneaHoraryBalanceGuardV41Loader', './lunea-horary-balance-guard-v41.js', 'Horary Balance Guard V41');
+  }
+
   function refreshTo(build) {
     try {
       const url = new URL(location.href);
@@ -102,6 +106,7 @@
     loadHoraryHardening();
     loadHoraryLocationButton();
     loadHoraryTraditionalCore();
+    loadHoraryBalanceGuard();
     checkBuild();
   }
 
