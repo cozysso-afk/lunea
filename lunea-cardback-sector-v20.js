@@ -1,21 +1,20 @@
 'use strict';
 
 /*
-  LUNEA SECTOR CARD BACKS V20
-  ===========================
-  Authoritative visual bridge for the user-uploaded sector backs.
-  Loaded after legacy V19 so dynamically created/restored cards cannot fall
-  back to the old back_*.PNG artwork.
+  LUNEA SECTOR CARD BACKS V20.1
+  =============================
+  Authoritative visual bridge for the uploaded sector backs.
+  Daily now has its own pearl/opal celestial artwork (chosen concept 1).
 */
 (() => {
   const W = window;
   if (W.__LUNEA_SECTOR_CARD_BACKS_V20__) return;
   W.__LUNEA_SECTOR_CARD_BACKS_V20__ = true;
 
-  const RELEASE = '20.0';
-  const ASSET_VERSION = '20260905-2130';
+  const RELEASE = '20.1';
+  const ASSET_VERSION = '20260906-0650-daily-v1';
   const FILES = Object.freeze({
-    DAILY: 'tarot_back_general.jpeg',
+    DAILY: 'tarot_back_daily.jpeg',
     GENERAL: 'tarot_back_general.jpeg',
     LOVE: 'tarot_back_love.jpeg',
     STOCK: 'tarot_back_stock.jpeg',
@@ -163,7 +162,7 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) repairAll(); });
     W.addEventListener?.('pageshow', repairAll, {passive:true});
     W.LUNEA_SECTOR_CARD_BACKS_V20 = Object.freeze({version:RELEASE, files:FILES, repairBack, repairAll});
-    console.info('🃏 LUNEA uploaded sector card backs V20 loaded');
+    console.info('🃏 LUNEA uploaded sector card backs V20.1 loaded · Daily dedicated back');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});

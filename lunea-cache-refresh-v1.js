@@ -41,7 +41,7 @@
     loadBuildScopedScript('luneaJournalDetailV51Loader', './lunea-journal-detail-v51.js', 'Journal full-detail + toolbar V51');
   }
   function loadSectorCardBacks() {
-    loadBuildScopedScript('luneaSectorCardBacksV20Loader', './lunea-cardback-sector-v20.js', 'uploaded sector card backs V20');
+    loadBuildScopedScript('luneaSectorCardBacksV20Loader', './lunea-cardback-sector-v20.js', 'uploaded sector card backs V20.1');
   }
   function loadTimingUploadedArt() {
     loadBuildScopedScript('luneaTimingUploadedArtV16Loader', './lunea-timing-image-assets-v16.js', 'Timing uploaded artwork V16');
@@ -51,6 +51,9 @@
   }
   function loadDraftTimingPersistence() {
     loadBuildScopedScript('luneaDraftTimingV50Loader', './lunea-draft-timing-v50.js', 'All-reading draft Timing persistence V50');
+  }
+  function loadAstroRealWarmV53() {
+    loadBuildScopedScript('luneaAstroRealWarmV53Loader', './lunea-astro-warm-v53.js', 'Astro real backend warm V53');
   }
   function loadHoraryQuestionModes() {
     loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
@@ -104,6 +107,7 @@
     loadTimingUploadedArt();
     loadDailyTimingPersistence();
     loadDraftTimingPersistence();
+    loadAstroRealWarmV53();
     loadHoraryQuestionModes();
     loadHoraryHardening();
     loadHoraryLocationButton();
