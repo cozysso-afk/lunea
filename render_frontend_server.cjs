@@ -7,7 +7,7 @@ const path = require('path');
 const ROOT = process.cwd();
 const PORT = Number(process.env.PORT || 10000);
 const API_ORIGIN = 'https://lunea-astro-api.onrender.com';
-const UI_BUILD = '20260905-2215-auth-v2';
+const UI_BUILD = '20260905-2240-emergency-v43';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -56,7 +56,8 @@ const INJECT = `
 <script src="./lunea-cardback-sector-v20.js?v=${UI_BUILD}" data-lunea-render-direct="cardbacks"></script>
 <script src="./lunea-timing-image-assets-v16.js?v=${UI_BUILD}" data-lunea-render-direct="timing"></script>
 <script src="./lunea-horary-mobile-stability-v42.js?v=${UI_BUILD}" data-lunea-render-direct="horary"></script>
-<script src="./lunea-learning-auth-recovery-v2.js?v=${UI_BUILD}" data-lunea-render-direct="learning-auth"></script>`;
+<script src="./lunea-learning-auth-recovery-v2.js?v=${UI_BUILD}" data-lunea-render-direct="learning-auth"></script>
+<script src="./lunea-emergency-repair-v43.js?v=${UI_BUILD}" data-lunea-render-direct="emergency-v43"></script>`;
 
 function safePath(urlPath) {
   let decoded;
@@ -122,8 +123,6 @@ function serveFile(file, req, res) {
       out = Buffer.from(html, 'utf8');
     }
 
-    // The bypass is an emergency correctness path. Prefer a fresh request over
-    // stale iOS/PWA behavior for HTML, JS, JSON and uploaded artwork.
     if (['.html', '.js', '.json', '.png', '.jpg', '.jpeg', '.webp'].includes(ext)) {
       res.setHeader('cache-control', 'no-store, max-age=0, must-revalidate');
       res.setHeader('pragma', 'no-cache');
@@ -135,7 +134,7 @@ function serveFile(file, req, res) {
     res.statusCode = 200;
     res.setHeader('content-type', MIME[ext] || 'application/octet-stream');
     res.setHeader('content-length', out.length);
-    res.setHeader('x-lunea-deploy', 'render-v42-direct-bypass');
+    res.setHeader('x-lunea-deploy', 'render-v43-emergency-bypass');
     res.setHeader('x-lunea-ui-build', UI_BUILD);
     res.end(req.method === 'HEAD' ? undefined : out);
   });
@@ -146,7 +145,7 @@ const server = http.createServer(async (req, res) => {
   if (req.url === '/__lunea_bypass_health') {
     res.setHeader('content-type', 'application/json; charset=utf-8');
     res.setHeader('cache-control', 'no-store');
-    return res.end(JSON.stringify({ ok: true, build: UI_BUILD, proxy: true, directFixes: ['cardbacks-v20','timing-v16','horary-v42','learning-auth-recovery-v2'] }));
+    return res.end(JSON.stringify({ ok: true, build: UI_BUILD, proxy: true, directFixes: ['cardbacks-v20','timing-v16','horary-v42','learning-auth-recovery-v2','emergency-v43'] }));
   }
 
   const file = safePath(req.url || '/');
