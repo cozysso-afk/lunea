@@ -16,7 +16,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Gate one-time scheduled recovery
+        id: gate
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ ! -f .github/PAGES_REPAIR_ONCE ]; then
+            echo "run=no" >> "$GITHUB_OUTPUT"
+            echo "One-time Pages recovery already consumed; skipping."
+          else
+            echo "run=yes" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Stamp build, icon, and loader URLs
+        if: steps.gate.outputs.run == 'yes'
         shell: bash
         run: |
           python - <<'PY'
@@ -112,14 +124,19 @@ jobs:
           PY
 
       - name: Commit build stamp
+        if: steps.gate.outputs.run == 'yes'
         shell: bash
         run: |
-          if git diff --quiet -- index.html lunea-build.json lunea-structural-routing-v4.js; then
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            rm -f .github/PAGES_REPAIR_ONCE
+          fi
+          if git diff --quiet -- index.html lunea-build.json lunea-structural-routing-v4.js .github/PAGES_REPAIR_ONCE; then
             echo 'No cache/icon stamp change needed'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html lunea-build.json lunea-structural-routing-v4.js
+          git add -A .github/PAGES_REPAIR_ONCE
           git commit -m "Stamp LUNEA Pages build and canonical Home Screen icon"
           git push
