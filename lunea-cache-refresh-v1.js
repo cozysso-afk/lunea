@@ -43,6 +43,9 @@
   function loadTimingUploadedArt() {
     loadBuildScopedScript('luneaTimingUploadedArtV16Loader', './lunea-timing-image-assets-v16.js', 'Timing uploaded artwork V16');
   }
+  function loadDailyTimingPersistence() {
+    loadBuildScopedScript('luneaDailyTimingV49Loader', './lunea-daily-timing-v49.js', 'Daily Timing persistence V49');
+  }
   function loadHoraryQuestionModes() {
     loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
   }
@@ -92,6 +95,7 @@
     loadJournalHeaderFix();
     loadSectorCardBacks();
     loadTimingUploadedArt();
+    loadDailyTimingPersistence();
     loadHoraryQuestionModes();
     loadHoraryHardening();
     loadHoraryLocationButton();
