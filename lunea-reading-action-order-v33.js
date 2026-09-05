@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA READING ACTION ORDER V33.4
+  LUNEA READING ACTION ORDER V33.5
   ================================
   Keeps the reading action grid in a stable, task-oriented order even though
   several buttons are injected by independent feature modules.
@@ -27,6 +27,9 @@
   applies the screenshot-marked INTIMACY presentation corrections without
   changing RNG, AI interpretation, prompt generation, or storage.
 
+  V33.5 makes sure the V36 result-copy bridge is loaded with the current build
+  token, so iOS/PWA caches cannot keep an older Timing-only copy script.
+
   Unknown/future buttons are preserved after the known controls.
 */
 (() => {
@@ -36,9 +39,9 @@
 
   const SELF_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3303';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3305';
     } catch {
-      return '3303';
+      return '3305';
     }
   })();
 
@@ -66,6 +69,7 @@
   const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
   const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
   const INTIMACY_REPAIR_LOADER_ID = 'luneaIntimacyRepairV43Loader';
+  const RESULT_COPY_LOADER_ID = 'luneaResultCopyV36Loader';
 
   function actionBar() {
     return document.querySelector('#spreadOverlay .actionbar');
@@ -291,10 +295,19 @@
     return ensureScript(INTIMACY_REPAIR_LOADER_ID, './lunea-intimacy-repair-v43.js', 'INTIMACY repair UI V43');
   }
 
+  function ensureResultCopyBridge() {
+    const loadedVersion = String(W.LUNEA_TIMING_COPY_V35?.version || '');
+    if (loadedVersion === '36.0') return true;
+    if (document.getElementById(RESULT_COPY_LOADER_ID)) return true;
+    try { W.__LUNEA_TIMING_COPY_V35__ = false; } catch {}
+    return ensureScript(RESULT_COPY_LOADER_ID, './lunea-timing-result-copy-v35.js', 'result copy bridge V36');
+  }
+
   function boot() {
     reorder();
     ensureTopPromptCopy();
     ensureBottomActions();
+    ensureResultCopyBridge();
     ensureIntimacyCleanUi();
     ensureIntimacyBurgundyUi();
     ensureIntimacyRepairUi();
@@ -323,6 +336,7 @@
       reorder();
       ensureTopPromptCopy();
       ensureBottomActions();
+      ensureResultCopyBridge();
       ensureIntimacyCleanUi();
       ensureIntimacyBurgundyUi();
       ensureIntimacyRepairUi();
@@ -332,17 +346,18 @@
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
-    version:'33.4',
+    version:'33.5',
     order:[...ORDER],
     reorder,
     ensureTopPromptCopy,
     syncTopPromptCopy,
     ensureBottomActions,
     syncBottomButtons,
+    ensureResultCopyBridge,
     ensureIntimacyCleanUi,
     ensureIntimacyBurgundyUi,
     ensureIntimacyRepairUi,
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot,{once:true});
   else boot();
 })();
