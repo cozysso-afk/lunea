@@ -17,6 +17,7 @@
     './lunea-home-timing-polish-v9.js?v=901',
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',
+    './lunea-daily-orbit6-bootfix-v57.js?v=5701',
     './lunea-daily-orbit6-fix-v57.js?v=5701',
     './lunea-daily-celestial-v22.js?v=2201',
     './lunea-sector-color-system-v28.js?v=2801',
