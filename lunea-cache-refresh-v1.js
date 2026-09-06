@@ -9,6 +9,7 @@
   window.__LUNEA_CACHE_REFRESH_V1__ = true;
 
   const W = window;
+  const IS_NETLIFY = /\.netlify\.app$/i.test(location.hostname);
   const BUILD_FILE = './lunea-build.json';
   const SELF_BUILD = (() => {
     try {
@@ -35,6 +36,9 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  function loadBootRevealV29() {
+    loadBuildScopedScript('luneaBootRevealV29Loader', './lunea-boot-reveal-v29.js', 'current UI boot reveal V29');
+  }
   function loadRuntimeStateV55() {
     loadBuildScopedScript('luneaRuntimeStateV55Loader', './lunea-runtime-state-v55.js', 'runtime stale-state guard V55');
   }
@@ -59,8 +63,8 @@
   function loadAstroRealWarmV53() {
     loadBuildScopedScript('luneaAstroRealWarmV53Loader', './lunea-astro-warm-v53.js', 'Astro real backend warm V53');
   }
-  function loadThaiDateCenterV54() {
-    loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'Thai period date centering V54');
+  function loadThaiDateDisplayV57() {
+    loadBuildScopedScript('luneaThaiDateDisplayV57Loader', './lunea-thai-date-display-v57.js', 'Thai centered date display V57');
   }
   function loadHoraryQuestionModes() {
     loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
@@ -108,6 +112,7 @@
   }
 
   function boot() {
+    loadBootRevealV29();
     loadRuntimeStateV55();
     loadJournalHeaderFix();
     loadJournalDetailV51();
@@ -115,7 +120,7 @@
     loadTimingUploadedArt();
     loadDailyTimingPersistence();
     loadDraftTimingPersistence();
-    loadThaiDateCenterV54();
+    loadThaiDateDisplayV57();
     loadAstroRealWarmV53();
     loadHoraryQuestionModes();
     loadHoraryHardening();
@@ -124,14 +129,9 @@
     loadHoraryBalanceGuard();
     loadHoraryMobileStability();
 
-    /*
-      Canonical Render already serves HTML/JS as no-store and stamps the active
-      build at response time. Runtime V55 now watches lunea-build.json on app
-      resume, so the old immediate post-paint reload remains disabled here.
-    */
-    if (W.__LUNEA_RENDER_CANONICAL__) {
+    if (W.__LUNEA_RENDER_CANONICAL__ || IS_NETLIFY) {
       W.__LUNEA_BUILD_CHECK_DONE__ = true;
-      console.info('[LUNEA cache refresh] canonical Render · runtime V55 watches future builds');
+      console.info(`[LUNEA cache refresh] ${IS_NETLIFY ? 'Netlify stable runtime' : 'canonical Render'} · no forced refresh`);
     } else {
       checkBuild();
     }
