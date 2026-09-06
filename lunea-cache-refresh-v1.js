@@ -36,6 +36,9 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  function loadNetlifyAstroRouteV57() {
+    if (IS_NETLIFY) loadBuildScopedScript('luneaNetlifyAstroRouteV57Loader', './lunea-netlify-astro-route-v57.js', 'Netlify Astro proxy route V57');
+  }
   function loadBootRevealV29() {
     loadBuildScopedScript('luneaBootRevealV29Loader', './lunea-boot-reveal-v29.js', 'current UI boot reveal V29');
   }
@@ -112,6 +115,7 @@
   }
 
   function boot() {
+    loadNetlifyAstroRouteV57();
     loadBootRevealV29();
     loadRuntimeStateV55();
     loadJournalHeaderFix();
