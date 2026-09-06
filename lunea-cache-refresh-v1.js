@@ -32,6 +32,7 @@
     load('luneaThaiDateDisplayV57Loader','./lunea-thai-date-display-v57.js','Thai centered date display V57');
     load('luneaAstroRealWarmV53Loader','./lunea-astro-warm-v53.js','Astro backend warm V53');
     load('luneaAstroJobQueueV56Loader','./lunea-astro-job-queue-v56.js','Astro Job Queue V56');
+    load('luneaHomePortalRepairV58Loader','./lunea-home-portal-repair-v58.js','Home Portal repair V58');
     load('luneaHoraryQuestionModesV37Loader','./lunea-horary-question-modes-v37.js','Horary modes V37');
     load('luneaHoraryHardeningV38Loader','./lunea-horary-hardening-v38.js','Horary hardening V38');
     load('luneaHoraryLocationButtonV39Loader','./lunea-horary-location-button-v39.js','Horary location V39');
