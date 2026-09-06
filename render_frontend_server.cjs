@@ -47,62 +47,6 @@ const MIME = {
   '.woff2': 'font/woff2',
 };
 
-/*
-  IMPORTANT: this curtain is injected before any external repair script.
-  The previous server injected scripts before index.html's boot gate, which let
-  the legacy/base UI paint briefly on a cold first load. Keep the body hidden
-  until the existing lunea-boot-reveal-v29.js declares the final UI ready.
-*/
-const INJECT = `
-<script id="luneaRenderPreBootV54">
-(() => {
-  const root = document.documentElement;
-  root.classList.add('lunea-booting');
-  if (!window.__LUNEA_BOOT_STARTED__) window.__LUNEA_BOOT_STARTED__ = performance.now();
-  window.__LUNEA_RENDER_CANONICAL__ = true;
-})();
-</script>
-<style id="luneaRenderPreBootV54Style">
-html.lunea-booting,html.lunea-booting body{background:#060713!important;overflow:hidden!important}
-html.lunea-booting body>*{opacity:0!important;visibility:hidden!important;pointer-events:none!important}
-html.lunea-booting body::before{content:'';position:fixed;inset:0;z-index:2147483000;pointer-events:none;background:radial-gradient(circle at 50% 43%,rgba(205,190,255,.16) 0 7%,transparent 23%),radial-gradient(circle at 50% 46%,rgba(112,222,213,.075),transparent 34%),linear-gradient(180deg,#080a18 0%,#090918 52%,#050610 100%)}
-html.lunea-booting body::after{content:'☾  L U N E A';position:fixed;left:50%;top:46%;z-index:2147483001;transform:translate(-50%,-50%);pointer-events:none;white-space:nowrap;color:#f4efff;font:600 18px/1.2 Georgia,'Times New Roman',serif;letter-spacing:5px;text-shadow:0 0 22px rgba(204,187,255,.42),0 0 36px rgba(108,220,211,.14)}
-</style>
-<meta name="lunea-render-build" content="${UI_BUILD}">
-<script id="luneaRenderBypassV54Bootstrap">
-(() => {
-  const proxyBase = location.origin + '/__lunea_api';
-  const upstreamOrigins = ['${API_ORIGIN}', '${LEGACY_API_ORIGIN}'];
-  try { localStorage.setItem('LUNEA_ASTRO_API_URL', proxyBase); } catch {}
-  window.__LUNEA_RENDER_BYPASS_V52__ = '${UI_BUILD}';
-  window.__LUNEA_RENDER_BYPASS_V54__ = '${UI_BUILD}';
-  window.__LUNEA_RENDER_CANONICAL__ = true;
-  const nativeFetch = window.fetch.bind(window);
-  window.fetch = function(input, init) {
-    try {
-      const raw = typeof input === 'string' ? input : (input && input.url) || '';
-      const matched = upstreamOrigins.find(origin => raw.startsWith(origin));
-      if (matched) {
-        const target = proxyBase + raw.slice(matched.length);
-        if (typeof input === 'string') return nativeFetch(target, init);
-        return nativeFetch(new Request(target, input), init);
-      }
-    } catch {}
-    return nativeFetch(input, init);
-  };
-})();
-</script>
-<script src="./lunea-cardback-sector-v20.js?v=${UI_BUILD}" data-lunea-render-direct="cardbacks"></script>
-<script src="./lunea-timing-image-assets-v16.js?v=${UI_BUILD}" data-lunea-render-direct="timing"></script>
-<script src="./lunea-daily-timing-v49.js?v=${UI_BUILD}" data-lunea-render-direct="daily-timing-v49"></script>
-<script src="./lunea-draft-timing-v50.js?v=${UI_BUILD}" data-lunea-render-direct="draft-timing-v50"></script>
-<script src="./lunea-horary-mobile-stability-v42.js?v=${UI_BUILD}" data-lunea-render-direct="horary"></script>
-<script src="./lunea-learning-auth-recovery-v2.js?v=${UI_BUILD}" data-lunea-render-direct="learning-auth"></script>
-<script src="./lunea-emergency-repair-v43.js?v=${UI_BUILD}" data-lunea-render-direct="emergency-v43"></script>
-<script src="./lunea-profile-natal-v45.js?v=${UI_BUILD}" data-lunea-render-direct="profile-natal-v45"></script>
-<script src="./lunea-archive-timing-v47.js?v=${UI_BUILD}" data-lunea-render-direct="archive-timing-v47"></script>
-<script src="./lunea-journal-detail-v51.js?v=${UI_BUILD}" data-lunea-render-direct="journal-detail-v51"></script>`;
-
 function safePath(urlPath) {
   let decoded;
   try { decoded = decodeURIComponent(urlPath.split('?')[0]); } catch { decoded = '/'; }
@@ -400,14 +344,7 @@ function serveFile(file, req, res) {
     }
 
     const ext = path.extname(file).toLowerCase();
-    let out = data;
-    if (ext === '.html') {
-      let html = data.toString('utf8');
-      if (!html.includes('luneaRenderBypassV54Bootstrap')) {
-        html = html.includes('<head>') ? html.replace('<head>','<head>'+INJECT) : INJECT+html;
-      }
-      out = Buffer.from(html,'utf8');
-    }
+    const out = data;
 
     if (['.html','.js','.json','.png','.jpg','.jpeg','.webp'].includes(ext)) {
       res.setHeader('cache-control','no-store, max-age=0, must-revalidate');
@@ -420,7 +357,7 @@ function serveFile(file, req, res) {
     res.statusCode = 200;
     res.setHeader('content-type',MIME[ext] || 'application/octet-stream');
     res.setHeader('content-length',out.length);
-    res.setHeader('x-lunea-deploy','render-astro-ui-v54');
+    res.setHeader('x-lunea-deploy','render-astro-ui-v54-raw-html');
     res.setHeader('x-lunea-ui-build',UI_BUILD);
     res.end(req.method === 'HEAD' ? undefined : out);
   });
@@ -439,11 +376,10 @@ const server = http.createServer(async (req,res) => {
       ok:true,
       build:UI_BUILD,
       proxy:true,
+      rawHtml:true,
       apiOrigin:readyState.entry?.label || 'warming',
       directFixes:[
-        'cardbacks-v20','timing-v16','daily-timing-v49','draft-timing-v50',
-        'horary-v42','learning-auth-recovery-v2','emergency-v43','profile-natal-v45',
-        'archive-timing-v47','journal-detail-v51','astro-proxy-v54','preboot-v54'
+        'astro-proxy-v54','raw-v57.1-html'
       ],
       natalProxy:{singleFlight:true,cacheMinutes:10,backendHealth:'real'},
       astroProxy:{dualOrigin:true,coldStartWaitSeconds:70,transientFailover:true}
@@ -462,7 +398,7 @@ const server = http.createServer(async (req,res) => {
 });
 
 server.listen(PORT,'0.0.0.0',() => {
-  console.log(`LUNEA Render direct bypass ${UI_BUILD} listening on ${PORT}`);
+  console.log(`LUNEA Render raw V57.1 HTML + Astro proxy ${UI_BUILD} listening on ${PORT}`);
   setTimeout(() => {
     findReadyOrigin(false).catch(err => {
       console.info('[LUNEA proxy] background Astro warm pending/failed:', err?.message || err);
