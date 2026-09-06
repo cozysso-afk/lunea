@@ -3,6 +3,9 @@
 /* LUNEA Structural V4 — V57 deterministic host order
    One current-home chain first, then feature layers. No service worker. */
 (() => {
+  if (window.__LUNEA_STRUCTURAL_V4_LOADER__) return;
+  window.__LUNEA_STRUCTURAL_V4_LOADER__ = true;
+
   const CURRENT_HOME = [
     './lunea-luminous-theme-v1.js?v=101',
     './lunea-luminous-layout-v2.js?v=201',
@@ -78,14 +81,32 @@
     './lunea-reading-action-order-v33.js?v=d2198d8c5779'
   ];
 
-  const SOURCES=[...CURRENT_HOME,...REST];
-  const loadSequential=sources=>sources.reduce((p,src)=>p.then(()=>new Promise((resolve,reject)=>{
-    const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=()=>reject(new Error('Failed to load '+src));document.head.appendChild(script);
-  })),Promise.resolve());
-
-  if(document.readyState==='loading'){
-    for(const src of SOURCES)document.write(`<script src="${src}"><\/script>`);
-    return;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  async function loadOne(src) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const ok = await new Promise(resolve => {
+        const script = document.createElement('script');
+        script.src = src + (src.includes('?') ? '&' : '?') + 'boot=' + Date.now() + '-' + attempt;
+        script.async = false;
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        (document.head || document.documentElement).appendChild(script);
+      });
+      if (ok) return true;
+      if (attempt < 2) await sleep(120);
+    }
+    console.warn('[LUNEA Structural V4] skipped after retry', src);
+    return false;
   }
-  loadSequential(SOURCES).catch(err=>console.error('[LUNEA Structural V4 loader]',err));
+
+  async function loadSequential(sources) {
+    for (const src of sources) await loadOne(src);
+  }
+
+  function boot() {
+    loadSequential([...CURRENT_HOME, ...REST]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
 })();
