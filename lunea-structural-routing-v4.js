@@ -18,6 +18,7 @@
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-orbit6-fix-v57.js?v=5701',
     './lunea-daily-celestial-v22.js?v=2201',
+    './lunea-ui-freeze-v57.js?v=5701',
     './lunea-sector-color-system-v28.js?v=2801',
     './lunea-boot-reveal-v29.js?v=2903'
   ];
