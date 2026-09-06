@@ -1,29 +1,37 @@
 'use strict';
+/* LUNEA V57 stable host loader.
+   Critical home is isolated from the rest of the feature stack.
+   No document.write, no service worker, no all-or-nothing chain. */
+(()=>{
+  const W=window;
+  if(W.__LUNEA_STABLE_HOST_LOADER_V57__)return;
+  W.__LUNEA_STABLE_HOST_LOADER_V57__=true;
 
-/* LUNEA Structural V4 — V57 deterministic host order
-   One current-home chain first, then feature layers. No service worker. */
-(() => {
-  const CURRENT_HOME = [
-    './lunea-luminous-theme-v1.js?v=101',
-    './lunea-luminous-layout-v2.js?v=201',
-    './lunea-luminous-polish-v3.js?v=301',
-    './lunea-top-spacing-v4.js?v=401',
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+  function load(src){
+    return new Promise(resolve=>{
+      const s=document.createElement('script');
+      s.src=src+(src.includes('?')?'&':'?')+'host='+Date.now();
+      s.async=false;
+      s.onload=()=>resolve(true);
+      s.onerror=()=>{console.warn('[LUNEA V57 host] skipped',src);resolve(false)};
+      (document.head||document.documentElement).appendChild(s);
+    });
+  }
+
+  async function waitCritical(timeout=10000){
+    const start=Date.now();
+    while(Date.now()-start<timeout){
+      if(document.documentElement.dataset.luneaCriticalHome==='ready')return true;
+      await sleep(60);
+    }
+    return false;
+  }
+
+  const REST=[
     './lunea-astro-origin-failover-v57.js?v=5701',
-    './lunea-structural-routing-v4-base.js?v=412',
-    './lunea-daily-lock-v1.js?v=101',
     './lunea-card-motion-timing-v7.js?v=701',
-    './lunea-home-portal-v8.js?v=801',
-    './lunea-home-timing-polish-v9.js?v=901',
-    './lunea-category-art-v10.js?v=1001',
-    './lunea-daily-orbit6-v21.js?v=2101',
-    './lunea-daily-orbit6-fix-v57.js?v=5701',
-    './lunea-daily-celestial-v22.js?v=2201',
-    './lunea-ui-freeze-v57.js?v=5701',
     './lunea-sector-color-system-v28.js?v=2801',
-    './lunea-boot-reveal-v29.js?v=2903'
-  ];
-
-  const REST = [
     './lunea-gemini-model-picker-v1.js?v=101',
     './lunea-manual-structure-v1.js?v=105',
     './lunea-manual-everywhere-v1.js?v=103',
@@ -77,14 +85,18 @@
     './lunea-reading-action-order-v33.js?v=d2198d8c5779'
   ];
 
-  const SOURCES=[...CURRENT_HOME,...REST];
-  const loadSequential=sources=>sources.reduce((p,src)=>p.then(()=>new Promise((resolve,reject)=>{
-    const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=()=>reject(new Error('Failed to load '+src));document.head.appendChild(script);
-  })),Promise.resolve());
+  async function boot(){
+    if(document.readyState!=='complete'){
+      await new Promise(resolve=>W.addEventListener('load',resolve,{once:true}));
+    }
 
-  if(document.readyState==='loading'){
-    for(const src of SOURCES)document.write(`<script src="${src}"><\/script>`);
-    return;
+    await load('./lunea-critical-home-v57.js?v=5701');
+    const ready=await waitCritical();
+    if(!ready)console.warn('[LUNEA V57 host] critical home readiness timeout');
+
+    // Non-home feature failures cannot roll the home back anymore.
+    for(const src of REST)await load(src);
   }
-  loadSequential(SOURCES).catch(err=>console.error('[LUNEA Structural V4 loader]',err));
+
+  boot().catch(err=>console.error('[LUNEA V57 host]',err));
 })();
