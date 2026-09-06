@@ -26,7 +26,8 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
   const BACKENDS = [V2, LEGACY];
   const originalReadFile = fs.readFile.bind(fs);
   const nativeFetch = typeof global.fetch === 'function' ? global.fetch.bind(global) : null;
-  const warmStarted = new Set();
+  const warmActive = new Set();
+  const warmAttempts = new Map();
 
   function urlFrom(input) {
     try {
@@ -41,18 +42,29 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
   }
 
   function warmInBackground(origin) {
-    if (!nativeFetch || warmStarted.has(origin)) return;
-    warmStarted.add(origin);
+    if (!nativeFetch || warmActive.has(origin)) return;
+    const attempt = Number(warmAttempts.get(origin) || 0) + 1;
+    warmAttempts.set(origin, attempt);
+    warmActive.add(origin);
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 45000);
     nativeFetch(`${origin}/health`, {
       method:'GET', cache:'no-store', signal:controller.signal,
       headers:{Accept:'application/json','User-Agent':'LUNEA-Render-Warm-V57'}
     }).then(response => {
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      warmAttempts.set(origin, 0);
       console.info(`[LUNEA preload V57] Astro warm ${origin.includes('-v2') ? 'v2' : 'legacy'} -> ${response.status}`);
     }).catch(error => {
-      console.warn(`[LUNEA preload V57] Astro warm ${origin.includes('-v2') ? 'v2' : 'legacy'} pending/failed: ${String(error?.message || error)}`);
-    }).finally(() => clearTimeout(timer));
+      console.warn(`[LUNEA preload V57] Astro warm ${origin.includes('-v2') ? 'v2' : 'legacy'} attempt ${attempt} pending/failed: ${String(error?.message || error)}`);
+      if (attempt < 4) {
+        setTimeout(() => warmInBackground(origin), Math.min(12000, 2500 * attempt));
+      }
+    }).finally(() => {
+      clearTimeout(timer);
+      warmActive.delete(origin);
+    });
   }
 
   /* Start waking both calculation services as soon as the frontend process wakes. */
@@ -66,7 +78,7 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
 
       /* The existing server gates every calculation on /health. On free Render,
          that made the button wait up to 70s before the real POST even began.
-         We already issue a real warm request above; return readiness immediately
+         We already issue real warm requests above; return readiness immediately
          here so the calculation itself becomes the authoritative health check. */
       if (/\/health(?:\?|$)/.test(raw)) {
         warmInBackground(origin);
