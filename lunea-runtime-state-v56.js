@@ -1,6 +1,6 @@
 'use strict';
 
-/* LUNEA RUNTIME STATE V56
+/* LUNEA RUNTIME STATE V56.1
    Question boundaries are hard state boundaries. No Transit / Return / Thai
    request, busy label, inline result, or auto-resume marker from a previous
    tarot question may survive into the next reading.
@@ -21,9 +21,7 @@
 
   function currentQuestion() {
     let q = unquote($('spreadQuestion')?.textContent || '');
-    if (!q) {
-      try { q = unquote(W.state?.question || ''); } catch {}
-    }
+    if (!q) { try { q = unquote(W.state?.question || ''); } catch {} }
     return q;
   }
 
@@ -47,6 +45,7 @@
     if (!btn) return;
     btn.disabled = false;
     btn.removeAttribute('aria-busy');
+    btn.removeAttribute('data-lunea-warm-busy');
     delete btn.dataset.luneaWarmBusy;
     btn.textContent = label;
   }
@@ -58,11 +57,24 @@
     el.innerHTML = '';
   }
 
+  function resetThaiRangeUi() {
+    resetButton('luneaThaiTarotRangeBtn', '🇹🇭 Thai 기간');
+    document.querySelectorAll('.thai-v33-run').forEach(btn => {
+      btn.disabled = false;
+      btn.removeAttribute('aria-busy');
+      if (/계산.*중|대기.*중|재시도/.test(clean(btn.textContent))) btn.textContent = '기간 계산';
+    });
+    document.querySelectorAll('.thai-v33-status').forEach(el => {
+      if (statusLooksBusy(el.textContent)) el.textContent = '';
+    });
+  }
+
   function resetVisibleUi() {
     resetButton('astroTransitRun', '🌌 트랜짓 스캔');
     resetButton('astroReturnRun', '↻ 리턴 계산');
     resetButton('thaiTaksaRun', '🇹🇭 태국점성술 계산');
     resetButton('luneaThaiTarotBridgeBtn', '🇹🇭 Thai 보조');
+    resetThaiRangeUi();
 
     const transitTop = $('astroTransitBtn');
     if (transitTop) transitTop.textContent = '🌌 Astro Timing';
@@ -82,6 +94,7 @@
     $('luneaReturnInline')?.remove();
     $('luneaThaiTarotBridgeInline')?.remove();
     $('luneaThaiInline')?.remove();
+    $('luneaThaiRangeInline')?.remove();
 
     const badge = $('luneaAstroJobBadgeV23');
     badge?.classList.remove('show','waiting');
@@ -94,8 +107,7 @@
     try { localStorage.removeItem(PENDING_KEY); } catch {}
     try { localStorage.removeItem(LONG_KEY); } catch {}
     resetVisibleUi();
-
-    [60, 220, 700, 1600].forEach(ms => setTimeout(resetVisibleUi, ms));
+    [60,220,700,1600].forEach(ms => setTimeout(resetVisibleUi,ms));
     try { document.documentElement.dataset.luneaAuxBoundary = reason; } catch {}
   }
 
@@ -107,8 +119,10 @@
     const old = pendingQuestion(rows);
     const transitQ = unquote($('astroTransitQuestion')?.value || '');
     const returnQ = unquote($('astroReturnQuestion')?.value || '');
-    const thaiBusy = statusLooksBusy($('luneaThaiTarotBridgeBtn')?.textContent || '')
+    const thaiBridgeBusy = statusLooksBusy($('luneaThaiTarotBridgeBtn')?.textContent || '')
       || $('luneaThaiTarotBridgeBtn')?.getAttribute('aria-busy') === 'true';
+    const thaiRangeBusy = statusLooksBusy($('luneaThaiTarotRangeBtn')?.textContent || '')
+      || $('luneaThaiTarotRangeBtn')?.getAttribute('aria-busy') === 'true';
 
     const mismatch = Boolean(
       (old && old !== live)
@@ -116,7 +130,9 @@
       || (returnQ && returnQ !== live)
     );
 
-    if (mismatch || thaiBusy) {
+    /* A restored page cannot safely resume Thai bridge/range against a different
+       reading. If a button is still busy at page-show/question boundary, release it. */
+    if (mismatch || thaiBridgeBusy || thaiRangeBusy) {
       clearAuxiliaryState(mismatch ? 'stale-question' : 'stale-thai-busy');
       return true;
     }
@@ -127,7 +143,6 @@
     const node = $('spreadQuestion');
     if (!node) return false;
     if (observer) return true;
-
     lastQuestion = currentQuestion();
     observer = new MutationObserver(() => {
       const next = currentQuestion();
@@ -136,7 +151,7 @@
       lastQuestion = next;
       if (previous || next) clearAuxiliaryState('question-change');
     });
-    observer.observe(node, {childList:true, subtree:true, characterData:true});
+    observer.observe(node,{childList:true,subtree:true,characterData:true});
     return true;
   }
 
@@ -151,38 +166,20 @@
         const field = id.startsWith('astroTransit') ? $('astroTransitQuestion') : $('astroReturnQuestion');
         const requestQ = unquote(field?.value || '');
         if (requestQ && requestQ !== live) resetVisibleUi();
-      }).observe(el, {childList:true, subtree:true, characterData:true, attributes:true});
+      }).observe(el,{childList:true,subtree:true,characterData:true,attributes:true});
     });
   }
 
-  function bootPass() {
-    installQuestionObserver();
-    installResultMutationGate();
-    inspectForStaleState();
-  }
-
-  function boot() {
+  function bootPass(){installQuestionObserver();installResultMutationGate();inspectForStaleState()}
+  function boot(){
     bootPass();
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      bootPass();
-      if (tries >= 80 && observer) clearInterval(timer);
-    }, 100);
+    let tries=0;
+    const timer=setInterval(()=>{tries+=1;bootPass();if(tries>=80&&observer)clearInterval(timer)},100);
   }
 
-  W.addEventListener('pageshow', () => setTimeout(bootPass, 30), {passive:true});
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) setTimeout(bootPass, 30);
-  });
+  W.addEventListener('pageshow',()=>setTimeout(bootPass,30),{passive:true});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(bootPass,30)});
 
-  W.LUNEA_RUNTIME_STATE_V56 = Object.freeze({
-    clear: clearAuxiliaryState,
-    inspect: inspectForStaleState,
-    currentQuestion,
-    version: 56,
-  });
-
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
-  else boot();
+  W.LUNEA_RUNTIME_STATE_V56=Object.freeze({clear:clearAuxiliaryState,inspect:inspectForStaleState,currentQuestion,version:'56.1'});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
