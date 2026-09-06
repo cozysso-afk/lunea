@@ -5,6 +5,9 @@
   const root=document.documentElement;
   let done=false;
 
+  /* V29 owns the reveal once loaded; cancel the legacy 3.5s reveal first. */
+  try{clearTimeout(window.__LUNEA_BOOT_FAILSAFE__);}catch{}
+
   const reveal=()=>{
     if(done)return;done=true;
     clearTimeout(window.__LUNEA_BOOT_FAILSAFE__);
