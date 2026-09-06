@@ -1,0 +1,165 @@
+name: Patch V61 recovery bridge
+
+on:
+  push:
+    branches: [repair-v60-stable-pwa]
+    paths:
+      - '.v61-recovery-trigger'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: repair-v60-stable-pwa
+
+      - name: Patch recovery bridge
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('render_preload_v56.cjs')
+          s = p.read_text(encoding='utf-8')
+
+          start = s.index('  const RECOVERY_HTML = ')
+          end = s.index('  function urlFrom(input) {', start)
+
+          replacement = r'''  const RECOVERY_BRIDGE_V61 = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#070916"><title>LUNEA</title><style>html,body{margin:0;width:100%;height:100%;background:#070916;color:#f4efff;font-family:-apple-system,BlinkMacSystemFont,"Pretendard",sans-serif}body{display:grid;place-items:center}.wrap{text-align:center}.logo{font:600 20px/1.2 Georgia,serif;letter-spacing:5px;text-shadow:0 0 22px rgba(204,187,255,.42)}.status{margin-top:14px;font-size:12px;color:#aaa3bd}</style></head><body><div class="wrap"><div class="logo">☾ L U N E A</div><div class="status" id="s">앱 캐시 복구 중…</div></div><script>(async()=>{const s=document.getElementById('s');try{if('serviceWorker'in navigator){const rs=await navigator.serviceWorker.getRegistrations();for(const r of rs){try{r.waiting&&r.waiting.postMessage({type:'LUNEA_SW_RETIRE'})}catch{}try{r.active&&r.active.postMessage({type:'LUNEA_SW_RETIRE'})}catch{}try{await r.unregister()}catch{}}}if('caches'in window){const ks=await caches.keys();await Promise.all(ks.filter(k=>/^lunea-/i.test(k)).map(k=>caches.delete(k)))}}catch{}try{document.cookie='lunea_recovered_v61=1; Path=/; Max-Age=31536000; SameSite=Lax'}catch{}s.textContent='복구 완료 · 화면 여는 중…';location.replace('/__lunea_bypass_health?lunea_app_v61=1&t='+Date.now())})();<\/script></body></html>`;
+
+  const APP_BRIDGE_HEAD_V61 = `<base href="/"><script id="luneaAppBridgeV61">(()=>{try{document.cookie='lunea_recovered_v61=1; Path=/; Max-Age=31536000; SameSite=Lax'}catch{}try{if(history&&history.replaceState)history.replaceState(null,'','/')}catch{}try{if('serviceWorker'in navigator)navigator.serviceWorker.getRegistrations().then(rs=>rs.forEach(r=>{try{r.unregister()}catch{}})).catch(()=>{})}catch{}try{if('caches'in window)caches.keys().then(ks=>Promise.all(ks.filter(k=>/^lunea-/i.test(k)).map(k=>caches.delete(k)))).catch(()=>{})}catch{}})();<\/script>`;
+
+  function parseRequestUrl(req) {
+    try { return new URL(String(req?.url || '/'), 'https://lunea.local'); }
+    catch { return new URL('https://lunea.local/'); }
+  }
+
+  function hasV61Recovery(req) {
+    const u = parseRequestUrl(req);
+    if (u.searchParams.get('lunea_recovered_v61') === '1') return true;
+    return /(?:^|;\s*)lunea_recovered_v61=1(?:;|$)/.test(String(req?.headers?.cookie || ''));
+  }
+
+  function isRootGet(req) {
+    const method = String(req?.method || 'GET').toUpperCase();
+    if (method !== 'GET' && method !== 'HEAD') return false;
+    const pathname = parseRequestUrl(req).pathname;
+    return pathname === '/' || pathname === '/index.html';
+  }
+
+  function sendV61Bridge(req, res) {
+    const body = Buffer.from(RECOVERY_BRIDGE_V61, 'utf8');
+    res.statusCode = 200;
+    res.setHeader('content-type','text/html; charset=utf-8');
+    res.setHeader('cache-control','no-store, max-age=0, must-revalidate');
+    res.setHeader('pragma','no-cache');
+    res.setHeader('expires','0');
+    res.setHeader('set-cookie','lunea_recovered_v61=1; Path=/; Max-Age=31536000; SameSite=Lax');
+    res.setHeader('content-length',String(body.length));
+    res.setHeader('x-lunea-recovery','v61-bridge');
+    return res.end(req.method === 'HEAD' ? undefined : body);
+  }
+
+  function redirectToV61Bridge(res) {
+    res.statusCode = 302;
+    res.setHeader('location', `/__lunea_bypass_health?lunea_bridge_v61=1&t=${Date.now()}`);
+    res.setHeader('cache-control','no-store, max-age=0, must-revalidate');
+    res.setHeader('pragma','no-cache');
+    res.setHeader('expires','0');
+    res.setHeader('content-length','0');
+    res.setHeader('x-lunea-recovery','v61-redirect');
+    return res.end();
+  }
+
+  function serveAppBridgeV61(req, res, handler) {
+    const originalUrl = req.url;
+    const originalEnd = res.end.bind(res);
+    let transformed = false;
+
+    res.end = function luneaV61End(chunk, encoding, callback) {
+      if (!transformed) {
+        transformed = true;
+        try {
+          const type = String(res.getHeader('content-type') || '');
+          if (chunk != null && /text\/html/i.test(type)) {
+            let html = Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk);
+            if (!html.includes('luneaAppBridgeV61')) {
+              html = html.includes('<head>') ? html.replace('<head>', '<head>' + APP_BRIDGE_HEAD_V61) : APP_BRIDGE_HEAD_V61 + html;
+            }
+            const out = Buffer.from(html, 'utf8');
+            try { res.setHeader('content-length', String(out.length)); } catch {}
+            req.url = originalUrl;
+            return originalEnd(req.method === 'HEAD' ? undefined : out, undefined, callback);
+          }
+        } catch (error) {
+          console.warn('[LUNEA preload V61] app bridge transform skipped:', error?.message || error);
+        }
+      }
+      req.url = originalUrl;
+      return originalEnd(chunk, encoding, callback);
+    };
+
+    req.url = '/?lunea_recovered_v61=1';
+    return handler(req, res);
+  }
+
+  http.createServer = function luneaCreateServerV61(handler, ...rest) {
+    return originalCreateServer((req, res) => {
+      const u = parseRequestUrl(req);
+
+      // This path is explicitly ignored by the broken V58 service worker, so it
+      // is our guaranteed network escape hatch even while the old worker still
+      // controls the current standalone WebView.
+      if (u.pathname === '/__lunea_bypass_health' && u.searchParams.get('lunea_bridge_v61') === '1') {
+        return sendV61Bridge(req, res);
+      }
+      if (u.pathname === '/__lunea_bypass_health' && u.searchParams.get('lunea_app_v61') === '1') {
+        return serveAppBridgeV61(req, res, handler);
+      }
+
+      // Every pre-V61 root navigation goes through the excluded bridge once.
+      // The old V58 worker follows this redirect on its network leg and replaces
+      // its cached shell with the bridge, breaking the recovery loop by itself.
+      if (isRootGet(req) && !hasV61Recovery(req)) {
+        return redirectToV61Bridge(res);
+      }
+
+      return handler(req, res);
+    }, ...rest);
+  };
+
+'''
+
+          s = s[:start] + replacement + s[end:]
+          s = s.replace('LUNEA RENDER PRELOAD V60 RECOVERY', 'LUNEA RENDER PRELOAD V61 RECOVERY BRIDGE')
+          s = s.replace("global.__LUNEA_RENDER_PRELOAD_V60__ = true;", "global.__LUNEA_RENDER_PRELOAD_V61__ = true;")
+          s = s.replace("const STAMP = '20260906-1320-render-v60-recovery';", "const STAMP = '20260906-1348-render-v61-bridge';")
+          s = s.replace('LUNEA-Render-Warm-V60', 'LUNEA-Render-Warm-V61')
+          s = s.replace('[LUNEA preload V60]', '[LUNEA preload V61]')
+          s = s.replace('function luneaFetchV60', 'function luneaFetchV61')
+          s = s.replace("source:'lunea-preload-v60'", "source:'lunea-preload-v61'")
+          s = s.replace('LUNEA Render preload V60 recovery armed', 'LUNEA Render preload V61 recovery bridge armed')
+
+          p.write_text(s, encoding='utf-8')
+          print('patched V61 recovery bridge')
+          PY
+
+          node --check render_preload_v56.cjs
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          if git diff --quiet -- render_preload_v56.cjs; then
+            echo 'No change'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add render_preload_v56.cjs
+          git commit -m 'fix: escape broken V58 shell through network bridge V61'
+          git push origin HEAD:repair-v60-stable-pwa
