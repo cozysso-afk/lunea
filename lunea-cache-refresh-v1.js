@@ -36,12 +36,6 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
-  function loadNetlifyAstroRouteV57() {
-    if (IS_NETLIFY) loadBuildScopedScript('luneaNetlifyAstroRouteV57Loader', './lunea-netlify-astro-route-v57.js', 'Netlify Astro proxy route V57');
-  }
-  function loadBootRevealV29() {
-    loadBuildScopedScript('luneaBootRevealV29Loader', './lunea-boot-reveal-v29.js', 'current UI boot reveal V29');
-  }
   function loadRuntimeStateV55() {
     loadBuildScopedScript('luneaRuntimeStateV55Loader', './lunea-runtime-state-v55.js', 'runtime stale-state guard V55');
   }
@@ -66,8 +60,8 @@
   function loadAstroRealWarmV53() {
     loadBuildScopedScript('luneaAstroRealWarmV53Loader', './lunea-astro-warm-v53.js', 'Astro real backend warm V53');
   }
-  function loadThaiDateDisplayV57() {
-    loadBuildScopedScript('luneaThaiDateDisplayV57Loader', './lunea-thai-date-display-v57.js', 'Thai centered date display V57');
+  function loadThaiDateCenterV54() {
+    loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'Thai period date centering V54');
   }
   function loadHoraryQuestionModes() {
     loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
@@ -115,8 +109,6 @@
   }
 
   function boot() {
-    loadNetlifyAstroRouteV57();
-    loadBootRevealV29();
     loadRuntimeStateV55();
     loadJournalHeaderFix();
     loadJournalDetailV51();
@@ -124,7 +116,7 @@
     loadTimingUploadedArt();
     loadDailyTimingPersistence();
     loadDraftTimingPersistence();
-    loadThaiDateDisplayV57();
+    loadThaiDateCenterV54();
     loadAstroRealWarmV53();
     loadHoraryQuestionModes();
     loadHoraryHardening();
@@ -133,9 +125,11 @@
     loadHoraryBalanceGuard();
     loadHoraryMobileStability();
 
+    /* Render and Netlify both serve the active V57 build without a forced
+       post-paint reload. Runtime V55 handles future build changes on resume. */
     if (W.__LUNEA_RENDER_CANONICAL__ || IS_NETLIFY) {
       W.__LUNEA_BUILD_CHECK_DONE__ = true;
-      console.info(`[LUNEA cache refresh] ${IS_NETLIFY ? 'Netlify stable runtime' : 'canonical Render'} · no forced refresh`);
+      console.info(`[LUNEA cache refresh] ${IS_NETLIFY ? 'Netlify static V57' : 'canonical Render'} · runtime V55 watches future builds`);
     } else {
       checkBuild();
     }
