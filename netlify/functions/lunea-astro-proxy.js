@@ -1,8 +1,8 @@
 'use strict';
 
 const ORIGINS = [
-  {label:'v2', origin:'https://lunea-astro-api-v2.onrender.com'},
-  {label:'legacy', origin:'https://lunea-astro-api.onrender.com'},
+  {label:'v2', origin:'https://lunea-astro-api-v2.onrender.com', timeoutMs:18000},
+  {label:'legacy', origin:'https://lunea-astro-api.onrender.com', timeoutMs:30000},
 ];
 const TRANSIENT = new Set([408,425,429,500,502,503,504]);
 
@@ -31,9 +31,9 @@ function requestSuffix(event) {
   return '/' + raw + (query ? `?${query}` : '');
 }
 
-async function callOne(entry, suffix, event, timeoutMs) {
+async function callOne(entry, suffix, event) {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const timer = setTimeout(() => controller.abort(), entry.timeoutMs);
   try {
     const response = await fetch(entry.origin + suffix, {
       method:event.httpMethod || 'GET',
@@ -54,14 +54,14 @@ async function callOne(entry, suffix, event, timeoutMs) {
   }
 }
 
-async function warmBackends() {
-  await Promise.allSettled(ORIGINS.map(async entry => {
+function warmBackends() {
+  return Promise.allSettled(ORIGINS.map(async entry => {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 4500);
     try {
       await fetch(entry.origin + '/health', {
         method:'GET', cache:'no-store', signal:controller.signal,
-        headers:{Accept:'application/json','User-Agent':'LUNEA-Netlify-Warm-V1'}
+        headers:{Accept:'application/json','User-Agent':'LUNEA-Netlify-Warm-V57'}
       });
     } finally {
       clearTimeout(timer);
@@ -72,13 +72,14 @@ async function warmBackends() {
 exports.handler = async function handler(event) {
   const suffix = requestSuffix(event);
 
-  // Keep the app responsive: health is optimistic, but still triggers real Render wake requests.
+  // Match the V57.1 behavior: health checks must never block a user action.
+  // Fire a real warm attempt, then answer readiness immediately.
   if (/^\/health(?:\?|$)/.test(suffix)) {
-    await warmBackends();
+    warmBackends().catch(() => {});
     return {
       statusCode:200,
       headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store'},
-      body:JSON.stringify({ok:true,warming:true,source:'lunea-netlify-proxy-v1'})
+      body:JSON.stringify({ok:true,warming:true,source:'lunea-netlify-proxy-v57'})
     };
   }
 
@@ -86,7 +87,7 @@ exports.handler = async function handler(event) {
   let lastError = null;
   for (const entry of ORIGINS) {
     try {
-      const result = await callOne(entry, suffix, event, entry.label === 'v2' ? 9000 : 9000);
+      const result = await callOne(entry, suffix, event);
       last = {...result, originLabel:entry.label};
       if (!TRANSIENT.has(result.statusCode)) {
         return {
