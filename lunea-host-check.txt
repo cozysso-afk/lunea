@@ -1,0 +1,2 @@
+LUNEA HOST OK 2026-09-06 19:00 KST
+This is a plain static file with no JavaScript, no CSS, no service worker, and no API calls.
