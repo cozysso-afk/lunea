@@ -6,35 +6,56 @@ on:
     paths:
       - '.github/workflows/lunea-frontend-keepalive.yml'
   schedule:
-    # Keep the free Render frontend warm from 05:00–02:59 KST.
-    # UTC 20:00–17:59; allow a 2-hour overnight sleep window (03:00–04:59 KST)
-    # so the frontend does not consume essentially the entire monthly free-instance pool.
-    - cron: '*/10 0-17,20-23 * * *'
+    # Render Free sleeps after ~15 minutes idle. Five-minute pings leave enough
+    # margin for delayed GitHub scheduled runs and keep the existing Render URL
+    # warm without touching the production deploy branch.
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: lunea-frontend-keepalive
+  cancel-in-progress: true
+
 jobs:
   wake-frontend:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 4
     steps:
-      - name: Wake and verify LUNEA frontend
+      - name: Keep LUNEA Render frontend awake
         shell: bash
         run: |
           set -u
-          URL='https://lunea-v41-web.onrender.com/__lunea_bypass_health'
-          for attempt in $(seq 1 12); do
-            body="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 \
+          BASE='https://lunea-v41-web.onrender.com'
+          HEALTH="${BASE}/__lunea_bypass_health"
+
+          # A single inbound request is enough to reset Render's idle timer once
+          # the service is up. If it happened to be asleep, keep retrying until
+          # the real Node process answers so the next scheduled ping starts from
+          # a warm instance.
+          for attempt in $(seq 1 16); do
+            stamp="$(date +%s)"
+            body="$(curl -L --silent --show-error --connect-timeout 10 --max-time 20 \
               -H 'Cache-Control: no-cache' \
-              "${URL}?keepalive=$(date +%s)" 2>/dev/null || true)"
+              -H 'User-Agent: LUNEA-Frontend-Keepalive/2' \
+              "${HEALTH}?keepalive=${stamp}" 2>/dev/null || true)"
+
             if printf '%s' "$body" | grep -q '"ok":true'; then
-              echo "LUNEA frontend is awake (attempt ${attempt})."
+              # Touch the canonical root as well so Render records ordinary app
+              # traffic in addition to the health request.
+              curl -L --silent --output /dev/null --connect-timeout 10 --max-time 20 \
+                -H 'Cache-Control: no-cache' \
+                -H 'User-Agent: LUNEA-Frontend-Keepalive/2' \
+                "${BASE}/?keepalive=${stamp}" || true
+              echo "LUNEA frontend warm (attempt ${attempt})."
               exit 0
             fi
-            echo "Frontend still waking (attempt ${attempt}/12)."
-            sleep 10
+
+            echo "Frontend waking (attempt ${attempt}/16)."
+            sleep 8
           done
-          echo 'Frontend did not become ready within the wake window.' >&2
+
+          echo 'LUNEA frontend did not become ready during keepalive window.' >&2
           exit 1
