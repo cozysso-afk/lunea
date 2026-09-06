@@ -13,6 +13,7 @@
     './lunea-daily-lock-v1.js?v=101',
     './lunea-card-motion-timing-v7.js?v=701',
     './lunea-home-portal-v8.js?v=801',
+    './lunea-home-portal-minfix-v57.js?v=5701',
     './lunea-home-timing-polish-v9.js?v=901',
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',
