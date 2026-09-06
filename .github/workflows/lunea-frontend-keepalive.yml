@@ -1,0 +1,40 @@
+name: LUNEA Frontend Keepalive
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/lunea-frontend-keepalive.yml'
+  schedule:
+    # Keep the free Render frontend warm from 05:00–02:59 KST.
+    # UTC 20:00–17:59; allow a 2-hour overnight sleep window (03:00–04:59 KST)
+    # so the frontend does not consume essentially the entire monthly free-instance pool.
+    - cron: '*/10 0-17,20-23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wake-frontend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Wake and verify LUNEA frontend
+        shell: bash
+        run: |
+          set -u
+          URL='https://lunea-v41-web.onrender.com/__lunea_bypass_health'
+          for attempt in $(seq 1 12); do
+            body="$(curl -L --silent --show-error --connect-timeout 10 --max-time 25 \
+              -H 'Cache-Control: no-cache' \
+              "${URL}?keepalive=$(date +%s)" 2>/dev/null || true)"
+            if printf '%s' "$body" | grep -q '"ok":true'; then
+              echo "LUNEA frontend is awake (attempt ${attempt})."
+              exit 0
+            fi
+            echo "Frontend still waking (attempt ${attempt}/12)."
+            sleep 10
+          done
+          echo 'Frontend did not become ready within the wake window.' >&2
+          exit 1
