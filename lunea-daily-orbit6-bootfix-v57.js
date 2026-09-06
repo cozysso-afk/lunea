@@ -1,41 +1,57 @@
 'use strict';
 
-/* LUNEA DAILY ORBIT 6 BOOTFIX V57
-   Host-only recovery for Vercel's post-document dynamic loader.
-   V21 registers its boot on window.load when evaluated while readyState is
-   interactive. If that load event already passed, DAILY stays on legacy 4.
-   This file does not change draw/storage semantics; it only re-evaluates V21
-   once after document.readyState becomes complete when its public API is absent. */
+/* LUNEA DAILY ORBIT 6 BOOTFIX V57.2
+   Vercel injects the structural chain after document.write/document.close.
+   Both Daily Lock V1 and Orbit 6 V21 can be evaluated after the original load
+   event boundary. Recover the dependency first, then recover Orbit 6.
+   No draw/storage semantics are changed here. */
 (()=>{
   const W=window;
-  if(W.__LUNEA_DAILY_ORBIT6_BOOTFIX_V57__)return;
-  W.__LUNEA_DAILY_ORBIT6_BOOTFIX_V57__=true;
+  if(W.__LUNEA_DAILY_ORBIT6_BOOTFIX_V572__)return;
+  W.__LUNEA_DAILY_ORBIT6_BOOTFIX_V572__=true;
 
-  let retried=false;
-  function ready(){
-    return !!(W.LUNEA_DAILY_ORBIT6_V21 && document.querySelector('.daily.lunea-daily-orbit6'));
-  }
-  function retryOnce(){
-    if(retried||ready())return;
-    if(document.readyState!=='complete')return;
-    retried=true;
-    try{W.__LUNEA_DAILY_ORBIT6_V21__=false}catch{}
+  const hasLock=()=>!!W.LUNEA_DAILY_ORBIT_V1;
+  const hasOrbit=()=>!!(W.LUNEA_DAILY_ORBIT6_V21&&document.querySelector('.daily.lunea-daily-orbit6'));
+  let lockReloading=false,orbitReloading=false;
+
+  function loadScript(src,onload){
     const s=document.createElement('script');
-    s.src='./lunea-daily-orbit6-v21.js?v=2101-bootfix57';
-    s.async=false;
-    s.onload=()=>setTimeout(()=>{
-      if(!ready())console.warn('[LUNEA V57] DAILY ORBIT 6 boot retry completed but UI is not ready');
-    },120);
-    s.onerror=()=>console.warn('[LUNEA V57] DAILY ORBIT 6 boot retry failed to load');
+    s.src=src;s.async=false;
+    s.onload=onload||null;
+    s.onerror=()=>console.warn('[LUNEA V57] failed:',src);
     (document.head||document.documentElement).appendChild(s);
+  }
+
+  function recoverLock(){
+    if(hasLock()||lockReloading||document.readyState!=='complete')return;
+    lockReloading=true;
+    try{W.__LUNEA_DAILY_LOCK_V1__=false}catch{}
+    loadScript('./lunea-daily-lock-v1.js?v=101-v572',()=>{
+      lockReloading=false;
+      setTimeout(recoverOrbit,80);
+    });
+  }
+
+  function recoverOrbit(){
+    if(hasOrbit()||orbitReloading||!hasLock()||document.readyState!=='complete')return;
+    orbitReloading=true;
+    try{W.__LUNEA_DAILY_ORBIT6_V21__=false}catch{}
+    loadScript('./lunea-daily-orbit6-v21.js?v=2101-v572',()=>{
+      orbitReloading=false;
+      setTimeout(()=>{
+        if(!hasOrbit())console.warn('[LUNEA V57] Orbit 6 reloaded but UI still not ready');
+      },180);
+    });
   }
 
   let n=0;
   const t=setInterval(()=>{
     n++;
-    if(ready()){clearInterval(t);return;}
-    retryOnce();
-    if(retried||n>80)clearInterval(t);
+    if(hasOrbit()){clearInterval(t);return;}
+    if(!hasLock())recoverLock(); else recoverOrbit();
+    if(n>180)clearInterval(t);
   },100);
-  retryOnce();
+
+  recoverLock();
+  recoverOrbit();
 })();
