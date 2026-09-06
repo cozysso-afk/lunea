@@ -1,8 +1,8 @@
 'use strict';
 
 /*
-  LUNEA RENDER PRELOAD V57
-  ------------------------
+  LUNEA RENDER PRELOAD V57.1
+  --------------------------
   Kept at the existing filename because Render NODE_OPTIONS already requires it.
 
   V57 fixes four production issues captured in the iPhone recording:
@@ -20,7 +20,7 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
   global.__LUNEA_RENDER_PRELOAD_V56__ = true;
   global.__LUNEA_RENDER_PRELOAD_V57__ = true;
 
-  const STAMP = '20260906-1048-render-v57';
+  const STAMP = '20260906-1057-render-v57-1';
   const V2 = 'https://lunea-astro-api-v2.onrender.com';
   const LEGACY = 'https://lunea-astro-api.onrender.com';
   const BACKENDS = [V2, LEGACY];
@@ -28,6 +28,8 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
   const nativeFetch = typeof global.fetch === 'function' ? global.fetch.bind(global) : null;
   const warmActive = new Set();
   const warmAttempts = new Map();
+  const warmNextAt = new Map();
+  const WARM_DELAYS = [10000, 20000, 30000, 45000, 60000];
 
   function urlFrom(input) {
     try {
@@ -41,8 +43,12 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
     return BACKENDS.find(origin => url === origin || url.startsWith(origin + '/')) || '';
   }
 
-  function warmInBackground(origin) {
+  function warmInBackground(origin, force = false) {
     if (!nativeFetch || warmActive.has(origin)) return;
+    const now = Date.now();
+    const allowedAt = Number(warmNextAt.get(origin) || 0);
+    if (!force && now < allowedAt) return;
+
     const attempt = Number(warmAttempts.get(origin) || 0) + 1;
     warmAttempts.set(origin, attempt);
     warmActive.add(origin);
@@ -55,12 +61,13 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
     }).then(response => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       warmAttempts.set(origin, 0);
+      warmNextAt.set(origin, Date.now() + 4 * 60 * 1000);
       console.info(`[LUNEA preload V57] Astro warm ${origin.includes('-v2') ? 'v2' : 'legacy'} -> ${response.status}`);
     }).catch(error => {
-      console.warn(`[LUNEA preload V57] Astro warm ${origin.includes('-v2') ? 'v2' : 'legacy'} attempt ${attempt} pending/failed: ${String(error?.message || error)}`);
-      if (attempt < 4) {
-        setTimeout(() => warmInBackground(origin), Math.min(12000, 2500 * attempt));
-      }
+      const delay = WARM_DELAYS[Math.min(attempt - 1, WARM_DELAYS.length - 1)];
+      warmNextAt.set(origin, Date.now() + delay);
+      console.warn(`[LUNEA preload V57] Astro warm ${origin.includes('-v2') ? 'v2' : 'legacy'} attempt ${attempt} pending/failed: ${String(error?.message || error)}; retry in ${Math.round(delay/1000)}s`);
+      if (attempt <= WARM_DELAYS.length) setTimeout(() => warmInBackground(origin, true), delay);
     }).finally(() => {
       clearTimeout(timer);
       warmActive.delete(origin);
@@ -68,7 +75,7 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
   }
 
   /* Start waking both calculation services as soon as the frontend process wakes. */
-  BACKENDS.forEach(warmInBackground);
+  BACKENDS.forEach(origin => warmInBackground(origin, true));
 
   if (nativeFetch) {
     global.fetch = async function luneaFetchV57(input, init = {}) {
@@ -78,10 +85,10 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
 
       /* The existing server gates every calculation on /health. On free Render,
          that made the button wait up to 70s before the real POST even began.
-         We already issue real warm requests above; return readiness immediately
-         here so the calculation itself becomes the authoritative health check. */
+         A real warm cycle is already running; answer readiness immediately so
+         the calculation itself becomes the authoritative health check. */
       if (/\/health(?:\?|$)/.test(raw)) {
-        warmInBackground(origin);
+        warmInBackground(origin, false);
         return new Response(JSON.stringify({ok:true,warming:true,source:'lunea-preload-v57'}), {
           status:200,
           headers:{'content-type':'application/json','cache-control':'no-store'}
@@ -132,8 +139,6 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
       'lunea-ios-performance-v3.js',
     ]) html = stampAsset(html, asset);
 
-    /* The old independent 3.5s index failsafe could reveal the base card even
-       if the fixed reveal script was still waiting for V22. Give final UI 6.5s. */
     html = html.replace('},3500);', '},6500);');
 
     const structuralRe = /<script src="\.\/lunea-structural-routing-v4\.js\?v=[^"]+"><\/script>/;
@@ -171,5 +176,5 @@ if (!global.__LUNEA_RENDER_PRELOAD_V56__) {
     });
   };
 
-  console.info(`LUNEA Render preload V57 armed · ${STAMP}`);
+  console.info(`LUNEA Render preload V57.1 armed · ${STAMP}`);
 }
