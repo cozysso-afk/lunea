@@ -1,0 +1,49 @@
+name: LUNEA Netlify Static V1 Verify
+
+on:
+  push:
+    branches: [netlify-static-v1]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Syntax check
+        run: |
+          node --check scripts/build-netlify-static.cjs
+          node --check netlify/functions/lunea-astro-proxy.js
+      - name: Build static mirror
+        run: node scripts/build-netlify-static.cjs
+      - name: Verify Render-equivalent UI injection
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist-netlify/index.html
+          grep -q 'luneaRenderPreBootV54' dist-netlify/index.html
+          grep -q 'luneaRenderBypassV54Bootstrap' dist-netlify/index.html
+          grep -q 'data-lunea-render-v57="1"' dist-netlify/index.html
+          grep -q 'lunea-thai-date-display-v57.js' dist-netlify/index.html
+          grep -q 'lunea-runtime-state-v56.js' dist-netlify/index.html
+          grep -q 'lunea-timing-moondial-sync-v15.js' dist-netlify/index.html
+          grep -q 'lunea-timing-image-assets-v16.js' dist-netlify/index.html
+          if grep -q 'lunea-sw-register-v58.js' dist-netlify/index.html; then
+            echo 'Broken V58 service-worker registrar is present in built HTML' >&2
+            exit 1
+          fi
+          test ! -e dist-netlify/lunea-sw-register-v58.js
+      - name: Upload static test artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lunea-netlify-static-v1
+          path: dist-netlify
+          if-no-files-found: error
+          retention-days: 3
