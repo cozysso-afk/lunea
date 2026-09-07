@@ -1,14 +1,13 @@
 'use strict';
 /* LUNEA deterministic recovery loader.
-   One pinned order, one execution path. No document.write, no cache-bump timestamps,
-   no nested critical-home loader, no duplicate UI generations. */
+   One pinned runtime generation. Home is made ready first; feature layers continue
+   afterwards. No document.write, nested loader, timestamp cache-bump, or secondary injector. */
 (()=>{
   const W=window;
-  if(W.__LUNEA_DETERMINISTIC_LOADER_V1__) return;
-  W.__LUNEA_DETERMINISTIC_LOADER_V1__=true;
+  if(W.__LUNEA_DETERMINISTIC_LOADER_V2__) return;
+  W.__LUNEA_DETERMINISTIC_LOADER_V2__=true;
 
-  const SOURCES=[
-    /* one visual generation */
+  const HOME_SOURCES=[
     './lunea-luminous-theme-v1.js?v=101',
     './lunea-luminous-layout-v2.js?v=201',
     './lunea-luminous-polish-v3.js?v=301',
@@ -22,9 +21,10 @@
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-celestial-v22.js?v=2201',
-    './lunea-sector-color-system-v28.js?v=2801',
+    './lunea-sector-color-system-v28.js?v=2801'
+  ];
 
-    /* reading/editor/journal */
+  const FEATURE_SOURCES=[
     './lunea-runtime-state-v55.js?v=5501',
     './lunea-manual-structure-v1.js?v=105',
     './lunea-manual-everywhere-v1.js?v=103',
@@ -54,7 +54,6 @@
     './lunea-reading-boundary-reset-v31.js?v=3102',
     './lunea-reading-action-order-v33.js?v=d2198d8c5779',
 
-    /* INTIMACY final chain */
     './lunea-intimacy-v34.js?v=d2198d8c5779',
     './lunea-intimacy-ai-bridge-v34.js?v=d2198d8c5779',
     './lunea-intimacy-legacy-v35.js?v=d2198d8c5779',
@@ -65,7 +64,6 @@
     './lunea-intimacy-burgundy-v40.js?v=4005',
     './lunea-intimacy-repair-v43.js?v=4301',
 
-    /* Timing/Horary: semantic data first, artwork last */
     './lunea-horary-ab-v1.js?v=104',
     './lunea-horary-balance-v19-5.js?v=1905',
     './lunea-horary-question-modes-v37.js?v=3701',
@@ -84,7 +82,6 @@
     './lunea-draft-timing-v50.js?v=5001',
     './lunea-timing-uploaded-art-v58.js?v=5801',
 
-    /* Astro / Thai */
     './lunea-transit-range-v1.js?v=103',
     './lunea-transit-long-run-v1.js?v=102',
     './lunea-astro-job-queue-v56.js?v=5601',
@@ -99,8 +96,7 @@
     './lunea-final-prompt-priority-v1.js?v=d2198d8c5779',
     './lunea-sheet-scroll-fix-v1.js?v=106',
     './lunea-mobile-journal-polish-v27.js?v=2701',
-    './lunea-learning-success-gate-v1.js?v=101',
-    './lunea-boot-reveal-v29.js?v=2902'
+    './lunea-learning-success-gate-v1.js?v=101'
   ];
 
   const loaded=new Set();
@@ -118,19 +114,34 @@
     });
   }
 
-  async function boot(){
-    if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
-    for(const src of SOURCES) await load(src);
-    document.documentElement.dataset.luneaDeterministicReady='1';
+  const homeLooksReady=()=>!!(
+    document.querySelector('#luneaHomePortalV8 .lunea-v8-tile') &&
+    document.querySelector('.daily.lunea-daily-orbit6 .lunea-daily-six-grid') &&
+    /DAILY ORBIT 6/i.test(document.querySelector('.daily h3')?.textContent||'')
+  );
+
+  function revealHome(){
+    document.documentElement.dataset.luneaHomeReady='1';
     document.documentElement.classList.remove('lunea-booting');
     document.documentElement.classList.add('lunea-ui-ready');
     try{clearTimeout(W.__LUNEA_BOOT_FAILSAFE__)}catch{}
+    W.dispatchEvent(new CustomEvent('lunea:home-ready'));
+  }
+
+  async function boot(){
+    if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
+
+    for(const src of HOME_SOURCES) await load(src);
+    if(!homeLooksReady()) console.warn('[LUNEA deterministic] home readiness markers incomplete; fail-open');
+    revealHome();
+
+    for(const src of FEATURE_SOURCES) await load(src);
+    document.documentElement.dataset.luneaDeterministicReady='1';
     W.dispatchEvent(new CustomEvent('lunea:deterministic-ready'));
   }
 
   boot().catch(err=>{
     console.error('[LUNEA deterministic]',err);
-    document.documentElement.classList.remove('lunea-booting');
-    document.documentElement.classList.add('lunea-ui-ready');
+    revealHome();
   });
 })();
