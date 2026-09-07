@@ -25,12 +25,13 @@
     'extraCard',
     'timingSupportBtn',
     'astroTransitBtn',
-    'luneaThaiTarotBridgeBtn',
+    'thaiTaksaBtn',
     'luneaThaiTarotRangeBtn',
     'astroReturnBtn',
     'astroHoraryBtn',
     'luneaTopCopyPrompt'
   ];
+  const THAI_ACTION_IDS = ['thaiTaksaBtn', 'luneaThaiTarotBridgeBtn'];
 
   /* The 2026-09-05 upload contains correct printed faces for 21-37, 39-60,
      but several filenames do not match the number printed on the card. It also
@@ -148,7 +149,7 @@
     let button = $('luneaThaiTarotRangeBtn');
     if (button) return button;
     const bar = document.querySelector('#spreadOverlay .actionbar');
-    const thai = $('luneaThaiTarotBridgeBtn');
+    const thai = THAI_ACTION_IDS.map($).find(Boolean);
     if (!bar || !thai) return null;
     button = document.createElement('button');
     button.type = 'button';
@@ -169,6 +170,7 @@
     const bar = document.querySelector('#spreadOverlay .actionbar');
     if (!bar) return false;
     const rank = new Map(ACTION_ORDER.map((id, index) => [id, index]));
+    rank.set('luneaThaiTarotBridgeBtn', rank.get('thaiTaksaBtn'));
     [...bar.children]
       .sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : 999) - (rank.has(b.id) ? rank.get(b.id) : 999))
       .forEach(node => bar.appendChild(node));
@@ -206,6 +208,7 @@
       #spreadOverlay .actionbar>#extraCard{order:5}
       #spreadOverlay .actionbar>#timingSupportBtn{order:6}
       #spreadOverlay .actionbar>#astroTransitBtn{order:7}
+      #spreadOverlay .actionbar>#thaiTaksaBtn{order:8}
       #spreadOverlay .actionbar>#luneaThaiTarotBridgeBtn{order:8}
       #spreadOverlay .actionbar>#luneaThaiTarotRangeBtn{order:9}
       #spreadOverlay .actionbar>#astroReturnBtn{order:10}
