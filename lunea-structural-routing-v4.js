@@ -65,7 +65,7 @@
     './lunea-timing-result-copy-v35.js?v=3501',
     './lunea-timing-moondial-sync-v15.js?v=1502',
     './lunea-timing-ab-inline-v16.js?v=1601',
-    './lunea-timing-uploaded-art-v57.js?v=5701',
+    './lunea-timing-uploaded-art-v58.js?v=5801',
 
     './lunea-transit-range-v1.js?v=103',
     './lunea-transit-long-run-v1.js?v=102',
