@@ -120,7 +120,5 @@
   W.addEventListener('lunea:deterministic-ready',settle);
   W.addEventListener('pageshow',()=>setTimeout(settle,60),{passive:true});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(settle,60)});
-  const mo=new MutationObserver(()=>queueMicrotask(settle));
-  if(document.documentElement) mo.observe(document.documentElement,{childList:true,subtree:true});
   settle();
 })();

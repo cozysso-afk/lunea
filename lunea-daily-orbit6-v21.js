@@ -411,12 +411,12 @@
   }
 
   function boot() {
+    if (install()) return;
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
       if (install() || tries > 160) clearInterval(timer);
     }, 80);
-    install();
   }
 
   if (document.readyState === 'complete') setTimeout(boot, 0);
