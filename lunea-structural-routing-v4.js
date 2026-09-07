@@ -1,11 +1,11 @@
 'use strict';
 
-/* LUNEA Structural V4.1 — deterministic V57 host order.
-   Boot curtain is armed first, then the current home + Daily Orbit 6.
-   Legacy Daily Lock runs only after Orbit 6 owns the button/state. No service worker. */
+/* LUNEA Structural V4.2 — deterministic Vercel recovery order.
+   Current shell first; final recovered modules finish before the boot curtain lifts.
+   No service worker. */
 (() => {
   const CURRENT_HOME = [
-    './lunea-boot-reveal-v29.js?v=2904',
+    './lunea-boot-reveal-v29.js?v=2959',
     './lunea-astro-origin-failover-v57.js?v=5720',
     './lunea-luminous-theme-v1.js?v=101',
     './lunea-luminous-layout-v2.js?v=201',
@@ -29,8 +29,11 @@
     './lunea-manual-everywhere-v1.js?v=103',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
-    './lunea-reading-journal-v2.js?v=201',
+
+    /* Archive search lays out its controls first; Journal V2 then owns rendering/copy/verification. */
     './lunea-archive-search-v1.js?v=101',
+    './lunea-reading-journal-v2.js?v=259',
+
     './lunea-flip-all-fix-v1.js?v=102',
     './lunea-question-casebook-v1.js?v=101',
     './lunea-question-casebook-web-v1.js?v=101',
@@ -46,7 +49,7 @@
     './lunea-horary-ab-v1.js?v=104',
     './lunea-timing-ab-v1.js?v=102',
     './lunea-timing-prompt-repair-v1.js?v=101',
-    './lunea-timing-result-copy-v35.js?v=3501',
+    './lunea-timing-result-copy-v35.js?v=3600',
     './lunea-thai-tarot-bridge-v32.js?v=d2198d8c5779',
     './lunea-thai-range-v33.js?v=d2198d8c5779',
     './lunea-thai-date-display-v57.js?v=5702',
@@ -57,7 +60,10 @@
     './lunea-timing-moondial-sync-v15.js?v=1502',
     './lunea-timing-image-assets-v16.js?v=1602',
     './lunea-timing-ab-inline-v16.js?v=1601',
-    './lunea-timing-uploaded-art-v57.js?v=5720',
+
+    /* Do not run the V57 semantic-forcer here: it would overwrite uploaded art again. */
+    './lunea-timing-custom-safe-v59.js?v=5900',
+
     './lunea-manual-limit20-v17.js?v=1705',
     './lunea-horary-balance-v19-5.js?v=1905',
     './lunea-cardback-restore-v19.js?v=d2198d8c5779',
@@ -66,21 +72,37 @@
     './lunea-intimacy-ai-bridge-v34.js?v=d2198d8c5779',
     './lunea-intimacy-legacy-v35.js?v=d2198d8c5779',
     './lunea-intimacy-readability-v36.js?v=d2198d8c5779',
+    './lunea-intimacy-oracle-v35.js?v=352',
+    './lunea-intimacy-oracle-ui-v36.js?v=3614',
+    './lunea-intimacy-clean-v39.js?v=3900',
+    './lunea-intimacy-burgundy-v40.js?v=4000',
+    './lunea-intimacy-repair-v43.js?v=4300',
     './lunea-learning-success-gate-v1.js?v=101',
     './lunea-astro-resume-v23.js?v=2301',
     './lunea-thai-standalone-v24.js?v=2401',
     './lunea-thai-art-v25.js?v=2501',
     './lunea-thai-art-polish-v26.js?v=2601',
+    './lunea-thai-archive-timing-isolation-v27.js?v=2702',
     './lunea-mobile-journal-polish-v27.js?v=2701',
     './lunea-fixed-spread-depth-v30.js?v=3003',
     './lunea-general-order-v30-5.js?v=3005',
     './lunea-reading-boundary-reset-v31.js?v=3102',
-    './lunea-reading-action-order-v33.js?v=d2198d8c5779'
+    './lunea-reading-action-order-v33.js?v=d2198d8c5779',
+
+    /* Last: host-only recovery bridge sets data-lunea-final-ready=59. */
+    './lunea-vercel-recovery-v59.js?v=5900'
   ];
 
   const SOURCES=[...CURRENT_HOME,...REST];
   const loadSequential=sources=>sources.reduce((p,src)=>p.then(()=>new Promise((resolve,reject)=>{
-    const script=document.createElement('script');script.src=src;script.onload=resolve;script.onerror=()=>reject(new Error('Failed to load '+src));document.head.appendChild(script);
+    const script=document.createElement('script');
+    script.src=src;
+    script.onload=resolve;
+    script.onerror=()=>{
+      console.warn('[LUNEA Structural V4] optional script failed',src);
+      resolve();
+    };
+    document.head.appendChild(script);
   })),Promise.resolve());
 
   if(document.readyState==='loading'){
