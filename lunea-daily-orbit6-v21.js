@@ -412,6 +412,7 @@
 
   function boot() {
     if (install()) return;
+    renderHome();
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
@@ -419,6 +420,9 @@
     }, 80);
   }
 
-  if (document.readyState === 'complete') setTimeout(boot, 0);
-  else W.addEventListener('load', boot, {once: true});
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot, {once:true});
+  } else {
+    boot();
+  }
 })();
