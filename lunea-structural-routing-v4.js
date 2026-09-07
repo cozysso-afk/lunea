@@ -7,6 +7,11 @@
   if(W.__LUNEA_DETERMINISTIC_LOADER_V2__) return;
   W.__LUNEA_DETERMINISTIC_LOADER_V2__=true;
 
+  /* Never expose the legacy shell while the current home generation is still loading. */
+  try{clearTimeout(W.__LUNEA_BOOT_FAILSAFE__)}catch{}
+  document.documentElement.classList.add('lunea-booting');
+  document.documentElement.classList.remove('lunea-ui-ready');
+
   const HOME_SOURCES=[
     './lunea-luminous-theme-v1.js?v=101',
     './lunea-luminous-layout-v2.js?v=201',
@@ -96,7 +101,8 @@
     './lunea-final-prompt-priority-v1.js?v=d2198d8c5779',
     './lunea-sheet-scroll-fix-v1.js?v=106',
     './lunea-mobile-journal-polish-v27.js?v=2701',
-    './lunea-learning-success-gate-v1.js?v=101'
+    './lunea-learning-success-gate-v1.js?v=101',
+    './lunea-recovery-finish-v59.js?v=5901'
   ];
 
   const loaded=new Set();
@@ -121,18 +127,20 @@
   );
 
   function revealHome(){
+    if(!homeLooksReady()) return false;
     document.documentElement.dataset.luneaHomeReady='1';
     document.documentElement.classList.remove('lunea-booting');
     document.documentElement.classList.add('lunea-ui-ready');
     try{clearTimeout(W.__LUNEA_BOOT_FAILSAFE__)}catch{}
     W.dispatchEvent(new CustomEvent('lunea:home-ready'));
+    return true;
   }
 
   async function boot(){
     if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
 
     for(const src of HOME_SOURCES) await load(src);
-    if(!homeLooksReady()) console.warn('[LUNEA deterministic] home readiness markers incomplete; fail-open');
+    if(!homeLooksReady()) console.warn('[LUNEA deterministic] home readiness markers incomplete; keeping legacy shell hidden');
     revealHome();
 
     for(const src of FEATURE_SOURCES) await load(src);
@@ -142,6 +150,5 @@
 
   boot().catch(err=>{
     console.error('[LUNEA deterministic]',err);
-    revealHome();
   });
 })();
