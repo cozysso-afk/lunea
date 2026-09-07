@@ -8,6 +8,7 @@
   W.__LUNEA_DETERMINISTIC_LOADER_V1__=true;
 
   const SOURCES=[
+    /* one visual generation */
     './lunea-luminous-theme-v1.js?v=101',
     './lunea-luminous-layout-v2.js?v=201',
     './lunea-luminous-polish-v3.js?v=301',
@@ -23,11 +24,15 @@
     './lunea-daily-celestial-v22.js?v=2201',
     './lunea-sector-color-system-v28.js?v=2801',
 
+    /* reading/editor/journal */
+    './lunea-runtime-state-v55.js?v=5501',
     './lunea-manual-structure-v1.js?v=105',
     './lunea-manual-everywhere-v1.js?v=103',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
     './lunea-reading-journal-v2.js?v=201',
+    './lunea-journal-header-fix-v1.js?v=101',
+    './lunea-journal-detail-v51.js?v=5101',
     './lunea-archive-search-v1.js?v=101',
     './lunea-flip-all-fix-v1.js?v=102',
     './lunea-question-casebook-v1.js?v=101',
@@ -42,12 +47,14 @@
     './lunea-reading-polish-v14.js?v=1401',
     './lunea-manual-limit20-v17.js?v=1705',
     './lunea-cardback-restore-v19.js?v=d2198d8c5779',
+    './lunea-cardback-sector-v20.js?v=2001',
     './lunea-universal-ai-opal-v20.js?v=2003',
     './lunea-fixed-spread-depth-v30.js?v=3003',
     './lunea-general-order-v30-5.js?v=3005',
     './lunea-reading-boundary-reset-v31.js?v=3102',
     './lunea-reading-action-order-v33.js?v=d2198d8c5779',
 
+    /* INTIMACY final chain */
     './lunea-intimacy-v34.js?v=d2198d8c5779',
     './lunea-intimacy-ai-bridge-v34.js?v=d2198d8c5779',
     './lunea-intimacy-legacy-v35.js?v=d2198d8c5779',
@@ -58,15 +65,26 @@
     './lunea-intimacy-burgundy-v40.js?v=4005',
     './lunea-intimacy-repair-v43.js?v=4301',
 
+    /* Timing/Horary: semantic data first, artwork last */
     './lunea-horary-ab-v1.js?v=104',
     './lunea-horary-balance-v19-5.js?v=1905',
+    './lunea-horary-question-modes-v37.js?v=3701',
+    './lunea-horary-hardening-v38.js?v=3801',
+    './lunea-horary-location-button-v39.js?v=3901',
+    './lunea-horary-traditional-core-v40.js?v=4001',
+    './lunea-horary-balance-guard-v41.js?v=4101',
+    './lunea-horary-mobile-stability-v42.js?v=4201',
     './lunea-timing-ab-v1.js?v=102',
     './lunea-timing-prompt-repair-v1.js?v=101',
     './lunea-timing-result-copy-v35.js?v=3501',
     './lunea-timing-moondial-sync-v15.js?v=1502',
+    './lunea-timing-image-assets-v16.js?v=1602',
     './lunea-timing-ab-inline-v16.js?v=1601',
+    './lunea-daily-timing-v49.js?v=4901',
+    './lunea-draft-timing-v50.js?v=5001',
     './lunea-timing-uploaded-art-v58.js?v=5801',
 
+    /* Astro / Thai */
     './lunea-transit-range-v1.js?v=103',
     './lunea-transit-long-run-v1.js?v=102',
     './lunea-astro-job-queue-v56.js?v=5601',
@@ -101,9 +119,7 @@
   }
 
   async function boot(){
-    if(document.readyState==='loading'){
-      await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
-    }
+    if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
     for(const src of SOURCES) await load(src);
     document.documentElement.dataset.luneaDeterministicReady='1';
     document.documentElement.classList.remove('lunea-booting');
