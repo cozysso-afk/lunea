@@ -5,7 +5,7 @@
   const root=document.documentElement;
   let done=false;
 
-  /* The base HTML's 3.5s failsafe can expose DAILY ORBIT 4 before V57 finishes. */
+  /* Never expose the legacy shell while the recovered presentation stack is loading. */
   try{clearTimeout(window.__LUNEA_BOOT_FAILSAFE__)}catch{}
 
   const reveal=()=>{
@@ -28,13 +28,15 @@
     document.querySelector('.daily .lunea-daily-six-grid')&&
     /DAILY ORBIT 6/i.test(document.querySelector('.daily h3')?.textContent||'')
   );
+  const intimacyReady=()=>!!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
+  const finalReady=()=>root.dataset.luneaFinalReady==='59';
 
   const afterDom=()=>{
     const started=performance.now();
     const probe=()=>{
-      if(homeReady()&&dailyReady())return reveal();
-      /* Safety: never strand the app behind the curtain if an optional visual fails. */
-      if(performance.now()-started>4200)return reveal();
+      if(homeReady()&&dailyReady()&&intimacyReady()&&finalReady())return reveal();
+      /* Hard safety only: preserve a usable app even if an optional recovery module fails. */
+      if(performance.now()-started>6500)return reveal();
       requestAnimationFrame(probe);
     };
     probe();
