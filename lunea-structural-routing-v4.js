@@ -27,6 +27,8 @@
     './lunea-thai-standalone-v24.js?v=2401',
     './lunea-thai-art-v25.js?v=2501',
     './lunea-thai-art-polish-v26.js?v=2601',
+    './lunea-thai-tarot-bridge-v32.js?v=d2198d8c5779',
+    './lunea-thai-range-v33.js?v=d2198d8c5779',
     './lunea-home-timing-polish-v9.js?v=901',
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',
@@ -95,8 +97,6 @@
     './lunea-astro-job-queue-v56.js?v=5601',
     './lunea-astro-origin-failover-v57.js?v=5701',
     './lunea-astro-resume-v23.js?v=2301',
-    './lunea-thai-tarot-bridge-v32.js?v=d2198d8c5779',
-    './lunea-thai-range-v33.js?v=d2198d8c5779',
     './lunea-thai-date-display-v57.js?v=5701',
     './lunea-final-prompt-priority-v1.js?v=d2198d8c5779',
     './lunea-sheet-scroll-fix-v1.js?v=106',
@@ -121,7 +121,7 @@
     });
   }
 
-  const yieldToBrowser=()=>new Promise(resolve=>setTimeout(resolve,0));
+  const yieldToBrowser=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
 
   const homeLooksReady=()=>!!(
     document.querySelector('#luneaHomePortalV8 .lunea-v8-tile') &&
