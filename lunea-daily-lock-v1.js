@@ -268,5 +268,6 @@
     return true;
   }
   function boot(){addStyles();let tries=0;const t=setInterval(()=>{tries++;if(install()||tries>120)clearInterval(t)},80);install()}
-  if(document.readyState==='complete')setTimeout(boot,0);else W.addEventListener('load',boot,{once:true});
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
+  else boot();
 })();
