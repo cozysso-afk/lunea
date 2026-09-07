@@ -102,7 +102,8 @@
     './lunea-sheet-scroll-fix-v1.js?v=106',
     './lunea-mobile-journal-polish-v27.js?v=2701',
     './lunea-learning-success-gate-v1.js?v=101',
-    './lunea-recovery-finish-v59.js?v=5901'
+    './lunea-recovery-finish-v59.js?v=5901',
+    './lunea-recovery-ui-v65.js?v=6501'
   ];
 
   const loaded=new Set();
