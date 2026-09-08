@@ -38,10 +38,10 @@
 
   // Audited UI only. No journal migration, timing fetch, AI or global observer.
   const SHELL_SOURCES=[
-    './lunea-shell-ui-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=101',
     './lunea-journal-header-fix-v1.js?v=101',
-    './lunea-mobile-journal-polish-v27.js?v=2701'
+    './lunea-mobile-journal-polish-v27.js?v=2701',
+    './lunea-sheet-scroll-fix-v1.js?v=106'
   ];
   let shellPromise;
   const readyGroups=new Set();
@@ -69,6 +69,7 @@
       './lunea-manual-library-v1.js?v=101',
       './lunea-reading-journal-v2.js?v=201',
       './lunea-archive-search-v1.js?v=101',
+      './lunea-journal-detail-v51.js?v=5101',
       './lunea-manual-limit20-v17.js?v=1705'
     ],
     learning:[
@@ -97,7 +98,8 @@
       './lunea-timing-ab-inline-v16.js?v=1601',
       './lunea-daily-timing-v49.js?v=4901',
       './lunea-draft-timing-v50.js?v=5001',
-      './lunea-timing-uploaded-art-v58.js?v=5801'
+      './lunea-timing-uploaded-art-v58.js?v=5801',
+      './lunea-recovery-ui-v65.js?v=6501'
     ],
     astro:[
       './lunea-horary-ab-v1.js?v=104',
@@ -117,9 +119,7 @@
     finish:[
       './lunea-thai-date-display-v57.js?v=5701',
       './lunea-final-prompt-priority-v1.js?v=d2198d8c5779',
-      './lunea-sheet-scroll-fix-v1.js?v=106',
-      './lunea-recovery-finish-v59.js?v=5901',
-      './lunea-recovery-ui-v65.js?v=6501'
+      './lunea-recovery-finish-v59.js?v=5901'
     ]
   };
 
@@ -230,26 +230,6 @@
     };
     document.addEventListener('pointerdown',prime,{capture:true,passive:true});
     document.addEventListener('focusin',prime,true);
-    // These entry points must not execute old UI or restore before dependencies finish.
-    // Capture is installed before shell/journal listeners; replay the original click once.
-    const pending=new WeakSet();
-    const replaying=new WeakSet();
-    document.addEventListener('click',e=>{
-      const button=e.target?.closest?.('#archiveBtn,#luneaDraftRestore');
-      if(!button||replaying.has(button)) return;
-      const name=button.id==='archiveBtn'?'journal':'reading';
-      if(readyGroups.has(name)) return;
-      e.preventDefault();e.stopImmediatePropagation();
-      if(pending.has(button)) return;
-      pending.add(button);
-      button.setAttribute('aria-busy','true');
-      ensure(name).then(ok=>{
-        if(ok&&button.isConnected){
-          replaying.add(button);
-          try{button.click()}finally{replaying.delete(button)}
-        }else if(!ok) alert('기능을 불러오지 못했어요. 다시 눌러주세요.');
-      }).finally(()=>{pending.delete(button);button.removeAttribute('aria-busy')});
-    },true);
   }
 
   async function boot(){
