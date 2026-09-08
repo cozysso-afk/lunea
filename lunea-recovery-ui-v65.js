@@ -171,9 +171,11 @@
     if (!bar) return false;
     const rank = new Map(ACTION_ORDER.map((id, index) => [id, index]));
     rank.set('luneaThaiTarotBridgeBtn', rank.get('thaiTaksaBtn'));
-    [...bar.children]
-      .sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : 999) - (rank.has(b.id) ? rank.get(b.id) : 999))
-      .forEach(node => bar.appendChild(node));
+    const target = [...bar.children]
+      .sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : 999) - (rank.has(b.id) ? rank.get(b.id) : 999));
+    target.forEach((node, index) => {
+      if (bar.children[index] !== node) bar.insertBefore(node, bar.children[index] || null);
+    });
     return true;
   }
 
