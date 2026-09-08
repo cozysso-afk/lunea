@@ -28,7 +28,7 @@
     const raw=`${img?.getAttribute?.('src')||''} ${img?.dataset?.luneaTimingCardId||''}`;
     const m=raw.match(/timing_(\d{3})|LT-(\d{3})/i);const n=Number(m?.[1]||m?.[2]||0);return n>=1&&n<=60?n:null;
   }
-  function setImg(img,n){if(!img||!n)return false;const want=asset(n);img.dataset.luneaTimingSemantic=String(n);if(img.getAttribute('src')!==want)img.setAttribute('src',want);return true;}
+  function setImg(img,n){if(!img||!n)return false;if(img?.dataset?.luneaTimingArtworkV65==='1')return false;const want=asset(n);img.dataset.luneaTimingSemantic=String(n);if(img.getAttribute('src')!==want)img.setAttribute('src',want);return true;}
 
   function syncSingle(){
     const img=document.getElementById('timingImage');if(!img)return false;
