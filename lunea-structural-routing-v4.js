@@ -33,13 +33,18 @@
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-celestial-v22.js?v=2201',
-    './lunea-sector-color-system-v28.js?v=2801',
-    './lunea-reading-draft-v1.js?v=101',
-    './lunea-opal-light-polish-v13.js?v=1301',
-    './lunea-reading-polish-v14.js?v=1401',
-    './lunea-mobile-journal-polish-v27.js?v=2701',
-    './lunea-recovery-ui-v65.js?v=6501'
+    './lunea-sector-color-system-v28.js?v=2801'
   ];
+
+  // Audited UI only. No journal migration, timing fetch, AI or global observer.
+  const SHELL_SOURCES=[
+    './lunea-shell-ui-v1.js?v=101',
+    './lunea-reading-draft-v1.js?v=101',
+    './lunea-journal-header-fix-v1.js?v=101',
+    './lunea-mobile-journal-polish-v27.js?v=2701'
+  ];
+  let shellPromise;
+  const readyGroups=new Set();
 
   const GROUPS={
     reading:[
@@ -47,6 +52,8 @@
       './lunea-ai-spread-preflight-v2.js?v=105',
       './lunea-reading-flow-v5.js?v=501',
       './lunea-mobile-reading-controls-v12.js?v=1201',
+      './lunea-opal-light-polish-v13.js?v=1301',
+      './lunea-reading-polish-v14.js?v=1401',
       './lunea-flip-all-fix-v1.js?v=102',
       './lunea-cardback-restore-v19.js?v=d2198d8c5779',
       './lunea-cardback-sector-v20.js?v=2001',
@@ -61,8 +68,6 @@
       './lunea-manual-everywhere-v1.js?v=103',
       './lunea-manual-library-v1.js?v=101',
       './lunea-reading-journal-v2.js?v=201',
-      './lunea-journal-header-fix-v1.js?v=101',
-      './lunea-journal-detail-v51.js?v=5101',
       './lunea-archive-search-v1.js?v=101',
       './lunea-manual-limit20-v17.js?v=1705'
     ],
@@ -113,37 +118,43 @@
       './lunea-thai-date-display-v57.js?v=5701',
       './lunea-final-prompt-priority-v1.js?v=d2198d8c5779',
       './lunea-sheet-scroll-fix-v1.js?v=106',
-      './lunea-recovery-finish-v59.js?v=5901'
+      './lunea-recovery-finish-v59.js?v=5901',
+      './lunea-recovery-ui-v65.js?v=6501'
     ]
   };
 
-  const loaded=new Set();
+  const loaded=new Map();
   const groupPromises=new Map();
 
   function load(src){
-    if(loaded.has(src)) return Promise.resolve(true);
-    loaded.add(src);
-    return new Promise(resolve=>{
+    if(loaded.has(src)) return loaded.get(src);
+    const promise=new Promise((resolve,reject)=>{
       const s=document.createElement('script');
       s.src=src;
       s.async=false;
       s.dataset.luneaDeterministic='1';
       s.onload=()=>resolve(true);
-      s.onerror=()=>{console.error('[LUNEA deterministic] failed',src);resolve(false)};
+      s.onerror=()=>{loaded.delete(src);s.remove();reject(new Error('Script failed: '+src))};
       (document.head||document.documentElement).appendChild(s);
     });
+    loaded.set(src,promise);
+    return promise;
   }
 
   async function loadGroup(name){
     if(groupPromises.has(name)) return groupPromises.get(name);
-    const sources=GROUPS[name]||[];
+    if(!Object.hasOwn(GROUPS,name)) return false;
+    const sources=GROUPS[name];
     const promise=(async()=>{
+      await shellPromise;
       document.documentElement.dataset.luneaLoadingGroup=name;
       for(const src of sources) await load(src);
       if(document.documentElement.dataset.luneaLoadingGroup===name) delete document.documentElement.dataset.luneaLoadingGroup;
+      readyGroups.add(name);
       W.dispatchEvent(new CustomEvent('lunea:feature-group-ready',{detail:{name}}));
       return true;
     })().catch(err=>{
+      groupPromises.delete(name);
       console.error('[LUNEA deterministic group]',name,err);
       if(document.documentElement.dataset.luneaLoadingGroup===name) delete document.documentElement.dataset.luneaLoadingGroup;
       return false;
@@ -198,6 +209,7 @@
     const key=String(el.dataset?.key||'').toLowerCase();
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
+    if(id==='luneaDraftRestore') return 'reading';
     if(id==='luneaThaiHomeTileV24' || /Thai|태국점성술|Taksa/i.test(text)) return 'finish';
     if(key==='timing' || /TIMING ORACLE|Astro Timing|시기 오라클/i.test(text)) return 'timing';
     if(key==='horary' || /HORARY|호라리|Returns?|Transit/i.test(text)) return 'astro';
@@ -209,17 +221,35 @@
   }
 
   function installLazyTriggers(){
+    const ensure=name=>name==='journal'||name==='learning'||name==='finish'
+      ? loadGroup(name)
+      : loadGroup('reading').then(ok=>ok&&loadGroup(name));
     const prime=e=>{
       const name=groupForTarget(e.target);
-      if(!name) return;
-      if(name==='finish'){
-        loadGroup('finish');
-        return;
-      }
-      loadGroup('reading').then(()=>loadGroup(name));
+      if(name) ensure(name);
     };
     document.addEventListener('pointerdown',prime,{capture:true,passive:true});
     document.addEventListener('focusin',prime,true);
+    // These entry points must not execute old UI or restore before dependencies finish.
+    // Capture is installed before shell/journal listeners; replay the original click once.
+    const pending=new WeakSet();
+    const replaying=new WeakSet();
+    document.addEventListener('click',e=>{
+      const button=e.target?.closest?.('#archiveBtn,#luneaDraftRestore');
+      if(!button||replaying.has(button)) return;
+      const name=button.id==='archiveBtn'?'journal':'reading';
+      if(readyGroups.has(name)) return;
+      e.preventDefault();e.stopImmediatePropagation();
+      if(pending.has(button)) return;
+      pending.add(button);
+      button.setAttribute('aria-busy','true');
+      ensure(name).then(ok=>{
+        if(ok&&button.isConnected){
+          replaying.add(button);
+          try{button.click()}finally{replaying.delete(button)}
+        }else if(!ok) alert('기능을 불러오지 못했어요. 다시 눌러주세요.');
+      }).finally(()=>{pending.delete(button);button.removeAttribute('aria-busy')});
+    },true);
   }
 
   async function boot(){
@@ -231,7 +261,14 @@
     revealHome();
     installLazyTriggers();
 
-    /* Stage 1: stop here. No automatic FEATURE flood after Home becomes usable. */
+    shellPromise=(async()=>{
+      for(const src of SHELL_SOURCES) await load(src);
+      applyStaticHomeBranding();
+      document.documentElement.dataset.luneaShellReady='1';
+      W.dispatchEvent(new CustomEvent('lunea:shell-ready'));
+    })();
+    await shellPromise;
+    /* Stop after the finite shell. Feature groups require user intent. */
     document.documentElement.dataset.luneaDeterministicReady='1';
     document.documentElement.dataset.luneaLazyRuntime='1';
     W.dispatchEvent(new CustomEvent('lunea:deterministic-ready'));
