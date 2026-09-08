@@ -14,27 +14,59 @@
 
   const ORIGINS=Object.freeze(['https://lunea-astro-api-v2.onrender.com','https://lunea-astro-api.onrender.com']);
   const TRANSIENT=new Set([408,425,429,500,502,503,504]);
+  const ORIGIN_TIMEOUT_MS=Object.freeze({
+    health:[7000,15000],
+    calculation:[12000,25000]
+  });
   const nativeFetch=W.fetch.bind(W);
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const rawUrl=input=>{try{return typeof input==='string'?input:(input instanceof URL?input.href:String(input?.url||''))}catch{return''}};
   const official=url=>ORIGINS.find(o=>url===o||url.startsWith(o+'/'))||'';
   const targetUrl=(original,target)=>{const u=new URL(original);return `${target}${u.pathname}${u.search}`};
 
-  async function runFetch(input,init,url){
-    if(typeof input==='string'||input instanceof URL)return nativeFetch(url,init);
-    try{return nativeFetch(new Request(url,input.clone()),init)}catch{return nativeFetch(url,init)}
+  async function runFetch(input,init,url,timeoutMs){
+    const controller=new AbortController();
+    const upstream=init?.signal||input?.signal||null;
+    let timedOut=false,relay=null;
+    if(upstream?.aborted)controller.abort(upstream.reason);
+    else if(upstream?.addEventListener){
+      relay=()=>controller.abort(upstream.reason);
+      upstream.addEventListener('abort',relay,{once:true});
+    }
+    const timer=setTimeout(()=>{
+      timedOut=true;
+      try{controller.abort('lunea-astro-origin-timeout')}catch{controller.abort()}
+    },timeoutMs);
+    const nextInit={...(init||{}),signal:controller.signal};
+    try{
+      if(typeof input==='string'||input instanceof URL)return await nativeFetch(url,nextInit);
+      let request=null;
+      try{request=new Request(url,input.clone())}catch{}
+      return await nativeFetch(request||url,nextInit);
+    }catch(error){
+      if(!timedOut)throw error;
+      const timeoutError=new TypeError(`Astro origin timeout after ${timeoutMs}ms`);
+      timeoutError.luneaOriginTimeout=true;
+      throw timeoutError;
+    }finally{
+      clearTimeout(timer);
+      if(upstream&&relay)upstream.removeEventListener?.('abort',relay);
+    }
   }
 
-  async function oneRound(input,init,originalUrl){
+  async function oneRound(input,init,originalUrl,isHealth){
     let lastResponse=null,lastError=null;
-    for(const origin of ORIGINS){
+    for(let index=0;index<ORIGINS.length;index+=1){
+      const origin=ORIGINS[index];
       try{
-        const response=await runFetch(input,init,targetUrl(originalUrl,origin));
+        const timeoutMs=(isHealth?ORIGIN_TIMEOUT_MS.health:ORIGIN_TIMEOUT_MS.calculation)[index];
+        const response=await runFetch(input,init,targetUrl(originalUrl,origin),timeoutMs);
         lastResponse=response;
         if(!TRANSIENT.has(response.status))return {done:true,response};
       }catch(error){
         lastError=error;
-        if(String(error?.name||'')==='AbortError')throw error;
+        const upstream=init?.signal||input?.signal||null;
+        if(upstream?.aborted)throw error;
       }
     }
     return {done:false,response:lastResponse,error:lastError};
@@ -52,7 +84,7 @@
 
     for(let i=0;i<waits.length;i++){
       if(waits[i])await sleep(waits[i]);
-      const result=await oneRound(input,init,originalUrl);
+      const result=await oneRound(input,init,originalUrl,isHealth);
       if(result.done)return result.response;
       if(result.response)lastResponse=result.response;
       if(result.error)lastError=result.error;
