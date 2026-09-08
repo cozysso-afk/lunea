@@ -42,22 +42,22 @@
     './lunea-journal-header-fix-v1.js?v=101',
     './lunea-mobile-journal-polish-v27.js?v=2701',
     './lunea-journal-detail-v51.js?v=5101',
-    './lunea-sheet-scroll-fix-v1.js?v=106'
+    './lunea-sheet-scroll-fix-v1.js?v=106',
+    './lunea-cardback-restore-v19.js?v=d2198d8c5779',
+    './lunea-cardback-sector-v20.js?v=2001'
   ];
   let shellPromise;
   const readyGroups=new Set();
 
   const GROUPS={
     reading:[
-      './lunea-runtime-state-v55.js?v=5501',
+      './lunea-runtime-state-v56.js?v=5601',
       './lunea-ai-spread-preflight-v2.js?v=105',
       './lunea-reading-flow-v5.js?v=501',
       './lunea-mobile-reading-controls-v12.js?v=1201',
       './lunea-opal-light-polish-v13.js?v=1301',
       './lunea-reading-polish-v14.js?v=1401',
       './lunea-flip-all-fix-v1.js?v=102',
-      './lunea-cardback-restore-v19.js?v=d2198d8c5779',
-      './lunea-cardback-sector-v20.js?v=2001',
       './lunea-universal-ai-opal-v20.js?v=2003',
       './lunea-fixed-spread-depth-v30.js?v=3003',
       './lunea-general-order-v30-5.js?v=3005',
@@ -102,6 +102,7 @@
       './lunea-recovery-ui-v65.js?v=6501'
     ],
     astro:[
+      './lunea-profile-natal-v45.js?v=4501',
       './lunea-horary-ab-v1.js?v=104',
       './lunea-horary-balance-v19-5.js?v=1905',
       './lunea-horary-question-modes-v37.js?v=3701',
@@ -203,13 +204,14 @@
   }
 
   function groupForTarget(target){
-    const el=target?.closest?.('button,[role="button"],a,.lunea-v8-tile');
+    const el=target?.closest?.('button,[role="button"],a,.lunea-v8-tile,#profileStrip');
     if(!el) return null;
     const id=String(el.id||'');
     const key=String(el.dataset?.key||'').toLowerCase();
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
     if(id==='luneaDraftRestore') return 'reading';
+    if(id==='profileBtn' || id==='profileStrip' || id==='saveProfile' || id==='luneaNatalCalcBtn' || el.closest('#profileOverlay')) return 'astro';
     if(id==='luneaThaiHomeTileV24' || /Thai|태국점성술|Taksa/i.test(text)) return 'finish';
     if(key==='timing' || /TIMING ORACLE|Astro Timing|시기 오라클/i.test(text)) return 'timing';
     if(key==='horary' || /HORARY|호라리|Returns?|Transit/i.test(text)) return 'astro';

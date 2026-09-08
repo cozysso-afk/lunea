@@ -63,6 +63,6 @@
     }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
   }
 
-  function boot(){addStyle();upgradeAll();installObserver();W.LUNEA_TIMING_UPLOADED_ART_V16=Object.freeze({version:RELEASE,upgradeAll});console.info('🕰 LUNEA Timing semantic artwork V16.1 verified')}
+  function boot(){upgradeAll();addStyle();installObserver();W.LUNEA_TIMING_UPLOADED_ART_V16=Object.freeze({version:RELEASE,upgradeAll});console.info('🕰 LUNEA Timing semantic artwork V16.1 verified')}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

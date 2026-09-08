@@ -54,7 +54,7 @@
       #timingOverlay .timing-card-label{display:none!important}`;document.head.appendChild(s);
   }
   async function boot(){
-    style();await loadDeck();syncAll();
+    await loadDeck();syncAll();style();
     const targets=['timingLabelKo','timingLabelEn','luneaTimingABCards'];
     for(const id of targets){const el=document.getElementById(id);if(el&&!el.__luneaTimingV58Obs){el.__luneaTimingV58Obs=true;new MutationObserver(()=>queueMicrotask(syncAll)).observe(el,{childList:true,subtree:true,characterData:true});}}
     document.addEventListener('click',e=>{if(e.target?.closest?.('#timingDraw,#timingRefine,#timingSupportBtn,#luneaTimingABPanel')){setTimeout(syncAll,0);setTimeout(syncAll,80);setTimeout(syncAll,220);}},true);
