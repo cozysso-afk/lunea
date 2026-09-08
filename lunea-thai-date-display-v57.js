@@ -66,7 +66,8 @@
   function sync(input) {
     const shell = input?.closest?.(`.${SHELL}`);
     const visible = shell?.querySelector?.('.thai-v57-date-visible');
-    if (visible) visible.textContent = formatDate(input.value);
+    const next = formatDate(input.value);
+    if (visible && visible.textContent !== next) visible.textContent = next;
   }
 
   function enhance(input) {
