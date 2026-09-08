@@ -33,18 +33,20 @@
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-celestial-v22.js?v=2201',
-    './lunea-sector-color-system-v28.js?v=2801'
+    './lunea-sector-color-system-v28.js?v=2801',
+    './lunea-reading-draft-v1.js?v=101',
+    './lunea-opal-light-polish-v13.js?v=1301',
+    './lunea-reading-polish-v14.js?v=1401',
+    './lunea-mobile-journal-polish-v27.js?v=2701',
+    './lunea-recovery-ui-v65.js?v=6501'
   ];
 
   const GROUPS={
     reading:[
       './lunea-runtime-state-v55.js?v=5501',
-      './lunea-reading-draft-v1.js?v=101',
       './lunea-ai-spread-preflight-v2.js?v=105',
       './lunea-reading-flow-v5.js?v=501',
       './lunea-mobile-reading-controls-v12.js?v=1201',
-      './lunea-opal-light-polish-v13.js?v=1301',
-      './lunea-reading-polish-v14.js?v=1401',
       './lunea-flip-all-fix-v1.js?v=102',
       './lunea-cardback-restore-v19.js?v=d2198d8c5779',
       './lunea-cardback-sector-v20.js?v=2001',
@@ -62,8 +64,7 @@
       './lunea-journal-header-fix-v1.js?v=101',
       './lunea-journal-detail-v51.js?v=5101',
       './lunea-archive-search-v1.js?v=101',
-      './lunea-manual-limit20-v17.js?v=1705',
-      './lunea-mobile-journal-polish-v27.js?v=2701'
+      './lunea-manual-limit20-v17.js?v=1705'
     ],
     learning:[
       './lunea-question-casebook-v1.js?v=101',
@@ -112,8 +113,7 @@
       './lunea-thai-date-display-v57.js?v=5701',
       './lunea-final-prompt-priority-v1.js?v=d2198d8c5779',
       './lunea-sheet-scroll-fix-v1.js?v=106',
-      './lunea-recovery-finish-v59.js?v=5901',
-      './lunea-recovery-ui-v65.js?v=6501'
+      './lunea-recovery-finish-v59.js?v=5901'
     ]
   };
 
@@ -161,6 +161,26 @@
     /DAILY ORBIT 6/i.test(document.querySelector('.daily h3')?.textContent||'')
   );
 
+  function applyStaticHomeBranding(){
+    const holder=document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-object');
+    if(!holder) return false;
+    let img=holder.querySelector('img');
+    if(!img){
+      img=document.createElement('img');
+      img.alt='';
+      img.setAttribute('aria-hidden','true');
+      holder.replaceChildren(img);
+    }
+    const src='./assets/intimacy-oracle/intimacy_sector_final.png?v=lazy-shell-1';
+    if(img.getAttribute('src')!==src) img.setAttribute('src',src);
+    img.style.width='100%';
+    img.style.height='100%';
+    img.style.objectFit='cover';
+    img.style.borderRadius='inherit';
+    img.style.transform='scale(1.20)';
+    return true;
+  }
+
   function revealHome(){
     if(!homeLooksReady()) return false;
     document.documentElement.dataset.luneaHomeReady='1';
@@ -207,6 +227,7 @@
 
     for(const src of HOME_SOURCES) await load(src);
     if(!homeLooksReady()) console.warn('[LUNEA deterministic] home readiness markers incomplete; keeping legacy shell hidden');
+    applyStaticHomeBranding();
     revealHome();
     installLazyTriggers();
 
