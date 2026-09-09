@@ -20,6 +20,7 @@
   W.__LUNEA_FINAL_PROMPT_PRIORITY_V1__ = true;
 
   const MARKER = '[FINAL READING PRIORITY · 최종 근거 우선순위]';
+  const FINAL_LINE = '12. 최종 답변에서는 질문의 결론과 카드 근거가 먼저다. 그다음 유효한 점성/프로필 보조를 짧고 구체적으로 붙인다. 계산값이 있는 보조 체계를 단순히 생략하지 않는다.';
 
   function clean(v){ return String(v || '').replace(/\s+/g,' ').trim(); }
 
@@ -133,7 +134,20 @@
     const thai = thaiPolicy(prompt);
     const saju = sajuPolicy(prompt);
 
-    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n12. 최종 답변에서는 질문의 결론과 카드 근거가 먼저다. 그다음 유효한 점성/프로필 보조를 짧고 구체적으로 붙인다. 계산값이 있는 보조 체계를 단순히 생략하지 않는다.`;
+    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n${FINAL_LINE}`;
+  }
+
+  function withoutFinalBlocks(prompt){
+    let out = String(prompt || '');
+    let start = out.indexOf(MARKER);
+    while (start !== -1) {
+      const end = out.indexOf(FINAL_LINE, start + MARKER.length);
+      if (end === -1) break;
+      const after = end + FINAL_LINE.length;
+      out = `${out.slice(0, start).trimEnd()}\n\n${out.slice(after).trimStart()}`.trim();
+      start = out.indexOf(MARKER);
+    }
+    return out;
   }
 
   function install(){
@@ -142,8 +156,7 @@
     if (prior.__luneaFinalPromptPriorityV2) return true;
 
     const wrapped = function(){
-      let p = String(prior.apply(this, arguments) || '');
-      if (p.includes(MARKER)) return p;
+      const p = withoutFinalBlocks(prior.apply(this, arguments));
       return `${p}\n\n${finalBlock(p)}`;
     };
     wrapped.__luneaFinalPromptPriorityV2 = true;
