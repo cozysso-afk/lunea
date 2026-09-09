@@ -235,6 +235,7 @@
       get ready(){return readyPromise},
       actionOrder:[...ACTION_ORDER],
       uploadedFace:{...UPLOADED_FACE},
+      artworkForCard:artwork,
       reorderActions,
       syncTiming
     });

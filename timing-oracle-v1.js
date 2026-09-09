@@ -35,6 +35,7 @@
     aiText: '',
     analysis: null
   };
+  let timingRenderToken = 0;
 
   const byId = id => document.getElementById(id);
 
@@ -307,7 +308,47 @@
   }
 
   function cardImg(c) {
+    const resolver = window.LUNEA_RECOVERY_UI_V65?.artworkForCard;
+    if (typeof resolver === 'function') {
+      try {
+        const authoritative = resolver(c);
+        if (authoritative) return authoritative;
+      } catch {}
+    }
     return `./${encodeURIComponent(c.filename)}`;
+  }
+
+  function waitForTimingImage(img, expectedSrc) {
+    const loaded = () => img.src === expectedSrc && img.complete && img.naturalWidth > 0;
+    const decoded = async () => {
+      if (!loaded()) return false;
+      if (typeof img.decode === 'function') {
+        try { await img.decode(); }
+        catch { return loaded(); }
+      }
+      return loaded();
+    };
+    if (loaded()) return decoded();
+    return new Promise(resolve => {
+      const cleanup = () => {
+        img.removeEventListener('load', onLoad);
+        img.removeEventListener('error', onError);
+      };
+      const onLoad = () => {
+        cleanup();
+        decoded().then(resolve);
+      };
+      const onError = () => {
+        cleanup();
+        resolve(false);
+      };
+      img.addEventListener('load', onLoad, {once:true});
+      img.addEventListener('error', onError, {once:true});
+      if (loaded()) {
+        cleanup();
+        decoded().then(resolve);
+      }
+    });
   }
 
   function addStyles() {
@@ -446,7 +487,10 @@
     byId('timingRefine').onclick = performRefineDraw;
     byId('timingAI').onclick = standaloneAIRead;
     byId('timingSave').onclick = saveStandaloneTiming;
-    byId('timingFlip').onclick = () => byId('timingInner')?.classList.add('flipped');
+    byId('timingFlip').onclick = () => {
+      const flip = byId('timingFlip');
+      if (flip?.dataset.luneaTimingFaceReady === '1') byId('timingInner')?.classList.add('flipped');
+    };
   }
 
   function openTimingModal(mode, question) {
@@ -522,13 +566,22 @@
 
   function renderTimingCard(card, isRefine) {
     const flip = byId('timingFlip');
-    flip.classList.add('show');
-    byId('timingInner').classList.remove('flipped');
+    const inner = byId('timingInner');
+    const image = byId('timingImage');
+    const renderToken = ++timingRenderToken;
+    inner.style.transition = 'none';
+    inner.classList.remove('flipped');
+    void inner.offsetWidth;
+    inner.style.removeProperty('transition');
+    flip.dataset.luneaTimingFaceReady = '0';
 
-    byId('timingImage').src = cardImg(card);
-    byId('timingImage').alt = card.label_ko;
+    const finalSrc = cardImg(card);
+    const expectedSrc = new URL(finalSrc, document.baseURI).href;
+    image.src = finalSrc;
+    image.alt = card.label_ko;
     byId('timingLabelKo').textContent = card.label_ko;
     byId('timingLabelEn').textContent = card.label_en;
+    flip.classList.add('show');
 
     const extra = isRefine ? `<br><b style="color:#8a6cab">정밀화 카드</b>` : '';
     byId('timingResult').innerHTML =
@@ -542,7 +595,11 @@
     const ref = refineCandidates(timingState.primary, timingState.question);
     byId('timingRefine').style.display = (!isRefine && ref.length) ? '' : 'none';
 
-    setTimeout(() => byId('timingInner').classList.add('flipped'), 120);
+    waitForTimingImage(image, expectedSrc).then(ready => {
+      if (!ready || renderToken !== timingRenderToken || image.src !== expectedSrc) return;
+      flip.dataset.luneaTimingFaceReady = '1';
+      inner.classList.add('flipped');
+    });
   }
 
   function performRefineDraw() {
