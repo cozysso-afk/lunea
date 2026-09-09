@@ -2,7 +2,6 @@
 
 /* LUNEA RECOVERY UI V65
    Final deterministic repair for the Vercel recovery branch.
-   - Pins the 12 reading actions to the intended 3-column order.
    - Keeps Timing labels authoritative and selects artwork by the number that is
      actually printed on the uploaded card, including the misnamed upload files.
    Existing readings, IndexedDB, localStorage and draft state are never cleared.
@@ -15,22 +14,6 @@
   const RELEASE = '20260907-v65';
   const $ = id => document.getElementById(id);
   const norm = value => String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
-
-  const ACTION_ORDER = [
-    'flipAll',
-    'aiRead',
-    'saveReading',
-    'retry',
-    'extraCard',
-    'timingSupportBtn',
-    'astroTransitBtn',
-    'thaiTaksaBtn',
-    'luneaThaiTarotRangeBtn',
-    'astroReturnBtn',
-    'astroHoraryBtn',
-    'luneaTopCopyPrompt'
-  ];
-  const THAI_ACTION_IDS = ['thaiTaksaBtn', 'luneaThaiTarotBridgeBtn'];
 
   /* The 2026-09-05 upload contains correct printed faces for 21-37, 39-60,
      but several filenames do not match the number printed on the card. It also
@@ -145,98 +128,25 @@
     [0, 90, 240, 520, 900].forEach(ms => setTimeout(syncTiming, ms));
   }
 
-  function ensureThaiRange() {
-    let button = $('luneaThaiTarotRangeBtn');
-    if (button) return button;
-    const bar = document.querySelector('#spreadOverlay .actionbar');
-    const thai = THAI_ACTION_IDS.map($).find(Boolean);
-    if (!bar || !thai) return null;
-    button = document.createElement('button');
-    button.type = 'button';
-    button.id = 'luneaThaiTarotRangeBtn';
-    button.className = thai.className || 'mini';
-    button.textContent = '🇹🇭 Thai 기간';
-    button.onclick = () => {
-      const api = W.LUNEA_THAI_RANGE_V33;
-      if (typeof api?.openTarot === 'function') api.openTarot();
-      else alert('Thai 기간 기능을 불러오는 중이야. 잠시 후 다시 눌러줘.');
-    };
-    bar.appendChild(button);
-    return button;
-  }
-
-  function reorderActions() {
-    ensureThaiRange();
-    const bar = document.querySelector('#spreadOverlay .actionbar');
-    if (!bar) return false;
-    const rank = new Map(ACTION_ORDER.map((id, index) => [id, index]));
-    rank.set('luneaThaiTarotBridgeBtn', rank.get('thaiTaksaBtn'));
-    const target = [...bar.children]
-      .sort((a, b) => (rank.has(a.id) ? rank.get(a.id) : 999) - (rank.has(b.id) ? rank.get(b.id) : 999));
-    target.forEach((node, index) => {
-      if (bar.children[index] !== node) bar.insertBefore(node, bar.children[index] || null);
-    });
-    return true;
-  }
-
-  function addStyle() {
-    if ($('luneaRecoveryUiV65Style')) return;
-    const style = document.createElement('style');
-    style.id = 'luneaRecoveryUiV65Style';
-    style.textContent = `
-      #spreadOverlay .actionbar>#flipAll{order:1}
-      #spreadOverlay .actionbar>#aiRead{order:2}
-      #spreadOverlay .actionbar>#saveReading{order:3}
-      #spreadOverlay .actionbar>#retry{order:4}
-      #spreadOverlay .actionbar>#extraCard{order:5}
-      #spreadOverlay .actionbar>#timingSupportBtn{order:6}
-      #spreadOverlay .actionbar>#astroTransitBtn{order:7}
-      #spreadOverlay .actionbar>#thaiTaksaBtn{order:8}
-      #spreadOverlay .actionbar>#luneaThaiTarotBridgeBtn{order:8}
-      #spreadOverlay .actionbar>#luneaThaiTarotRangeBtn{order:9}
-      #spreadOverlay .actionbar>#astroReturnBtn{order:10}
-      #spreadOverlay .actionbar>#astroHoraryBtn{order:11}
-      #spreadOverlay .actionbar>#luneaTopCopyPrompt{order:12}
-    `;
-    document.head.appendChild(style);
-  }
-
   function boot() {
-    addStyle();
-    reorderActions();
     readyPromise = loadTimingDeck().then(() => {
       scheduleTiming();
       return cards.length > 0;
     });
 
-    const bar = document.querySelector('#spreadOverlay .actionbar');
-    if (bar && !bar.__luneaV65Observed) {
-      bar.__luneaV65Observed = true;
-      let queued = false;
-      new MutationObserver(() => {
-        if (queued) return;
-        queued = true;
-        requestAnimationFrame(() => { queued = false; reorderActions(); });
-      }).observe(bar, {childList:true});
-    }
-
     document.addEventListener('click', event => {
       if (event.target?.closest?.('#timingDraw,#timingRefine,#timingSupportBtn,[data-open="timing"],#luneaTimingABPanel')) scheduleTiming();
-      if (event.target?.closest?.('#spreadOverlay')) setTimeout(reorderActions, 0);
     }, true);
 
     W.addEventListener('pageshow', () => {
-      reorderActions();
       scheduleTiming();
     }, {passive:true});
 
     W.LUNEA_RECOVERY_UI_V65 = Object.freeze({
       version:65,
       get ready(){return readyPromise},
-      actionOrder:[...ACTION_ORDER],
       uploadedFace:{...UPLOADED_FACE},
       artworkForCard:artwork,
-      reorderActions,
       syncTiming
     });
     console.info('✅ LUNEA Recovery UI V65 loaded');

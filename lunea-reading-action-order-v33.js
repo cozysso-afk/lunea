@@ -22,10 +22,10 @@
   V33.2 also hardens the Thai period date grid on iOS so native date inputs do
   not overflow their grid tracks or collide in the middle of the modal.
 
-  V33.3 loads the isolated INTIMACY V43 repair layer after the existing clean
-  and burgundy layers. V33.4 keeps the control-order behavior stable and also
-  applies the screenshot-marked INTIMACY presentation corrections without
-  changing RNG, AI interpretation, prompt generation, or storage.
+  V33.4 keeps the control-order behavior stable and applies the
+  screenshot-marked INTIMACY reading presentation corrections without changing
+  RNG, AI interpretation, prompt generation, or storage. INTIMACY runtime
+  layers remain owned by the dedicated deterministic feature group.
 
   V33.5 makes sure the V36 result-copy bridge is loaded with the current build
   token, so iOS/PWA caches cannot keep an older Timing-only copy script.
@@ -53,7 +53,7 @@
     'extraCard',
     'timingSupportBtn',
     'astroTransitBtn',
-    'luneaThaiTarotBridgeBtn',
+    'thaiTaksaBtn',
     'luneaThaiTarotRangeBtn',
     'astroReturnBtn',
     'astroHoraryBtn',
@@ -66,9 +66,6 @@
   const BOTTOM_AI_ID = 'luneaBottomAiRead';
   const BOTTOM_SAVE_ID = 'luneaBottomSaveReading';
   const BOTTOM_STYLE_ID = 'luneaBottomReadingActionsStyle';
-  const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
-  const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
-  const INTIMACY_REPAIR_LOADER_ID = 'luneaIntimacyRepairV43Loader';
   const RESULT_COPY_LOADER_ID = 'luneaResultCopyV36Loader';
 
   function actionBar() {
@@ -82,6 +79,7 @@
     if (!children.length) return true;
 
     const rank = new Map(ORDER.map((id, index) => [id, index]));
+    rank.set('luneaThaiTarotBridgeBtn', rank.get('thaiTaksaBtn'));
     const known = [];
     const unknown = [];
     children.forEach((node, index) => {
@@ -95,7 +93,9 @@
     const already = desired.length === children.length && desired.every((node, index) => node === children[index]);
     if (already) return true;
 
-    desired.forEach(node => bar.appendChild(node));
+    desired.forEach((node, index) => {
+      if (bar.children[index] !== node) bar.insertBefore(node, bar.children[index] || null);
+    });
     return true;
   }
 
@@ -283,18 +283,6 @@
     return true;
   }
 
-  function ensureIntimacyCleanUi() {
-    return ensureScript(INTIMACY_CLEAN_LOADER_ID, './lunea-intimacy-clean-v39.js', 'INTIMACY clean UI V39');
-  }
-
-  function ensureIntimacyBurgundyUi() {
-    return ensureScript(INTIMACY_BURGUNDY_LOADER_ID, './lunea-intimacy-burgundy-v40.js', 'INTIMACY burgundy UI V40');
-  }
-
-  function ensureIntimacyRepairUi() {
-    return ensureScript(INTIMACY_REPAIR_LOADER_ID, './lunea-intimacy-repair-v43.js', 'INTIMACY repair UI V43');
-  }
-
   function ensureResultCopyBridge() {
     const loadedVersion = String(W.LUNEA_TIMING_COPY_V35?.version || '');
     if (loadedVersion === '36.0') return true;
@@ -308,9 +296,6 @@
     ensureTopPromptCopy();
     ensureBottomActions();
     ensureResultCopyBridge();
-    ensureIntimacyCleanUi();
-    ensureIntimacyBurgundyUi();
-    ensureIntimacyRepairUi();
 
     let queued = false;
     const bar = actionBar();
@@ -330,19 +315,6 @@
       observer.observe(bar, {childList:true,attributes:true,attributeFilter:['disabled']});
     }
 
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      reorder();
-      ensureTopPromptCopy();
-      ensureBottomActions();
-      ensureResultCopyBridge();
-      ensureIntimacyCleanUi();
-      ensureIntimacyBurgundyUi();
-      ensureIntimacyRepairUi();
-      const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
-      if ((ready && document.getElementById(TOP_COPY_ID) && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
-    }, 250);
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
@@ -354,9 +326,6 @@
     ensureBottomActions,
     syncBottomButtons,
     ensureResultCopyBridge,
-    ensureIntimacyCleanUi,
-    ensureIntimacyBurgundyUi,
-    ensureIntimacyRepairUi,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot,{once:true});
   else boot();
