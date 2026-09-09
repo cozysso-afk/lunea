@@ -359,6 +359,13 @@
       .lunea-timing-category{border-color:rgba(255,210,125,.34)!important;background:
         linear-gradient(145deg,rgba(255,245,228,.10),rgba(189,164,248,.10)),var(--panel)!important}
       .lunea-timing-category .cat-icon{background:rgba(255,210,125,.12)!important;border-color:rgba(255,210,125,.28)!important;color:var(--gold)!important}
+      body.modal-open:has(#timingOverlay.show){touch-action:pan-y}
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show{touch-action:pan-y}
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-modal{
+        overflow-x:hidden!important;overflow-y:auto!important;
+        -webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;
+        overscroll-behavior-y:contain!important;
+      }
       #timingOverlay{background:rgba(8,6,14,.88);backdrop-filter:blur(16px)}
       #timingOverlay .timing-modal{
         color:#3a3042;border-color:rgba(208,171,103,.45);
