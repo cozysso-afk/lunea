@@ -166,33 +166,42 @@
 
       /* Home: INTIMACY is a real portal entry, like the other reading sectors. */
       #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]{
+        position:relative!important;overflow:hidden!important;
         grid-column:1/-1!important;display:grid!important;
         grid-template-columns:58px minmax(0,1fr) 22px!important;grid-template-rows:auto auto!important;
         column-gap:13px!important;row-gap:3px!important;align-items:center!important;
         min-height:102px!important;padding:13px 14px!important;
-        border-color:rgba(217,153,187,.18)!important;
-        background:radial-gradient(circle at 8% 22%,rgba(196,132,174,.13),transparent 28%),linear-gradient(148deg,rgba(27,19,38,.90),rgba(9,11,24,.97))!important
+        border-color:rgba(235,132,169,.40)!important;
+        background:radial-gradient(circle at 10% 17%,rgba(232,92,145,.23),transparent 31%),radial-gradient(circle at 91% 4%,rgba(158,54,112,.18),transparent 36%),linear-gradient(145deg,rgba(91,19,50,.96),rgba(54,13,40,.97) 48%,rgba(25,10,29,.99))!important;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 12px 30px rgba(70,8,39,.24)!important
+      }
+      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]::before{
+        content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;
+        pointer-events:none!important;background:linear-gradient(105deg,rgba(255,192,214,.055),transparent 34%,rgba(138,53,108,.045))!important
       }
       #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-object{
         grid-column:1!important;grid-row:1/3!important;width:58px!important;height:58px!important;margin:0!important;
-        border-radius:17px!important;overflow:hidden!important;padding:0!important;background:#151326!important;
-        border:1px solid rgba(228,207,235,.19)!important
+        border-radius:17px!important;overflow:hidden!important;padding:0!important;background:#310b20!important;
+        border:1px solid rgba(250,176,202,.38)!important;
+        box-shadow:0 7px 20px rgba(80,9,45,.30),inset 0 1px 0 rgba(255,255,255,.10)!important
       }
       #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-object img{
-        display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;pointer-events:none!important
+        display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:center!important;
+        transform:scale(1.20)!important;transform-origin:center!important;border-radius:inherit!important;pointer-events:none!important
       }
       #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-label{
-        grid-column:2!important;grid-row:1!important;align-self:end!important;margin:0!important;font-size:12px!important
+        grid-column:2!important;grid-row:1!important;align-self:end!important;margin:0!important;font-size:12px!important;color:#fff4f7!important
       }
       #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-sub{
-        grid-column:2!important;grid-row:2!important;align-self:start!important;margin:0!important
+        grid-column:2!important;grid-row:2!important;align-self:start!important;margin:0!important;color:rgba(229,199,210,.76)!important
       }
       #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-open{
-        grid-column:3!important;grid-row:1/3!important;position:static!important;align-self:center!important;justify-self:end!important
+        grid-column:3!important;grid-row:1/3!important;position:static!important;align-self:center!important;justify-self:end!important;color:#efb3c9!important
       }
       .lunea-v39-adult-badge{
         display:inline-flex;align-items:center;margin-left:5px;padding:2px 5px;border-radius:999px;
-        border:1px solid rgba(223,137,176,.34);color:#e8a8c0;font:700 7.5px/1 system-ui,sans-serif;letter-spacing:.55px;vertical-align:2px
+        border:1px solid rgba(243,139,178,.46);background:rgba(130,28,70,.27);color:#f5b0c9;
+        font:700 7.5px/1 system-ui,sans-serif;letter-spacing:.55px;vertical-align:2px
       }
       @media(max-width:390px){
         .lunea-intimacy-category .cat-icon{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;border-radius:15px!important}
