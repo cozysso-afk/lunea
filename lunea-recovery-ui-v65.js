@@ -2,7 +2,6 @@
 
 /* LUNEA RECOVERY UI V65
    Final deterministic repair for the Vercel recovery branch.
-   - Makes the archive close control reliable after an iOS/PWA resume.
    - Pins the 12 reading actions to the intended 3-column order.
    - Keeps Timing labels authoritative and selects artwork by the number that is
      actually printed on the uploaded card, including the misnamed upload files.
@@ -52,6 +51,7 @@
 
   let cards = [];
   let byLabel = new Map();
+  let readyPromise = Promise.resolve(false);
 
   function cardNumber(card) {
     const match = String(card?.id || card?.filename || '').match(/(?:LT-|timing_)(\d{3})/i);
@@ -179,30 +179,11 @@
     return true;
   }
 
-  function closeArchive() {
-    const overlay = $('archiveOverlay');
-    if (!overlay) return false;
-    overlay.classList.remove('show');
-    overlay.setAttribute('aria-hidden', 'true');
-    overlay.style.pointerEvents = 'none';
-    if (!document.querySelector('.overlay.show')) document.body.classList.remove('modal-open');
-    document.activeElement?.blur?.();
-    return true;
-  }
-
-  function syncArchivePointerState() {
-    const overlay = $('archiveOverlay');
-    if (!overlay) return;
-    overlay.style.pointerEvents = overlay.classList.contains('show') ? 'auto' : 'none';
-  }
-
   function addStyle() {
     if ($('luneaRecoveryUiV65Style')) return;
     const style = document.createElement('style');
     style.id = 'luneaRecoveryUiV65Style';
     style.textContent = `
-      #archiveOverlay.show{pointer-events:auto!important}
-      #archiveOverlay [data-close="archive"]{pointer-events:auto!important;z-index:80!important;touch-action:manipulation!important}
       #spreadOverlay .actionbar>#flipAll{order:1}
       #spreadOverlay .actionbar>#aiRead{order:2}
       #spreadOverlay .actionbar>#saveReading{order:3}
@@ -223,14 +204,10 @@
   function boot() {
     addStyle();
     reorderActions();
-    syncArchivePointerState();
-    loadTimingDeck().then(scheduleTiming);
-
-    const archive = $('archiveOverlay');
-    if (archive && !archive.__luneaV65Observed) {
-      archive.__luneaV65Observed = true;
-      new MutationObserver(syncArchivePointerState).observe(archive, {attributes:true, attributeFilter:['class']});
-    }
+    readyPromise = loadTimingDeck().then(() => {
+      scheduleTiming();
+      return cards.length > 0;
+    });
 
     const bar = document.querySelector('#spreadOverlay .actionbar');
     if (bar && !bar.__luneaV65Observed) {
@@ -244,28 +221,20 @@
     }
 
     document.addEventListener('click', event => {
-      if (event.target?.closest?.('#archiveOverlay [data-close="archive"]')) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        closeArchive();
-        return;
-      }
-      if (event.target?.closest?.('#archiveBtn')) setTimeout(syncArchivePointerState, 0);
       if (event.target?.closest?.('#timingDraw,#timingRefine,#timingSupportBtn,[data-open="timing"],#luneaTimingABPanel')) scheduleTiming();
       if (event.target?.closest?.('#spreadOverlay')) setTimeout(reorderActions, 0);
     }, true);
 
     W.addEventListener('pageshow', () => {
-      syncArchivePointerState();
       reorderActions();
       scheduleTiming();
     }, {passive:true});
 
     W.LUNEA_RECOVERY_UI_V65 = Object.freeze({
       version:65,
+      get ready(){return readyPromise},
       actionOrder:[...ACTION_ORDER],
       uploadedFace:{...UPLOADED_FACE},
-      closeArchive,
       reorderActions,
       syncTiming
     });

@@ -62,7 +62,8 @@
       './lunea-fixed-spread-depth-v30.js?v=3003',
       './lunea-general-order-v30-5.js?v=3005',
       './lunea-reading-boundary-reset-v31.js?v=3102',
-      './lunea-reading-action-order-v33.js?v=d2198d8c5779'
+      './lunea-reading-action-order-v33.js?v=d2198d8c5779',
+      './lunea-final-prompt-priority-v1.js?v=d2198d8c5779'
     ],
     journal:[
       './lunea-manual-structure-v1.js?v=105',
@@ -119,7 +120,6 @@
     ],
     finish:[
       './lunea-thai-date-display-v57.js?v=5701',
-      './lunea-final-prompt-priority-v1.js?v=d2198d8c5779',
       './lunea-recovery-finish-v59.js?v=5901'
     ]
   };
@@ -150,6 +150,11 @@
       await shellPromise;
       document.documentElement.dataset.luneaLoadingGroup=name;
       for(const src of sources) await load(src);
+      if(name==='timing'){
+        const timingReady=await W.LUNEA_RECOVERY_UI_V65?.ready;
+        if(!timingReady) throw new Error('Timing authoritative artwork unavailable');
+      }
+      W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
       if(document.documentElement.dataset.luneaLoadingGroup===name) delete document.documentElement.dataset.luneaLoadingGroup;
       readyGroups.add(name);
       W.dispatchEvent(new CustomEvent('lunea:feature-group-ready',{detail:{name}}));
@@ -210,7 +215,7 @@
     const key=String(el.dataset?.key||'').toLowerCase();
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
-    if(id==='luneaDraftRestore') return 'reading';
+    if(id==='luneaDraftRestore' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
     if(id==='profileBtn' || id==='profileStrip' || id==='saveProfile' || id==='luneaNatalCalcBtn' || el.closest('#profileOverlay')) return 'astro';
     if(id==='luneaThaiHomeTileV24' || /Thai|태국점성술|Taksa/i.test(text)) return 'finish';
     if(key==='timing' || /TIMING ORACLE|Astro Timing|시기 오라클/i.test(text)) return 'timing';
@@ -226,12 +231,41 @@
     const ensure=name=>name==='journal'||name==='learning'||name==='finish'
       ? loadGroup(name)
       : loadGroup('reading').then(ok=>ok&&loadGroup(name));
+    const ready=name=>name==='journal'||name==='learning'||name==='finish'
+      ? readyGroups.has(name)
+      : readyGroups.has('reading')&&(name==='reading'||readyGroups.has(name));
+    const replaying=new WeakSet();
+    const pending=new WeakSet();
     const prime=e=>{
       const name=groupForTarget(e.target);
       if(name) ensure(name);
     };
+    const gate=e=>{
+      const target=e.target instanceof Element?e.target:null;
+      const trigger=target?.closest?.('button,[role="button"],a,.lunea-v8-tile,#profileStrip');
+      if(!trigger||replaying.has(trigger)) return;
+      const name=groupForTarget(trigger);
+      if(!name) return;
+      if(ready(name)){
+        W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
+        return;
+      }
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if(pending.has(trigger)) return;
+      pending.add(trigger);
+      ensure(name).then(ok=>{
+        pending.delete(trigger);
+        if(!ok||!trigger.isConnected) return;
+        W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
+        replaying.add(trigger);
+        trigger.click();
+        queueMicrotask(()=>replaying.delete(trigger));
+      });
+    };
     document.addEventListener('pointerdown',prime,{capture:true,passive:true});
     document.addEventListener('focusin',prime,true);
+    document.addEventListener('click',gate,true);
   }
 
   async function boot(){

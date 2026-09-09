@@ -154,6 +154,9 @@
         line-height:1.64!important;font-size:10.5px!important;color:#d7d5df!important;
         max-height:46dvh!important;overflow-y:auto!important;-webkit-overflow-scrolling:touch
       }
+      #archiveOverlay{pointer-events:none}
+      #archiveOverlay.show{pointer-events:auto!important}
+      #archiveOverlay [data-close="archive"]{pointer-events:auto!important;z-index:80!important;touch-action:manipulation!important}
       #archiveOverlay .lunea-v51-recovery-row{
         display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
         gap:7px!important;margin:8px 0 10px!important;width:100%!important
@@ -185,6 +188,23 @@
     };
   }
 
+  function closeArchive() {
+    const overlay = $('archiveOverlay');
+    if (!overlay) return false;
+    overlay.classList.remove('show');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.style.pointerEvents = 'none';
+    if (!document.querySelector('.overlay.show')) document.body.classList.remove('modal-open');
+    document.activeElement?.blur?.();
+    return true;
+  }
+
+  function syncArchivePointerState() {
+    const overlay = $('archiveOverlay');
+    if (!overlay) return;
+    overlay.style.pointerEvents = overlay.classList.contains('show') ? 'auto' : 'none';
+  }
+
   function normalizeToolbar() {
     const overlay = $('archiveOverlay');
     const toolbar = overlay?.querySelector('.archive-toolbar');
@@ -207,6 +227,11 @@
     if (copy) copy.textContent = '전체 복사';
 
     let row = overlay.querySelector('.lunea-v51-recovery-row');
+    const recovery = W.LUNEA_EMERGENCY_REPAIR_V43;
+    if (typeof recovery?.importLegacyClipboard !== 'function' || typeof recovery?.restoreSafetyBackup !== 'function') {
+      row?.remove();
+      return true;
+    }
     if (!row) {
       row = document.createElement('div');
       row.className = 'lunea-v51-recovery-row';
@@ -244,6 +269,7 @@
     requestAnimationFrame(() => {
       queued = false;
       addStyles();
+      syncArchivePointerState();
       normalizeToolbar();
       normalizeRows();
     });
@@ -253,15 +279,22 @@
     const overlay = $('archiveOverlay');
     if (!overlay) return false;
     addStyles();
+    syncArchivePointerState();
     normalizeToolbar();
     normalizeRows();
 
     if (!overlay.__luneaJournalDetailV51Observed) {
       overlay.__luneaJournalDetailV51Observed = true;
-      new MutationObserver(normalizeSoon).observe(overlay, {childList:true, subtree:true});
+      new MutationObserver(normalizeSoon).observe(overlay, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
     }
 
     overlay.addEventListener('click', event => {
+      if (event.target?.closest?.('[data-close="archive"]')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        closeArchive();
+        return;
+      }
       const btn = event.target?.closest?.('.archive-item .archive-actions button');
       if (!isDetailButton(btn)) return;
       event.preventDefault();
@@ -270,7 +303,7 @@
     }, true);
 
     W.addEventListener('pageshow', () => setTimeout(normalizeSoon, 80), {passive:true});
-    W.LUNEA_JOURNAL_DETAIL_V51 = Object.freeze({version:'51.0', normalize:normalizeSoon});
+    W.LUNEA_JOURNAL_DETAIL_V51 = Object.freeze({version:'51.0', normalize:normalizeSoon, closeArchive, syncArchivePointerState});
     console.info('📚 LUNEA Journal Detail V51 loaded · full evidence + clean toolbar');
     return true;
   }

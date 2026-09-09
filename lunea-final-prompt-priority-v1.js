@@ -137,9 +137,9 @@
   }
 
   function install(){
-    if (W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__) return true;
     const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
     if (typeof prior !== 'function') return false;
+    if (prior.__luneaFinalPromptPriorityV2) return true;
 
     const wrapped = function(){
       let p = String(prior.apply(this, arguments) || '');
@@ -147,6 +147,7 @@
       return `${p}\n\n${finalBlock(p)}`;
     };
     wrapped.__luneaFinalPromptPriorityV2 = true;
+    wrapped.__luneaFinalPromptPriorityBase = prior;
     W.promptString = wrapped;
     try { promptString = wrapped; } catch {}
     W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__ = true;
@@ -156,6 +157,7 @@
 
   W.LUNEA_FINAL_PROMPT_PRIORITY_V1 = {
     version:2,
+    ensure:install,
     classify,
     build:finalBlock,
     hasWesternNatal,
@@ -178,8 +180,6 @@
     install();
   }
 
-  // Install slightly after the other load-time prompt repair wrappers so this
-  // remains the final compact instruction the model sees.
-  if (document.readyState === 'complete') setTimeout(boot,120);
-  else W.addEventListener('load', () => setTimeout(boot,120), {once:true});
+  W.addEventListener('lunea:feature-group-ready', install);
+  boot();
 })();
