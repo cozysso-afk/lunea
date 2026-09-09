@@ -116,6 +116,14 @@
       html.lunea-timing-image-assets-v15 #timingOverlay .timing-stage{
         position:relative!important;padding:20px 6px 8px!important;min-height:310px!important;
       }
+      /* Collapse the decorative dial while neither a decoded single card nor
+         a completed A/B panel is ready to own the stage. */
+      html.lunea-timing-image-assets-v15 #timingOverlay .timing-stage:not(:has(.timing-flip.show)):not(:has(#luneaTimingABPanel.show)){
+        min-height:0!important;padding-top:0!important;padding-bottom:0!important;gap:0!important;
+      }
+      html.lunea-timing-image-assets-v15 #timingOverlay .timing-stage:not(:has(.timing-flip.show)):not(:has(#luneaTimingABPanel.show))::before{
+        content:none!important;display:none!important;
+      }
       html.lunea-timing-image-assets-v15 #timingOverlay .timing-stage::before{
         content:'';position:absolute;left:50%;top:48%;width:min(330px,84vw);aspect-ratio:1;transform:translate(-50%,-50%);
         pointer-events:none;opacity:.55;

@@ -523,6 +523,7 @@
   }
 
   function resetTimingUI() {
+    timingRenderToken += 1;
     byId('timingFlip').classList.remove('show');
     byId('timingInner').classList.remove('flipped');
     byId('timingResult').classList.remove('show');
@@ -568,12 +569,18 @@
     const flip = byId('timingFlip');
     const inner = byId('timingInner');
     const image = byId('timingImage');
+    const result = byId('timingResult');
+    const actions = byId('timingActions');
     const renderToken = ++timingRenderToken;
     inner.style.transition = 'none';
     inner.classList.remove('flipped');
     void inner.offsetWidth;
     inner.style.removeProperty('transition');
     flip.dataset.luneaTimingFaceReady = '0';
+    flip.classList.remove('show');
+    result.classList.remove('show');
+    actions.classList.remove('show');
+    byId('timingAIText').classList.remove('show');
 
     const finalSrc = cardImg(card);
     const expectedSrc = new URL(finalSrc, document.baseURI).href;
@@ -581,24 +588,25 @@
     image.alt = card.label_ko;
     byId('timingLabelKo').textContent = card.label_ko;
     byId('timingLabelEn').textContent = card.label_en;
-    flip.classList.add('show');
 
     const extra = isRefine ? `<br><b style="color:#8a6cab">정밀화 카드</b>` : '';
-    byId('timingResult').innerHTML =
+    result.innerHTML =
       `<div class="group">${groupLabel(card)}</div>` +
       `<h4>${card.label_ko} · ${card.label_en}</h4>` +
       `<p>${card.meaning}${extra}</p>`;
-    byId('timingResult').classList.add('show');
-    byId('timingActions').classList.add('show');
-    byId('timingAIText').classList.remove('show');
 
     const ref = refineCandidates(timingState.primary, timingState.question);
     byId('timingRefine').style.display = (!isRefine && ref.length) ? '' : 'none';
 
     waitForTimingImage(image, expectedSrc).then(ready => {
       if (!ready || renderToken !== timingRenderToken || image.src !== expectedSrc) return;
+      // Apply the final face before exposing the stage so no card back or empty
+      // front can become a visible intermediate owner.
       flip.dataset.luneaTimingFaceReady = '1';
       inner.classList.add('flipped');
+      flip.classList.add('show');
+      result.classList.add('show');
+      actions.classList.add('show');
     });
   }
 
