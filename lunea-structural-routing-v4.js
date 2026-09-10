@@ -70,6 +70,9 @@
       './lunea-general-order-v30-5.js?v=3005',
       './lunea-reading-boundary-reset-v31.js?v=3102',
       './lunea-reading-action-order-v33.js?v=d2198d8c5779',
+      './lunea-manual-structure-v1.js?v=105',
+      './lunea-manual-everywhere-v1.js?v=103',
+      './lunea-manual-limit20-v17.js?v=1705',
       './lunea-final-prompt-priority-v1.js?v=d2198d8c5779'
     ],
     journal:[
