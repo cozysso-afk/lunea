@@ -253,6 +253,9 @@
       const title = category.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
       const icon = category.querySelector('.cat-icon');
       if (!icon) return;
+      /* INTIMACY has a dedicated image owner (V39/V40). Treating its
+         non-SVG artwork as an unknown category replaces it with sparkle. */
+      if (category.classList.contains('lunea-intimacy-category')) return;
       let markup = ICONS.sparkle;
       if (/CAREER|EXAM/.test(title)) markup = ICONS.career;
       else if (/LOVE|INNER HEART|RELATION/.test(title)) markup = ICONS.love;
@@ -277,6 +280,7 @@
       document.querySelectorAll('.category .cat-icon').forEach(icon => {
         if (icon.querySelector('svg')) return;
         const category = icon.closest('.category');
+        if (category?.classList.contains('lunea-intimacy-category')) return;
         const title = category?.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
         let markup = ICONS.sparkle;
         if (/CAREER|EXAM/.test(title)) markup = ICONS.career;
