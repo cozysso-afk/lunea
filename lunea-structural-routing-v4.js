@@ -227,9 +227,8 @@
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
     if(id==='luneaDraftRestore' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
-    /* Profile shell + V45 picker are Home-ready. Only calculation surfaces need
-       the Astro group; close/tab/save controls must never be captured here. */
-    if(id==='luneaNatalCalcBtn') return 'astro';
+    /* Profile shell, V45 picker and the eager Natal client are Home-ready.
+       Only genuinely lazy astrology surfaces should enter the Astro group. */
     if(id==='luneaThaiHomeTileV24' || /Thai|태국점성술|Taksa/i.test(text)) return 'finish';
     if(key==='timing' || /TIMING ORACLE|Astro Timing|시기 오라클/i.test(text)) return 'timing';
     if(key==='horary' || /HORARY|호라리|Returns?|Transit/i.test(text)) return 'astro';
