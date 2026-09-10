@@ -231,6 +231,15 @@
     return true;
   }
 
+  function hideLegacyLoveEntry() {
+    const legacy = $('.reading-item[data-cat="LOVE"][data-title="속궁합 · 19+"]');
+    if (!legacy) return false;
+    legacy.hidden = true;
+    legacy.style.setProperty('display', 'none', 'important');
+    legacy.dataset.luneaLegacyIntimacyHidden = '1';
+    return true;
+  }
+
   function normalizeCategory(category) {
     category.dataset.luneaIntimacyCleanRelease = RELEASE;
     ensureCategoryIcon(category);
@@ -296,6 +305,7 @@
   }
 
   function apply() {
+    hideLegacyLoveEntry();
     const category = $('.lunea-intimacy-category');
     if (!category) return false;
     ensureStyles();
