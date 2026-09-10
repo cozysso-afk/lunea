@@ -299,7 +299,10 @@
   async function boot(){
     if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
 
-    for(const src of HOME_VISUAL_SOURCES) await load(src);
+    /* async=false preserves insertion-order execution for these dynamic classic
+       scripts; start their fetches together so Home readiness is not gated by
+       seventeen serial network round trips. */
+    await Promise.all(HOME_VISUAL_SOURCES.map(load));
     if(!homeLooksReady()) console.warn('[LUNEA deterministic] home readiness markers incomplete; keeping legacy shell hidden');
     applyStaticHomeBranding();
     revealHome();
