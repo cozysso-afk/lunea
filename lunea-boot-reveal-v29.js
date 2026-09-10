@@ -26,6 +26,10 @@
   const dailyReady=()=>!!(
     document.querySelector('.daily.lunea-daily-orbit6')&&
     document.querySelector('.daily .lunea-daily-six-grid')&&
+    document.querySelector('.daily .lunea-v22-sky')&&
+    document.querySelector('.daily[data-lunea-sector="daily"]')&&
+    document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]')&&
+    window.__LUNEA_PROFILE_NATAL_V45__&&
     /DAILY ORBIT 6/i.test(document.querySelector('.daily h3')?.textContent||'')
   );
 

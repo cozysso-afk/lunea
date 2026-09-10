@@ -29,25 +29,6 @@
     /iPad|iPhone|iPod/.test(ua) ||
     (platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-  /*
-    Structural Routing V2 is platform-independent.
-    Load it before the iOS-only early return so desktop/Safari share the same router.
-    Failure is non-fatal: existing V7.4 remains active.
-  */
-  function loadStructuralRoutingV2() {
-    if (document.querySelector('script[data-lunea-structural-routing-v2]')) return;
-    const s = document.createElement('script');
-    s.src = './lunea-structural-routing-v2.js?v=201';
-    s.async = false;
-    s.dataset.luneaStructuralRoutingV2 = '1';
-    s.addEventListener('error', () => {
-      console.warn('[LUNEA] Structural Routing V2 failed to load; V7.4 remains active');
-    }, {once:true});
-    document.head.appendChild(s);
-  }
-
-  loadStructuralRoutingV2();
-
   if (!isiOS) {
     console.info('✦ LUNEA iOS Performance V3 skipped (non-iOS)');
     return;

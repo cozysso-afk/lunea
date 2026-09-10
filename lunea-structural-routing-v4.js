@@ -12,28 +12,34 @@
   document.documentElement.classList.add('lunea-booting');
   document.documentElement.classList.remove('lunea-ui-ready');
 
-  const HOME_SOURCES=[
+  /* Final Home owners first. The boot curtain can lift as soon as this set is
+     complete; feature/runtime helpers continue without holding first paint. */
+  const HOME_VISUAL_SOURCES=[
     './lunea-luminous-theme-v1.js?v=101',
     './lunea-luminous-layout-v2.js?v=201',
     './lunea-luminous-polish-v3.js?v=301',
     './lunea-top-spacing-v4.js?v=401',
-    './lunea-gemini-model-picker-v1.js?v=101',
-    './lunea-structural-routing-v4-base.js?v=412',
     './lunea-daily-lock-v1.js?v=101',
-    './lunea-card-motion-timing-v7.js?v=701',
     './lunea-home-portal-v8.js?v=801',
     './lunea-intimacy-v34.js?v=d2198d8c5779',
     './lunea-intimacy-clean-v39.js?v=3901',
     './lunea-thai-standalone-v24.js?v=2401',
     './lunea-thai-art-v25.js?v=2501',
     './lunea-thai-art-polish-v26.js?v=2601',
-    './lunea-thai-tarot-bridge-v32.js?v=d2198d8c5779',
-    './lunea-thai-range-v33.js?v=d2198d8c5779',
     './lunea-home-timing-polish-v9.js?v=901',
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-celestial-v22.js?v=2201',
-    './lunea-sector-color-system-v28.js?v=2801'
+    './lunea-sector-color-system-v28.js?v=2801',
+    './lunea-profile-natal-v45.js?v=4501'
+  ];
+
+  const HOME_RUNTIME_SOURCES=[
+    './lunea-gemini-model-picker-v1.js?v=101',
+    './lunea-structural-routing-v4-base.js?v=412',
+    './lunea-card-motion-timing-v7.js?v=701',
+    './lunea-thai-tarot-bridge-v32.js?v=d2198d8c5779',
+    './lunea-thai-range-v33.js?v=d2198d8c5779'
   ];
 
   // Audited UI only. No journal migration, timing fetch, AI or global observer.
@@ -47,6 +53,7 @@
     './lunea-cardback-sector-v20.js?v=2001'
   ];
   let shellPromise;
+  let homeRuntimePromise;
   const readyGroups=new Set();
 
   const GROUPS={
@@ -103,7 +110,6 @@
       './lunea-recovery-ui-v65.js?v=6501'
     ],
     astro:[
-      './lunea-profile-natal-v45.js?v=4501',
       './lunea-horary-ab-v1.js?v=104',
       './lunea-horary-balance-v19-5.js?v=1905',
       './lunea-horary-question-modes-v37.js?v=3701',
@@ -148,6 +154,7 @@
     const sources=GROUPS[name];
     const promise=(async()=>{
       await shellPromise;
+      if(name!=='journal'&&name!=='learning') await homeRuntimePromise;
       document.documentElement.dataset.luneaLoadingGroup=name;
       for(const src of sources) await load(src);
       if(name==='timing'){
@@ -175,6 +182,10 @@
   const homeLooksReady=()=>!!(
     document.querySelector('#luneaHomePortalV8 .lunea-v8-tile') &&
     document.querySelector('.daily.lunea-daily-orbit6 .lunea-daily-six-grid') &&
+    document.querySelector('.daily.lunea-daily-orbit6 .lunea-v22-sky') &&
+    document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]') &&
+    document.querySelector('.daily[data-lunea-sector="daily"]') &&
+    W.__LUNEA_PROFILE_NATAL_V45__ &&
     /DAILY ORBIT 6/i.test(document.querySelector('.daily h3')?.textContent||'')
   );
 
@@ -216,7 +227,9 @@
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
     if(id==='luneaDraftRestore' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
-    if(id==='profileBtn' || id==='profileStrip' || id==='saveProfile' || id==='luneaNatalCalcBtn' || el.closest('#profileOverlay')) return 'astro';
+    /* Profile shell + V45 picker are Home-ready. Only calculation surfaces need
+       the Astro group; close/tab/save controls must never be captured here. */
+    if(id==='luneaNatalCalcBtn') return 'astro';
     if(id==='luneaThaiHomeTileV24' || /Thai|태국점성술|Taksa/i.test(text)) return 'finish';
     if(key==='timing' || /TIMING ORACLE|Astro Timing|시기 오라클/i.test(text)) return 'timing';
     if(key==='horary' || /HORARY|호라리|Returns?|Transit/i.test(text)) return 'astro';
@@ -246,6 +259,9 @@
       if(!trigger||replaying.has(trigger)) return;
       const name=groupForTarget(trigger);
       if(!name) return;
+      /* Opening a category is navigation, not a reading. Prime its runtime on
+         pointerdown, but let the first tap reveal the category immediately. */
+      if(name==='reading' && (trigger.matches('#luneaHomePortalV8 .lunea-v8-tile') || trigger.matches('.category-header'))) return;
       if(ready(name)){
         W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
         return;
@@ -254,9 +270,22 @@
       e.stopImmediatePropagation();
       if(pending.has(trigger)) return;
       pending.add(trigger);
+      trigger.setAttribute('aria-busy','true');
+      let pendingOverlay=null;
+      if(name==='journal' && trigger.id==='archiveBtn'){
+        pendingOverlay=document.getElementById('archiveOverlay');
+        W.showOverlay?.('archiveOverlay');
+        pendingOverlay?.setAttribute('aria-busy','true');
+      }
       ensure(name).then(ok=>{
         pending.delete(trigger);
-        if(!ok||!trigger.isConnected) return;
+        trigger.removeAttribute('aria-busy');
+        pendingOverlay?.removeAttribute('aria-busy');
+        if(!ok||!trigger.isConnected){
+          if(pendingOverlay?.classList.contains('show')) W.hideOverlay?.(pendingOverlay.id);
+          return;
+        }
+        if(pendingOverlay && !pendingOverlay.classList.contains('show')) return;
         W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
         replaying.add(trigger);
         trigger.click();
@@ -271,11 +300,10 @@
   async function boot(){
     if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
 
-    for(const src of HOME_SOURCES) await load(src);
+    for(const src of HOME_VISUAL_SOURCES) await load(src);
     if(!homeLooksReady()) console.warn('[LUNEA deterministic] home readiness markers incomplete; keeping legacy shell hidden');
     applyStaticHomeBranding();
     revealHome();
-    installLazyTriggers();
 
     shellPromise=(async()=>{
       for(const src of SHELL_SOURCES) await load(src);
@@ -283,7 +311,13 @@
       document.documentElement.dataset.luneaShellReady='1';
       W.dispatchEvent(new CustomEvent('lunea:shell-ready'));
     })();
-    await shellPromise;
+    homeRuntimePromise=(async()=>{
+      for(const src of HOME_RUNTIME_SOURCES) await load(src);
+      document.documentElement.dataset.luneaHomeRuntimeReady='1';
+      W.dispatchEvent(new CustomEvent('lunea:home-runtime-ready'));
+    })();
+    installLazyTriggers();
+    await Promise.all([shellPromise,homeRuntimePromise]);
     /* Stop after the finite shell. Feature groups require user intent. */
     document.documentElement.dataset.luneaDeterministicReady='1';
     document.documentElement.dataset.luneaLazyRuntime='1';
