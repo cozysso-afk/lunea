@@ -59,6 +59,11 @@
   const GROUPS={
     reading:[
       './lunea-runtime-state-v56.js?v=5601',
+      './lunea-question-casebook-v1.js?v=101',
+      './lunea-question-casebook-web-v1.js?v=101',
+      './lunea-question-casebook-ranker-v1.js?v=101',
+      './lunea-user-spread-learning-v1.js?v=108',
+      './lunea-learning-success-gate-v1.js?v=101',
       './lunea-ai-spread-preflight-v2.js?v=105',
       './lunea-reading-flow-v5.js?v=501',
       './lunea-mobile-reading-controls-v12.js?v=1201',
@@ -72,6 +77,7 @@
       './lunea-reading-action-order-v33.js?v=d2198d8c5779',
       './lunea-manual-structure-v1.js?v=105',
       './lunea-manual-everywhere-v1.js?v=103',
+      './lunea-manual-library-v1.js?v=101',
       './lunea-manual-limit20-v17.js?v=1705',
       './lunea-final-prompt-priority-v1.js?v=d2198d8c5779'
     ],
@@ -129,6 +135,7 @@
     ],
     finish:[
       './lunea-thai-date-display-v57.js?v=5701',
+      './lunea-timing-result-copy-v35.js?v=3501',
       './lunea-recovery-finish-v59.js?v=5901'
     ]
   };

@@ -12,6 +12,10 @@
   W.__LUNEA_JOURNAL_DETAIL_V51__ = true;
 
   const ARCHIVE_KEY = 'LUNEA_ARCHIVE_V3';
+  const STATUS = {
+    pending: '○ 미확인', hit: '✓ 맞음', partial: '△ 부분',
+    miss: '× 틀림', unverifiable: '? 판정불가'
+  };
   const $ = id => document.getElementById(id);
   const norm = v => String(v ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
 
@@ -36,16 +40,18 @@
 
   function evidenceScore(row) {
     if (!row || typeof row !== 'object') return 0;
-    const keys = ['astroTransit','astroReturns','thaiTaksa','thaiTaksaRange','thaiRange','horary','timing','legacyImportedText'];
+    const keys = ['astroNatal','astroTransit','astroReturns','thaiTaksa','thaiTaksaRange','thaiRange','horary','timing','legacyImportedText'];
     return keys.reduce((n, key) => n + (row[key] != null && row[key] !== '' ? 1 : 0), 0)
       + (row.ai ? 1 : 0)
       + (Array.isArray(row.cards) ? Math.min(2, row.cards.length) : 0);
   }
 
-  function bestArchiveMatch(item) {
-    const title = itemTitle(item);
-    const q = itemQuestion(item);
-    const rows = readArchive().slice().sort((a,b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0));
+  function bestArchiveFor(rows, title, q, sourceArchiveId = '') {
+    const source = String(sourceArchiveId || '');
+    if (source) {
+      const byId = rows.find(r => String(r?.id || '') === source);
+      if (byId) return byId;
+    }
     const exact = rows.filter(r => norm(r?.title) === title && norm(r?.q) === q);
     if (exact.length) return exact.sort((a,b) => evidenceScore(b) - evidenceScore(a))[0];
     const qMatches = q ? rows.filter(r => norm(r?.q) === q) : [];
@@ -55,17 +61,22 @@
     return null;
   }
 
-  async function journalMatch(item) {
+  function bestArchiveMatch(item) {
+    const rows = readArchive().slice().sort((a,b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0));
+    return bestArchiveFor(rows, itemTitle(item), itemQuestion(item));
+  }
+
+  async function journalEntryMatch(item) {
     try {
       const rows = await W.LUNEA_READING_JOURNAL?.getAll?.();
       if (!Array.isArray(rows)) return null;
       const title = itemTitle(item), q = itemQuestion(item);
       const exact = rows.find(x => norm(x?.reading?.title) === title && norm(x?.reading?.q) === q);
-      if (exact?.reading) return exact.reading;
+      if (exact?.reading) return exact;
       const byQ = q && rows.find(x => norm(x?.reading?.q) === q);
-      if (byQ?.reading) return byQ.reading;
+      if (byQ?.reading) return byQ;
       const byTitle = title && rows.find(x => norm(x?.reading?.title) === title);
-      return byTitle?.reading || null;
+      return byTitle?.reading ? byTitle : null;
     } catch { return null; }
   }
 
@@ -89,6 +100,7 @@
       reading.ai ? `[AI 해석]\n${reading.ai}` : ''
     ].filter(Boolean);
     const sections = [
+      ['Natal / Astrology · 점성술', reading.astroNatal],
       ['Transit · 트랜짓', reading.astroTransit],
       ['Returns · 리턴', reading.astroReturns],
       ['Thai Astrology · 태국점성술', reading.thaiTaksa],
@@ -114,19 +126,90 @@
     return fallbackRichText(reading);
   }
 
-  async function resolveRichReading(item) {
+  async function resolveRichRecord(item) {
     const local = bestArchiveMatch(item);
-    const journal = await journalMatch(item);
-    if (!local) return journal;
-    if (!journal) return local;
-    return evidenceScore(local) >= evidenceScore(journal) ? {...journal, ...local} : {...local, ...journal};
+    const entry = await journalEntryMatch(item);
+    const journal = entry?.reading || null;
+    if (!local) return {reading:journal, entry};
+    if (!journal) return {reading:local, entry:null};
+    const reading = evidenceScore(local) >= evidenceScore(journal)
+      ? {...journal, ...local}
+      : {...local, ...journal};
+    return {reading, entry};
+  }
+
+  async function resolveRichReading(item) {
+    return (await resolveRichRecord(item)).reading;
+  }
+
+  function validationText(entry) {
+    if (!entry) return '';
+    const lines = [`판정: ${STATUS[entry.status] || entry.status || STATUS.pending}`];
+    if (entry.resultDate) lines.push(`실제 결과 날짜: ${entry.resultDate}`);
+    if (entry.dueDate) lines.push(`확인 예정일: ${entry.dueDate}`);
+    if (entry.outcome) lines.push(`실제 결과: ${entry.outcome}`);
+    if (entry.note) lines.push(`메모: ${entry.note}`);
+    if (entry.tags?.length) lines.push(`태그: ${entry.tags.join(', ')}`);
+    return `[검증]\n${lines.join('\n')}`;
+  }
+
+  function richCopyText(reading, entry) {
+    return [richText(reading), validationText(entry)].filter(Boolean).join('\n\n');
+  }
+
+  async function copyText(text, success) {
+    if (!text) { alert('복사할 기록이 없어.'); return false; }
+    try {
+      await navigator.clipboard.writeText(text);
+      alert(success);
+      return true;
+    } catch { alert('복사 권한을 확인해줘.'); return false; }
+  }
+
+  async function copyRichItem(item, btn) {
+    const {reading, entry} = await resolveRichRecord(item);
+    const copied = await copyText(richCopyText(reading, entry), '복사했어.');
+    if (copied && btn) {
+      btn.textContent = '✓ 복사됨';
+      setTimeout(() => { if (btn.isConnected) btn.textContent = '복사'; }, 800);
+    }
+  }
+
+  async function allRichCopyText() {
+    const locals = readArchive().slice().sort((a,b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0));
+    let entries = [];
+    try {
+      const rows = await W.LUNEA_READING_JOURNAL?.getAll?.();
+      if (Array.isArray(rows)) entries = rows;
+    } catch {}
+    if (!entries.length) {
+      return locals.map(reading => richText(reading)).filter(Boolean).join('\n\n────────────\n\n');
+    }
+    const used = new Set();
+    const records = entries.map(entry => {
+      const journal = entry?.reading || null;
+      const local = bestArchiveFor(
+        locals,
+        norm(journal?.title),
+        norm(journal?.q),
+        entry?.sourceArchiveId
+      );
+      if (local) used.add(local);
+      const reading = !local ? journal : evidenceScore(local) >= evidenceScore(journal)
+        ? {...journal, ...local}
+        : {...local, ...journal};
+      return richCopyText(reading, entry);
+    });
+    locals.filter(reading => !used.has(reading)).forEach(reading => records.push(richText(reading)));
+    return records.filter(Boolean).join('\n\n────────────\n\n');
   }
 
   function isDetailButton(btn) {
     if (!btn?.closest?.('#archiveOverlay .archive-item .archive-actions')) return false;
     const actions = btn.parentElement;
     const buttons = [...actions.querySelectorAll(':scope > button')];
-    return /카드\s*[/·]?\s*해석|리딩\s*상세/.test(norm(btn.textContent)) || buttons.indexOf(btn) === 1;
+    return /카드\s*[/·]?\s*해석|리딩\s*상세/.test(norm(btn.textContent)) ||
+      (buttons.length >= 4 && buttons.indexOf(btn) === 1);
   }
 
   async function openRichDetail(item, btn) {
@@ -258,7 +341,9 @@
       const actions = item.querySelector('.archive-actions');
       if (!actions) return;
       const buttons = [...actions.querySelectorAll(':scope > button')];
-      if (buttons[1] && buttons[1].textContent !== '리딩 상세') buttons[1].textContent = '리딩 상세';
+      const detail = buttons.find(btn => /카드\s*[/·]?\s*해석|리딩\s*상세/.test(norm(btn.textContent))) ||
+        (buttons.length >= 4 ? buttons[1] : null);
+      if (detail && detail.textContent !== '리딩 상세') detail.textContent = '리딩 상세';
     });
   }
 
@@ -295,7 +380,20 @@
         closeArchive();
         return;
       }
+      const copyAll = event.target?.closest?.('#copyAllArchive');
+      if (copyAll) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        allRichCopyText().then(text => copyText(text, '전체 기록 복사 완료'));
+        return;
+      }
       const btn = event.target?.closest?.('.archive-item .archive-actions button');
+      if (btn && (/^복사$/.test(norm(btn.textContent)) || btn.dataset.a === 'copy')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        copyRichItem(btn.closest('.archive-item'), btn);
+        return;
+      }
       if (!isDetailButton(btn)) return;
       event.preventDefault();
       event.stopImmediatePropagation();
