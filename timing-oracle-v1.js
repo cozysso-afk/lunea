@@ -362,9 +362,19 @@
       body.modal-open:has(#timingOverlay.show){touch-action:pan-y}
       body.modal-open:has(#timingOverlay.show) #timingOverlay.show{touch-action:pan-y}
       body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-modal{
-        overflow-x:hidden!important;overflow-y:auto!important;
-        -webkit-overflow-scrolling:touch!important;touch-action:pan-y!important;
+        display:flex!important;flex-direction:column!important;
+        overflow:hidden!important;touch-action:pan-y!important;
+      }
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-modal-header{
+        flex:0 0 auto;min-height:0;
+      }
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-scroll-body{
+        flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;
+        -webkit-overflow-scrolling:touch;touch-action:pan-y;
         overscroll-behavior-y:contain!important;
+      }
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-modal>#timingClose{
+        position:absolute!important;top:11px;right:13px;z-index:4;
       }
       #timingOverlay{background:rgba(8,6,14,.88);backdrop-filter:blur(16px)}
       #timingOverlay .timing-modal{
@@ -458,31 +468,35 @@
     ov.innerHTML = `
       <div class="modal timing-modal">
         <button class="close" id="timingClose">×</button>
-        <div class="sub">LUNEA · TIME SIGNAL</div>
-        <h3 class="modal-h">Timing Oracle</h3>
-        <div class="field" id="timingQuestionField">
-          <label>시기를 묻는 질문</label>
-          <textarea id="timingQuestion" placeholder="예: 그 사람에게 연락이 온다면 언제쯤일까?"></textarea>
+        <div class="timing-modal-header">
+          <div class="sub">LUNEA · TIME SIGNAL</div>
+          <h3 class="modal-h">Timing Oracle</h3>
         </div>
-        <p class="timing-help" id="timingHelp">질문에 기간을 직접 적으면 그 범위를 우선해 후보를 좁혀. 기본은 한 질문에 한 장이야.</p>
-        <button class="primary full-btn" id="timingDraw">⏳ 시기 카드 한 장 뽑기</button>
-        <div class="timing-stage">
-          <div class="timing-flip" id="timingFlip">
-            <div class="timing-inner" id="timingInner">
-              <div class="timing-face timing-back"></div>
-              <div class="timing-face timing-front">
-                <img id="timingImage" alt="">
-                <div class="timing-card-label"><span id="timingLabelEn"></span><b id="timingLabelKo"></b></div>
+        <div class="timing-scroll-body" id="timingScrollBody">
+          <div class="field" id="timingQuestionField">
+            <label>시기를 묻는 질문</label>
+            <textarea id="timingQuestion" placeholder="예: 그 사람에게 연락이 온다면 언제쯤일까?"></textarea>
+          </div>
+          <p class="timing-help" id="timingHelp">질문에 기간을 직접 적으면 그 범위를 우선해 후보를 좁혀. 기본은 한 질문에 한 장이야.</p>
+          <button class="primary full-btn" id="timingDraw">⏳ 시기 카드 한 장 뽑기</button>
+          <div class="timing-stage">
+            <div class="timing-flip" id="timingFlip">
+              <div class="timing-inner" id="timingInner">
+                <div class="timing-face timing-back"></div>
+                <div class="timing-face timing-front">
+                  <img id="timingImage" alt="">
+                  <div class="timing-card-label"><span id="timingLabelEn"></span><b id="timingLabelKo"></b></div>
+                </div>
               </div>
             </div>
+            <div class="timing-result" id="timingResult"></div>
+            <div class="timing-actions" id="timingActions">
+              <button class="mini" id="timingRefine">✦ 시기 더 좁히기</button>
+              <button class="mini" id="timingAI">🔮 AI 시기 해석</button>
+              <button class="mini" id="timingSave">💾 기록</button>
+            </div>
+            <div class="timing-ai" id="timingAIText"></div>
           </div>
-          <div class="timing-result" id="timingResult"></div>
-          <div class="timing-actions" id="timingActions">
-            <button class="mini" id="timingRefine">✦ 시기 더 좁히기</button>
-            <button class="mini" id="timingAI">🔮 AI 시기 해석</button>
-            <button class="mini" id="timingSave">💾 기록</button>
-          </div>
-          <div class="timing-ai" id="timingAIText"></div>
         </div>
       </div>
     `;
@@ -515,6 +529,8 @@
       : `질문에 기간을 직접 적으면 그 범위를 우선해 후보를 좁혀. 기본은 한 질문에 한 장이야.`;
 
     resetTimingUI();
+    const scrollBody = byId('timingScrollBody');
+    if (scrollBody) scrollBody.scrollTop = 0;
 
     const ov = byId('timingOverlay');
     ov.classList.add('show');
