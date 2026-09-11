@@ -30,6 +30,7 @@
   const timingState = {
     mode: null,            // standalone | support
     question: '',
+    repeatContext: null,   // DAILY uses a local calendar day, not a rolling 24h template
     primary: null,
     refine: null,
     aiText: '',
@@ -78,10 +79,38 @@
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 80))); } catch {}
   }
 
+  function localDay(at = Date.now()) {
+    const d = new Date(at);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function repeatContextForModal(mode, q) {
+    // Only the real support reading can establish DAILY context. Standalone
+    // must not inherit the category of a reading left open behind its modal.
+    try {
+      if (mode === 'support' && state?.category === 'DAILY' &&
+          questionSignature(state.question) === questionSignature(q)) {
+        return {dailyDay: localDay()};
+      }
+    } catch {}
+    return null;
+  }
+
   function recentSameQuestion(q) {
     const sig = questionSignature(q);
     const now = Date.now();
-    return getHistory().find(x => x.sig === sig && now - x.at < REPEAT_WINDOW_MS) || null;
+    const dailyDay = timingState.repeatContext?.dailyDay;
+    return getHistory().find(x => {
+      if (x.sig !== sig || now - x.at >= REPEAT_WINDOW_MS) return false;
+      if (dailyDay) {
+        // A legacy row proves text and draw time only, never a category. It
+        // can protect the same local day, but cannot claim another DAILY day.
+        return (x.context?.dailyDay || localDay(x.at)) === dailyDay;
+      }
+      // Explicit DAILY entries describe that day's recurring reading only.
+      // Ordinary questions still match across spread/category/reading IDs.
+      return !x.context?.dailyDay;
+    }) || null;
   }
 
   function daysToEndOfWeek(now = new Date()) {
@@ -517,6 +546,7 @@
   function openTimingModal(mode, question) {
     timingState.mode = mode;
     timingState.question = question || '';
+    timingState.repeatContext = repeatContextForModal(mode, timingState.question);
     timingState.primary = null;
     timingState.refine = null;
     timingState.aiText = '';
@@ -582,7 +612,7 @@
     timingState.aiText = '';
     timingState.analysis = analysis;
 
-    saveHistory({sig:questionSignature(q),at:Date.now(),cardId:card.id,label:card.label_ko});
+    saveHistory({sig:questionSignature(q),at:Date.now(),cardId:card.id,label:card.label_ko,context:timingState.repeatContext});
 
     renderTimingCard(card, false);
     if (timingState.mode === 'support') renderSupportInline();
@@ -676,6 +706,7 @@
   function clearSupportTiming() {
     timingState.mode = null;
     timingState.question = '';
+    timingState.repeatContext = null;
     timingState.primary = null;
     timingState.refine = null;
     timingState.aiText = '';
