@@ -381,21 +381,17 @@
         const rationale = `${String(current?.designRationale || 'LUNEA AI 질문 구조 기반 설계')} · PRE-DRAW USER CONFIRMED · USER_EDIT_MAX_${MAX_USER}`;
 
         const changed = finalTitle !== baseline.spreadTitle || !samePositions(baseline.positions, all);
-        if (changed && W.LUNEA_SPREAD_LEARNING_V1?.record) {
-          try {
-            W.LUNEA_SPREAD_LEARNING_V1.record({
-              question,
-              category:String(getState()?.category||'GENERAL').trim().toUpperCase()||'GENERAL',
-              originalSpread:{spreadTitle:baseline.spreadTitle, positions:baseline.positions},
-              correctedSpread:{spreadTitle:finalTitle, positions:numbered},
-              meta:current?._luneaPreflight || {}
-            });
-          } catch (error) {
-            console.warn('[LUNEA V20] correction learning failed', error);
-          }
-        }
-
-        finish({...current, spreadTitle:finalTitle, positions:numbered, designRationale:rationale});
+        // Carry one learning event out of the preview; confirmation alone never saves.
+        const learningPayload={
+          question,
+          category:String(getState()?.category||'GENERAL').trim().toUpperCase()||'GENERAL',
+          originalSpread:{spreadTitle:baseline.spreadTitle,positions:baseline.positions},
+          correctedSpread:{spreadTitle:finalTitle,positions:numbered},
+          meta:current?._luneaPreflight||{}
+        };
+        finish({...current,spreadTitle:finalTitle,positions:numbered,designRationale:rationale,
+          _luneaPendingCorrection:changed?learningPayload:null,
+          _luneaPendingUsage:changed?null:learningPayload});
       };
     });
   }
@@ -537,7 +533,13 @@
         if (typeof start !== 'function') throw new Error('startSpread unavailable');
         const now = getState();
         if (now) now.__luneaUniversalAI = false;
-        start(question, confirmed.positions, confirmed.spreadTitle, confirmed.designRationale);
+        const result=await start(question, confirmed.positions, confirmed.spreadTitle, confirmed.designRationale);
+        if(result!==false&&result?.ok!==false){
+          try{
+            if(confirmed._luneaPendingCorrection)W.LUNEA_SPREAD_LEARNING_V1?.record?.(confirmed._luneaPendingCorrection);
+            else if(confirmed._luneaPendingUsage)W.LUNEA_SPREAD_LEARNING_V1?.recordUsage?.(confirmed._luneaPendingUsage);
+          }catch(error){console.warn('[LUNEA V20] post-start learning failed',error)}
+        }
       } catch (error) {
         console.error('[LUNEA V20] universal AI spread failed', error);
         alert('AI 맞춤 배열을 만드는 중 오류가 났어. 질문 내용은 그대로 유지돼.');

@@ -12,8 +12,8 @@
    - a failed / rejected start never becomes a learned correction
 
    Base AI preflight already performs its own post-start commit. This
-   gate targets only the V20 universal preview and otherwise stays out
-   of the learning path.
+   gate remains for legacy V20 confirm-time callers. Current V2/V20
+   previews both commit directly after start; accepted usage is separate.
 */
 (() => {
   const W=window;
@@ -87,9 +87,9 @@
       try{result=prior.apply(this,args)}
       catch(error){throw error}
       if(result&&typeof result.then==='function'){
-        return result.then(value=>{commit(hit);return value},error=>{throw error});
+        return result.then(value=>{if(value!==false&&value?.ok!==false)commit(hit);return value},error=>{throw error});
       }
-      commit(hit);
+      if(result!==false&&result?.ok!==false)commit(hit);
       return result;
     };
     wrapped.__luneaLearningSuccessGate=true;

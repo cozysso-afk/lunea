@@ -3,7 +3,7 @@
 /*
   LUNEA USER SPREAD LEARNING V1.6
   =============================
-  Local-only correction memory for AI spread preflight.
+  Correction memory and separate local accepted-AI usage for spread preflight.
 
   - Saves only when the user manually changes preview title/positions before confirm.
   - Stores the final corrected spread as a high-priority example for similar future questions.
@@ -13,6 +13,7 @@
   - Learns user-authored manual spreads after the user actually starts the draw.
   - Never uploads the memory as a dataset; matched examples travel only inside the user's
     normal Gemini preflight request for that current question.
+  - Accepted AI usage is stored separately (500 rows); repeated use is weak guidance.
   - Max 1000 corrections, deduped by normalized question; shrinks safely only if storage is full.
   - Keeps up to 32 positions so A/B 24-card symmetric layouts are learned in full.
 */
@@ -188,6 +189,66 @@
     return {saved:ok,row};
   }
 
+  // Accepted AI usage is a separate, weak preference signal; never correction data.
+  const USAGE_KEY='LUNEA_SPREAD_USAGE_MEMORY_V1';
+  const USAGE_MAX=500;
+  const bounded=(value,max=300)=>clean(value).slice(0,max);
+  function readUsage(){
+    try{
+      const rows=JSON.parse(localStorage.getItem(USAGE_KEY)||'[]');
+      return Array.isArray(rows)?rows.filter(r=>r?.source==='ai_usage'&&Array.isArray(r.positions)).slice(0,USAGE_MAX):[];
+    }catch{return[]}
+  }
+  function writeUsage(rows){
+    let kept=rows.slice(0,USAGE_MAX);
+    while(kept.length){
+      try{localStorage.setItem(USAGE_KEY,JSON.stringify(kept));return true}
+      catch{if(kept.length===1)return false;kept=kept.slice(0,Math.max(1,Math.floor(kept.length*.75)))}
+    }
+    return false;
+  }
+  function recordUsage(payload={}){
+    const original=payload.originalSpread,final=payload.correctedSpread;
+    if(!original||!final||!samePositions(original.positions,final.positions)||clean(original.spreadTitle)!==clean(final.spreadTitle))return {saved:false,reason:'not_unchanged'};
+    const question=bounded(payload.question,2000),finalPos=positions(final.positions).map(x=>bounded(x));
+    if(!question||finalPos.length<2)return {saved:false,reason:'invalid'};
+    const raw=payload.meta||{};
+    const category=explicitCategory(payload.category||raw.category)||inferredCategory(question,raw);
+    const meta={
+      intentSummary:bounded(raw.intentSummary,500),primaryIntent:bounded(raw.primaryIntent),
+      targetStructure:bounded(raw.targetStructure),
+      requestedAxes:positions(raw.requestedAxes).map(x=>bounded(x))
+    };
+    const spreadTitle=bounded(final.spreadTitle,160);
+    const signature=JSON.stringify([compact(spreadTitle),finalPos.map(compact)]);
+    const questionKey=compact(question),now=Date.now();
+    const rows=readUsage();
+    const index=rows.findIndex(r=>r.questionKey===questionKey&&r.category===category&&r.signature===signature);
+    const previous=index<0?null:rows.splice(index,1)[0];
+    const row={question,questionKey,category,spreadTitle,positions:finalPos,positionCount:finalPos.length,
+      ...meta,structureProfile:profile(question,{...meta,category}),signature,source:'ai_usage',
+      createdAt:previous?.createdAt||now,lastUsedAt:now,
+      useCount:Math.min(1000000,Math.max(0,Number(previous?.useCount)||0)+1)};
+    rows.unshift(row);
+    return {saved:writeUsage(rows),row};
+  }
+  function findUsage(question,limit=2,options={}){
+    const q=clean(question);if(!q)return[];
+    const opts=typeof options==='string'?{category:options}:(options||{});
+    const category=explicitCategory(opts.category)||inferredCategory(q);
+    return readUsage().filter(row=>row.category===category&&row.useCount>=2)
+      .map(row=>({row,...score(q,row,{category})}))
+      .filter(x=>!x.blocked&&x.value>.35)
+      .sort((a,b)=>b.value-a.value||b.row.useCount-a.row.useCount)
+      .slice(0,Math.max(1,Math.min(3,Number(limit)||2)))
+      .map(x=>({row:x.row,score:x.value,priority:'weak_usage'}));
+  }
+  function formatUsageForPrompt(question,limit=2,options={}){
+    const matches=findUsage(question,limit,options);
+    if(!matches.length)return '반복 채택 사용 사례 없음';
+    return matches.map(({row:r},i)=>`[AI 채택 사용 참고 ${i+1} · ${r.category} · ${r.useCount}회 사용]\n과거 질문: ${r.question}\n배열명: ${r.spreadTitle}\n대상 구조: ${r.targetStructure||'미지정'}\n포지션: ${r.positions.join(' / ')}\n요청축: ${r.requestedAxes.join(' / ')}`).join('\n\n');
+  }
+
   function recordManual(payload={}){
     const finalPos=positions(payload.positions);
     const axes=positions(payload.axes);
@@ -337,6 +398,12 @@
     maxPositions:MAX_POSITIONS,
     record,
     recordManual,
+    recordUsage,
+    findUsage,
+    formatUsageForPrompt,
+    usageKey:USAGE_KEY,
+    usageMax:USAGE_MAX,
+    usageList:()=>readUsage().slice(),
     find,
     profile,
     compatibility,
