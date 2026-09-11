@@ -25,5 +25,5 @@ test('Reveal all staggers Oracle flips at the Tarot 110ms rhythm without rerende
   assert.match(render,/revealOracleButton\(b,i\)/);
 });
 test('Oracle runtime cache token advances for PWA refresh',()=>{
-  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
+  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3616/);
 });
