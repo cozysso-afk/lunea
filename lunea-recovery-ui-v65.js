@@ -2,8 +2,8 @@
 
 /* LUNEA RECOVERY UI V65
    Final deterministic repair for the Vercel recovery branch.
-   - Keeps Timing labels authoritative and selects artwork by the number that is
-     actually printed on the uploaded card, including the misnamed upload files.
+   - Keeps Timing labels authoritative and selects final Timing artwork 1:1 by
+     the semantic card number from the canonical LT-### PNG asset set.
    Existing readings, IndexedDB, localStorage and draft state are never cleared.
 */
 (() => {
@@ -11,26 +11,16 @@
   if (W.__LUNEA_RECOVERY_UI_V65__) return;
   W.__LUNEA_RECOVERY_UI_V65__ = true;
 
-  const RELEASE = '20260907-v65';
+  const RELEASE = '20260911-v65-lt-final60';
   const $ = id => document.getElementById(id);
   const norm = value => String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
 
-  /* The 2026-09-05 upload contains correct printed faces for 21-37, 39-60,
-     but several filenames do not match the number printed on the card. It also
-     contains 41-60 duplicated under 001-020, so 1-20 and 38 must use the
-     original semantic artwork. */
-  const UPLOADED_FACE = Object.freeze({
-    21:'timing_021.jpg', 22:'timing_022.jpg', 23:'timing_023.jpg', 24:'timing_024.jpg',
-    25:'timing_025.jpg', 26:'timing_026.jpg', 27:'timing_027.jpg', 28:'timing_028.jpg',
-    29:'timing_029.jpg', 30:'timing_030.jpg', 31:'timing_031.jpg', 32:'timing_032.jpg',
-    33:'timing_033.jpg', 34:'timing_034.jpg', 35:'timing_035.jpg', 36:'timing_036.jpg',
-    37:'timing_037.jpg', 39:'timing_038.jpg', 40:'timing_040.jpg',
-    41:'timing_041.PNG', 42:'timing_042.PNG', 43:'timing_043.PNG', 44:'timing_044.PNG',
-    45:'timing_045.PNG', 46:'timing_046.PNG', 47:'timing_047.PNG', 48:'timing_048.PNG',
-    49:'timing_049.PNG', 50:'timing_050.PNG', 51:'timing_051.jpg', 52:'timing_052.jpg',
-    53:'timing_053.jpg', 54:'timing_054.jpg', 55:'timing_055.jpg', 56:'timing_058.jpg',
-    57:'timing_056.jpg', 58:'timing_057.jpg', 59:'timing_060.jpg', 60:'timing_059.jpg'
-  });
+  const FINAL_FACE = Object.freeze(Object.fromEntries(
+    Array.from({length:60}, (_, index) => {
+      const number = index + 1;
+      return [number, `assets/timing-oracle/cards/LT-${String(number).padStart(3, '0')}.png`];
+    })
+  ));
 
   let cards = [];
   let byLabel = new Map();
@@ -51,7 +41,7 @@
 
   function artwork(card) {
     const number = cardNumber(card);
-    return absoluteAsset(UPLOADED_FACE[number] || card?.filename);
+    return absoluteAsset(FINAL_FACE[number]);
   }
 
   async function loadTimingDeck() {
@@ -145,7 +135,7 @@
     W.LUNEA_RECOVERY_UI_V65 = Object.freeze({
       version:65,
       get ready(){return readyPromise},
-      uploadedFace:{...UPLOADED_FACE},
+      uploadedFace:{...FINAL_FACE},
       artworkForCard:artwork,
       syncTiming
     });
