@@ -136,9 +136,11 @@
 
       .thai-v33-range-panel{margin-top:13px;padding:12px;border-radius:15px;border:1px solid rgba(213,190,126,.14);background:rgba(255,255,255,.025)}
       .thai-v33-range-kicker{color:#c5ae72;font:700 8px 'Cinzel',serif;letter-spacing:1.2px;margin-bottom:8px}
-      .thai-v33-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
-      .thai-v33-chip{min-height:34px;border-radius:10px;border:1px solid rgba(222,210,178,.12);background:rgba(255,255,255,.035);color:#aaa6b1;font-size:9.4px;font-weight:700}
+      .thai-v33-quick{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:6px}
+      .thai-v33-chip{grid-column:span 2;min-width:0;min-height:34px;border-radius:10px;border:1px solid rgba(222,210,178,.12);background:rgba(255,255,255,.035);color:#aaa6b1;font-size:9.4px;font-weight:700}
+      .thai-v33-chip:nth-child(4){grid-column:2/span 2}.thai-v33-chip:nth-child(5){grid-column:4/span 2}
       .thai-v33-chip.active{color:#f1e7c7;border-color:rgba(214,184,108,.34);background:rgba(200,163,80,.10)}
+      .thai-v33-range-help{margin:0 1px 8px;color:#888591;font-size:8.7px;line-height:1.4;text-align:center}
       .thai-v33-dates{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
       .thai-v33-field{display:block;color:#8f8d99;font-size:8.3px;line-height:1.35}
       .thai-v33-field input{margin-top:4px;width:100%;box-sizing:border-box;min-height:34px;padding:6px 7px;border-radius:9px;border:1px solid rgba(220,215,199,.12);background:rgba(7,9,17,.7);color:#ded9e4;font-size:10px}
@@ -161,6 +163,12 @@
     document.head.appendChild(style);
   }
 
+  function syncDateDisplay(...inputs) {
+    const display = W.LUNEA_THAI_DATE_DISPLAY_V57;
+    if (typeof display?.sync === 'function') inputs.forEach(input => display.sync(input));
+    else display?.syncAll?.();
+  }
+
   function setQuickRange(startInput, endInput, days, root) {
     const start = startInput.value || koreaDateString();
     startInput.value = start;
@@ -168,6 +176,7 @@
     root?.querySelectorAll('.thai-v33-chip').forEach(btn => {
       btn.classList.toggle('active', Number(btn.dataset.days) === Number(days));
     });
+    syncDateDisplay(startInput, endInput);
   }
 
   function validateRange(startInput, endInput) {
@@ -241,7 +250,10 @@
         <button type="button" class="thai-v33-chip" data-days="7">7일</button>
         <button type="button" class="thai-v33-chip active" data-days="14">14일</button>
         <button type="button" class="thai-v33-chip" data-days="30">30일</button>
+        <button type="button" class="thai-v33-chip" data-days="60">60일</button>
+        <button type="button" class="thai-v33-chip" data-days="90">90일</button>
       </div>
+      <p class="thai-v33-range-help">직접 날짜 선택 가능 · 최대 90일</p>
       <div class="thai-v33-dates">
         <label class="thai-v33-field">시작일<input type="date" id="luneaThaiStandaloneRangeStart"></label>
         <label class="thai-v33-field">종료일<input type="date" id="luneaThaiStandaloneRangeEnd"></label>
@@ -337,7 +349,10 @@
           <button type="button" class="thai-v33-chip" data-days="7">7일</button>
           <button type="button" class="thai-v33-chip active" data-days="14">14일</button>
           <button type="button" class="thai-v33-chip" data-days="30">30일</button>
+          <button type="button" class="thai-v33-chip" data-days="60">60일</button>
+          <button type="button" class="thai-v33-chip" data-days="90">90일</button>
         </div>
+        <p class="thai-v33-range-help">직접 날짜 선택 가능 · 최대 90일</p>
         <div class="thai-v33-dates">
           <label class="thai-v33-field">시작일<input type="date" id="luneaThaiTarotRangeStart"></label>
           <label class="thai-v33-field">종료일<input type="date" id="luneaThaiTarotRangeEnd"></label>
@@ -575,6 +590,10 @@ ${rows.map(row => `  · ${row}`).join('\n')}
 
   W.LUNEA_THAI_RANGE_V33 = {
     version:'33.0',
+    maxDays:MAX_DAYS,
+    setQuickRange,
+    validateRange,
+    inclusiveDays,
     openTarot:openTarotRange,
     runTarot:runTarotRange,
     runStandalone:runStandaloneRange,

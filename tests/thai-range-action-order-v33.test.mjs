@@ -50,19 +50,20 @@ assert.match(rangeSource, /tarotState\.renderSignature === signature/);
 const expectedOrder = [
   'flipAll','aiRead','saveReading',
   'retry','extraCard','timingSupportBtn',
-  'astroTransitBtn','luneaThaiTarotBridgeBtn','luneaThaiTarotRangeBtn',
+  'astroTransitBtn','thaiTaksaBtn','luneaThaiTarotRangeBtn',
   'astroReturnBtn','astroHoraryBtn'
 ];
 for (let i = 0; i < expectedOrder.length - 1; i += 1) {
   assert.ok(orderSource.indexOf(`'${expectedOrder[i]}'`) < orderSource.indexOf(`'${expectedOrder[i+1]}'`), `action order regressed around ${expectedOrder[i]}`);
 }
 assert.match(orderSource, /Unknown\/future buttons are preserved/);
+assert.match(orderSource, /rank\.set\('luneaThaiTarotBridgeBtn', rank\.get\('thaiTaksaBtn'\)\)/);
 assert.match(orderSource, /const desired = \[\.\.\.known\.map\(x => x\.node\), \.\.\.unknown\.map\(x => x\.node\)\]/);
 assert.match(orderSource, /if \(already\) return true/);
 
 // Long spreads get small convenience controls immediately after the prompt-copy box.
-assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.4/);
-assert.match(orderSource, /version:'33\.4'/);
+assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.5/);
+assert.match(orderSource, /version:'33\.5'/);
 assert.match(orderSource, /luneaBottomReadingActions/);
 assert.match(orderSource, /luneaBottomAiRead/);
 assert.match(orderSource, /luneaBottomSaveReading/);
@@ -81,14 +82,15 @@ assert.match(orderSource, /min-width:0!important/);
 assert.match(orderSource, /max-width:100%!important/);
 assert.match(orderSource, /@media\(max-width:360px\)/);
 
-// Both parser and sequential loader paths must include the modules, regardless of build-stamp value.
+// The deterministic loader must include each module once; the bridge alias is
+// handled inside the action-order owner rather than by loading a second copy.
 for (const asset of [
   'lunea-thai-range-v33.js',
   'lunea-reading-action-order-v33.js',
   'lunea-thai-tarot-bridge-v32.js'
 ]) {
   const pattern = new RegExp(asset.replaceAll('.', '\\.') + "\\?v=[^\"']+", 'g');
-  assert.equal((loader.match(pattern) || []).length, 2, `${asset} must exist in both structural loader paths`);
+  assert.equal((loader.match(pattern) || []).length, 1, `${asset} must have one deterministic loader owner`);
 }
 
 // Future Pages releases must cache-bust all behavior-critical Thai/action modules.
@@ -100,4 +102,4 @@ for (const asset of [
   assert.match(workflow, new RegExp(asset.replaceAll('.', '\\.')));
 }
 
-console.log('Thai range V33 + reading action order V33.4 regression tests: PASS');
+console.log('Thai range V33 + reading action order V33.5 regression tests: PASS');

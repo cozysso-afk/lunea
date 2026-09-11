@@ -52,21 +52,17 @@ assert.match(source, /Western Astrology, Saju, Thai Astrology/);
 assert.ok(source.indexOf("return '시험'") < source.indexOf("return '연락'"), 'exam/contact routing priority regressed');
 assert.ok(source.indexOf("return '직장'") < source.indexOf("return '연락'"), 'career/contact routing priority regressed');
 
-// Load the bridge before Thai Range and Final Priority so all Thai computed
-// blocks are visible to the final evidence-policy wrapper. Build-stamp values
-// are intentionally variable after each Pages release.
+// The deterministic loader has one structural owner for the bridge/range and
+// loads both before reading-group Final Priority. Build stamps remain variable.
 const bridgeToken = 'lunea-thai-tarot-bridge-v32.js?v=';
 const rangeToken = 'lunea-thai-range-v33.js?v=';
 const finalToken = 'lunea-final-prompt-priority-v1.js?v=';
-assert.equal((loader.match(/lunea-thai-tarot-bridge-v32\.js\?v=[^"']+/g) || []).length, 2, 'bridge must exist in both structural loader paths');
-assert.equal((loader.match(/lunea-thai-range-v33\.js\?v=[^"']+/g) || []).length, 2, 'Thai range must exist in both structural loader paths');
-for (let offset = 0, i = 0; i < 2; i += 1) {
-  const bridgeIndex = loader.indexOf(bridgeToken, offset);
-  const rangeIndex = loader.indexOf(rangeToken, bridgeIndex + 1);
-  const finalIndex = loader.indexOf(finalToken, rangeIndex + 1);
-  assert.ok(bridgeIndex >= 0 && bridgeIndex < rangeIndex && rangeIndex < finalIndex, `Thai prompt load order regressed on path ${i+1}`);
-  offset = finalIndex + 1;
-}
+assert.equal((loader.match(/lunea-thai-tarot-bridge-v32\.js\?v=[^"']+/g) || []).length, 1, 'bridge must have one deterministic loader owner');
+assert.equal((loader.match(/lunea-thai-range-v33\.js\?v=[^"']+/g) || []).length, 1, 'Thai range must have one deterministic loader owner');
+const bridgeIndex = loader.indexOf(bridgeToken);
+const rangeIndex = loader.indexOf(rangeToken, bridgeIndex + 1);
+const finalIndex = loader.indexOf(finalToken, rangeIndex + 1);
+assert.ok(bridgeIndex >= 0 && bridgeIndex < rangeIndex && rangeIndex < finalIndex, 'Thai prompt load order regressed');
 
 // The standalone Thai experience remains present and independent.
 assert.match(loader, /lunea-thai-standalone-v24\.js\?v=2401/);

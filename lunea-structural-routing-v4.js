@@ -54,7 +54,7 @@
     './lunea-structural-routing-v4-base.js?v=412',
     './lunea-card-motion-timing-v7.js?v=701',
     './lunea-thai-tarot-bridge-v32.js?v=d2198d8c5779',
-    './lunea-thai-range-v33.js?v=d2198d8c5779'
+    './lunea-thai-range-v33.js?v=20260911-range-90-ui'
   ];
 
   // Audited UI only. No journal migration, timing fetch, AI or global observer.
@@ -110,6 +110,7 @@
       './lunea-question-casebook-ranker-v1.js?v=101',
       './lunea-user-spread-learning-v1.js?v=109',
       './lunea-learning-cloud-sync-v1.js?v=104',
+      './lunea-learning-auth-recovery-v2.js?v=201',
       './lunea-learning-success-gate-v1.js?v=102'
     ],
     intimacy:[
@@ -153,7 +154,7 @@
       './lunea-astro-resume-v23.js?v=2301'
     ],
     finish:[
-      './lunea-thai-date-display-v57.js?v=5701',
+      './lunea-thai-date-display-v57.js?v=5702',
       './lunea-timing-result-copy-v35.js?v=3501',
       './lunea-recovery-finish-v59.js?v=5901'
     ]
@@ -347,6 +348,12 @@
     document.addEventListener('click',gate,true);
   }
 
+  function primeLearningUI(){
+    queueMicrotask(()=>{
+      loadGroup('learning').then(ok=>{if(!ok)console.warn('[LUNEA deterministic] learning UI unavailable')});
+    });
+  }
+
   async function boot(){
     if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
 
@@ -370,6 +377,9 @@
       W.dispatchEvent(new CustomEvent('lunea:home-runtime-ready'));
     })();
     installLazyTriggers();
+    /* Home is already visible. Prime only the small learning group after the
+       shell, without waiting for it or pulling in the reading runtime. */
+    primeLearningUI();
     await Promise.all([shellPromise,homeRuntimePromise]);
     /* Stop after the finite shell. Feature groups require user intent. */
     document.documentElement.dataset.luneaDeterministicReady='1';

@@ -49,7 +49,8 @@
       .${SHELL}>input[type="date"]{
         position:absolute!important;inset:0!important;z-index:2!important;width:100%!important;height:100%!important;
         min-height:0!important;margin:0!important;padding:0!important;border:0!important;border-radius:10px!important;
-        opacity:.001!important;background:transparent!important;color:transparent!important;-webkit-appearance:none!important;
+        opacity:0!important;background:transparent!important;color:transparent!important;
+        -webkit-text-fill-color:transparent!important;caret-color:transparent!important;-webkit-appearance:none!important;
         appearance:none!important;cursor:pointer!important
       }
       .${SHELL}>input[type="date"]::-webkit-calendar-picker-indicator{
@@ -63,7 +64,7 @@
     document.head.appendChild(style);
   }
 
-  function sync(input) {
+  function updateVisible(input) {
     const shell = input?.closest?.(`.${SHELL}`);
     const visible = shell?.querySelector?.('.thai-v57-date-visible');
     const next = formatDate(input.value);
@@ -73,7 +74,7 @@
   function enhance(input) {
     if (!(input instanceof HTMLInputElement) || input.type !== 'date') return false;
     if (!input.closest('.thai-v33-field')) return false;
-    if (input.dataset.luneaThaiDateV57 === '1') { sync(input); return true; }
+    if (input.dataset.luneaThaiDateV57 === '1') { updateVisible(input); return true; }
 
     input.dataset.luneaThaiDateV57 = '1';
     const shell = document.createElement('span');
@@ -84,44 +85,30 @@
     input.parentNode.insertBefore(shell, input);
     shell.appendChild(visible);
     shell.appendChild(input);
-    input.addEventListener('input', () => sync(input));
-    input.addEventListener('change', () => sync(input));
-    sync(input);
+    input.addEventListener('input', () => updateVisible(input));
+    input.addEventListener('change', () => updateVisible(input));
+    updateVisible(input);
     return true;
   }
 
-  function enhanceAll() {
-    document.querySelectorAll('.thai-v33-field input[type="date"]').forEach(enhance);
+  function sync(input) {
+    if (!enhance(input)) return false;
+    updateVisible(input);
+    return true;
+  }
+
+  function syncAll() {
+    document.querySelectorAll('.thai-v33-field input[type="date"]').forEach(sync);
   }
 
   function boot() {
     addStyle();
-    enhanceAll();
-
-    new MutationObserver(records => {
-      let needed = false;
-      for (const record of records) {
-        if (record.addedNodes?.length) { needed = true; break; }
-      }
-      if (needed) queueMicrotask(enhanceAll);
-    }).observe(document.documentElement,{childList:true,subtree:true});
-
-    document.addEventListener('click', event => {
-      if (event.target?.closest?.('.thai-v33-chip,#luneaThaiTarotRangeBtn,.thai-v33-range-panel')) {
-        requestAnimationFrame(enhanceAll);
-        setTimeout(enhanceAll,50);
-        setTimeout(enhanceAll,180);
-      }
-    },true);
-
-    /* Programmatic .value assignments do not emit input/change. Keep the tiny
-       visible mirrors synced while a Thai panel exists. */
-    setInterval(() => {
-      if (document.querySelector('.thai-v33-dates')) enhanceAll();
-    },350);
-
-    W.LUNEA_THAI_DATE_DISPLAY_V57 = Object.freeze({version:57,enhanceAll});
+    syncAll();
   }
+
+  /* V33 owns every panel insertion and programmatic range assignment. Its
+     explicit calls keep these mirrors current without observers or polling. */
+  W.LUNEA_THAI_DATE_DISPLAY_V57 = Object.freeze({version:57,sync,syncAll,enhanceAll:syncAll});
 
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
