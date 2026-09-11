@@ -7,7 +7,7 @@
   const deck=typeof TAROT_DECK!=='undefined'?TAROT_DECK:[];
   if(deck.length!==78 || E.cards.some(c=>!E.identity(c.code,deck))) throw new Error('Canonical Tarot identities unavailable');
   // Design-locked JPEG originals; no crop, re-encoding, or color treatment.
-  const ASSETS=Object.freeze({front:'./assets/message-oracle/message_oracle_front_frame.jpeg?v=101',back:'./assets/message-oracle/message_oracle_back.jpeg?v=101'});
+  const ASSETS=Object.freeze({front:'./assets/message-oracle/message_oracle_front_frame.jpeg?v=101',back:'./assets/message-oracle/message_oracle_back.jpeg?v=101',frontMask:'./assets/message-oracle/message_oracle_front_mask.png?v=101',backMask:'./assets/message-oracle/message_oracle_back_mask.png?v=101'});
   let assetsPromise;
   function ready(){
     if(!assetsPromise) assetsPromise=Promise.all(Object.values(ASSETS).map(src=>new Promise((resolve,reject)=>{
@@ -24,16 +24,22 @@
     #luneaMessageOracleOverlay[data-open="true"]{display:flex}
     #luneaMessageOracleOverlay,#luneaMessageOracleOverlay *{box-sizing:border-box;min-width:0}
     #luneaMessageOracleOverlay .mo-sheet{width:100%;max-width:470px;max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;border:1px solid #ad96bd;border-radius:23px;padding:20px;background:linear-gradient(155deg,#f4eee9,#e9e2f0);color:#393140;box-shadow:0 20px 70px #0005;text-align:left}
-    #luneaMessageOracleOverlay .mo-header{display:flex;align-items:start;gap:12px;justify-content:space-between}
-    #luneaMessageOracleOverlay .mo-kicker{font-size:10px;letter-spacing:1.7px;color:#756079;font-weight:700}
-    #luneaMessageOracleOverlay h2{font:600 20px/1.45 'Noto Serif KR',serif;margin:8px 0}
+    #luneaMessageOracleOverlay .mo-header{display:flex;align-items:start;gap:10px;justify-content:space-between}
+    #luneaMessageOracleOverlay .mo-heading{display:flex;align-items:flex-start;gap:9px;flex:1}
+    #luneaMessageOracleOverlay .mo-symbol{display:block;flex:0 0 30px;width:30px;height:30px;margin-top:2px;color:#775d85;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+    #luneaMessageOracleOverlay .mo-heading-copy{flex:1}
+    #luneaMessageOracleOverlay .mo-kicker{font-size:10px;letter-spacing:1.1px;color:#756079;font-weight:700}
+    #luneaMessageOracleOverlay h2{font:600 19px/1.45 'Noto Serif KR',serif;margin:8px 0}
     #luneaMessageOracleOverlay .mo-sub{font-size:11px;line-height:1.6;color:#716673;margin:0 0 17px}
-    #luneaMessageOracleOverlay button{font:600 12px/1.45 'Noto Sans KR',sans-serif;color:#514050;background:#fff8;border:1px solid #b7a3b8;border-radius:11px;padding:10px 12px;min-height:42px;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
+    #luneaMessageOracleOverlay button{font:600 12px/1.45 'Noto Sans KR',sans-serif;color:#514050;background:#f1eaf2;border:1px solid #b7a3b8;border-radius:11px;padding:10px 12px;min-height:42px;white-space:normal;overflow-wrap:anywhere;cursor:pointer}
     #luneaMessageOracleOverlay button:focus-visible,#luneaMessageOracleOverlay textarea:focus-visible{outline:2px solid #80658c;outline-offset:2px}
     #luneaMessageOracleOverlay button:active{background:#ddd0e5}
     #luneaMessageOracleOverlay .mo-close{flex:0 0 40px;font-size:23px;padding:2px}
     #luneaMessageOracleOverlay label{display:block;font-size:13px;font-weight:650;margin-bottom:7px;color:#493d51}
-    #luneaMessageOracleOverlay textarea{display:block;width:100%;max-width:100%;min-height:88px;resize:vertical;font-size:16px;line-height:1.5;padding:11px;border:1px solid #b5a6b9;border-radius:12px;color:#393140;background:#fff9}
+    #luneaMessageOracleOverlay textarea{display:block;width:100%;max-width:100%;min-height:88px;resize:vertical;font-size:16px;line-height:1.5;padding:11px;border:1px solid #b5a6b9!important;border-radius:12px;color:#393140!important;-webkit-text-fill-color:#393140!important;caret-color:#60476d;background:#f8f2f6!important;box-shadow:inset 0 1px 2px #7057790a!important;color-scheme:light}
+    #luneaMessageOracleOverlay #moQuestion::placeholder{color:#807284!important;-webkit-text-fill-color:#807284!important;opacity:1}
+    #luneaMessageOracleOverlay #moQuestion:focus{color:#393140!important;-webkit-text-fill-color:#393140!important;background:#f8f2f6!important;border-color:#947ba1!important;box-shadow:0 0 0 3px #947ba11c!important}
+    #luneaMessageOracleOverlay .mo-question-summary,#luneaMessageOracleOverlay .mo-full-text{color:#453649;-webkit-text-fill-color:#453649}
     #luneaMessageOracleOverlay .mo-chips{display:flex;flex-wrap:wrap;gap:6px;margin:9px 0 13px}
     #luneaMessageOracleOverlay .mo-chips button{padding:7px 9px;min-height:36px;font-size:11px}
     #luneaMessageOracleOverlay .mo-chips button[aria-pressed="true"]{background:#705779;color:#fff;border-color:#705779}
@@ -45,20 +51,25 @@
     #luneaMessageOracleOverlay .mo-card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateY(0deg)}
     #luneaMessageOracleOverlay .mo-card[data-face="front"] .mo-card-inner{transform:rotateY(180deg)}
     #luneaMessageOracleOverlay .mo-card-back,#luneaMessageOracleOverlay .mo-card-front{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-    #luneaMessageOracleOverlay .mo-card-front{transform:rotateY(180deg);background:#faf6f0;color:#493747}
-    #luneaMessageOracleOverlay .mo-frame-art,#luneaMessageOracleOverlay .mo-back-art{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:none;pointer-events:none}
+    #luneaMessageOracleOverlay .mo-card-front{transform:rotateY(180deg);background:transparent;color:#493747}
+    #luneaMessageOracleOverlay .mo-frame-art,#luneaMessageOracleOverlay .mo-back-art{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:none;background:transparent;pointer-events:none;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
+    /* Lossless external alpha silhouettes remove only edge-connected export
+       white. The approved JPEG pixels and the frame coordinate system stay intact. */
+    #luneaMessageOracleOverlay .mo-frame-art{-webkit-mask-image:url('${ASSETS.frontMask}');mask-image:url('${ASSETS.frontMask}')}
+    #luneaMessageOracleOverlay .mo-back-art{-webkit-mask-image:url('${ASSETS.backMask}');mask-image:url('${ASSETS.backMask}')}
     #luneaMessageOracleOverlay .mo-slot{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;overflow-wrap:anywhere}
-    #luneaMessageOracleOverlay .mo-score{left:42%;top:7.1%;width:16%;height:6.5%;font:600 24px/1 'Noto Serif KR',serif;color:#745832}
+    #luneaMessageOracleOverlay .mo-score{left:50%;top:10.72%;width:15.6%;height:6.5%;transform:translate(-50%,-50%);font:600 23px/1 'Noto Serif KR',serif;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.04em;white-space:nowrap;color:#745832}
+    #luneaMessageOracleOverlay .mo-score[data-digits="3"]{font-size:18px}
     #luneaMessageOracleOverlay .mo-image-slot{left:29.8%;top:18%;width:40.3%;height:33.1%}
-    #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;margin:0}
-    #luneaMessageOracleOverlay .mo-identity{left:21%;top:55.4%;width:58%;height:4.7%;flex-direction:column;gap:1px;font:600 11.5px/1.2 'Noto Serif KR',serif}
-    #luneaMessageOracleOverlay .mo-name-ko{font-size:11px;font-weight:500}
-    #luneaMessageOracleOverlay .mo-message{left:12.2%;top:63.5%;width:75.6%;height:12.6%;font:500 12.5px/1.45 'Noto Serif KR',serif;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;background:transparent;margin:0}
+    #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;flex-direction:column;gap:1px;font:600 12.5px/1.15 'Noto Serif KR',serif}
+    #luneaMessageOracleOverlay .mo-name-ko{font-size:12px;font-weight:500}
+    #luneaMessageOracleOverlay .mo-message{left:12.2%;top:63.5%;width:75.6%;height:12.6%;font:500 14px/1.42 'Noto Serif KR',serif;word-break:keep-all}
     #luneaMessageOracleOverlay .mo-details{position:absolute;left:13.3%;top:79.4%;width:73.4%;height:6.5%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3.8%;margin:0}
     #luneaMessageOracleOverlay .mo-detail{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;line-height:1.25}
-    #luneaMessageOracleOverlay .mo-detail-label{font-size:9px;color:#75604a;font-weight:500}
-    #luneaMessageOracleOverlay .mo-detail-value{font-size:10.5px;font-weight:650;color:#493747;word-break:keep-all}
-    #luneaMessageOracleOverlay .mo-bottom{left:35%;top:90.1%;width:30%;height:3.6%;font-size:11px;line-height:1.25;color:#6d5439}
+    #luneaMessageOracleOverlay .mo-detail-label{font-size:10px;color:#75604a;font-weight:500}
+    #luneaMessageOracleOverlay .mo-detail-value{font-size:12px;font-weight:650;color:#493747;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-bottom{left:35%;top:90.1%;width:30%;height:3.6%;font-size:12px;line-height:1.25;color:#6d5439}
     #luneaMessageOracleOverlay .mo-full-reading{font-size:12px;line-height:1.7;margin:12px 0}
     #luneaMessageOracleOverlay .mo-full-reading summary{cursor:pointer}
     #luneaMessageOracleOverlay .mo-full-text{white-space:pre-wrap}
@@ -76,7 +87,7 @@
   document.head.appendChild(style);
   const overlay=document.createElement('div'); overlay.id='luneaMessageOracleOverlay';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','moTitle');overlay.setAttribute('aria-hidden','true');
-  overlay.innerHTML=`<section class="mo-sheet" tabindex="-1"><div class="mo-header"><div><div class="mo-kicker">LUNEA · MESSAGE ORACLE</div><h2 id="moTitle">연락 · 소식 메시지 카드</h2></div><button class="mo-close" aria-label="닫기">×</button></div><p class="mo-sub">연애 · 재회 · 공적 결과 · 업무 · SNS · 지인 소식</p>
+  overlay.innerHTML=`<section class="mo-sheet" tabindex="-1"><div class="mo-header"><div class="mo-heading"><svg class="mo-symbol" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect x="3" y="12" width="23" height="16" rx="3"></rect><path d="m4 14 10.5 8L25 14M21 3a5 5 0 0 0 6 6 5.4 5.4 0 1 1-6-6ZM8 3v5M5.5 5.5h5"></path></svg><div class="mo-heading-copy"><div class="mo-kicker">LUNEA · MESSAGE ORACLE</div><h2 id="moTitle">연락 · 소식 메시지 카드</h2></div></div><button class="mo-close" aria-label="닫기">×</button></div><p class="mo-sub">연애 · 재회 · 공적 결과 · 업무 · SNS · 지인 소식</p>
     <form class="mo-form"><label for="moQuestion">어떤 연락이나 소식이 궁금해?</label><textarea id="moQuestion" maxlength="2000" required placeholder="예: 회사에서 면접 결과를 알려줄까?"></textarea><div class="mo-context" aria-live="polite"></div><div class="mo-chips" role="group" aria-label="연락 맥락"></div><button class="mo-primary" type="submit">✉️ 메시지 카드 한 장 뽑기</button></form>
     <div class="mo-card" data-face="back"><div class="mo-card-inner">
       <div class="mo-card-back" aria-hidden="true"><img class="mo-back-art" src="${ASSETS.back}" alt="" width="1024" height="1536"></div>
@@ -150,11 +161,12 @@
     const finish=()=>{if(flipAnimation===animation){flipAnimation=null;$('.mo-card').removeAttribute('aria-busy');$('[data-action="redraw"]').disabled=false}};
     animation.finished.then(finish,finish);
   }
+  function renderScore(score){const node=$('.mo-score');node.textContent=`${score}%`;node.dataset.digits=String(String(score).length);}
   function render(animate=false){
     const d=E.describe(current);$('.mo-result').hidden=!d;$('.mo-actions').hidden=!d;$('.mo-form').hidden=!!d;$('.mo-result-context').hidden=!d;
     if(!d){reveal(false);return}
     const id=E.identity(d.cardCode,deck),names=displayNames(id);
-    $('.mo-score').textContent=`${d.score}%`;
+    renderScore(d.score);
     $('.mo-name-en').textContent=names.english;$('.mo-name-ko').textContent=names.korean;
     const img=$('.mo-image');img.src=id.img;img.alt=id.name;
     // A complete first sentence fits the approved message panel. Full unmodified

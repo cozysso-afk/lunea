@@ -31,7 +31,7 @@ function harness({loader=false,denied=false,reduced=false,assetFail=false,holdAs
  context.window=context;
  const html=read('index.html');vm.runInContext(html.split('\n').find(line=>line.startsWith("document.querySelectorAll('.category-header').forEach")),context);vm.runInContext(html.slice(html.indexOf('const MAJORS='),html.indexOf('const TAROT_DECK='))+'const TAROT_DECK=[...MAJORS,...buildMinor()];',context);
  if(loader){vm.runInContext(read('lunea-structural-routing-v4.js').replace('  boot().catch(err=>{','  W.__messageTest={groupForTarget,installLazyTriggers};\n  boot().catch(err=>{'),context);context.__messageTest.installLazyTriggers()}
- else{vm.runInContext(read('lunea-message-oracle-v1.js'),context);vm.runInContext(read('lunea-message-oracle-ui-v1.js'),context)}
+ else{vm.runInContext(read('lunea-message-oracle-v1.js'),context);vm.runInContext(read('lunea-message-oracle-ui-v1.js').replace('  W.LUNEA_MESSAGE_ORACLE_UI_V1=', '  W.__renderMessageScore=renderScore;\n  W.LUNEA_MESSAGE_ORACLE_UI_V1='),context)}
  return {document,entry,context,map,loaded,query:s=>document.querySelector(s),draws:()=>draws,setConfirm:v=>confirm=v,copied:()=>copied,animations:()=>animations,finishFlips:async()=>{activeAnimations.forEach(a=>a.finish());activeAnimations=[];await Promise.resolve()},releaseAssets:()=>{pendingAssets.forEach(f=>f());pendingAssets=[]}};
 }
 async function start(h){await h.entry.click();h.query('#moQuestion').value='합성 면접 결과 연락';await h.query('#moQuestion').emit('input');await h.query('.mo-form').emit('submit');await h.finishFlips()}
@@ -65,7 +65,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=102']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=103']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -114,4 +114,13 @@ test('all 78 restored identities get stable names and upright canonical images w
  for(const c of api.cards){const row=api.result('합성 복원 질문','GENERAL',c.code);api.storage(h.context.localStorage).save(row)}
  await h.entry.click();for(const button of h.query('.mo-saved-list').children){await button.click();assert.ok(h.query('.mo-name-en').textContent);assert.ok(h.query('.mo-name-ko').textContent);assert.ok(h.query('.mo-image').alt);assert.equal(h.query('.mo-card').dataset.face,'front')}
  assert.equal(h.draws(),0);assert.equal(h.animations(),0);
+});
+
+
+test('score typography distinguishes 9%, 34% and 100% without changing a result',()=>{
+ const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[100,'3']]){h.context.__renderMessageScore(score);assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits)}assert.equal(h.draws(),0);
+});
+test('header has a visible SVG motif and styles scope the dark input override to Message',()=>{
+ const h=harness();assert.equal(h.query('.mo-symbol').tagName,'svg');assert.equal(h.query('.mo-symbol').getAttribute('viewBox'),'0 0 32 32');assert.equal(h.query('.mo-symbol').children.length,2);
+ const css=h.query('#luneaMessageOracleStyle').textContent;assert.match(css,/color:#393140!important;-webkit-text-fill-color:#393140!important/);assert.match(css,/\.mo-card-front\{[^}]*background:transparent/);assert.match(css,/mask-image:url\('[^']*message_oracle_front_mask.png/);assert.match(css,/mask-image:url\('[^']*message_oracle_back_mask.png/);
 });
