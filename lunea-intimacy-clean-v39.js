@@ -69,6 +69,9 @@
       .lunea-intimacy-category .category-header::after{display:none!important}
       .lunea-intimacy-category .cat-left{gap:11px!important;min-width:0!important}
       .lunea-intimacy-category .cat-icon{flex-shrink:0}
+      html.lunea-luminous-layout-v2 .lunea-intimacy-category .cat-icon{
+        font-size:22px!important;line-height:1!important;
+      }
       .lunea-intimacy-category .cat-text{min-width:0!important}
       .lunea-intimacy-category .cat-text h3{
         margin:0!important;color:#f2edf5!important;text-shadow:none!important;

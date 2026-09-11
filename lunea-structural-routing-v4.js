@@ -37,7 +37,7 @@
     './lunea-daily-lock-v1.js?v=101',
     './lunea-home-portal-v8.js?v=801',
     './lunea-intimacy-v34.js?v=d2198d8c5779',
-    './lunea-intimacy-clean-v39.js?v=20260911-list-symbol',
+    './lunea-intimacy-clean-v39.js?v=20260911-heart-visible',
     './lunea-thai-standalone-v24.js?v=2401',
     './lunea-thai-art-v25.js?v=2501',
     './lunea-thai-art-polish-v26.js?v=2602',
