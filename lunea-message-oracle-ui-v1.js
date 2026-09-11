@@ -58,18 +58,22 @@
     #luneaMessageOracleOverlay .mo-frame-art{-webkit-mask-image:url('${ASSETS.frontMask}');mask-image:url('${ASSETS.frontMask}')}
     #luneaMessageOracleOverlay .mo-back-art{-webkit-mask-image:url('${ASSETS.backMask}');mask-image:url('${ASSETS.backMask}')}
     #luneaMessageOracleOverlay .mo-slot{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;overflow-wrap:anywhere}
-    #luneaMessageOracleOverlay .mo-score{left:50%;top:10.72%;width:15.6%;height:6.5%;transform:translate(-50%,-50%);font:600 23px/1 'Noto Serif KR',serif;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.04em;white-space:nowrap;color:#745832}
+    /* Measured usable rectangles in the unmodified 846 x 1399 front:
+       score 359,89 126x126; message 101,875 643x201; bottom 293,1254 259x52.
+       The bottom rectangle follows the optically even ivory core so every
+       context label shares one font-metric correction through slot geometry. */
+    #luneaMessageOracleOverlay .mo-score{left:42.434988%;top:6.361687%;width:14.893617%;height:9.006433%;display:flex;align-items:center;justify-content:center;text-align:center;font:600 23px/1 'Noto Serif KR',serif;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.04em;white-space:nowrap;color:#745832}
     #luneaMessageOracleOverlay .mo-score[data-digits="3"]{font-size:18px}
     #luneaMessageOracleOverlay .mo-image-slot{left:29.8%;top:18%;width:40.3%;height:33.1%}
     #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;background:transparent;margin:0}
     #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;flex-direction:column;gap:1px;font:600 12.5px/1.15 'Noto Serif KR',serif}
     #luneaMessageOracleOverlay .mo-name-ko{font-size:12px;font-weight:500}
-    #luneaMessageOracleOverlay .mo-message{left:12.2%;top:63%;width:75.6%;height:14.2%;font:500 14px/1.34 'Noto Serif KR',serif;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-message{left:11.938534%;top:62.544675%;width:76.004728%;height:14.367405%;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;padding:2px 5px;font:500 14px/1.34 'Noto Serif KR',serif;word-break:keep-all}
     #luneaMessageOracleOverlay .mo-details{position:absolute;left:13.3%;top:79.4%;width:73.4%;height:6.5%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3.8%;margin:0}
     #luneaMessageOracleOverlay .mo-detail{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;line-height:1.25}
     #luneaMessageOracleOverlay .mo-detail-label{font-size:10px;color:#75604a;font-weight:500}
     #luneaMessageOracleOverlay .mo-detail-value{font-size:12px;font-weight:650;color:#493747;word-break:keep-all}
-    #luneaMessageOracleOverlay .mo-bottom{left:35%;top:90.1%;width:30%;height:3.6%;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;color:#6d5439;transform:translateY(-1px)}
+    #luneaMessageOracleOverlay .mo-bottom{left:34.633570%;top:89.635454%;width:30.614657%;height:3.716941%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1;color:#6d5439}
     #luneaMessageOracleOverlay .mo-full-reading{font-size:12px;line-height:1.7;margin:12px 0}
     #luneaMessageOracleOverlay .mo-full-reading summary{cursor:pointer}
     #luneaMessageOracleOverlay .mo-full-text{white-space:pre-wrap}

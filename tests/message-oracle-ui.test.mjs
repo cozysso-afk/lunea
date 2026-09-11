@@ -65,7 +65,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=105']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=106']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -149,7 +149,27 @@ test('all 78 restored identities get stable names and upright canonical images w
 test('score typography distinguishes 9%, 34% and 100% without changing a result',()=>{
  const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[100,'3']]){h.context.__messagePresentation.renderScore(score);assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits);assert.match(h.query('.mo-score').getAttribute('aria-label'),/결과 성공 확률이 아님/)}assert.equal(h.draws(),0);
 });
+test('approved source-space slots center score, multiline message, and every context label without transforms',()=>{
+ const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
+ const rule=name=>css.match(new RegExp(`#luneaMessageOracleOverlay \\.${name}\\{([^}]*)\\}`))?.[1]||'';
+ const value=(body,property)=>Number(body.match(new RegExp(`${property}:([\\d.]+)%`))?.[1]);
+ const specs={
+  'mo-score':{x:359,y:89,w:126,h:126},
+  'mo-message':{x:101,y:875,w:643,h:201},
+  'mo-bottom':{x:293,y:1254,w:259,h:52}
+ };
+ for(const [name,expected] of Object.entries(specs)){
+  const body=rule(name);assert.ok(body,name);
+  const actual={x:value(body,'left')*846/100,y:value(body,'top')*1399/100,w:value(body,'width')*846/100,h:value(body,'height')*1399/100};
+  for(const key of Object.keys(expected))assert.ok(Math.abs(actual[key]-expected[key])<.001,`${name} ${key}: ${actual[key]}`);
+  assert.match(body,/display:flex/);assert.match(body,/align-items:center/);assert.match(body,/justify-content:center/);assert.match(body,/text-align:center/);assert.doesNotMatch(body,/transform:/);
+ }
+ assert.equal(specs['mo-score'].x+specs['mo-score'].w/2,422);assert.equal(specs['mo-score'].y+specs['mo-score'].h/2,152);
+ assert.equal(specs['mo-message'].x+specs['mo-message'].w/2,422.5);assert.equal(specs['mo-message'].y+specs['mo-message'].h/2,975.5);
+ assert.equal(specs['mo-bottom'].x+specs['mo-bottom'].w/2,422.5);assert.equal(specs['mo-bottom'].y+specs['mo-bottom'].h/2,1280);
+ assert.match(rule('mo-message'),/margin:0/);assert.match(rule('mo-message'),/padding:2px 5px/);assert.match(rule('mo-bottom'),/line-height:1/);
+});
 test('header uses the approved transparent PNG logo and styles scope the dark input override to Message',()=>{
  const h=harness();assert.equal(h.query('.mo-symbol').tagName,'img');assert.equal(h.query('.mo-symbol').getAttribute('src'),'./assets/message-oracle/message_oracle_logo.png?v=101');assert.equal(h.query('.mo-symbol').getAttribute('aria-hidden'),'true');
- const css=h.query('#luneaMessageOracleStyle').textContent;assert.match(css,/color:#393140!important;-webkit-text-fill-color:#393140!important/);assert.match(css,/\.mo-card-front\{[^}]*background:transparent/);assert.match(css,/mask-image:url\('[^']*message_oracle_front_mask.png/);assert.match(css,/mask-image:url\('[^']*message_oracle_back_mask.png/);assert.match(css,/\.mo-bottom\{[^}]*display:flex;align-items:center;justify-content:center[^}]*line-height:1[^}]*translateY\(-1px\)/);
+ const css=h.query('#luneaMessageOracleStyle').textContent;assert.match(css,/color:#393140!important;-webkit-text-fill-color:#393140!important/);assert.match(css,/\.mo-card-front\{[^}]*background:transparent/);assert.match(css,/mask-image:url\('[^']*message_oracle_front_mask.png/);assert.match(css,/mask-image:url\('[^']*message_oracle_back_mask.png/);
 });
