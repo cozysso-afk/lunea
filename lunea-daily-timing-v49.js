@@ -27,9 +27,34 @@
       return d && d.day===localDay() && Array.isArray(d.drawn) && d.drawn.length>=4 ? d : null;
     }catch{return null}
   }
-  function isDailyContext(){
+  function cardKey(card){
+    if(!card) return '';
+    return [card.code||card.id||card.name||'', card.isReversed?'R':'U'].join(':');
+  }
+  function readingSignature(obj){
+    const drawn=Array.isArray(obj?.drawn)?obj.drawn:[];
+    return [norm(obj?.category),norm(obj?.title),norm(obj?.question),drawn.map(cardKey).join('|')].join('::');
+  }
+  function currentDailyLike(){
     const s=getState();
-    return s?.category==='DAILY' || !!readDaily();
+    if(!s || norm(s.category)!=='DAILY' || !Array.isArray(s.drawn) || !s.drawn.length) return null;
+    return {category:'DAILY',title:s.title,question:s.question,drawn:s.drawn};
+  }
+  function savedDailyLike(){
+    const d=readDaily();
+    return d ? {category:'DAILY',title:d.title,question:d.question,drawn:d.drawn} : null;
+  }
+  function sameDailyReading(){
+    const current=currentDailyLike();
+    const saved=savedDailyLike();
+    if(!current || !saved) return false;
+    return readingSignature(current)===readingSignature(saved);
+  }
+  function currentDailySignature(){
+    return sameDailyReading() ? readingSignature(currentDailyLike()) : '';
+  }
+  function isDailyContext(){
+    return !!currentDailySignature();
   }
   function readSnap(){
     try{
@@ -39,8 +64,19 @@
     const d=readDaily();
     return d?.timingSupport?.day===localDay() && d.timingSupport.imgSrc ? d.timingSupport : null;
   }
+  function snapMatchesCurrentDaily(snap){
+    if(!snap || !isDailyContext()) return false;
+    const current=currentDailyLike();
+    const currentSig=currentDailySignature();
+    if(snap.readingSignature) return snap.readingSignature===currentSig;
+    const snapTitle=norm(snap.title), snapQuestion=norm(snap.question);
+    const currentTitle=norm(current?.title), currentQuestion=norm(current?.question);
+    if(snapTitle && currentTitle && snapTitle!==currentTitle) return false;
+    if(snapQuestion && currentQuestion && snapQuestion!==currentQuestion) return false;
+    return true;
+  }
   function mergeIntoDaily(snap){
-    if(!snap) return;
+    if(!snap || !snapMatchesCurrentDaily(snap)) return;
     try{
       const d=readDaily();
       if(!d) return;
@@ -61,6 +97,7 @@
       version:49,
       day:localDay(),
       savedAt:Date.now(),
+      readingSignature:currentDailySignature(),
       title:String(s?.title||d?.title||'DAILY ORBIT'),
       question:String(s?.question||d?.question||''),
       imgSrc:String(img.src||''),
@@ -90,9 +127,10 @@
     };
   }
   function attachTimingToNewestArchive(){
+    if(!isDailyContext()) return;
     const snap=readSnap();
     const d=readDaily();
-    if(!snap||!d) return;
+    if(!snap||!d||!snapMatchesCurrentDaily(snap)) return;
     try{
       const rows=JSON.parse(localStorage.getItem(ARCHIVE_KEY)||'[]');
       if(!Array.isArray(rows)||!rows.length) return;
@@ -150,7 +188,7 @@
     if($('luneaTimingInline')){compactInline();snapshotInline();return true}
     const snap=readSnap();
     const cards=$('cards');
-    if(!snap||!cards||!snap.imgSrc) return false;
+    if(!snap||!snapMatchesCurrentDaily(snap)||!cards||!snap.imgSrc) return false;
     const box=document.createElement('div');
     box.id='luneaTimingInline';
     box.className='timing-inline';
@@ -194,7 +232,7 @@
     W.addEventListener('pageshow',()=>{if(isDailyContext())scheduleRestore()},{passive:true});
 
     W.LUNEA_DAILY_TIMING_V49={snapshot:snapshotInline,restore:restoreInline,compact:compactInline,read:readSnap};
-    console.info('⏳ LUNEA Daily Timing V49 loaded · compact + persistent');
+    console.info('⏳ LUNEA Daily Timing V49 loaded · exact DAILY identity + persistent');
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();
