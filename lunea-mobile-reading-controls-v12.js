@@ -7,6 +7,7 @@
   - replaces the horizontally scrolling tiny spread action chips with a stable action dock
   - larger touch targets and readable labels
   - mobile-friendly Timing inline card with the real final Timing image as its only card visual
+  - subtle action identity for Thai Astrology and Horary
   - no RNG / reading / timing / archive / astrology logic changes
 */
 (() => {
@@ -86,6 +87,32 @@
     #spreadOverlay .actionbar #extraCard{
       color:#e9f3f3!important;
       border-color:rgba(174,216,211,.15)!important;
+    }
+
+    /* Thai Astrology — one restrained Siam-gold family. */
+    #spreadOverlay .actionbar #thaiTaksaBtn,
+    #spreadOverlay .actionbar #luneaThaiTarotRangeBtn{
+      color:#f0d5a0!important;
+      border-color:rgba(216,170,91,.26)!important;
+      background:linear-gradient(145deg,rgba(135,82,38,.18),rgba(83,54,34,.08))!important;
+    }
+    #spreadOverlay .actionbar #thaiTaksaBtn:active,
+    #spreadOverlay .actionbar #luneaThaiTarotRangeBtn:active{
+      color:#f4ddb0!important;
+      border-color:rgba(224,181,103,.34)!important;
+      background:linear-gradient(145deg,rgba(151,94,45,.24),rgba(91,59,37,.12))!important;
+    }
+
+    /* Horary — cool celestial blue, distinct from Timing violet. */
+    #spreadOverlay .actionbar #astroHoraryBtn{
+      color:#d7e8f8!important;
+      border-color:rgba(117,169,210,.25)!important;
+      background:linear-gradient(145deg,rgba(52,91,138,.19),rgba(48,57,111,.09))!important;
+    }
+    #spreadOverlay .actionbar #astroHoraryBtn:active{
+      color:#e0eefb!important;
+      border-color:rgba(132,184,223,.34)!important;
+      background:linear-gradient(145deg,rgba(60,104,155,.25),rgba(53,64,123,.13))!important;
     }
 
     /* Give the reading content enough breathing room around the sticky dock. */
