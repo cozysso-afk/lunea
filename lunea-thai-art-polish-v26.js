@@ -24,6 +24,50 @@
     const s=document.createElement('style');
     s.id='luneaThaiArtPolishV26Style';
     s.textContent=`
+      /* Shared final Thai sheet theme: standalone support and period calendar. */
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay){
+        --dim:#bfb09a;--text:#f4e9d5;--gold:#efd39b;--gold2:#d8aa5b;
+        box-sizing:border-box;background:rgba(12,8,5,.95)!important;color:#f4e9d5;
+      }
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) *{box-sizing:border-box;min-width:0}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .modal{
+        width:100%;max-width:448px!important;
+        background:radial-gradient(ellipse at 90% 0%,rgba(216,170,91,.10),transparent 40%),linear-gradient(160deg,#1d1510,#17110d)!important;
+        border-color:rgba(216,170,91,.30)!important;
+        box-shadow:inset 0 1px 0 rgba(239,211,155,.06),0 24px 64px rgba(0,0,0,.55)!important;
+      }
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.modal-h,.thai-v24-title,.thai-v24-kicker,.thai-v33-range-kicker,b,strong,label,small){color:#efd39b!important}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.modal-h,.thai-v24-title){padding-right:28px;overflow-wrap:anywhere}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(p,.thai-v24-sub,.thai-v24-status,.thai-v33-status,.thai-v33-field,.thai-v24-cell span,.thai-v24-summary span,.thai-v33-main span){color:#bfb09a!important}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.thai-v24-summary,.thai-v24-cell,.thai-v24-now,.thai-v33-range-panel,.thai-v33-day,.thai-v33-summary span){
+        background:rgba(216,170,91,.055)!important;border-color:rgba(216,170,91,.24)!important;color:#e0cfaf!important;
+      }
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.thai-v24-cell.focus,.thai-v33-day.supportive){border-color:rgba(216,170,91,.45)!important}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.thai-v24-cell.kala,.thai-v33-day.caution){border-color:rgba(199,139,116,.42)!important}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(input,select,textarea){
+        width:100%!important;max-width:100%!important;min-width:0!important;
+        background:#17110d!important;border-color:rgba(216,170,91,.28)!important;color:#f4e9d5!important;color-scheme:dark;
+      }
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(input,select,textarea):focus{border-color:#d8aa5b!important;outline-color:#d8aa5b;box-shadow:0 0 0 2px rgba(216,170,91,.14)!important}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) button{
+        min-width:0;max-width:100%;white-space:normal;overflow-wrap:anywhere;
+        background:linear-gradient(145deg,#302319,#211810)!important;border-color:rgba(216,170,91,.28)!important;color:#efd39b!important;
+        box-shadow:inset 0 1px 0 rgba(239,211,155,.06)!important;
+      }
+      #luneaThaiStandaloneOverlay #luneaThaiStandaloneRun,
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .thai-v33-run{
+        background:linear-gradient(120deg,#efd39b,#d8aa5b)!important;color:#21170d!important;
+      }
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.thai-v24-topic.active,.thai-v33-chip.active){background:#49341f!important;border-color:#d8aa5b!important;color:#fff0d0!important}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.thai-v24-grid,.thai-v33-dates){grid-template-columns:repeat(2,minmax(0,1fr))}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .thai-v33-quick{grid-template-columns:repeat(3,minmax(0,1fr))}
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .modal *{overflow-wrap:anywhere}
+      #luneaThaiTarotBridgeInline{box-sizing:border-box;max-width:100%;overflow-wrap:anywhere;background:#1d1510!important;border-color:rgba(216,170,91,.28)!important}
+      #luneaThaiTarotBridgeInline :is(small,b){color:#efd39b!important}
+      #luneaThaiTarotBridgeInline span{color:#bfb09a!important}
+      @media(max-width:420px){
+        :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .thai-v33-dates{grid-template-columns:minmax(0,1fr)}
+      }
       #luneaThaiHomeTileV24 .thai-v24-orb{
         overflow:hidden!important;
         isolation:isolate;

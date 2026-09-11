@@ -177,6 +177,13 @@
         background:linear-gradient(145deg,rgba(255,255,255,.68),rgba(241,232,221,.60))!important;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.80)!important;
       }
+      html.lunea-timing-image-assets-v15 #timingOverlay :is(.timing-actions,.tab-actions){
+        display:flex;flex-wrap:wrap!important;min-width:0;max-width:100%;box-sizing:border-box;
+      }
+      html.lunea-timing-image-assets-v15 #timingOverlay :is(.timing-actions,.tab-actions)>button{
+        flex:1 1 125px!important;min-width:0!important;max-width:100%!important;box-sizing:border-box;
+        white-space:normal!important;overflow-wrap:anywhere;line-height:1.4;
+      }
       html.lunea-timing-image-assets-v15 #timingOverlay #timingRefine{
         border-color:rgba(157,128,182,.34)!important;
         background:linear-gradient(112deg,rgba(235,225,245,.92),rgba(247,238,224,.94))!important;

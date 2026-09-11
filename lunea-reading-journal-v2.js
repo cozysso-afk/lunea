@@ -315,7 +315,7 @@
         border-color:rgba(130,234,220,.62);
         box-shadow:0 0 0 2px rgba(130,234,220,.08);
       }
-      .lj-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:9px 0}
+      .lj-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:9px 0}
       .lj-stat{
         padding:9px 4px;text-align:center;border-radius:12px;
         border:1px solid rgba(130,234,220,.14);
@@ -334,7 +334,13 @@
         background:rgba(130,234,220,.055);border-left:2px solid rgba(130,234,220,.48);
         color:#9fb8bb;font-size:8.7px;line-height:1.55
       }
-      .lj-filter{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:7px}
+      .lj-filter{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:7px}
+      #archiveOverlay .archive-modal,#archiveOverlay .archive-modal *{box-sizing:border-box}
+      #archiveOverlay :is(.archive-toolbar,.lj-filter,.lj-grid,.lj-stats,.lj-tools)>*{min-width:0;max-width:100%;overflow-wrap:anywhere}
+      #archiveOverlay :is(input,select,textarea){min-width:0;max-width:100%;width:100%;box-sizing:border-box}
+      #archiveOverlay .archive-toolbar{flex-wrap:wrap}
+      #archiveOverlay .archive-toolbar input{flex:1 1 100%}
+      #archiveOverlay :is(.archive-toolbar,.lj-tools) button{min-width:0;white-space:normal;overflow-wrap:anywhere}
       .lj-filter select{min-height:39px;padding:7px;font-size:10px}
       .lj-tools{display:flex;gap:5px;margin-bottom:10px}
       .lj-tools button{flex:1}
@@ -362,13 +368,13 @@
         border:1px solid rgba(255,159,198,.15)
       }
       .lj-review.open{display:block}
-      .lj-statuses{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+      .lj-statuses{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
       .lj-statuses button{padding:6px 2px;font-size:8px}
       .lj-statuses .on{
         color:#fff;border-color:rgba(130,234,220,.55);
         background:linear-gradient(135deg,rgba(84,205,191,.24),rgba(255,159,198,.12))
       }
-      .lj-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+      .lj-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
       .lj-field{margin-top:7px}
       .lj-field label{display:block;font-size:8.8px;color:#cddcde;margin-bottom:3px}
       .lj-field textarea{height:64px;font-size:11px}
@@ -380,9 +386,9 @@
         background:linear-gradient(135deg,rgba(84,205,191,.18),rgba(255,159,198,.09))!important
       }
       @media(max-width:390px){
-        .lj-stats{grid-template-columns:1fr 1fr}
+        .lj-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
         .lj-statuses{grid-template-columns:repeat(3,1fr)}
-        .lj-grid{grid-template-columns:1fr}
+        .lj-grid,.lj-filter{grid-template-columns:minmax(0,1fr)}
       }
     `;
     document.head.appendChild(style);

@@ -32,6 +32,39 @@
       #astroHoraryOverlay .horary-modal textarea,#astroHoraryOverlay .horary-modal input,#astroHoraryOverlay .horary-modal select{
         scroll-margin-top:88px!important;
       }
+      /* Final Horary presentation owner: midnight celestial, scoped to this sheet. */
+      #astroHoraryOverlay,#astroHoraryOverlay *{box-sizing:border-box}
+      #astroHoraryOverlay{
+        --dim:#a7b8cb;--text:#e6eff8;--gold:#cfe5f6;--gold2:#9fc8e8;
+        background:rgba(4,9,18,.94)!important;color:#e6eff8;
+      }
+      #astroHoraryOverlay .horary-modal{
+        background:radial-gradient(ellipse at 85% 0%,rgba(117,169,210,.10),transparent 42%),linear-gradient(160deg,#0c1427,#09111f)!important;
+        border-color:rgba(117,169,210,.28)!important;
+        box-shadow:inset 0 1px 0 rgba(207,229,246,.07),0 24px 64px rgba(0,0,0,.55)!important;
+      }
+      #astroHoraryOverlay :is(.sub,.modal-h,h4,h5,b,strong,label,summary){color:#cfe5f6!important}
+      #astroHoraryOverlay .modal-h{padding-right:28px;overflow-wrap:anywhere}
+      #astroHoraryOverlay :is(.horary-help,.horary-status,.v38-help,.horary-mode-v37 span){color:#a7b8cb!important}
+      #astroHoraryOverlay :is(.horary-summary,.horary-card,.horary-ai,.horary-mode-v37,#luneaHoraryModeEvidenceV37,#luneaHoraryManualEvidenceV38,#luneaHoraryConditionEvidenceV38,#luneaHoraryAdvancedLocationV38){
+        background:linear-gradient(145deg,rgba(117,169,210,.08),rgba(50,64,104,.09))!important;
+        border-color:rgba(117,169,210,.24)!important;color:#b5c7d9!important;
+      }
+      #astroHoraryOverlay :is(input,select,textarea){
+        width:100%!important;max-width:100%!important;min-width:0!important;
+        background:#09111f!important;border-color:rgba(117,169,210,.28)!important;color:#e6eff8!important;color-scheme:dark;
+      }
+      #astroHoraryOverlay :is(input,select,textarea):focus{border-color:#9fc8e8!important;outline-color:#9fc8e8;box-shadow:0 0 0 2px rgba(117,169,210,.14)!important}
+      #astroHoraryOverlay :is(button,.mini){
+        max-width:100%;min-width:0;white-space:normal;overflow-wrap:anywhere;
+        background:linear-gradient(145deg,#1b2b42,#111d30)!important;border-color:rgba(117,169,210,.30)!important;color:#cfe5f6!important;
+        box-shadow:inset 0 1px 0 rgba(207,229,246,.06)!important;
+      }
+      #astroHoraryOverlay #astroHoraryRun{background:linear-gradient(120deg,#cfe5f6,#9fc8e8)!important;color:#09111f!important}
+      #astroHoraryOverlay :is(.horary-grid,.v38-grid)>*,#astroHoraryOverlay .horary-modal>*{min-width:0;max-width:100%;overflow-wrap:anywhere}
+      #astroHoraryOverlay .horary-actions{flex-wrap:wrap}
+      #astroHoraryOverlay .horary-actions button{flex:1 1 125px}
+      @media(max-width:420px){#astroHoraryOverlay :is(.horary-grid,.v38-grid){grid-template-columns:minmax(0,1fr)!important}}
       html.lunea-horary-v42-locked,html.lunea-horary-v42-locked body{overscroll-behavior:none!important}
     `;
     document.head.appendChild(style);

@@ -113,6 +113,11 @@
         letter-spacing:.85px!important;
         color:rgba(229,181,204,.76)!important;
       }
+      .lunea-intimacy-category,.lunea-intimacy-category *{box-sizing:border-box}
+      .lunea-intimacy-category :is(.category-content,.reading-item,.cat-left,.cat-text){min-width:0;max-width:100%}
+      .lunea-intimacy-category .reading-item{position:relative;white-space:normal;overflow-wrap:anywhere}
+      .lunea-intimacy-category .reading-item :is(h4,p){overflow-wrap:anywhere}
+      .lunea-intimacy-category .reading-item:has(.lunea-count-label){padding-right:64px!important}
       @media(max-width:380px){
         .lunea-intimacy-category .cat-icon{width:58px!important;height:58px!important;min-width:58px!important;min-height:58px!important;border-radius:17px!important}
         .lunea-intimacy-category .reading-item{padding:12px 43px 12px 12px!important}
