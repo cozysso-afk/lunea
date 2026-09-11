@@ -7,7 +7,7 @@
   const deck=typeof TAROT_DECK!=='undefined'?TAROT_DECK:[];
   if(deck.length!==78 || E.cards.some(c=>!E.identity(c.code,deck))) throw new Error('Canonical Tarot identities unavailable');
   // Design-locked JPEG originals; no crop, re-encoding, or color treatment.
-  const ASSETS=Object.freeze({front:'./assets/message-oracle/message_oracle_front_frame.jpeg?v=101',back:'./assets/message-oracle/message_oracle_back.jpeg?v=101',frontMask:'./assets/message-oracle/message_oracle_front_mask.png?v=101',backMask:'./assets/message-oracle/message_oracle_back_mask.png?v=101'});
+  const ASSETS=Object.freeze({logo:'./assets/message-oracle/message_oracle_logo.png?v=101',front:'./assets/message-oracle/message_oracle_front_frame.jpeg?v=101',back:'./assets/message-oracle/message_oracle_back.jpeg?v=101',frontMask:'./assets/message-oracle/message_oracle_front_mask.png?v=101',backMask:'./assets/message-oracle/message_oracle_back_mask.png?v=101'});
   let assetsPromise;
   function ready(){
     if(!assetsPromise) assetsPromise=Promise.all(Object.values(ASSETS).map(src=>new Promise((resolve,reject)=>{
@@ -26,7 +26,7 @@
     #luneaMessageOracleOverlay .mo-sheet{width:100%;max-width:470px;max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;border:1px solid #ad96bd;border-radius:23px;padding:20px;background:linear-gradient(155deg,#f4eee9,#e9e2f0);color:#393140;box-shadow:0 20px 70px #0005;text-align:left}
     #luneaMessageOracleOverlay .mo-header{display:flex;align-items:start;gap:10px;justify-content:space-between}
     #luneaMessageOracleOverlay .mo-heading{display:flex;align-items:flex-start;gap:9px;flex:1}
-    #luneaMessageOracleOverlay .mo-symbol{display:block;flex:0 0 30px;width:30px;height:30px;margin-top:2px;color:#775d85;fill:none;stroke:currentColor;stroke-width:1.55;stroke-linecap:round;stroke-linejoin:round}
+    #luneaMessageOracleOverlay .mo-symbol{display:block;flex:0 0 36px;width:36px;height:36px;margin-top:0;object-fit:contain;background:transparent;filter:none}
     #luneaMessageOracleOverlay .mo-heading-copy{flex:1}
     #luneaMessageOracleOverlay .mo-kicker{font-size:10px;letter-spacing:1.1px;color:#756079;font-weight:700}
     #luneaMessageOracleOverlay h2{font:600 19px/1.45 'Noto Serif KR',serif;margin:8px 0}
@@ -87,7 +87,7 @@
   document.head.appendChild(style);
   const overlay=document.createElement('div'); overlay.id='luneaMessageOracleOverlay';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','moTitle');overlay.setAttribute('aria-hidden','true');
-  overlay.innerHTML=`<section class="mo-sheet" tabindex="-1"><div class="mo-header"><div class="mo-heading"><svg class="mo-symbol" viewBox="0 0 32 32" aria-hidden="true" focusable="false"><rect x="3" y="12" width="23" height="16" rx="3"></rect><path d="m4 14 10.5 8L25 14M21 3a5 5 0 0 0 6 6 5.4 5.4 0 1 1-6-6ZM8 3v5M5.5 5.5h5"></path></svg><div class="mo-heading-copy"><div class="mo-kicker">LUNEA · MESSAGE ORACLE</div><h2 id="moTitle">연락 · 소식 메시지 카드</h2></div></div><button class="mo-close" aria-label="닫기">×</button></div><p class="mo-sub">연애 · 재회 · 공적 결과 · 업무 · SNS · 지인 소식</p>
+  overlay.innerHTML=`<section class="mo-sheet" tabindex="-1"><div class="mo-header"><div class="mo-heading"><img class="mo-symbol" src="${ASSETS.logo}" alt="" aria-hidden="true" width="1254" height="1254"><div class="mo-heading-copy"><div class="mo-kicker">LUNEA · MESSAGE ORACLE</div><h2 id="moTitle">연락 · 소식 메시지 카드</h2></div></div><button class="mo-close" aria-label="닫기">×</button></div><p class="mo-sub">연애 · 재회 · 공적 결과 · 업무 · SNS · 지인 소식</p>
     <form class="mo-form"><label for="moQuestion">어떤 연락이나 소식이 궁금해?</label><textarea id="moQuestion" maxlength="2000" required placeholder="예: 회사에서 면접 결과를 알려줄까?"></textarea><div class="mo-context" aria-live="polite"></div><div class="mo-chips" role="group" aria-label="연락 맥락"></div><button class="mo-primary" type="submit">✉️ 메시지 카드 한 장 뽑기</button></form>
     <div class="mo-card" data-face="back"><div class="mo-card-inner">
       <div class="mo-card-back" aria-hidden="true"><img class="mo-back-art" src="${ASSETS.back}" alt="" width="1024" height="1536"></div>
