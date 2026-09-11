@@ -116,7 +116,7 @@
       './lunea-daily-timing-v49.js?v=4901',
       './lunea-draft-timing-v50.js?v=5001',
       './lunea-timing-uploaded-art-v58.js?v=5801',
-      './lunea-recovery-ui-v65.js?v=6501'
+      './lunea-recovery-ui-v65.js?v=6502'
     ],
     astro:[
       './lunea-horary-ab-v1.js?v=104',
