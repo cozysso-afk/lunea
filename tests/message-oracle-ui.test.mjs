@@ -65,7 +65,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=107']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=102','./lunea-message-oracle-ui-v1.js?v=108']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -120,12 +120,13 @@ test('reduced motion reveals immediately, with no animation or additional RNG',a
  const h=harness({reduced:true});await start(h);assert.equal(h.query('.mo-card').dataset.face,'front');assert.equal(h.draws(),1);assert.equal(h.animations(),0);assert.equal(h.query('[data-action="redraw"]').disabled,false);
 });
 test('all seven contexts produce four concise labeled cells and context-safe presentation',async()=>{
+ const questions={LOVE:'그가 연락할까?',REUNION:'전남친이 다시 연락할까?',OFFICIAL:'심사 결과 연락 올까?',WORK_BIZ:'면접 결과 연락 올까?',SOCIAL:'내 인스타 스토리 보고 있을까?',PERSONAL:'오래 연락 없던 친구 소식 올까?',GENERAL:'새로운 소식이 궁금해'};
  for(const c of ['LOVE','REUNION','OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']){
-  const h=harness({reduced:true});await h.entry.click();h.query('#moQuestion').value='합성 질문';await h.query('[data-context="'+c+'"]').click();await h.query('.mo-form').emit('submit');
+  const h=harness({reduced:true});await h.entry.click();h.query('#moQuestion').value=questions[c];await h.query('[data-context="'+c+'"]').click();await h.query('.mo-form').emit('submit');
   const cells=h.query('.mo-details').children;assert.equal(cells.length,4);for(const cell of cells){assert.equal(cell.children.length,2);assert.ok(cell.children[0].textContent.length<=5);assert.ok(cell.children[1].textContent.length<=5)}
-  const row=JSON.parse(h.map.get('LUNEA_MESSAGE_ORACLE_LAST_V1')),d=h.context.LUNEA_MESSAGE_ORACLE_V1.describe(row);
-  const shown=h.context.__messagePresentation.visibleMessage(d);assert.equal(h.query('.mo-score').textContent,d.score+'%');assert.equal(h.query('.mo-bottom').textContent,h.context.LUNEA_MESSAGE_ORACLE_V1.CONTEXTS[c]);assert.ok(h.query('.mo-full-text').textContent.includes(shown));assert.equal(h.query('.mo-message').textContent,shown);
-  if(c==='OFFICIAL')assert.equal(cells[0].children[0].textContent,'통지');if(c==='SOCIAL')assert.equal(cells[1].children[0].textContent,'관찰');
+  const row=JSON.parse(h.map.get('LUNEA_MESSAGE_ORACLE_LAST_V1')),d=h.context.LUNEA_MESSAGE_ORACLE_V1.describe(row),reading=h.context.LUNEA_MESSAGE_ORACLE_V1.interpret(row);
+  const shown=h.context.__messagePresentation.visibleMessage(d);assert.equal(h.query('.mo-score').textContent,d.score+'%');assert.equal(h.query('.mo-bottom').textContent,h.context.LUNEA_MESSAGE_ORACLE_V1.CONTEXTS[c]);assert.ok(h.query('.mo-full-text').textContent.includes(reading.fullMessage));assert.equal(h.query('.mo-message').textContent,shown);assert.equal(shown,reading.shortMessage);
+  if(c==='OFFICIAL'||c==='WORK_BIZ')assert.equal(cells[0].children[0].textContent,'통지');if(c==='SOCIAL')assert.equal(cells[0].children[0].textContent,'관찰');
  }
 });
 
@@ -138,26 +139,20 @@ test('non-romantic priority cards use context-safe visible messages without chan
  }
 });
 
-test('all 78 cards compose deterministic context-aware strength, form, and caveat messages in all seven contexts',()=>{
+test('UI delegates all 78 x 7 visible messages and details to the engine without copied composition',()=>{
  const h=harness(),api=h.context.LUNEA_MESSAGE_ORACLE_V1,p=h.context.__messagePresentation;
- const tokens={LOVE:'연락·응답',REUNION:'재접촉·소식',OFFICIAL:'공식 통지·소식',WORK_BIZ:'업무 회신·소식',SOCIAL:'온라인 반응·메시지',PERSONAL:'개인 연락·소식',GENERAL:'연락·소식'};
  const nonRomantic=new Set(['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']);
  for(const card of api.cards){
-  const messages=[];
   for(const context of Object.keys(api.CONTEXTS)){
-   const result=api.result('합성 연락 질문',context,card.code),score=result.score,d=api.describe(result),message=p.visibleMessage(d);
-   assert.equal(message,p.visibleMessage(d),`${card.code} ${context} deterministic`);assert.equal(result.score,score);
-   if(context==='WORK_BIZ'&&card.code==='Devil')assert.match(message,/연락·결과 통지/);
-   else assert.match(message,new RegExp(tokens[context].replace('·','\\·')),`${card.code} ${context} context`);
-   assert.match(message,/신호(?:가 강해요|는 중간 이상이에요|는 제한적이며 조율이 먼저예요|는 약하고 관망·지연 쪽이에요)/,`${card.code} ${context} strength`);
-   assert.ok(message.includes('형태로')||context==='WORK_BIZ'&&card.code==='Devil',`${card.code} ${context} form`);
-   const sentences=(message.match(/\./g)||[]).length;assert.ok(sentences>=2&&sentences<=3,`${card.code} ${context} caveat`);
-   assert.ok(message.length>=47&&message.length<=110,`${card.code} ${context} length ${message.length}`);
-   if(nonRomantic.has(context))assert.doesNotMatch(message+/ ${p.visibleContextMessage(d)}/,/강한 관심|집착|호감|연애|감정|마음/,`${card.code} ${context} wording`);
-   messages.push(message);
+   const result=api.result('합성 연락 질문',context,card.code),score=result.score,d=api.describe(result),reading=api.interpret(result);
+   assert.equal(p.visibleMessage(d),reading.shortMessage,`${card.code} ${context} short`);
+   assert.equal(p.visibleContextMessage(d),reading.fullMessage,`${card.code} ${context} full`);
+   assert.deepEqual(JSON.parse(JSON.stringify(p.detailCells(d))),JSON.parse(JSON.stringify(reading.details)),`${card.code} ${context} details`);
+   assert.equal(result.score,score);assert.equal(reading.score,score);
+   if(nonRomantic.has(context))assert.doesNotMatch(reading.shortMessage+' '+reading.fullMessage,/사랑|호감|연애\s*감정|마음/,`${card.code} ${context} wording`);
   }
-  assert.equal(new Set(messages).size,7,`${card.code} context differentiation`);
  }
+ const source=read('lunea-message-oracle-ui-v1.js');assert.doesNotMatch(source,/const CONTEXT_COPY|const FORM_COPY|function messageFormGroup/);
 });
 
 test('Devil work result distinguishes contact strength from outcome and gives concrete details',async()=>{
@@ -166,11 +161,11 @@ test('Devil work result distinguishes contact strength from outcome and gives co
  assert.equal(d.score,67);
  assert.equal(p.visibleMessage(d),'연락·결과 통지 신호는 중간 이상이에요. 내부 제약과 압박으로 검토가 반복될 수 있으며, 연락과 긍정 결과는 별개예요.');
  assert.deepEqual(JSON.parse(JSON.stringify(p.detailCells(d))),[
-  {label:'회신',value:'중간 이상'},{label:'진행',value:'반복 검토'},{label:'제약',value:'큼'},{label:'속도',value:'지연 가능'}
+  {label:'통지',value:'중간 이상'},{label:'검토',value:'반복 가능'},{label:'제약',value:'큼'},{label:'속도',value:'지연 가능'}
  ]);
  api.storage(h.context.localStorage).remember(result);await h.entry.click();
  assert.equal(h.query('.mo-message').textContent,p.visibleMessage(d));assert.doesNotMatch(h.query('.mo-full-text').textContent,/강한 관심|집착성/);assert.match(h.query('#moScoreNote').textContent,/합격·승인·긍정 결과 확률이 아니/);assert.match(h.query('.mo-question-summary').textContent,/결과 방향과 별도/);
- assert.deepEqual(h.query('.mo-details').children.map(cell=>cell.children.map(n=>n.textContent)),[['회신','중간 이상'],['진행','반복 검토'],['제약','큼'],['속도','지연 가능']]);
+ assert.deepEqual(h.query('.mo-details').children.map(cell=>cell.children.map(n=>n.textContent)),[['통지','중간 이상'],['검토','반복 가능'],['제약','큼'],['속도','지연 가능']]);
  await h.query('[data-action="copy"]').click();assert.doesNotMatch(h.copied(),/강한 관심|집착성/);assert.match(h.copied(),/합격·승인·긍정 결과 확률이 아니라/);
 });
 test('all 78 restored identities get stable names and upright canonical images without drawing',async()=>{

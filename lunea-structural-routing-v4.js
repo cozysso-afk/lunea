@@ -123,8 +123,8 @@
       './lunea-intimacy-repair-v43.js?v=4301'
     ],
     message:[
-      './lunea-message-oracle-v1.js?v=101',
-      './lunea-message-oracle-ui-v1.js?v=107'
+      './lunea-message-oracle-v1.js?v=102',
+      './lunea-message-oracle-ui-v1.js?v=108'
     ],
     timing:[
       './lunea-timing-ab-v1.js?v=102',

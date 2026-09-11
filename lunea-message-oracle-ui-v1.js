@@ -121,106 +121,15 @@
     $('.mo-context').textContent=`${override==='AUTO'?'AUTO CONTEXT · 자동 분류':'직접 선택'} · ${E.CONTEXTS[context]}`;
     chips.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.context===override)));
   }
-  const DETAIL_LABELS={
-    LOVE:['감정','연락','행동','흐름'],REUNION:['감정','연락','행동','흐름'],
-    OFFICIAL:['통지','경로','진행','속도'],WORK_BIZ:['회신','진행','제약','속도'],
-    SOCIAL:['SNS','관찰','직접 반응','행동'],PERSONAL:['관계','소식','행동','흐름'],GENERAL:['응답','경로','행동','흐름']
-  };
-  const NON_ROMANTIC_CONTEXTS=new Set(['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']);
-  const CONTEXT_COPY=Object.freeze({
-    LOVE:Object.freeze({signal:'연락·응답',caveat:'연락 신호와 관계의 방향은 별개예요.'}),
-    REUNION:Object.freeze({signal:'재접촉·소식',caveat:'재접촉과 관계 회복은 별개예요.'}),
-    OFFICIAL:Object.freeze({signal:'공식 통지·소식',caveat:'통지와 승인·선정 여부는 별개예요.'}),
-    WORK_BIZ:Object.freeze({signal:'업무 회신·소식',caveat:'회신과 채용·제안 결과는 별개예요.'}),
-    SOCIAL:Object.freeze({signal:'온라인 반응·메시지',caveat:'확인·반응과 직접 연락은 별개예요.'}),
-    PERSONAL:Object.freeze({signal:'개인 연락·소식',caveat:'소식 도착과 관계 변화는 별개예요.'}),
-    GENERAL:Object.freeze({signal:'연락·소식',caveat:'소식 전달과 결과의 긍정·부정은 별개예요.'})
-  });
-  const CONTEXT_SAFE_STYLE=Object.freeze({
-    '집착성 반복 접촉':'압박이 얽힌 반복 확인','감정의 첫 인사':'조심스러운 첫 안내',
-    '익숙한 인연의 안부':'오래된 연결의 안부','수줍은 마음의 메시지':'조심스러운 첫 메시지','감정을 조절한 답':'절제된 답'
-  });
-  const FORM_COPY=Object.freeze({
-    direct:Object.freeze({DEFAULT:'직접 메시지·통화',OFFICIAL:'담당자의 직접 회신',WORK_BIZ:'메일·메신저·통화 회신',SOCIAL:'DM·댓글 같은 직접 반응'}),
-    formal:Object.freeze({DEFAULT:'정해진 창구·문서 안내',LOVE:'신중하고 형식적인 연락',REUNION:'중간자나 정해진 경로',SOCIAL:'공개 공지·계정 알림',PERSONAL:'가족·모임의 전달'}),
-    online:Object.freeze({DEFAULT:'SNS·온라인 알림',OFFICIAL:'온라인 공지·접수 알림',WORK_BIZ:'메일·업무 메신저',PERSONAL:'온라인 안부·소식'}),
-    mediated:Object.freeze({DEFAULT:'제3자·중간 전달',OFFICIAL:'기관·담당 경로',WORK_BIZ:'담당자 간 전달',SOCIAL:'공통 계정·간접 반응',PERSONAL:'공통 지인·가족 전달'}),
-    recontact:Object.freeze({DEFAULT:'오래된 채널의 재접촉',OFFICIAL:'보류 건의 재통지',WORK_BIZ:'이전 문의·제안 재회신',SOCIAL:'예전 계정·대화의 재반응',PERSONAL:'오래된 지인의 안부'}),
-    work:Object.freeze({DEFAULT:'실무 문의·회신',LOVE:'일정·현실 조건을 묻는 연락',REUNION:'현실 조건을 확인하는 연락',OFFICIAL:'처리 담당자의 회신',SOCIAL:'운영·협업 관련 반응',PERSONAL:'일정·생활 관련 소식'}),
-    schedule:Object.freeze({DEFAULT:'초대·일정 제안',OFFICIAL:'일정·절차 안내',WORK_BIZ:'미팅·일정 조율',SOCIAL:'온라인 초대·약속',PERSONAL:'모임·약속 소식'}),
-    community:Object.freeze({DEFAULT:'가족·모임을 통한 소식',OFFICIAL:'조직·단체 안내',WORK_BIZ:'팀·조직의 공지',SOCIAL:'커뮤니티·그룹 반응'}),
-    sudden:Object.freeze({DEFAULT:'갑작스러운 메시지·알림',OFFICIAL:'예고 없는 결과·변경 통지',WORK_BIZ:'급한 회신·일정 변경',SOCIAL:'갑작스러운 알림·DM'}),
-    checkin:Object.freeze({DEFAULT:'안부·확인 연락',OFFICIAL:'상태 확인·안내',WORK_BIZ:'진행 확인·후속 회신',SOCIAL:'가벼운 반응·안부',PERSONAL:'안부·생활 소식'}),
-    indirect:Object.freeze({DEFAULT:'간접 확인·추가 조율',OFFICIAL:'내부 확인·절차 조율',WORK_BIZ:'검토·일정 조율',SOCIAL:'조회·관찰 같은 간접 신호',PERSONAL:'주변을 통한 간접 소식'})
-  });
-  const NON_ROMANTIC_GUIDANCE=Object.freeze({
-    OFFICIAL:'공식 통지의 발생과 승인·선정 여부는 별도로 확인해요.',
-    WORK_BIZ:'업무 회신과 최종 수락·선정 여부는 별도로 확인해요.',
-    SOCIAL:'온라인 확인·관찰과 직접 메시지 행동은 별도로 확인해요.',
-    PERSONAL:'소식의 도착과 관계의 긍정적 변화는 별도로 확인해요.',
-    GENERAL:'연락·소식의 전달과 결과의 긍정·부정은 별도로 확인해요.'
-  });
-  function messageFormGroup(d){
-    const signals=new Set([...d.card.tags,...d.card.channels]),has=(...values)=>values.some(value=>signals.has(value));
-    if(d.context==='SOCIAL'&&has('SNS/온라인'))return 'online';
-    if(d.context==='REUNION'&&has('재접촉','재개'))return 'recontact';
-    if(has('업무 회신'))return 'work';
-    if((d.context==='OFFICIAL'||d.context==='WORK_BIZ')&&has('공식 경로','문서/결과','결과 통보','공개 안내','결정권자'))return 'formal';
-    if(has('재접촉','재개'))return 'recontact';
-    if(has('SNS/온라인'))return 'online';
-    if(has('제3자/중간 전달'))return 'mediated';
-    if(has('초대/약속'))return 'schedule';
-    if(has('가족/모임'))return 'community';
-    if(has('직접 연락'))return 'direct';
-    if(has('갑작스러운 소식','변경/충격'))return 'sudden';
-    if(has('안부'))return 'checkin';
-    return 'indirect';
+  /* The semantic owner composes every visible message and detail. These thin
+     adapters remain only for the existing UI test hook and legacy callers. */
+  function interpretation(value){
+    if(!value)return null;
+    return E.interpret({question:value.question,context:value.context,cardCode:value.cardCode,createdAt:value.createdAt});
   }
-  function messageStrength(d){
-    const signal=CONTEXT_COPY[d.context].signal;
-    // signalLevel is computed after the engine's card-profile context adjustment.
-    return d.signalLevel==='강한 신호'?`${signal} 신호가 강해요.`
-      :d.signalLevel==='연결 가능성'?`${signal} 신호는 중간 이상이에요.`
-      :d.signalLevel==='간접 · 조율'?`${signal} 신호는 제한적이며 조율이 먼저예요.`
-      :`${signal} 신호는 약하고 관망·지연 쪽이에요.`;
-  }
-  function messageCaveat(d){
-    const tags=d.card.tags,has=(...values)=>values.some(value=>tags.includes(value));
-    if(has('관망'))return '인지·관찰과 직접 행동은 별개예요.';
-    if(has('불확실'))return '간접 신호만으로 연락을 확정하지 말아요.';
-    if(has('차단/제약','지연'))return '제약이나 지연이 실제 전달을 늦출 수 있어요.';
-    if(has('갑작스러운 소식','변경/충격'))return '갑작스러운 전달과 긍정적인 내용은 별개예요.';
-    if(has('마무리'))return '마무리 통지가 새로운 시작을 뜻하지는 않아요.';
-    return CONTEXT_COPY[d.context].caveat;
-  }
-  function visibleMessage(d){
-    if(d.context==='WORK_BIZ'&&d.cardCode==='Devil')return '연락·결과 통지 신호는 중간 이상이에요. 내부 제약과 압박으로 검토가 반복될 수 있으며, 연락과 긍정 결과는 별개예요.';
-    const group=messageFormGroup(d),forms=FORM_COPY[group],form=forms[d.context]||forms.DEFAULT;
-    const style=NON_ROMANTIC_CONTEXTS.has(d.context)&&(CONTEXT_SAFE_STYLE[d.card.contactStyle]||d.card.contactStyle)||d.card.contactStyle;
-    return `${messageStrength(d)} ${form} 형태로, ${style} 흐름이 보여요. ${messageCaveat(d)}`;
-  }
-  function visibleContextMessage(d){return NON_ROMANTIC_CONTEXTS.has(d.context)?NON_ROMANTIC_GUIDANCE[d.context]:d.contextMessage}
-  // Compact presentation of existing engine tags; these never change its score or meaning.
-  const shortTag=t=>({'직접 연락':'직접','SNS/온라인':'온라인','공식 경로':'공식','제3자/중간 전달':'중간 전달','갑작스러운 소식':'돌발',
-    '상호 호응':'호응','차단/제약':'제약','문서/결과':'문서','거리/선택':'거리','조심스러운 시작':'조심','변경/충격':'변경',
-    '빠른 진행':'빠름','초대/약속':'약속','가족/모임':'모임','업무 회신':'실무','결과 통보':'통지','반복 연락':'반복'})[t]||t;
-  function detailCells(d){
-    const tags=d.card.tags, has=t=>tags.includes(t);
-    const signal=d.score>=75?'강함':d.score>=55?'중간 이상':d.score>=35?'제한적':'약함';
-    const path=shortTag(d.card.channels[0]||tags[0]);
-    const action=has('관망')?'관망':has('차단/제약')?'제약 큼':has('상호 호응')?'상호 응답':has('직접 연락')?'직접':'확인 필요';
-    const flow=has('지연')||has('차단/제약')||has('반복 연락')?'지연 가능':has('빠른 진행')?'빠름':has('갑작스러운 소식')?'돌발':has('조율')?'조율 중':has('마무리')?'마무리':'변동 가능';
-    const affect=has('상호 호응')?'호응':has('안부')?'관심':has('관망')?'유보':'단정 불가';
-    const progress=has('반복 연락')?'반복 검토':has('마무리')?'마무리':has('문서/결과')||has('결과 통보')?'결과 검토':has('조율')?'조율 중':has('공식 경로')?'절차 진행':has('상호 호응')?'협의 진행':has('관망')?'확인 중':has('변경/충격')?'변경 가능':has('차단/제약')?'보류 가능':'진행 가능';
-    const constraint=has('차단/제약')?'큼':has('불확실')||has('지연')?'있음':'낮음';
-    let values=[signal,path,action,flow];
-    if(d.context==='LOVE'||d.context==='REUNION')values=[affect,signal,action,flow];
-    if(d.context==='SOCIAL')values=[has('SNS/온라인')?'온라인':'별도 확인',has('관망')?'관찰':'불명확',has('직접 연락')?signal:'미확정',action];
-    if(d.context==='PERSONAL')values=[has('재접촉')?'옛 인연':affect,signal,action,flow];
-    if(d.context==='OFFICIAL')values=[signal,path,progress,flow];
-    if(d.context==='WORK_BIZ')values=[signal,progress,constraint,flow];
-    return DETAIL_LABELS[d.context].map((label,i)=>({label,value:values[i]}));
-  }
+  function visibleMessage(value){return interpretation(value)?.shortMessage||''}
+  function visibleContextMessage(value){return interpretation(value)?.fullMessage||''}
+  function detailCells(value){return interpretation(value)?.details||[]}
   function displayNames(id){
     const match=id.name.match(/^(.*?)\s*\((.*?)\)$/);
     let english=(match?.[1]||id.name).replace(/^(?:[IVX]+|0)\.\s*/,'').replace(/ of Pents$/,' of Pentacles');
@@ -230,8 +139,7 @@
     return {english,korean};
   }
   function copyResultText(value){
-    const d=E.describe(value),id=d&&E.identity(d.cardCode,deck);if(!d||!id)return '';
-    return `LUNEA MESSAGE ORACLE\n질문: ${d.question}\n맥락: ${E.CONTEXTS[d.context]}\n카드: ${id.name} (${d.cardCode}) · 정방향\n카드 기반 연락·소식 발생·전달 신호 강도: ${d.score}%\n합격·승인·긍정 결과 확률이 아니라 카드 상징을 연락·소식 관점으로 환산한 지표\n핵심 메시지: ${visibleMessage(d)}\n${visibleContextMessage(d)}\nKey Details: ${d.card.keyDetails.join(' · ')}`;
+    return E.copyText(value,deck);
   }
   function stopFlip(){
     const previous=flipAnimation;flipAnimation=null;previous?.cancel();
@@ -248,20 +156,19 @@
   }
   function renderScore(score){const node=$('.mo-score');node.textContent=`${score}%`;node.dataset.digits=String(String(score).length);node.setAttribute('aria-label',`카드 기반 연락·소식 발생·전달 신호 강도 ${score}퍼센트. 결과 성공 확률이 아님`);}
   function render(animate=false){
-    const d=E.describe(current);$('.mo-result').hidden=!d;$('.mo-actions').hidden=!d;$('.mo-form').hidden=!!d;$('.mo-result-context').hidden=!d;
-    if(!d){reveal(false);return}
+    const d=E.describe(current),reading=E.interpret(current);$('.mo-result').hidden=!reading;$('.mo-actions').hidden=!reading;$('.mo-form').hidden=!!reading;$('.mo-result-context').hidden=!reading;
+    if(!d||!reading){reveal(false);return}
     const id=E.identity(d.cardCode,deck),names=displayNames(id);
     renderScore(d.score);
     $('.mo-name-en').textContent=names.english;$('.mo-name-ko').textContent=names.korean;
     const img=$('.mo-image');img.src=id.img;img.alt=id.name;
-    const message=visibleMessage(d);
-    $('.mo-message').textContent=message;
-    $('.mo-details').replaceChildren(...detailCells(d).map(({label,value})=>{const cell=document.createElement('div');cell.className='mo-detail';
+    $('.mo-message').textContent=reading.shortMessage;
+    $('.mo-details').replaceChildren(...reading.details.map(({label,value})=>{const cell=document.createElement('div');cell.className='mo-detail';
       const l=document.createElement('span');l.className='mo-detail-label';l.textContent=label;
       const v=document.createElement('span');v.className='mo-detail-value';v.textContent=value;cell.appendChild(l);cell.appendChild(v);return cell}));
-    $('.mo-bottom').textContent=E.CONTEXTS[d.context];
-    $('.mo-question-summary').textContent=`질문: ${d.question}\n${E.CONTEXTS[d.context]} · 연락·소식 신호 ${d.score}% · 결과 방향과 별도`;
-    $('.mo-full-text').textContent=`${message}\n${visibleContextMessage(d)}\nKey Details: ${d.card.keyDetails.join(' · ')}`;
+    $('.mo-bottom').textContent=reading.contextLabel;
+    $('.mo-question-summary').textContent=`질문: ${d.question}\n${reading.contextLabel} · ${E.INTENTS[reading.intent]} · 연락·소식 신호 ${d.score}% · 결과 방향과 별도`;
+    $('.mo-full-text').textContent=`${reading.fullMessage}\nKey Details: ${reading.details.map(item=>`${item.label} ${item.value}`).join(' · ')}`;
     reveal(animate);
   }
   function renderSaved(){

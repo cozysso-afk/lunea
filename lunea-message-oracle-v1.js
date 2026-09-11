@@ -110,12 +110,56 @@
     const contextAdjustments = Object.fromEntries(Object.keys(CONTEXTS).map((c,i)=>[c,profiles[profile][i]]));
     // Judgement also represents official announcements, independent of its return motif.
     if(code==='Judgement') contextAdjustments.OFFICIAL=14;
-    return Object.freeze({code,baseSignalScore,signalLevel:level(baseSignalScore),contactStyle,
+    return Object.freeze({code,baseSignalScore,signalLevel:level(baseSignalScore),profile,contactStyle,
       channels:Object.freeze(tags.filter(t=>/연락|경로|전달|온라인|통보|문서|안부|회신/.test(t))),tags:Object.freeze(tags),
       baseMessageKo,keyDetails:Object.freeze(tags),contextAdjustments:Object.freeze(contextAdjustments),
       contextMessages:Object.freeze(Object.fromEntries(Object.keys(CONTEXTS).map(c=>[c,`${subjects[c]}의 ${contactStyle} 신호로 읽어요. ${contextNotes[c]}`])))});
   });
   const byCode = new Map(cards.map(c=>[c.code,c]));
+  const INTENTS=Object.freeze({
+    CONTACT_ARRIVAL:'연락 도착',REPLY:'회신',RESULT_NOTICE:'결과 통지',APPROVAL:'승인·선정 통지',
+    RECONTACT:'재접촉',SOCIAL_OBSERVE:'온라인 관찰',SOCIAL_ACTION:'온라인 직접 반응',SCHEDULE:'일정 확정',
+    PERSONAL_NEWS:'지인 소식',GENERAL_NEWS:'일반 소식'
+  });
+  const AXIS_LEVELS=Object.freeze(['LOW','MEDIUM','HIGH']);
+  const PROFILE_AXES=Object.freeze({
+    direct:[2,2,0,0,1,0,1,0,0,0],reciprocal:[2,1,0,0,2,0,0,0,1,0],
+    formal:[1,1,2,0,0,0,0,2,0,1],observe:[0,0,0,2,0,1,0,0,0,2],
+    past:[1,1,0,1,1,0,0,1,1,1],pause:[0,0,0,1,0,2,0,0,0,2],
+    sudden:[2,2,0,0,0,0,2,0,0,0],practical:[1,1,1,0,1,0,0,1,1,1],
+    conflict:[1,1,0,0,0,2,1,0,2,1],warm:[1,1,0,0,2,0,0,0,0,0],
+    completion:[1,1,2,0,0,1,0,2,0,1]
+  });
+  const AXIS_KEYS=Object.freeze(['directness','speed','formality','observation','reciprocity','restriction','suddenness','completion','repetition','delay']);
+  const NON_ROMANTIC_CONTEXTS=new Set(['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']);
+  const CONTEXT_COPY=Object.freeze({
+    LOVE:Object.freeze({signal:'연락·응답',caveat:'연락 신호와 관계의 방향은 별개예요.'}),
+    REUNION:Object.freeze({signal:'재접촉·소식',caveat:'재접촉과 관계 회복은 별개예요.'}),
+    OFFICIAL:Object.freeze({signal:'공식 통지·소식',caveat:'통지와 승인·선정 여부는 별개예요.'}),
+    WORK_BIZ:Object.freeze({signal:'업무 회신·소식',caveat:'회신과 채용·제안 결과는 별개예요.'}),
+    SOCIAL:Object.freeze({signal:'온라인 반응·메시지',caveat:'확인·반응과 직접 연락은 별개예요.'}),
+    PERSONAL:Object.freeze({signal:'개인 연락·소식',caveat:'소식 도착과 관계 변화는 별개예요.'}),
+    GENERAL:Object.freeze({signal:'연락·소식',caveat:'소식 전달과 결과의 긍정·부정은 별개예요.'})
+  });
+  const SAFE_PROFILE_STYLE=Object.freeze({
+    direct:'용건이 분명한 직접 전달',reciprocal:'상호 확인이 오가는 전달',formal:'기준과 절차를 따른 전달',
+    observe:'확인·관찰이 앞서는 간접 신호',past:'이전 사안이 다시 이어지는 전달',pause:'보류·대기가 앞서는 흐름',
+    sudden:'예고 없이 움직이는 전달',practical:'실무·조건을 확인하는 전달',conflict:'압박·이견이 얽힌 전달',
+    warm:'수용적인 응답',completion:'종결·완료를 알리는 전달'
+  });
+  const FORM_COPY=Object.freeze({
+    direct:Object.freeze({DEFAULT:'직접 메시지·통화',OFFICIAL:'담당자의 직접 회신',WORK_BIZ:'메일·업무 메신저',SOCIAL:'DM·댓글 같은 직접 반응'}),
+    formal:Object.freeze({DEFAULT:'정해진 창구·문서',LOVE:'신중하고 형식적인 연락',REUNION:'중간자나 정해진 경로',SOCIAL:'공개 공지·계정 알림',PERSONAL:'가족·모임의 전달'}),
+    online:Object.freeze({DEFAULT:'SNS·온라인 알림',OFFICIAL:'온라인 공지·접수 알림',WORK_BIZ:'메일·업무 메신저',PERSONAL:'온라인 안부·소식'}),
+    mediated:Object.freeze({DEFAULT:'제3자·중간 전달',OFFICIAL:'기관·담당 경로',WORK_BIZ:'담당자 간 전달',SOCIAL:'공통 계정·간접 반응',PERSONAL:'공통 지인·가족 전달'}),
+    recontact:Object.freeze({DEFAULT:'오래된 채널의 재접촉',OFFICIAL:'보류 건의 재통지',WORK_BIZ:'이전 문의·제안 재회신',SOCIAL:'예전 계정의 재반응',PERSONAL:'오래된 지인의 안부'}),
+    work:Object.freeze({DEFAULT:'실무 문의·회신',LOVE:'일정·현실 조건 연락',REUNION:'현실 조건 확인 연락',OFFICIAL:'처리 담당자의 회신',SOCIAL:'운영·협업 관련 반응',PERSONAL:'일정·생활 관련 소식'}),
+    schedule:Object.freeze({DEFAULT:'초대·일정 제안',OFFICIAL:'일정·절차 안내',WORK_BIZ:'미팅·일정 조율',SOCIAL:'온라인 초대·약속',PERSONAL:'모임·약속 소식'}),
+    community:Object.freeze({DEFAULT:'가족·모임 소식',OFFICIAL:'조직·단체 안내',WORK_BIZ:'팀·조직 공지',SOCIAL:'커뮤니티·그룹 반응'}),
+    sudden:Object.freeze({DEFAULT:'갑작스러운 메시지·알림',OFFICIAL:'예고 없는 결과·변경 통지',WORK_BIZ:'급한 회신·일정 변경',SOCIAL:'갑작스러운 알림·DM'}),
+    checkin:Object.freeze({DEFAULT:'안부·확인 연락',OFFICIAL:'상태 확인·안내',WORK_BIZ:'진행 확인·후속 회신',SOCIAL:'가벼운 반응·안부',PERSONAL:'안부·생활 소식'}),
+    indirect:Object.freeze({DEFAULT:'간접 확인·추가 조율',OFFICIAL:'내부 확인·절차 조율',WORK_BIZ:'검토·일정 조율',SOCIAL:'조회·관찰 신호',PERSONAL:'주변을 통한 간접 소식'})
+  });
   function classify(question){
     const q=String(question||'').normalize('NFKC');
     // Explicit subjects outrank generic "결과"; work-result questions remain WORK_BIZ.
@@ -128,6 +172,132 @@
     return 'GENERAL';
   }
   const resolveContext=(question,override='AUTO')=>Object.hasOwn(CONTEXTS,override)?override:classify(question);
+  function classifyIntent(question,context=classify(question)){
+    const q=String(question||'').normalize('NFKC').replace(/\s+/g,' ').trim();
+    const c=Object.hasOwn(CONTEXTS,context)?context:classify(q);
+    if(c==='REUNION'||/전남친|전여친|전애인|헤어진|재회|다시\s*연락|끊긴\s*인연|재접촉/.test(q))return'RECONTACT';
+    if(/\bDM\b|디엠|좋아요|팔로우|댓글/i.test(q)&&/보낼|할까|올까|누를|남길|반응|연락/.test(q))return'SOCIAL_ACTION';
+    if(/스토리|게시물|피드|계정|인스타|SNS|조회/i.test(q)&&/보(?:고|는|았|게)|확인|조회|관찰|염탐/.test(q))return'SOCIAL_OBSERVE';
+    if(/승인|선정|수락|허가|통과|계약|당첨/.test(q))return'APPROVAL';
+    if(/면접|시험|심사|채용|합격|불합격|발표|결과/.test(q)&&/결과|발표|통지|연락|알려|소식/.test(q))return'RESULT_NOTICE';
+    if(/일정|약속|미팅|면담|예약|날짜|시간/.test(q)&&/확정|연락|회신|알려|잡힐|정해/.test(q))return'SCHEDULE';
+    if(/답장|답변|회신|응답|카톡|문자|메일/.test(q)&&/올까|줄까|할까|오나|기다|보낸|했을/.test(q))return'REPLY';
+    if(c==='PERSONAL'||/친구|가족|지인|부모|형제|자매/.test(q))return'PERSONAL_NEWS';
+    if(/연락|메시지|전화|소식|알림/.test(q)&&/올까|할까|오나|오는|도착|받을|줄까/.test(q))return'CONTACT_ARRIVAL';
+    return'GENERAL_NEWS';
+  }
+  function semanticProfile(value){
+    const card=typeof value==='string'?byCode.get(value):value;
+    if(!card)return null;
+    const numbers=[...(PROFILE_AXES[card.profile]||PROFILE_AXES.practical)];
+    const set=(key,value)=>{numbers[AXIS_KEYS.indexOf(key)]=Math.max(numbers[AXIS_KEYS.indexOf(key)],value)};
+    const tags=new Set(card.tags),has=(...values)=>values.some(value=>tags.has(value));
+    if(has('직접 연락'))set('directness',2);
+    if(has('빠른 진행')){set('speed',2);set('directness',2)}
+    if(has('공식 경로','문서/결과','결과 통보','결정권자','공개 안내'))set('formality',2);
+    if(has('관망','SNS/온라인'))set('observation',2);
+    if(has('상호 호응'))set('reciprocity',2);
+    if(has('차단/제약'))set('restriction',2);
+    if(has('갑작스러운 소식','변경/충격')){set('suddenness',2);set('speed',2)}
+    if(has('마무리','결과 통보'))set('completion',2);
+    if(has('반복 연락'))set('repetition',2);
+    if(has('지연','관망','차단/제약'))set('delay',2);
+    const minor=card.code.match(/^(Wands|Cups|Swords|Pents)(\d{2})$/);
+    const suit=minor?.[1]||'Major',rank=minor?Number(minor[2]):null;
+    if(suit==='Wands'){set('speed',1);set('directness',1)}
+    if(suit==='Cups')set('reciprocity',1);
+    if(suit==='Swords')set('formality',1);
+    if(suit==='Pents'){set('formality',1);set('delay',1)}
+    if(rank===11){set('observation',1);set('speed',1)}
+    if(rank===12){set('directness',2);set('speed',2)}
+    if(rank===13)set('reciprocity',2);
+    if(rank===14){set('directness',2);set('formality',2)}
+    const courtRole=rank===11?'PAGE':rank===12?'KNIGHT':rank===13?'QUEEN':rank===14?'KING':rank===1?'ACE':rank?`NUMBER_${rank}`:'MAJOR';
+    return Object.freeze(Object.fromEntries([...AXIS_KEYS.map((key,index)=>[key,AXIS_LEVELS[numbers[index]]]),['suit',suit],['rank',rank],['courtRole',courtRole]]));
+  }
+  function formGroup(card,context,intent,axes){
+    const signals=new Set([...card.tags,...card.channels]),has=(...values)=>values.some(value=>signals.has(value));
+    if(intent==='SOCIAL_OBSERVE'||intent==='SOCIAL_ACTION')return'online';
+    if(intent==='SCHEDULE')return'schedule';
+    if(intent==='RECONTACT')return'recontact';
+    if((intent==='RESULT_NOTICE'||intent==='APPROVAL')&&axes.suddenness==='HIGH')return'sudden';
+    if((intent==='RESULT_NOTICE'||intent==='APPROVAL')&&axes.formality==='HIGH')return'formal';
+    if(has('업무 회신'))return'work';
+    if((context==='OFFICIAL'||context==='WORK_BIZ')&&has('공식 경로','문서/결과','결과 통보','공개 안내','결정권자'))return'formal';
+    if(has('재접촉','재개'))return'recontact';
+    if(has('SNS/온라인'))return'online';
+    if(has('제3자/중간 전달'))return'mediated';
+    if(has('초대/약속'))return'schedule';
+    if(has('가족/모임'))return'community';
+    if(has('직접 연락'))return'direct';
+    if(has('갑작스러운 소식','변경/충격'))return'sudden';
+    if(has('안부'))return'checkin';
+    return'indirect';
+  }
+  function safeStyle(card,context){
+    if(!NON_ROMANTIC_CONTEXTS.has(context))return card.contactStyle;
+    return /사랑|호감|마음|연애|감정|집착|수줍|그리움|아쉬움/.test(card.contactStyle)?SAFE_PROFILE_STYLE[card.profile]:card.contactStyle;
+  }
+  function signalName(intent,context){
+    const names={REPLY:'회신',RESULT_NOTICE:'결과 통지',APPROVAL:'승인·선정 통지',RECONTACT:'재접촉',SOCIAL_OBSERVE:'온라인 관찰·확인',SOCIAL_ACTION:'온라인 직접 반응',SCHEDULE:'일정 확정 연락',PERSONAL_NEWS:'지인 소식',GENERAL_NEWS:CONTEXT_COPY[context].signal};
+    return names[intent]||CONTEXT_COPY[context].signal;
+  }
+  function strengthSentence(signal,score){
+    return score>=75?`${signal} 신호가 강해요.`:score>=55?`${signal} 신호는 중간 이상이에요.`:score>=35?`${signal} 신호는 제한적이고 조율이 필요해요.`:`${signal} 신호는 약하며 대기·지연 쪽이에요.`;
+  }
+  function caveatFor(card,context,intent){
+    if(intent==='RESULT_NOTICE')return'연락 강도와 결과의 유불리는 별개예요.';
+    if(intent==='APPROVAL')return'통지 신호와 승인·선정 여부는 별개예요.';
+    if(intent==='SOCIAL_OBSERVE')return'보고 있는 것과 DM 같은 직접 행동은 별개예요.';
+    if(intent==='SOCIAL_ACTION')return'온라인 반응과 지속적인 연락 의사는 별개예요.';
+    if(intent==='RECONTACT')return'재접촉과 실제 관계 회복은 별개예요.';
+    if(intent==='SCHEDULE')return'연락이 와도 최종 확정 전에는 변경될 수 있어요.';
+    const has=(...values)=>values.some(value=>card.tags.includes(value));
+    if(has('관망'))return'인지·관찰과 직접 행동은 별개예요.';
+    if(has('불확실'))return'간접 신호만으로 연락을 확정하지 말아요.';
+    if(has('차단/제약','지연'))return'제약이나 지연이 실제 전달을 늦출 수 있어요.';
+    if(has('갑작스러운 소식','변경/충격'))return'갑작스러운 전달과 긍정적인 내용은 별개예요.';
+    if(has('마무리'))return'마무리 통지가 새로운 시작을 뜻하지는 않아요.';
+    return CONTEXT_COPY[context].caveat;
+  }
+  const SPECIAL_MESSAGES=Object.freeze({
+    'High Priestess|LOVE|CONTACT_ARRIVAL':'상대를 의식하고 지켜보는 신호는 있지만 직접 연락 행동은 약해요. 생각과 실제 행동을 구분해서 봐야 해요.',
+    'High Priestess|SOCIAL|SOCIAL_OBSERVE':'온라인 관찰·확인 신호는 강한 편이에요. 다만 보고 있는 것과 직접 DM하는 것은 별개예요.',
+    'High Priestess|WORK_BIZ|RESULT_NOTICE':'내부 확인이나 비공개 검토가 이어지는 흐름이에요. 직접 결과 통지까지는 시간이 더 필요할 수 있어요.',
+    'Justice|OFFICIAL|RESULT_NOTICE':'결정·통지 신호는 강한 편이에요. 공식 기준과 절차를 거친 안내에 가깝지만, 결과의 유불리는 카드 점수와 별개예요.',
+    'Swords11|SOCIAL|SOCIAL_OBSERVE':'확인·관찰 신호가 강해요. 직접 메시지보다 먼저 지켜보거나 정보를 확인하는 흐름이에요.',
+    'Swords11|SOCIAL|SOCIAL_ACTION':'온라인 관심은 있지만 직접 DM 행동은 그보다 약해요. 관찰과 실제 접촉을 구분해서 봐야 해요.',
+    'Tower|WORK_BIZ|RESULT_NOTICE':'갑작스러운 연락이나 변경 통지 신호가 강해요. 빠른 소식일 수 있지만 긍정 결과를 뜻하지는 않아요.',
+    'Devil|WORK_BIZ|RESULT_NOTICE':'연락·결과 통지 신호는 중간 이상이에요. 내부 제약과 압박으로 검토가 반복될 수 있으며, 연락과 긍정 결과는 별개예요.'
+  });
+  const shortTag=value=>({'직접 연락':'직접','SNS/온라인':'온라인','공식 경로':'공식','제3자/중간 전달':'중간 전달','갑작스러운 소식':'돌발','상호 호응':'호응','차단/제약':'제약','문서/결과':'문서','거리/선택':'거리','조심스러운 시작':'조심','변경/충격':'변경','빠른 진행':'빠름','초대/약속':'약속','가족/모임':'모임','업무 회신':'실무','결과 통보':'통지','반복 연락':'반복'})[value]||value;
+  const signalValue=score=>score>=75?'강함':score>=55?'중간 이상':score>=35?'제한적':'약함';
+  const axisValue=value=>value==='HIGH'?'강함':value==='MEDIUM'?'중간':'약함';
+  const restrictionValue=value=>value==='HIGH'?'큼':value==='MEDIUM'?'있음':'낮음';
+  const speedValue=axes=>axes.delay==='HIGH'?'지연 가능':axes.suddenness==='HIGH'?'돌발':axes.speed==='HIGH'?'빠름':axes.speed==='MEDIUM'?'보통':'느림';
+  function progressValue(card,axes){
+    if(axes.repetition==='HIGH')return'반복 가능';
+    if(axes.completion==='HIGH')return'완료 단계';
+    if(axes.observation==='HIGH')return'확인 중';
+    if(axes.restriction==='HIGH')return'보류 가능';
+    return'진행 중';
+  }
+  function detailsFor(card,context,intent,score,axes,form){
+    const path=shortTag(card.channels[0]||card.tags[0]||form);
+    const signal=signalValue(score),speed=speedValue(axes),restriction=restrictionValue(axes.restriction);
+    const direct=axisValue(axes.directness),observe=axisValue(axes.observation),reciprocity=axisValue(axes.reciprocity);
+    const action=axes.observation==='HIGH'&&axes.directness!=='HIGH'?'지켜봄':axes.restriction==='HIGH'?'제약 큼':axes.directness==='HIGH'?'직접':'확인 필요';
+    if(intent==='RESULT_NOTICE')return[{label:'통지',value:signal},{label:'검토',value:progressValue(card,axes)},{label:'제약',value:restriction},{label:'속도',value:speed}];
+    if(intent==='APPROVAL')return[{label:'통지',value:signal},{label:'절차',value:progressValue(card,axes)},{label:'제약',value:restriction},{label:'속도',value:speed}];
+    if(intent==='SOCIAL_OBSERVE')return[{label:'관찰',value:observe},{label:'직접 반응',value:direct},{label:'채널',value:'SNS'},{label:'행동',value:action}];
+    if(intent==='SOCIAL_ACTION')return[{label:'온라인',value:signal},{label:'직접 반응',value:direct},{label:'속도',value:speed},{label:'제약',value:restriction}];
+    if(intent==='REPLY')return[{label:'회신',value:signal},{label:'경로',value:path},{label:'속도',value:speed},{label:'제약',value:restriction}];
+    if(intent==='RECONTACT')return[{label:'재접촉',value:signal},{label:'직접성',value:direct},{label:'제약',value:restriction},{label:'회복',value:reciprocity}];
+    if(intent==='SCHEDULE')return[{label:'확정',value:signal},{label:'경로',value:path},{label:'속도',value:speed},{label:'변수',value:restriction}];
+    if(intent==='PERSONAL_NEWS')return[{label:'소식',value:signal},{label:'경로',value:path},{label:'속도',value:speed},{label:'호응',value:reciprocity}];
+    if(context==='LOVE')return[{label:'호응',value:reciprocity},{label:'연락',value:signal},{label:'행동',value:action},{label:'흐름',value:speed}];
+    return[{label:'응답',value:signal},{label:'경로',value:path},{label:'행동',value:action},{label:'흐름',value:speed}];
+  }
   function result(question, context, code, createdAt=new Date().toISOString()){
     const card=byCode.get(code);
     if(!card || !Object.hasOwn(CONTEXTS,context)) throw new Error('메시지 카드 정보를 확인할 수 없어요.');
@@ -152,6 +322,23 @@
     const card=byCode.get(r.cardCode);
     return {...r,card,signalLevel:level(r.score),message:card.baseMessageKo,contextMessage:card.contextMessages[r.context]};
   }
+  function interpret(value){
+    const candidate=value&&typeof value==='object'&&!value.createdAt?{...value,createdAt:'1970-01-01T00:00:00.000Z'}:value;
+    const d=describe(candidate);if(!d)return null;
+    const intent=classifyIntent(d.question,d.context),axes=semanticProfile(d.card),group=formGroup(d.card,d.context,intent,axes);
+    const form=FORM_COPY[group][d.context]||FORM_COPY[group].DEFAULT;
+    const style=safeStyle(d.card,d.context),signal=signalName(intent,d.context),caveat=caveatFor(d.card,d.context,intent);
+    const specialKey=`${d.cardCode}|${d.context}|${intent}`;
+    const shortMessage=SPECIAL_MESSAGES[specialKey]||`${strengthSentence(signal,d.score)} ${form} 쪽의 ${style} 흐름이에요. ${caveat}`;
+    const strength=d.score>=75?'전달 동력이 강한 편이에요':d.score>=55?'전달 가능성이 중간 이상이에요':d.score>=35?'추가 확인과 조율이 필요해요':'지금은 대기와 지연 쪽이 강해요';
+    const fullMessage=`이 질문은 ${INTENTS[intent]} 흐름으로 읽어요. ${style} 성격과 ${form} 신호를 함께 보면 ${strength}. ${caveat}`;
+    return Object.freeze({
+      question:d.question,context:d.context,contextLabel:CONTEXTS[d.context],cardCode:d.cardCode,score:d.score,
+      signalLevel:d.signalLevel,intent,axes,shortMessage,fullMessage,
+      details:Object.freeze(detailsFor(d.card,d.context,intent,d.score,axes,form).map(item=>Object.freeze(item))),
+      caveat,specialOverride:Object.hasOwn(SPECIAL_MESSAGES,specialKey),keyDetails:d.card.keyDetails
+    });
+  }
   const LAST_KEY='LUNEA_MESSAGE_ORACLE_LAST_V1', SAVED_KEY='LUNEA_MESSAGE_ORACLE_SAVED_V1';
   function storage(store){
     const read=key=>{try{return JSON.parse(store.getItem(key)||'null')}catch{return null}};
@@ -165,6 +352,14 @@
     };
   }
   function identity(code,deck){return Array.isArray(deck)?deck.find(c=>c.code===code)||null:null}
-  function copyText(value,deck){const d=describe(value);if(!d)return '';const id=identity(d.cardCode,deck);return `LUNEA MESSAGE ORACLE\n질문: ${d.question}\n맥락: ${CONTEXTS[d.context]}\n카드: ${id?.name||d.cardCode} (${d.cardCode}) · 정방향\n카드 기반 연락 신호 점수: ${d.score}%\n실제 확률이 아니라 카드 상징을 연락·소식 관점으로 환산한 지표\n핵심 메시지: ${d.message}\n${d.contextMessage}\nKey Details: ${d.card.keyDetails.join(' · ')}`}
-  root.LUNEA_MESSAGE_ORACLE_V1=Object.freeze({cards:Object.freeze(cards),CONTEXTS,classify,resolveContext,result,draw,restore,describe,storage,identity,copyText,LAST_KEY,SAVED_KEY});
+  function copyText(value,deck){
+    const d=interpret(value);if(!d)return '';const id=identity(d.cardCode,deck);
+    const details=d.details.map(item=>`${item.label} ${item.value}`).join(' · ');
+    return `LUNEA MESSAGE ORACLE\n질문: ${d.question}\n맥락: ${d.contextLabel}\n질문 의도: ${INTENTS[d.intent]}\n카드: ${id?.name||d.cardCode} (${d.cardCode}) · 정방향\n카드 기반 연락·소식 발생·전달 신호 강도: ${d.score}%\n실제 통계 확률이 아니며, 합격·승인·긍정 결과 확률이 아니라 연락·소식 신호를 카드 상징으로 환산한 지표예요.\n핵심 메시지: ${d.shortMessage}\n전체 메시지: ${d.fullMessage}\nKey Details: ${details}`;
+  }
+  root.LUNEA_MESSAGE_ORACLE_V1=Object.freeze({
+    cards:Object.freeze(cards),CONTEXTS,INTENTS,AXIS_LEVELS,classify,resolveContext,classifyIntent,semanticProfile,
+    result,draw,restore,describe,interpret,storage,identity,copyText,LAST_KEY,SAVED_KEY,
+    diagnostics:Object.freeze({specialOverrideCount:Object.keys(SPECIAL_MESSAGES).length,fallbackCount:0})
+  });
 })();
