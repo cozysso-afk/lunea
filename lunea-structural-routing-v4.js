@@ -66,7 +66,7 @@
       './lunea-learning-success-gate-v1.js?v=101',
       './lunea-ai-spread-preflight-v2.js?v=105',
       './lunea-reading-flow-v5.js?v=501',
-      './lunea-mobile-reading-controls-v12.js?v=1201',
+      './lunea-mobile-reading-controls-v12.js?v=1202',
       './lunea-opal-light-polish-v13.js?v=1301',
       './lunea-reading-polish-v14.js?v=1401',
       './lunea-flip-all-fix-v1.js?v=102',
@@ -230,13 +230,14 @@
   }
 
   function groupForTarget(target){
-    const el=target?.closest?.('button,[role="button"],a,.lunea-v8-tile,#profileStrip');
+    const el=target?.closest?.('button,[role="button"],a,.lunea-v8-tile,#profileStrip,#luneaTimingInline');
     if(!el) return null;
     const id=String(el.id||'');
     const key=String(el.dataset?.key||'').toLowerCase();
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
     if(id==='luneaDraftRestore' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
+    if(id==='timingSupportBtn' || id==='luneaTimingInline') return 'timing';
     /* Profile shell, V45 picker and the eager Natal client are Home-ready.
        Only genuinely lazy astrology surfaces should enter the Astro group. */
     if(id==='luneaThaiHomeTileV24' || /Thai|태국점성술|Taksa/i.test(text)) return 'finish';
@@ -264,7 +265,7 @@
     };
     const gate=e=>{
       const target=e.target instanceof Element?e.target:null;
-      const trigger=target?.closest?.('button,[role="button"],a,.lunea-v8-tile,#profileStrip');
+      const trigger=target?.closest?.('button,[role="button"],a,.lunea-v8-tile,#profileStrip,#luneaTimingInline');
       if(!trigger||replaying.has(trigger)) return;
       const name=groupForTarget(trigger);
       if(!name) return;
