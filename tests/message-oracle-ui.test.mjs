@@ -31,7 +31,7 @@ function harness({loader=false,denied=false,reduced=false,assetFail=false,holdAs
  context.window=context;
  const html=read('index.html');vm.runInContext(html.split('\n').find(line=>line.startsWith("document.querySelectorAll('.category-header').forEach")),context);vm.runInContext(html.slice(html.indexOf('const MAJORS='),html.indexOf('const TAROT_DECK='))+'const TAROT_DECK=[...MAJORS,...buildMinor()];',context);
  if(loader){vm.runInContext(read('lunea-structural-routing-v4.js').replace('  boot().catch(err=>{','  W.__messageTest={groupForTarget,installLazyTriggers};\n  boot().catch(err=>{'),context);context.__messageTest.installLazyTriggers()}
- else{vm.runInContext(read('lunea-message-oracle-v1.js'),context);vm.runInContext(read('lunea-message-oracle-ui-v1.js').replace('  W.LUNEA_MESSAGE_ORACLE_UI_V1=', '  W.__renderMessageScore=renderScore;\n  W.LUNEA_MESSAGE_ORACLE_UI_V1='),context)}
+ else{vm.runInContext(read('lunea-message-oracle-v1.js'),context);vm.runInContext(read('lunea-message-oracle-ui-v1.js').replace('  W.LUNEA_MESSAGE_ORACLE_UI_V1=', '  W.__messagePresentation=Object.freeze({renderScore,visibleMessage,visibleContextMessage,detailCells,copyResultText});\n  W.LUNEA_MESSAGE_ORACLE_UI_V1='),context)}
  return {document,entry,context,map,loaded,query:s=>document.querySelector(s),draws:()=>draws,setConfirm:v=>confirm=v,copied:()=>copied,animations:()=>animations,finishFlips:async()=>{activeAnimations.forEach(a=>a.finish());activeAnimations=[];await Promise.resolve()},releaseAssets:()=>{pendingAssets.forEach(f=>f());pendingAssets=[]}};
 }
 async function start(h){await h.entry.click();h.query('#moQuestion').value='합성 면접 결과 연락';await h.query('#moQuestion').emit('input');await h.query('.mo-form').emit('submit');await h.finishFlips()}
@@ -65,15 +65,21 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=104']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=105']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
 
 test('real Home markup uses existing expandable category handler and never opens a Tarot spread',async()=>{
  const h=harness();const header=h.query('.category-header'),category=h.query('#luneaSignalMessageSection');
+ const logo=h.query('.message-oracle-home-logo');assert.equal(logo.tagName,'img');assert.equal(logo.getAttribute('src'),'./assets/message-oracle/message_oracle_logo.png?v=101');assert.equal(logo.getAttribute('aria-hidden'),'true');
  assert.equal(header.getAttribute('aria-expanded'),'false');await header.click();assert.equal(header.getAttribute('aria-expanded'),'true');assert.equal(category.classList.contains('active'),true);
  await header.emit('keydown',{key:'Enter'});assert.equal(header.getAttribute('aria-expanded'),'false');assert.equal(h.entry.matches('.reading-item'),false);assert.equal(h.draws(),0);
+});
+
+test('Home and overlay reuse the byte-locked approved transparent logo',()=>{
+ const b=fs.readFileSync(new URL('../assets/message-oracle/message_oracle_logo.png',import.meta.url));assert.equal(b.length,1432655);assert.equal(createHash('sha256').update(b).digest('hex'),'dcd1da89454db6add489b35d3358daab80319e53b56ecb4687d9baf136cf4b0a');assert.equal(b.subarray(1,4).toString(),'PNG');
+ const h=harness();assert.equal(h.query('.mo-symbol').getAttribute('src'),h.query('.message-oracle-home-logo').getAttribute('src'));
 });
 
 
@@ -100,14 +106,37 @@ test('draw causes exactly one flip; double-tap cannot draw during animation; reo
 test('reduced motion reveals immediately, with no animation or additional RNG',async()=>{
  const h=harness({reduced:true});await start(h);assert.equal(h.query('.mo-card').dataset.face,'front');assert.equal(h.draws(),1);assert.equal(h.animations(),0);assert.equal(h.query('[data-action="redraw"]').disabled,false);
 });
-test('all seven contexts produce four concise labeled cells; full engine prose stays intact',async()=>{
+test('all seven contexts produce four concise labeled cells and context-safe presentation',async()=>{
  for(const c of ['LOVE','REUNION','OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']){
   const h=harness({reduced:true});await h.entry.click();h.query('#moQuestion').value='합성 질문';await h.query('[data-context="'+c+'"]').click();await h.query('.mo-form').emit('submit');
   const cells=h.query('.mo-details').children;assert.equal(cells.length,4);for(const cell of cells){assert.equal(cell.children.length,2);assert.ok(cell.children[0].textContent.length<=5);assert.ok(cell.children[1].textContent.length<=5)}
   const row=JSON.parse(h.map.get('LUNEA_MESSAGE_ORACLE_LAST_V1')),d=h.context.LUNEA_MESSAGE_ORACLE_V1.describe(row);
-  assert.equal(h.query('.mo-score').textContent,d.score+'%');assert.equal(h.query('.mo-bottom').textContent,h.context.LUNEA_MESSAGE_ORACLE_V1.CONTEXTS[c]);assert.ok(h.query('.mo-full-text').textContent.includes(d.message));assert.ok(d.message.startsWith(h.query('.mo-message').textContent));
-  if(c==='OFFICIAL')assert.equal(cells[0].children[0].textContent,'결과 신호');if(c==='SOCIAL')assert.equal(cells[1].children[0].textContent,'관찰');
+  const shown=h.context.__messagePresentation.visibleMessage(d);assert.equal(h.query('.mo-score').textContent,d.score+'%');assert.equal(h.query('.mo-bottom').textContent,h.context.LUNEA_MESSAGE_ORACLE_V1.CONTEXTS[c]);assert.ok(h.query('.mo-full-text').textContent.includes(shown));assert.equal(h.query('.mo-message').textContent,shown);
+  if(c==='OFFICIAL')assert.equal(cells[0].children[0].textContent,'통지');if(c==='SOCIAL')assert.equal(cells[1].children[0].textContent,'관찰');
  }
+});
+
+test('non-romantic priority cards use context-safe visible messages without changing scores',()=>{
+ const h=harness(),api=h.context.LUNEA_MESSAGE_ORACLE_V1,p=h.context.__messagePresentation;
+ const codes=['Devil','Tower','Justice','Hierophant','Judgement','World','High Priestess','Swords11','Swords08','Cups02','Fool'];
+ for(const context of ['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL'])for(const code of codes){
+  const result=api.result('합성 비연애 질문',context,code),before=result.score,d=api.describe(result),message=p.visibleMessage(d);
+  const guidance=p.visibleContextMessage(d);assert.ok(message.length>=35&&message.length<=90,context+' '+code);assert.doesNotMatch(message+' '+guidance,/강한 관심|집착성|호감|연애/);assert.equal(result.score,before);
+ }
+});
+
+test('Devil work result distinguishes contact strength from outcome and gives concrete details',async()=>{
+ const h=harness({reduced:true}),api=h.context.LUNEA_MESSAGE_ORACLE_V1,p=h.context.__messagePresentation;
+ const result=api.result('면접 결과','WORK_BIZ','Devil'),d=api.describe(result);
+ assert.equal(d.score,67);
+ assert.equal(p.visibleMessage(d),'연락·결과 통지 신호는 중간 이상이에요. 내부 제약과 압박으로 검토가 반복될 수 있으며, 연락과 긍정 결과는 별개예요.');
+ assert.deepEqual(JSON.parse(JSON.stringify(p.detailCells(d))),[
+  {label:'회신',value:'중간 이상'},{label:'진행',value:'반복 검토'},{label:'제약',value:'큼'},{label:'속도',value:'지연 가능'}
+ ]);
+ api.storage(h.context.localStorage).remember(result);await h.entry.click();
+ assert.equal(h.query('.mo-message').textContent,p.visibleMessage(d));assert.doesNotMatch(h.query('.mo-full-text').textContent,/강한 관심|집착성/);assert.match(h.query('#moScoreNote').textContent,/합격·승인·긍정 결과 확률이 아니/);assert.match(h.query('.mo-question-summary').textContent,/결과 방향과 별도/);
+ assert.deepEqual(h.query('.mo-details').children.map(cell=>cell.children.map(n=>n.textContent)),[['회신','중간 이상'],['진행','반복 검토'],['제약','큼'],['속도','지연 가능']]);
+ await h.query('[data-action="copy"]').click();assert.doesNotMatch(h.copied(),/강한 관심|집착성/);assert.match(h.copied(),/합격·승인·긍정 결과 확률이 아니라/);
 });
 test('all 78 restored identities get stable names and upright canonical images without drawing',async()=>{
  const h=harness({reduced:true}),api=h.context.LUNEA_MESSAGE_ORACLE_V1;
@@ -118,9 +147,9 @@ test('all 78 restored identities get stable names and upright canonical images w
 
 
 test('score typography distinguishes 9%, 34% and 100% without changing a result',()=>{
- const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[100,'3']]){h.context.__renderMessageScore(score);assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits)}assert.equal(h.draws(),0);
+ const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[100,'3']]){h.context.__messagePresentation.renderScore(score);assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits);assert.match(h.query('.mo-score').getAttribute('aria-label'),/결과 성공 확률이 아님/)}assert.equal(h.draws(),0);
 });
 test('header uses the approved transparent PNG logo and styles scope the dark input override to Message',()=>{
  const h=harness();assert.equal(h.query('.mo-symbol').tagName,'img');assert.equal(h.query('.mo-symbol').getAttribute('src'),'./assets/message-oracle/message_oracle_logo.png?v=101');assert.equal(h.query('.mo-symbol').getAttribute('aria-hidden'),'true');
- const css=h.query('#luneaMessageOracleStyle').textContent;assert.match(css,/color:#393140!important;-webkit-text-fill-color:#393140!important/);assert.match(css,/\.mo-card-front\{[^}]*background:transparent/);assert.match(css,/mask-image:url\('[^']*message_oracle_front_mask.png/);assert.match(css,/mask-image:url\('[^']*message_oracle_back_mask.png/);
+ const css=h.query('#luneaMessageOracleStyle').textContent;assert.match(css,/color:#393140!important;-webkit-text-fill-color:#393140!important/);assert.match(css,/\.mo-card-front\{[^}]*background:transparent/);assert.match(css,/mask-image:url\('[^']*message_oracle_front_mask.png/);assert.match(css,/mask-image:url\('[^']*message_oracle_back_mask.png/);assert.match(css,/\.mo-bottom\{[^}]*display:flex;align-items:center;justify-content:center[^}]*line-height:1[^}]*translateY\(-1px\)/);
 });

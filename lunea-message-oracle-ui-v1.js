@@ -26,7 +26,7 @@
     #luneaMessageOracleOverlay .mo-sheet{width:100%;max-width:470px;max-height:calc(100dvh - 24px);overflow-y:auto;overscroll-behavior:contain;border:1px solid #ad96bd;border-radius:23px;padding:20px;background:linear-gradient(155deg,#f4eee9,#e9e2f0);color:#393140;box-shadow:0 20px 70px #0005;text-align:left}
     #luneaMessageOracleOverlay .mo-header{display:flex;align-items:start;gap:10px;justify-content:space-between}
     #luneaMessageOracleOverlay .mo-heading{display:flex;align-items:flex-start;gap:9px;flex:1}
-    #luneaMessageOracleOverlay .mo-symbol{display:block;flex:0 0 36px;width:36px;height:36px;margin-top:0;object-fit:contain;background:transparent;filter:none}
+    #luneaMessageOracleOverlay .mo-symbol{flex:0 0 36px;width:36px;height:36px;margin-top:0}
     #luneaMessageOracleOverlay .mo-heading-copy{flex:1}
     #luneaMessageOracleOverlay .mo-kicker{font-size:10px;letter-spacing:1.1px;color:#756079;font-weight:700}
     #luneaMessageOracleOverlay h2{font:600 19px/1.45 'Noto Serif KR',serif;margin:8px 0}
@@ -64,12 +64,12 @@
     #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;background:transparent;margin:0}
     #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;flex-direction:column;gap:1px;font:600 12.5px/1.15 'Noto Serif KR',serif}
     #luneaMessageOracleOverlay .mo-name-ko{font-size:12px;font-weight:500}
-    #luneaMessageOracleOverlay .mo-message{left:12.2%;top:63.5%;width:75.6%;height:12.6%;font:500 14px/1.42 'Noto Serif KR',serif;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-message{left:12.2%;top:63%;width:75.6%;height:14.2%;font:500 14px/1.34 'Noto Serif KR',serif;word-break:keep-all}
     #luneaMessageOracleOverlay .mo-details{position:absolute;left:13.3%;top:79.4%;width:73.4%;height:6.5%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3.8%;margin:0}
     #luneaMessageOracleOverlay .mo-detail{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;line-height:1.25}
     #luneaMessageOracleOverlay .mo-detail-label{font-size:10px;color:#75604a;font-weight:500}
     #luneaMessageOracleOverlay .mo-detail-value{font-size:12px;font-weight:650;color:#493747;word-break:keep-all}
-    #luneaMessageOracleOverlay .mo-bottom{left:35%;top:90.1%;width:30%;height:3.6%;font-size:12px;line-height:1.25;color:#6d5439}
+    #luneaMessageOracleOverlay .mo-bottom{left:35%;top:90.1%;width:30%;height:3.6%;display:flex;align-items:center;justify-content:center;font-size:12px;line-height:1;color:#6d5439;transform:translateY(-1px)}
     #luneaMessageOracleOverlay .mo-full-reading{font-size:12px;line-height:1.7;margin:12px 0}
     #luneaMessageOracleOverlay .mo-full-reading summary{cursor:pointer}
     #luneaMessageOracleOverlay .mo-full-text{white-space:pre-wrap}
@@ -87,7 +87,7 @@
   document.head.appendChild(style);
   const overlay=document.createElement('div'); overlay.id='luneaMessageOracleOverlay';
   overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','moTitle');overlay.setAttribute('aria-hidden','true');
-  overlay.innerHTML=`<section class="mo-sheet" tabindex="-1"><div class="mo-header"><div class="mo-heading"><img class="mo-symbol" src="${ASSETS.logo}" alt="" aria-hidden="true" width="1254" height="1254"><div class="mo-heading-copy"><div class="mo-kicker">LUNEA · MESSAGE ORACLE</div><h2 id="moTitle">연락 · 소식 메시지 카드</h2></div></div><button class="mo-close" aria-label="닫기">×</button></div><p class="mo-sub">연애 · 재회 · 공적 결과 · 업무 · SNS · 지인 소식</p>
+  overlay.innerHTML=`<section class="mo-sheet" tabindex="-1"><div class="mo-header"><div class="mo-heading"><img class="message-oracle-logo mo-symbol" src="${ASSETS.logo}" alt="" aria-hidden="true" width="1254" height="1254"><div class="mo-heading-copy"><div class="mo-kicker">LUNEA · MESSAGE ORACLE</div><h2 id="moTitle">연락 · 소식 메시지 카드</h2></div></div><button class="mo-close" aria-label="닫기">×</button></div><p class="mo-sub">연애 · 재회 · 공적 결과 · 업무 · SNS · 지인 소식</p>
     <form class="mo-form"><label for="moQuestion">어떤 연락이나 소식이 궁금해?</label><textarea id="moQuestion" maxlength="2000" required placeholder="예: 회사에서 면접 결과를 알려줄까?"></textarea><div class="mo-context" aria-live="polite"></div><div class="mo-chips" role="group" aria-label="연락 맥락"></div><button class="mo-primary" type="submit">✉️ 메시지 카드 한 장 뽑기</button></form>
     <div class="mo-card" data-face="back"><div class="mo-card-inner">
       <div class="mo-card-back" aria-hidden="true"><img class="mo-back-art" src="${ASSETS.back}" alt="" width="1024" height="1536"></div>
@@ -99,7 +99,7 @@
         <p class="mo-slot mo-message"></p><div class="mo-details"></div><div class="mo-slot mo-bottom"></div>
       </article>
     </div></div>
-    <p class="mo-note" id="moScoreNote">카드 기반 연락 신호 점수 · 실제 통계 확률이 아니라 카드 상징을 연락·소식 관점으로 환산한 지표</p>
+    <p class="mo-note" id="moScoreNote"><strong>연락·소식 발생·전달 신호 강도</strong> · 합격·승인·긍정 결과 확률이 아니며, 카드 상징을 환산한 지표예요.</p>
     <div class="mo-result-context" hidden><p class="mo-note mo-question-summary"></p><details class="mo-full-reading"><summary>전체 메시지 · 맥락</summary><div class="mo-full-text"></div></details></div>
     <div class="mo-actions" hidden><button data-action="copy">📋 결과 복사</button><button data-action="save">💾 저장</button><button data-action="redraw">↻ 다시 뽑기</button></div><div class="mo-actions"><button data-action="new">새 질문</button></div><p class="mo-status" role="status"></p><details class="mo-saved"><summary>이 기기에 저장한 메시지 카드</summary><div class="mo-saved-list"></div></details></section>`;
   document.body.appendChild(overlay);
@@ -118,26 +118,56 @@
     chips.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.context===override)));
   }
   const DETAIL_LABELS={
-    LOVE:['감정','연락 신호','행동','흐름'],REUNION:['감정','연락 신호','행동','흐름'],
-    OFFICIAL:['결과 신호','공식 경로','진행 상태','속도'],WORK_BIZ:['회신','업무 흐름','행동','지연 요인'],
+    LOVE:['감정','연락','행동','흐름'],REUNION:['감정','연락','행동','흐름'],
+    OFFICIAL:['통지','경로','진행','속도'],WORK_BIZ:['회신','진행','제약','속도'],
     SOCIAL:['SNS','관찰','직접 반응','행동'],PERSONAL:['관계','소식','행동','흐름'],GENERAL:['응답','경로','행동','흐름']
   };
+  const NON_ROMANTIC_CONTEXTS=new Set(['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']);
+  const NON_ROMANTIC_MESSAGES=Object.freeze({
+    Devil:'연락·소식 전달 신호는 중간 이상이에요. 제약과 압박으로 확인이 반복될 수 있으며, 연락과 긍정 결과는 별개예요.',
+    Tower:'갑작스러운 통지나 변경 소식 신호가 강해요. 전달이 빠르거나 충격적일 수 있지만, 긍정 결과를 뜻하지는 않아요.',
+    Justice:'기준과 검토를 거친 결정·통지 신호예요. 연락 강도와 결과의 유불리는 별개이므로 실제 안내를 확인해요.',
+    Hierophant:'정해진 절차와 담당 경로를 통한 회신 신호예요. 공식 연락 가능성과 승인 여부는 별개로 확인해야 해요.',
+    Judgement:'보류되던 사안이 다시 호출되거나 결과가 통지될 신호가 강해요. 소식 도착과 긍정 결과는 별개예요.',
+    World:'진행 중인 사안이 마무리되어 최종 안내가 전달될 흐름이에요. 완료 통지가 곧 긍정 결과를 뜻하지는 않아요.',
+    'High Priestess':'상황을 알고 있거나 내부 확인 중이어도 직접 전달은 약할 수 있어요. 침묵을 확정 결과로 해석하지 말아요.',
+    Swords11:'조회·확인·관찰 신호가 있으나 직접 회신은 약할 수 있어요. 확인한 것과 행동으로 답하는 것은 별개예요.',
+    Swords08:'조건이나 부담이 전달을 막아 연락 신호가 약해요. 지연과 부정 결과를 같은 뜻으로 단정하지 말아요.',
+    Cups02:'상호 응답이나 협의가 오갈 신호예요. 대화가 맞물린다는 뜻이며 최종 수락·승인을 보장하지는 않아요.',
+    Fool:'예고 없이 가벼운 연락이나 새 안내가 들어올 수 있어요. 갑작스러운 전달과 결과의 안정성은 따로 확인해요.'
+  });
+  const NON_ROMANTIC_GUIDANCE=Object.freeze({
+    OFFICIAL:'공식 통지의 발생과 승인·선정 여부는 별도로 확인해요.',
+    WORK_BIZ:'업무 회신과 최종 수락·선정 여부는 별도로 확인해요.',
+    SOCIAL:'온라인 확인·관찰과 직접 메시지 행동은 별도로 확인해요.',
+    PERSONAL:'소식의 도착과 관계의 긍정적 변화는 별도로 확인해요.',
+    GENERAL:'연락·소식의 전달과 결과의 긍정·부정은 별도로 확인해요.'
+  });
+  function visibleMessage(d){
+    if(d.context==='WORK_BIZ'&&d.cardCode==='Devil')return '연락·결과 통지 신호는 중간 이상이에요. 내부 제약과 압박으로 검토가 반복될 수 있으며, 연락과 긍정 결과는 별개예요.';
+    if(NON_ROMANTIC_CONTEXTS.has(d.context)&&Object.hasOwn(NON_ROMANTIC_MESSAGES,d.cardCode))return NON_ROMANTIC_MESSAGES[d.cardCode];
+    return d.message.match(/^.*?[.!?](?:\s|$)/u)?.[0].trim()||d.message;
+  }
+  function visibleContextMessage(d){return NON_ROMANTIC_CONTEXTS.has(d.context)&&Object.hasOwn(NON_ROMANTIC_MESSAGES,d.cardCode)?NON_ROMANTIC_GUIDANCE[d.context]:d.contextMessage}
   // Compact presentation of existing engine tags; these never change its score or meaning.
   const shortTag=t=>({'직접 연락':'직접','SNS/온라인':'온라인','공식 경로':'공식','제3자/중간 전달':'중간 전달','갑작스러운 소식':'돌발',
     '상호 호응':'호응','차단/제약':'제약','문서/결과':'문서','거리/선택':'거리','조심스러운 시작':'조심','변경/충격':'변경',
     '빠른 진행':'빠름','초대/약속':'약속','가족/모임':'모임','업무 회신':'실무','결과 통보':'통지','반복 연락':'반복'})[t]||t;
   function detailCells(d){
     const tags=d.card.tags, has=t=>tags.includes(t);
-    const signal=d.score>=75?'강함':d.score>=55?'열림':d.score>=35?'간접':'약함';
+    const signal=d.score>=75?'강함':d.score>=55?'중간 이상':d.score>=35?'제한적':'약함';
     const path=shortTag(d.card.channels[0]||tags[0]);
-    const action=has('관망')?'관망':has('차단/제약')?'제약':has('상호 호응')?'호응':has('직접 연락')?'직접':'확인';
-    const flow=has('지연')?'지연':has('빠른 진행')?'빠름':has('갑작스러운 소식')?'돌발':has('조율')?'조율':has('마무리')?'마무리':'유동';
+    const action=has('관망')?'관망':has('차단/제약')?'제약 큼':has('상호 호응')?'상호 응답':has('직접 연락')?'직접':'확인 필요';
+    const flow=has('지연')||has('차단/제약')||has('반복 연락')?'지연 가능':has('빠른 진행')?'빠름':has('갑작스러운 소식')?'돌발':has('조율')?'조율 중':has('마무리')?'마무리':'변동 가능';
     const affect=has('상호 호응')?'호응':has('안부')?'관심':has('관망')?'유보':'단정 불가';
+    const progress=has('반복 연락')?'반복 검토':has('마무리')?'마무리':has('문서/결과')||has('결과 통보')?'결과 검토':has('조율')?'조율 중':has('공식 경로')?'절차 진행':has('상호 호응')?'협의 진행':has('관망')?'확인 중':has('변경/충격')?'변경 가능':has('차단/제약')?'보류 가능':'진행 가능';
+    const constraint=has('차단/제약')?'큼':has('불확실')||has('지연')?'있음':'낮음';
     let values=[signal,path,action,flow];
     if(d.context==='LOVE'||d.context==='REUNION')values=[affect,signal,action,flow];
     if(d.context==='SOCIAL')values=[has('SNS/온라인')?'온라인':'별도 확인',has('관망')?'관찰':'불명확',has('직접 연락')?signal:'미확정',action];
     if(d.context==='PERSONAL')values=[has('재접촉')?'옛 인연':affect,signal,action,flow];
-    if(d.context==='WORK_BIZ')values=[signal,has('조율')?'조율':path,action,has('지연')?'지연':has('차단/제약')?'제약':'미확정'];
+    if(d.context==='OFFICIAL')values=[signal,path,progress,flow];
+    if(d.context==='WORK_BIZ')values=[signal,progress,constraint,flow];
     return DETAIL_LABELS[d.context].map((label,i)=>({label,value:values[i]}));
   }
   function displayNames(id){
@@ -147,6 +177,10 @@
     const court=id.code.match(/^(Wands|Cups|Swords|Pents)(11|12|13|14)$/);
     if(court)korean=({Wands:'완드',Cups:'컵',Swords:'검',Pents:'펜타클'})[court[1]]+' '+({'11':'시종','12':'기사','13':'여왕','14':'왕'})[court[2]];
     return {english,korean};
+  }
+  function copyResultText(value){
+    const d=E.describe(value),id=d&&E.identity(d.cardCode,deck);if(!d||!id)return '';
+    return `LUNEA MESSAGE ORACLE\n질문: ${d.question}\n맥락: ${E.CONTEXTS[d.context]}\n카드: ${id.name} (${d.cardCode}) · 정방향\n카드 기반 연락·소식 발생·전달 신호 강도: ${d.score}%\n합격·승인·긍정 결과 확률이 아니라 카드 상징을 연락·소식 관점으로 환산한 지표\n핵심 메시지: ${visibleMessage(d)}\n${visibleContextMessage(d)}\nKey Details: ${d.card.keyDetails.join(' · ')}`;
   }
   function stopFlip(){
     const previous=flipAnimation;flipAnimation=null;previous?.cancel();
@@ -161,7 +195,7 @@
     const finish=()=>{if(flipAnimation===animation){flipAnimation=null;$('.mo-card').removeAttribute('aria-busy');$('[data-action="redraw"]').disabled=false}};
     animation.finished.then(finish,finish);
   }
-  function renderScore(score){const node=$('.mo-score');node.textContent=`${score}%`;node.dataset.digits=String(String(score).length);}
+  function renderScore(score){const node=$('.mo-score');node.textContent=`${score}%`;node.dataset.digits=String(String(score).length);node.setAttribute('aria-label',`카드 기반 연락·소식 발생·전달 신호 강도 ${score}퍼센트. 결과 성공 확률이 아님`);}
   function render(animate=false){
     const d=E.describe(current);$('.mo-result').hidden=!d;$('.mo-actions').hidden=!d;$('.mo-form').hidden=!!d;$('.mo-result-context').hidden=!d;
     if(!d){reveal(false);return}
@@ -169,15 +203,14 @@
     renderScore(d.score);
     $('.mo-name-en').textContent=names.english;$('.mo-name-ko').textContent=names.korean;
     const img=$('.mo-image');img.src=id.img;img.alt=id.name;
-    // A complete first sentence fits the approved message panel. Full unmodified
-    // engine prose and context remain available below the card and in copy/save.
-    $('.mo-message').textContent=d.message.match(/^.*?[.!?](?:\s|$)/u)?.[0].trim()||d.message;
+    const message=visibleMessage(d);
+    $('.mo-message').textContent=message;
     $('.mo-details').replaceChildren(...detailCells(d).map(({label,value})=>{const cell=document.createElement('div');cell.className='mo-detail';
       const l=document.createElement('span');l.className='mo-detail-label';l.textContent=label;
       const v=document.createElement('span');v.className='mo-detail-value';v.textContent=value;cell.appendChild(l);cell.appendChild(v);return cell}));
     $('.mo-bottom').textContent=E.CONTEXTS[d.context];
-    $('.mo-question-summary').textContent=`질문: ${d.question}\n${E.CONTEXTS[d.context]} · ${d.signalLevel}`;
-    $('.mo-full-text').textContent=`${d.message}\n${d.contextMessage}\nKey Details: ${d.card.keyDetails.join(' · ')}`;
+    $('.mo-question-summary').textContent=`질문: ${d.question}\n${E.CONTEXTS[d.context]} · 연락·소식 신호 ${d.score}% · 결과 방향과 별도`;
+    $('.mo-full-text').textContent=`${message}\n${visibleContextMessage(d)}\nKey Details: ${d.card.keyDetails.join(' · ')}`;
     reveal(animate);
   }
   function renderSaved(){
@@ -198,7 +231,7 @@
   $('[data-action="redraw"]').addEventListener('click',()=>{if(!flipAnimation&&current&&W.confirm('같은 질문으로 새 카드를 다시 뽑을까?'))commitDraw(current.question,current.context)});
   $('[data-action="new"]').addEventListener('click',()=>{const cleared=store.clear();current=null;question.value='';override='AUTO';syncContext();render();announce(cleared?'': '현재 화면은 초기화했지만 기기 저장소를 지우지 못했어요.');question.focus()});
   $('[data-action="save"]').addEventListener('click',()=>{announce(store.save(current)?'이 기기의 메시지 카드 목록에 저장했어요.':'저장 공간을 사용할 수 없어요. 결과를 복사해 주세요.');renderSaved()});
-  $('[data-action="copy"]').addEventListener('click',async()=>{try{await W.navigator.clipboard.writeText(E.copyText(current,deck));announce('결과를 복사했어요.')}catch{announce('복사를 허용하지 않은 브라우저예요. 결과 텍스트를 선택해 복사해 주세요.')}});
+  $('[data-action="copy"]').addEventListener('click',async()=>{try{await W.navigator.clipboard.writeText(copyResultText(current));announce('결과를 복사했어요.')}catch{announce('복사를 허용하지 않은 브라우저예요. 결과 텍스트를 선택해 복사해 주세요.')}});
   async function open(){
     const request=++openRequest;
     if(!await ready()){

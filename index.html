@@ -72,6 +72,8 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;mar
 
 /* Compact expandable tool section; independent of the DAILY ORBIT signal axis. */
 #luneaSignalMessageSection .cat-left{min-width:0}
+.message-oracle-logo{display:block;object-fit:contain;background:transparent;filter:none}
+#luneaSignalMessageSection .message-oracle-home-logo{width:34px;height:34px;flex:0 0 34px}
 #luneaSignalMessageSection .cat-text h3{font-size:13px}
 #luneaMessageOracleEntry{display:block;width:100%;max-width:100%;box-sizing:border-box;text-align:left;padding:12px;border-radius:13px;border:1px solid rgba(189,164,248,.22);background:rgba(189,164,248,.06);color:var(--text);white-space:normal}
 #luneaMessageOracleEntry strong,#luneaMessageOracleEntry span,#luneaMessageOracleEntry small{display:block;overflow-wrap:anywhere}
@@ -123,7 +125,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;mar
 <div class="reading-item" data-cat="STOCK" data-title="매도 타이밍" data-desc="지금 매도와 추가 보유의 심리적 득실을 비교합니다." data-count="5"><div><h4>매도 타이밍</h4><p>즉시 매도 vs 보유 비교.</p></div><div class="count">5</div></div>
 </div></div>
 <section class="category" id="luneaSignalMessageSection" aria-label="SIGNAL · MESSAGE">
-<div class="category-header"><div class="cat-left"><div class="cat-text"><h3>SIGNAL · MESSAGE</h3><p>연락 · 소식 · 응답</p></div></div><div class="toggle" aria-hidden="true">+</div></div>
+<div class="category-header"><div class="cat-left"><img class="message-oracle-logo message-oracle-home-logo" src="./assets/message-oracle/message_oracle_logo.png?v=101" alt="" aria-hidden="true" width="1254" height="1254"><div class="cat-text"><h3>SIGNAL · MESSAGE</h3><p>연락 · 소식 · 응답</p></div></div><div class="toggle" aria-hidden="true">+</div></div>
 <div class="category-content"><button id="luneaMessageOracleEntry" disabled><strong>MESSAGE ORACLE</strong><span>연락 · 소식 · 응답</span><small>연애·재회·공적 결과·업무·SNS·지인 소식까지<br>한 장으로 빠르게 확인</small></button><p id="luneaMessageOracleLoadStatus" role="status"></p></div>
 </section>
 </div>
@@ -578,7 +580,7 @@ window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
 </script><script src="./lunea-cache-refresh-v1.js?v=d2198d8c5779"></script>
   <script src="./spread-engine-v7.4.js?v=75"></script>
-  <script src="./lunea-structural-routing-v4.js?v=20260911-message-logo"></script>
+  <script src="./lunea-structural-routing-v4.js?v=20260911-message-clarity"></script>
   <script src="./timing-oracle-v1.js?v=102"></script>
   <script src="./general-5-6-v1.js?v=101"></script>
   <script src="./profile-advanced-v2.js?v=201"></script>

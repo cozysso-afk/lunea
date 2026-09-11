@@ -123,7 +123,7 @@
     ],
     message:[
       './lunea-message-oracle-v1.js?v=101',
-      './lunea-message-oracle-ui-v1.js?v=104'
+      './lunea-message-oracle-ui-v1.js?v=105'
     ],
     timing:[
       './lunea-timing-ab-v1.js?v=102',
