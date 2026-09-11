@@ -6,7 +6,7 @@
   Visual/mobile usability patch only.
   - replaces the horizontally scrolling tiny spread action chips with a stable action dock
   - larger touch targets and readable labels
-  - mobile-friendly Timing inline card with a CSS Moon Dial visual (no blank legacy PNG thumbnail)
+  - mobile-friendly Timing inline card with the real final Timing image as its only card visual
   - no RNG / reading / timing / archive / astrology logic changes
 */
 (() => {
@@ -92,7 +92,7 @@
     #spreadOverlay .modal{padding-bottom:calc(28px + env(safe-area-inset-bottom))!important}
 
     /* =======================================================
-       Inline Timing signal — replace tiny/blank legacy image
+       Inline Timing signal — exactly one real Timing card image
        ======================================================= */
     #luneaTimingInline.timing-inline{
       width:100%!important;
@@ -115,26 +115,25 @@
         linear-gradient(151deg,rgba(18,21,41,.93),rgba(8,10,24,.96))!important;
       box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 12px 30px rgba(0,0,0,.20)!important;
     }
-    #luneaTimingInline.timing-inline>img{display:none!important}
+    #luneaTimingInline.timing-inline>img{
+      display:block!important;
+      position:static!important;
+      inset:auto!important;
+      width:88px!important;
+      min-width:0!important;
+      max-width:88px!important;
+      height:auto!important;
+      max-height:148px!important;
+      aspect-ratio:auto!important;
+      justify-self:center!important;
+      margin:0!important;
+      transform:none!important;
+      object-fit:contain!important;
+      border-radius:10px!important;
+    }
     #luneaTimingInline.timing-inline::before{
-      content:'';
-      display:block;
-      width:88px;
-      height:126px;
-      border-radius:17px;
-      justify-self:center;
-      border:1px solid rgba(230,233,245,.25);
-      background:
-        radial-gradient(circle at 50% 44%,#f4f4f9 0 17%,#0d1022 18% 29%,transparent 30%),
-        radial-gradient(circle at 50% 44%,transparent 0 35%,rgba(223,226,241,.27) 36% 37%,transparent 38% 49%,rgba(210,204,235,.14) 50% 51%,transparent 52%),
-        radial-gradient(circle at 24% 18%,rgba(255,255,255,.72) 0 1px,transparent 1.5px),
-        radial-gradient(circle at 77% 15%,rgba(211,221,246,.58) 0 1px,transparent 1.4px),
-        radial-gradient(circle at 72% 71%,rgba(191,176,234,.55) 0 1px,transparent 1.4px),
-        linear-gradient(155deg,#181b38 0%,#0c1025 57%,#080a18 100%);
-      box-shadow:
-        inset 0 1px 0 rgba(255,255,255,.11),
-        0 9px 22px rgba(0,0,0,.31),
-        0 0 22px rgba(151,126,214,.09);
+      content:none!important;
+      display:none!important;
     }
     #luneaTimingInline .txt{min-width:0!important}
     #luneaTimingInline .txt small{
@@ -179,9 +178,9 @@
         padding:16px 15px 15px!important;
         text-align:center!important;
       }
-      #luneaTimingInline.timing-inline::before{
+      #luneaTimingInline.timing-inline>img{
         width:82px!important;
-        height:116px!important;
+        max-width:82px!important;
       }
       #luneaTimingInline .txt small{font-size:8.7px!important;margin-bottom:5px!important}
       #luneaTimingInline .txt b{font-size:17px!important;margin-bottom:7px!important}
