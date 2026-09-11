@@ -98,7 +98,21 @@
       #archiveOverlay .archive-search-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 9px}
       #archiveOverlay #archiveSearchSummary{font-size:9px;color:#8fded4}
       #archiveOverlay #archiveSearchReset{flex:0 0 auto}
-      @media(max-width:430px){#archiveOverlay .archive-search-advanced{grid-template-columns:minmax(0,1fr)}.archive-search-foot{position:sticky;top:0;z-index:2}}
+      @media(max-width:430px){#archiveOverlay .archive-search-advanced{grid-template-columns:minmax(0,1fr)}
+        #archiveOverlay #archiveDateFrom,
+        #archiveOverlay #archiveDateTo{
+          inline-size:min(100%,270px);max-inline-size:270px;justify-self:start;
+        }
+        @supports (-webkit-touch-callout:none){
+          #archiveOverlay #archiveDateFrom,
+          #archiveOverlay #archiveDateTo{
+            /* Keep padded native date controls within their compact slot on iOS. */
+            display:block;min-inline-size:0;-webkit-min-logical-width:0;
+            -webkit-appearance:none;appearance:none;line-height:1.25;
+          }
+        }
+        .archive-search-foot{position:sticky;top:0;z-index:2}
+      }
     `;
     document.head.appendChild(style);
   }

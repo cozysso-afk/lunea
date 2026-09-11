@@ -17,9 +17,9 @@ assert.match(source, /INTIMACY/);
 assert.doesNotMatch(source, /localStorage\.removeItem\(/);
 assert.doesNotMatch(source, /indexedDB\.(deleteDatabase|open)\(/);
 
-const refs = loader.match(/lunea-archive-search-v1\.js\?v=102/g) || [];
+const refs = loader.match(/lunea-archive-search-v1\.js\?v=103/g) || [];
 assert.equal(refs.length, 1, 'archive search has one lazy journal-group owner');
 const journalIndex = loader.indexOf('lunea-reading-journal-v2.js?v=202');
-assert.ok(journalIndex >= 0 && journalIndex < loader.indexOf('lunea-archive-search-v1.js?v=102'));
+assert.ok(journalIndex >= 0 && journalIndex < loader.indexOf('lunea-archive-search-v1.js?v=103'));
 
 console.log('LUNEA archive advanced search/date filter contract: PASS');

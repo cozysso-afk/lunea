@@ -101,7 +101,7 @@
       './lunea-manual-everywhere-v1.js?v=103',
       './lunea-manual-library-v1.js?v=101',
       './lunea-reading-journal-v2.js?v=202',
-      './lunea-archive-search-v1.js?v=102',
+      './lunea-archive-search-v1.js?v=103',
       './lunea-manual-limit20-v17.js?v=1705'
     ],
     learning:[
