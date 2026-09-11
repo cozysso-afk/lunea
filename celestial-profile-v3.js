@@ -131,6 +131,18 @@
       }
       @media(max-width:430px){
         #profileOverlay #cpv3BirthGrid{grid-template-columns:minmax(0,1fr)}
+        @supports (-webkit-touch-callout:none){
+          #profileOverlay #birthDate,
+          #profileOverlay #birthTime{
+            display:block;
+            inline-size:100%;max-inline-size:100%;min-inline-size:0;
+            -webkit-min-logical-width:0;
+            /* WebKit 301648: reset padded native control sizing.
+               Input types and platform picker behavior remain native. */
+            -webkit-appearance:none;appearance:none;
+            line-height:1.25;
+          }
+        }
       }
       .cpv3-policy{
         display:flex;align-items:center;justify-content:space-between;gap:10px;
