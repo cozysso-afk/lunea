@@ -18,6 +18,8 @@ assert.ok(core); assert.equal(core.version,'36.3'); assert.equal(core.flipGap,11
 assert.doesNotMatch(source,/Math\.random\s*\(/);
 assert.match(source,/crypto\.getRandomValues/);
 
+assert.equal(core.drawOracleCards(0).length,0);
+assert.equal(core.drawOracleCards(1).length,1);
 const draw=core.drawOracleCards(3,'리듬 · 경계 · 조율');
 assert.equal(draw.length,3);
 assert.equal(new Set(draw.map(card=>card.code)).size,3);
@@ -46,7 +48,7 @@ assert.equal(core.cardRoot,'./assets/intimacy-oracle/cards');
 assert.doesNotMatch(source,/tarot_back_intimacy_final\.png/);
 
 assert.match(bridge,/lunea-intimacy-oracle-v35\.js\?v=352/);
-assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3614/);
+assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
 assert.match(bridge,/__LUNEA_READING_ACTION_ORDER_V33__/);
 assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 

@@ -1,0 +1,398 @@
+[
+  {
+    "card_code": "O01",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_01.png",
+    "sha256": "574bdda1cbb857ac2c0268895bb573607ecfe5b74e73044f128c67d5f6ab23d4",
+    "git_blob_sha1": "c83b8db53df492e18d50912d3b9fc06a0d7903d2",
+    "bytes": 2156804,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O02",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_02.png",
+    "sha256": "a0b677ab0f0ccbb54fab7f0c2493eab8d2c60469651af31c3ed11d9b4d7dfd7e",
+    "git_blob_sha1": "8dbd2bfb0fa8563b115b2cbbfa364b69fe15ceea",
+    "bytes": 2262254,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O03",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_03.png",
+    "sha256": "554ccccbf5b7cfac82716c0425d4aab4ea7d5d465b8afdcb148a7578c767a6eb",
+    "git_blob_sha1": "c13d11619aaad21019cbfe98d2b14afcbc5c8479",
+    "bytes": 2236991,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O04",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_04.png",
+    "sha256": "2019f5914c049335a8e54a2ea95786aeaf94d8937eb84f5be9392fc358e0c627",
+    "git_blob_sha1": "302123c8937a03c9103d6f927d674702c533afcc",
+    "bytes": 1996617,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O05",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_05.png",
+    "sha256": "1a5c15919869baf76f681e7eebae110076ad8aac0e9120868d772467769405fb",
+    "git_blob_sha1": "67c0fb12aa99f779484ef9fa40d0f174a399abce",
+    "bytes": 2130910,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O06",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_06.png",
+    "sha256": "a771a62ed43fc16244e903bf53057b35988ab013c2ff8bd85a5d4a122c9f9fda",
+    "git_blob_sha1": "dfcecfc7fc19e0a61c7b3bd3be628b0525ccf1d2",
+    "bytes": 2182616,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O07",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_07.png",
+    "sha256": "aa3bca6e838b0c28dfedf0643192667acc05bd7bcb6dfe1690862b56ad713c40",
+    "git_blob_sha1": "bb289fd0e5fdbc2c465551bd52920aae4a461a57",
+    "bytes": 2223044,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O08",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_08.png",
+    "sha256": "00e67cb5c04a3a4783d534f5c88959ba013f61edecaeec03affa1a52bcfc9763",
+    "git_blob_sha1": "044b6e53442c58640f9969c05d564d76f3301584",
+    "bytes": 2178890,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O09",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_09.png",
+    "sha256": "5711aaf1baa9470cb1b84d61de5bf0989f810a1fa3dea1e474efe7493d26d91f",
+    "git_blob_sha1": "7d414e5345329c1fd1a14d733b4f20aae9e9de52",
+    "bytes": 2219559,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O10",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_10.png",
+    "sha256": "a67e8a62a6bdc5423a5c5d3d63a8efd2a6c37b1b7d204df0f2a31d62890c0044",
+    "git_blob_sha1": "288305e2bb992fb9d02222b56149e85dd355b92b",
+    "bytes": 2177266,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O11",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_11.png",
+    "sha256": "f38f1595fe6f1eafa84577cdc277d9c90eb0b1f95988ae532ea90b5c05ea1aa7",
+    "git_blob_sha1": "e98b71aa0279deaa47f470202dcf1b61e5b071fb",
+    "bytes": 2126144,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O12",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_12.png",
+    "sha256": "97527ea0d62ad52b929cc980dba89d66c721f4e29c5e5bcccbf68d3b88535ddf",
+    "git_blob_sha1": "a67a77924c6d7385b1a01986b6da120979ed9024",
+    "bytes": 2248805,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O13",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_13.png",
+    "sha256": "ae96dc7a4981e1682fac6b09558b9905a4e982afcea6ab1cc452190aed5132b2",
+    "git_blob_sha1": "c73db9ee83414dcb5726f219a513f7c1b685d067",
+    "bytes": 1884524,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O14",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_14.png",
+    "sha256": "b335b04ad87675d0ea38c4610a83dd5cfd58a4f9ab415223549d5c7104ddd1ba",
+    "git_blob_sha1": "298c0c916f09e495b5a8e531524ceaf235b0df59",
+    "bytes": 1985505,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O15",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_15.png",
+    "sha256": "fe905841913b4d21acd09db850f9d2e0bfc91438dfea6261e29011e39daa69ea",
+    "git_blob_sha1": "c16b8b2d5e649f532ec912c2f9c0db4b38467851",
+    "bytes": 1919815,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O16",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_16.png",
+    "sha256": "b639f37afba34d7bb97f203ad0f1f0bbfa1aade1f0e1746be58c989b88a595ea",
+    "git_blob_sha1": "b8859f87667124aa4c9ca70387ae2edee2ccd638",
+    "bytes": 2030724,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O17",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_17.png",
+    "sha256": "295e1c640dae82908176ab53a687efad6cf89a3ea2298a18a5e5d3fc8fd6ca10",
+    "git_blob_sha1": "16c865cabb01200c0eeca6d8294b466946b1aa6f",
+    "bytes": 2059908,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O18",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_18.png",
+    "sha256": "3dd2a2a67d529e922d0bbb52d8588dd410463b08bee60cd9bf3ab88a5b827c06",
+    "git_blob_sha1": "4f53a0c6a52a40497eece0e5362f0854d508a40f",
+    "bytes": 1927816,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O19",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_19.png",
+    "sha256": "41ec50a2128f6d2ba672bb94d2a36dc6e913fdc79f826c2768500155b3d202d4",
+    "git_blob_sha1": "7ef78c9045045a13c788d17b698c86a5d498ab40",
+    "bytes": 2115851,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O20",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_20.png",
+    "sha256": "a370b00eab8da2e4cd5bf543886399339986995a309463de63202050038092a3",
+    "git_blob_sha1": "9d78dd16e5103f594e3bb574d928bbe7099c7085",
+    "bytes": 2248721,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O21",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_21.png",
+    "sha256": "2c37138f052173b65028370d9bc278e932dad274c07eff40539cb0b2dc691807",
+    "git_blob_sha1": "b600fbf71a778f4093861f9db39f69127664e9e3",
+    "bytes": 2055303,
+    "dimensions": [
+      1086,
+      1448
+    ]
+  },
+  {
+    "card_code": "O22",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_22.png",
+    "sha256": "9a6cec4dab50514d31a6dcf6a24e7611dc81ab8bd75299f1b91cad0df072f229",
+    "git_blob_sha1": "fd11c30d58009d5ba3488723709669753bfc6209",
+    "bytes": 2116992,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O23",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_23.png",
+    "sha256": "9a783c3c0da54b8a7f7d05edcd776b6b4a90be4bc34c416b8d05d32a47c26877",
+    "git_blob_sha1": "153bb32ad069ffe55e7e8e9eaf6b57a5a6ecf7e0",
+    "bytes": 2457400,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O24",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_24.png",
+    "sha256": "481709fee5320042252982093e3a169b72e524a1df10263aaf088502244e2b2b",
+    "git_blob_sha1": "624c46981d930e26b2f119b8aa36b2b61a6dc086",
+    "bytes": 2332498,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O25",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_25.png",
+    "sha256": "12c864c83e7a008945d3f94e89cc68431cf38e170ede41fb5850705f1111878b",
+    "git_blob_sha1": "e422c3c75eea5a9bf29707ed3c9ea172c955cf33",
+    "bytes": 2266846,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O26",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_26.png",
+    "sha256": "fadc892438fe437c9a294047b3ac4df9847e81b0396bd842b9082226367f4382",
+    "git_blob_sha1": "922cde7603dd9b69b0c057b15d0f6594440f11a8",
+    "bytes": 2184349,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O27",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_27.png",
+    "sha256": "4a2054ec8c39d0dbc05711ce0b84e6c6f3b4298a3f504608558c3a438fb42726",
+    "git_blob_sha1": "67fb68456e2ef62ed9f46df4cd95be575a08eaba",
+    "bytes": 2167839,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O28",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_28.png",
+    "sha256": "8981d5f97624e9355b112507b5b1542f09796e42573100eb5eb61cdb13e57b9c",
+    "git_blob_sha1": "253cbbddea914ec479d7bc7055123155aeeba670",
+    "bytes": 2215852,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O29",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_29.png",
+    "sha256": "d08762a82afc68b07eed7247eb991f4fcac0d86db55a78084fdfc77d3b489ecc",
+    "git_blob_sha1": "ae7dadfa0bbfce27e3ae6bb4626cb52d15b62021",
+    "bytes": 2130911,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O30",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_30.png",
+    "sha256": "57b239852514cd2ea9cd521b86a0b5de6db9a69e7fe2a556eacb91f87b4dae74",
+    "git_blob_sha1": "b2c69cf935944352355c5b9fe333c94fcb50d34d",
+    "bytes": 2059338,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O31",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_31.png",
+    "sha256": "29e54ab130b8ef2c1aac4bfd34628309546faa317810107da3abcfda5f32b950",
+    "git_blob_sha1": "7c222bb973e488a968b0b94e7c1d13d8cfceeb93",
+    "bytes": 2061718,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O32",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_32.png",
+    "sha256": "6080e7031ded4aa1155b9aa76375f63fc9f16bfa09930495935c2ac45d94cc78",
+    "git_blob_sha1": "2eaf25c555dfeaefd2a0f5e9fd09d7cd73ff9816",
+    "bytes": 2115345,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O33",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_33.png",
+    "sha256": "0872814841568078505685928bc8c2fdfc502eb96950f25e21fc5f7a59650985",
+    "git_blob_sha1": "a22fad83c99420b47bedc3dd696ef1c13384ee53",
+    "bytes": 2613096,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O34",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_34.png",
+    "sha256": "6cba7a3644ebd863ffe874a89d15a67210893cf8e3df76ae4b6d6a5f6708e965",
+    "git_blob_sha1": "7b262b9e2f5692a04f8f10eb22573794e0236e8f",
+    "bytes": 2235955,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  },
+  {
+    "card_code": "O35",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_35.png",
+    "sha256": "e0b49ef22d2545a41fe696907403eaf0e4ce4babb21247f73549429302f79426",
+    "git_blob_sha1": "85db3b088023f2566d7f0e3d52c78abdaae56ef2",
+    "bytes": 2146902,
+    "dimensions": [
+      1055,
+      1491
+    ]
+  },
+  {
+    "card_code": "O36",
+    "canonical_target_path": "assets/intimacy-oracle/cards/oracle_36.png",
+    "sha256": "f8a53b4ea0fe8ae7b89257d3d0e5e627d6c8943c3ab73f79a5a643c78999be79",
+    "git_blob_sha1": "19fa00d051bbc4e6741cf21f29a98d65de535626",
+    "bytes": 2113986,
+    "dimensions": [
+      1024,
+      1536
+    ]
+  }
+]

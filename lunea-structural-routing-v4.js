@@ -113,10 +113,10 @@
       './lunea-learning-success-gate-v1.js?v=101'
     ],
     intimacy:[
-      './lunea-intimacy-ai-bridge-v34.js?v=d2198d8c5779',
+      './lunea-intimacy-ai-bridge-v34.js?v=3431',
       './lunea-intimacy-legacy-v35.js?v=d2198d8c5779',
       './lunea-intimacy-oracle-v35.js?v=352',
-      './lunea-intimacy-oracle-ui-v36.js?v=3614',
+      './lunea-intimacy-oracle-ui-v36.js?v=3615',
       './lunea-intimacy-readability-v36.js?v=3602',
       './lunea-intimacy-burgundy-v40.js?v=4005',
       './lunea-intimacy-repair-v43.js?v=4301'

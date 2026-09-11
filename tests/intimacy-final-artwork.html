@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="../"><title>INTIMACY approved-face fixture</title></head><body>
+<script>
+// Test-only storage: never read, clear, or overwrite an app user's storage.
+const fixtureStore = new Map();
+const localStorage = {getItem:k=>fixtureStore.get(k)??null,setItem:(k,v)=>fixtureStore.set(k,String(v))};
+const state = {category:'INTIMACY',title:'INTIMACY fixture',question:'합성 렌즈 검증',drawn:[{code:'Sun'}]};
+const fixtureParams = new URLSearchParams(location.search);
+async function fixtureScript(src){await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.head.appendChild(s)});}
+async function main(){
+  if(!fixtureParams.has('frame')){
+    const title=document.createElement('h1');title.textContent='INTIMACY · controlled restore fixtures';document.body.append(title);
+    const note=document.createElement('p');note.textContent='Production V35/V36/V43 and index modal/CSS; isolated in-memory storage. Synthetic renderer fixture, not full-app E2E.';document.body.append(note);
+    const controls=document.createElement('div');document.body.append(controls);
+    for(const [label,codes,count] of [['0 cards','',0],['1 card · O21','O21',1],['3 cards · O01/O13/O21','O01,O13,O21',3],['3 cards · O24/O33/O36','O24,O33,O36',3]]){
+      const b=document.createElement('button');b.textContent=label;b.onclick=()=>show(codes,count);controls.append(b);
+    }
+    const frames=document.createElement('div');frames.id='fixtureFrames';document.body.append(frames);
+    function show(codes,count){frames.replaceChildren();for(const width of [390,402,430]){const h=document.createElement('h2');h.textContent=width+' CSS px';const f=document.createElement('iframe');f.title='INTIMACY '+width;f.width=width;f.height=900;f.style.border='0';f.src='tests/intimacy-final-artwork.html?frame=1&count='+count+'&codes='+encodeURIComponent(codes);frames.append(h,f);}}
+    show('O01,O13,O21',3);return;
+  }
+  const parsed=new DOMParser().parseFromString(await (await fetch('index.html')).text(),'text/html');
+  for(const css of parsed.querySelectorAll('style'))document.head.append(css.cloneNode(true));
+  const overlay=parsed.getElementById('spreadOverlay');
+  document.body.append(overlay);document.body.classList.add('lunea-intimacy-reading');
+  // No copied renderer or hidden production test hooks. The actual V36 restore
+  // observer reads the same stable-code sidecar shape used by the application.
+  await fixtureScript('lunea-intimacy-oracle-v35.js?v=352');
+  const count=Number(fixtureParams.get('count'));
+  const codes=(fixtureParams.get('codes')||'').split(',').filter(code=>/^O(?:0[1-9]|[12][0-9]|3[0-6])$/.test(code));
+  if(![0,1,3].includes(count)||codes.length!==count)throw Error('Invalid fixture');
+  const lenses=count===3?['끌림·욕구 렌즈','리듬·경계 렌즈','유대·여운 렌즈']:['전체 리딩 렌즈'];
+  const stamp=[state.title,state.question,state.drawn.map(c=>c.code).join(',')].join('|');
+  localStorage.setItem('LUNEA_INTIMACY_ORACLE_MODE_V1',String(count));
+  localStorage.setItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1',JSON.stringify({stamp,mode:count,cards:codes.map((code,i)=>({code,lens:lenses[i]})),revealed:[],savedAt:Date.now()}));
+  await fixtureScript('lunea-intimacy-oracle-ui-v36.js?v=3615');
+  await fixtureScript('lunea-intimacy-repair-v43.js?v=4301');
+  const controls=document.createElement('div');controls.style.cssText='display:flex;flex-wrap:wrap;gap:6px;margin:8px 0';
+  const report=document.createElement('pre');report.id='fixtureReport';report.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;font-size:10px';
+  const panel=document.getElementById('luneaIntimacyOraclePanel');panel.after(controls,report);
+  let beforeRestore=null;
+  for(const [label,action] of [['Measure',measure],['Close / reopen',()=>{
+    beforeRestore=localStorage.getItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1');overlay.classList.remove('show');
+    setTimeout(()=>{overlay.classList.add('show');setTimeout(measure,150)},50);
+  }]]){const b=document.createElement('button');b.className='mini';b.textContent=label;b.onclick=action;controls.append(b);}
+  const close=overlay.querySelector('[data-close="spread"]');if(close)close.hidden=true;
+  overlay.classList.add('show');overlay.setAttribute('aria-hidden','false');
+  setTimeout(measure,200);
+  async function measure(){
+    const buttons=[...panel.querySelectorAll('.lio-card')];
+    const rows=[];
+    for(const b of buttons){
+      const front=b.querySelector('.lio-card-front'),art=b.querySelector('.lio-card-art'),meta=b.querySelector('.lio-card-meta');
+      const style=getComputedStyle(front),ar=art.getBoundingClientRect(),mr=meta.getBoundingClientRect(),br=b.getBoundingClientRect();
+      const src=style.backgroundImage.slice(5,-2),image=new Image();image.src=src;await image.decode();
+      rows.push({code:b.dataset.oracleCode,revealed:b.classList.contains('revealed'),label:b.getAttribute('aria-label'),backgroundSize:style.backgroundSize,filter:style.filter,dimensions:[image.naturalWidth,image.naturalHeight],captionOutside:mr.top>=ar.bottom-1,insidePanel:br.left>=panel.getBoundingClientRect().left&&br.right<=panel.getBoundingClientRect().right,art:[ar.width,ar.height]});
+    }
+    const saved=JSON.parse(localStorage.getItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1'));
+    const modal=overlay.querySelector('.modal');
+    report.textContent=JSON.stringify({viewport:innerWidth,expected:codes,count:buttons.length,panelHidden:panel.hidden,documentWidth:document.documentElement.scrollWidth,modal:[modal.scrollWidth,modal.clientWidth],panel:[panel.scrollWidth,panel.clientWidth],codesPreserved:JSON.stringify(rows.map(r=>r.code))===JSON.stringify(codes),restoreUnchanged:beforeRestore===null?null:beforeRestore===localStorage.getItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1'),revealed:saved.revealed,rows},null,2);
+  }
+}
+main().catch(error=>{document.body.append('Fixture error: '+error.message)});
+</script></body></html>
