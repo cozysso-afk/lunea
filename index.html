@@ -69,6 +69,18 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;mar
 .archive-modal{max-width:460px}.archive-toolbar{display:flex;gap:7px;margin:10px 0}.archive-toolbar input{flex:1}.archive-list{display:flex;flex-direction:column;gap:9px}.archive-item{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.09);border-radius:15px;padding:12px;text-align:left}.archive-meta{font-size:9.5px;color:var(--moon);margin-bottom:4px}.archive-title{font-weight:750;font-size:13px}.archive-q{font-size:11px;color:#e9e4f5;margin:4px 0 8px;line-height:1.5}.archive-actions{display:flex;gap:5px;flex-wrap:wrap}.archive-detail{display:none;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.07);font-size:10.5px;color:var(--dim);line-height:1.55;white-space:pre-wrap}.archive-detail.open{display:block}.danger{color:#ffc0ca;border-color:rgba(255,141,161,.35);background:rgba(255,141,161,.08)}.empty{text-align:center;color:var(--dim);padding:24px 10px;font-size:12px}
 .profile-modal .modal{max-width:420px}.footnote{font-size:10px;color:var(--dim);line-height:1.5;margin-top:8px}.spread-rationale{margin:0 0 10px;padding:8px 10px;border-radius:11px;background:rgba(189,164,248,.07);border:1px solid rgba(189,164,248,.14);color:#cfc4e2;font-size:10.5px;line-height:1.5;text-align:left}
 @media(max-width:390px){.app{padding-left:12px;padding-right:12px}.icon-btn{padding:7px 7px;font-size:10px}.tarot-card-wrapper{width:72px;height:118px}}
+
+/* Compact expandable tool section; independent of the DAILY ORBIT signal axis. */
+#luneaSignalMessageSection .cat-left{min-width:0}
+#luneaSignalMessageSection .cat-text h3{font-size:13px}
+#luneaMessageOracleEntry{display:block;width:100%;max-width:100%;box-sizing:border-box;text-align:left;padding:12px;border-radius:13px;border:1px solid rgba(189,164,248,.22);background:rgba(189,164,248,.06);color:var(--text);white-space:normal}
+#luneaMessageOracleEntry strong,#luneaMessageOracleEntry span,#luneaMessageOracleEntry small{display:block;overflow-wrap:anywhere}
+#luneaMessageOracleEntry strong{font-size:13px;color:var(--moon)}
+#luneaMessageOracleEntry span{font-size:12px;margin:4px 0}
+#luneaMessageOracleEntry small{font-size:11px;line-height:1.55;color:var(--dim)}
+#luneaMessageOracleEntry:focus-visible{outline:2px solid var(--moon);outline-offset:2px}
+#luneaMessageOracleEntry:active{background:rgba(189,164,248,.13)}
+#luneaMessageOracleLoadStatus{font-size:11px;color:var(--dim)}
 </style>
 </head>
 <body>
@@ -110,6 +122,10 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;mar
 <div class="reading-item" data-cat="STOCK" data-title="보유 / 익절" data-desc="보유 논리와 수익 실현 심리를 따로 점검합니다." data-count="5"><div><h4>보유 / 익절</h4><p>상승 기대 · 익절 욕구 · 리스크 · 대응.</p></div><div class="count">5</div></div>
 <div class="reading-item" data-cat="STOCK" data-title="매도 타이밍" data-desc="지금 매도와 추가 보유의 심리적 득실을 비교합니다." data-count="5"><div><h4>매도 타이밍</h4><p>즉시 매도 vs 보유 비교.</p></div><div class="count">5</div></div>
 </div></div>
+<section class="category" id="luneaSignalMessageSection" aria-label="SIGNAL · MESSAGE">
+<div class="category-header"><div class="cat-left"><div class="cat-text"><h3>SIGNAL · MESSAGE</h3><p>연락 · 소식 · 응답</p></div></div><div class="toggle" aria-hidden="true">+</div></div>
+<div class="category-content"><button id="luneaMessageOracleEntry" disabled><strong>MESSAGE ORACLE</strong><span>연락 · 소식 · 응답</span><small>연애·재회·공적 결과·업무·SNS·지인 소식까지<br>한 장으로 빠르게 확인</small></button><p id="luneaMessageOracleLoadStatus" role="status"></p></div>
+</section>
 </div>
 
 <!-- Bottom sheet -->
@@ -562,7 +578,7 @@ window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
 </script><script src="./lunea-cache-refresh-v1.js?v=d2198d8c5779"></script>
   <script src="./spread-engine-v7.4.js?v=75"></script>
-  <script src="./lunea-structural-routing-v4.js?v=20260911-journal-compact"></script>
+  <script src="./lunea-structural-routing-v4.js?v=20260911-message-oracle"></script>
   <script src="./timing-oracle-v1.js?v=102"></script>
   <script src="./general-5-6-v1.js?v=101"></script>
   <script src="./profile-advanced-v2.js?v=201"></script>

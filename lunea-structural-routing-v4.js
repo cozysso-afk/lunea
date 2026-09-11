@@ -121,6 +121,10 @@
       './lunea-intimacy-burgundy-v40.js?v=20260911-list-cards',
       './lunea-intimacy-repair-v43.js?v=4301'
     ],
+    message:[
+      './lunea-message-oracle-v1.js?v=101',
+      './lunea-message-oracle-ui-v1.js?v=101'
+    ],
     timing:[
       './lunea-timing-ab-v1.js?v=102',
       './lunea-timing-prompt-repair-v1.js?v=101',
@@ -179,9 +183,10 @@
     const sources=GROUPS[name];
     const promise=(async()=>{
       await shellPromise;
-      if(name!=='journal'&&name!=='learning') await homeRuntimePromise;
+      if(name!=='journal'&&name!=='learning'&&name!=='message') await homeRuntimePromise;
       document.documentElement.dataset.luneaLoadingGroup=name;
       for(const src of sources) await load(src);
+      if(name==='message' && (!W.LUNEA_MESSAGE_ORACLE_UI_V1 || !document.getElementById('luneaMessageOracleStyle'))) throw new Error('Message final presentation unavailable');
       if(name==='reading'){
         const readingUiReady=!!(
           W.__LUNEA_MOBILE_READING_CONTROLS_V12__ &&
@@ -266,6 +271,7 @@
     const key=String(el.dataset?.key||'').toLowerCase();
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
+    if(el.closest('#luneaSignalMessageSection')) return id==='luneaMessageOracleEntry'?'message':null;
     if(id==='luneaDraftRestore' || id==='dailyBtn' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
     if(id==='timingSupportBtn' || id==='luneaTimingInline') return 'timing';
     /* Profile shell, V45 picker and the eager Natal client are Home-ready.
@@ -281,10 +287,10 @@
   }
 
   function installLazyTriggers(){
-    const ensure=name=>name==='journal'||name==='learning'||name==='finish'
+    const ensure=name=>name==='journal'||name==='learning'||name==='finish'||name==='message'
       ? loadGroup(name)
       : loadGroup('reading').then(ok=>ok&&loadGroup(name));
-    const ready=name=>name==='journal'||name==='learning'||name==='finish'
+    const ready=name=>name==='journal'||name==='learning'||name==='finish'||name==='message'
       ? readyGroups.has(name)
       : readyGroups.has('reading')&&(name==='reading'||readyGroups.has(name));
     const replaying=new WeakSet();
@@ -322,16 +328,20 @@
         trigger.removeAttribute('aria-busy');
         pendingOverlay?.removeAttribute('aria-busy');
         if(!ok||!trigger.isConnected){
+          if(name==='message'){const note=document.getElementById('luneaMessageOracleLoadStatus');if(note)note.textContent='메시지 카드를 불러오지 못했어요. 다시 눌러 주세요.';}
           if(pendingOverlay?.classList.contains('show')) W.hideOverlay?.(pendingOverlay.id);
           return;
         }
         if(pendingOverlay && !pendingOverlay.classList.contains('show')) return;
         W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
+        if(name==='message'){const note=document.getElementById('luneaMessageOracleLoadStatus');if(note)note.textContent='';}
         replaying.add(trigger);
         trigger.click();
         queueMicrotask(()=>replaying.delete(trigger));
       });
     };
+    const messageEntry=document.getElementById('luneaMessageOracleEntry');
+    if(messageEntry) messageEntry.disabled=false;
     document.addEventListener('pointerdown',prime,{capture:true,passive:true});
     document.addEventListener('focusin',prime,true);
     document.addEventListener('click',gate,true);
