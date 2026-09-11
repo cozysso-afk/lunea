@@ -65,7 +65,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=106']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=101','./lunea-message-oracle-ui-v1.js?v=107']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -73,8 +73,21 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
 test('real Home markup uses existing expandable category handler and never opens a Tarot spread',async()=>{
  const h=harness();const header=h.query('.category-header'),category=h.query('#luneaSignalMessageSection');
  const logo=h.query('.message-oracle-home-logo');assert.equal(logo.tagName,'img');assert.equal(logo.getAttribute('src'),'./assets/message-oracle/message_oracle_logo.png?v=101');assert.equal(logo.getAttribute('aria-hidden'),'true');
+ assert.equal(h.query('.message-oracle-home-contexts').textContent,'연애 · 재회 · 결과 · 업무 · SNS');
  assert.equal(header.getAttribute('aria-expanded'),'false');await header.click();assert.equal(header.getAttribute('aria-expanded'),'true');assert.equal(category.classList.contains('active'),true);
  await header.emit('keydown',{key:'Enter'});assert.equal(header.getAttribute('aria-expanded'),'false');assert.equal(h.entry.matches('.reading-item'),false);assert.equal(h.draws(),0);
+});
+
+test('Home Message section gains moderate weight without becoming a hero tile',()=>{
+ const css=read('index.html').match(/\/\* Expandable Message tool section;[\s\S]*?#luneaMessageOracleLoadStatus\{[^}]*\}/)?.[0]||'';
+ const px=(selector,property)=>Number(css.match(new RegExp(`${selector}\\{[^}]*${property}:([\\d.]+)px`))?.[1]);
+ const logo=px('#luneaSignalMessageSection \\.message-oracle-home-logo','width');
+ const padding=px('#luneaSignalMessageSection \\.category-header','padding');
+ const oldHeight=34+15*2,newHeight=logo+padding*2;
+ assert.equal(logo,50);assert.ok(newHeight/oldHeight>=1.25&&newHeight/oldHeight<=1.30,newHeight/oldHeight);
+ assert.equal(px('#luneaSignalMessageSection \\.cat-text h3','font-size'),14.5);assert.equal(px('#luneaSignalMessageSection \\.cat-text p','font-size'),11);
+ assert.match(css,/\.message-oracle-home-contexts\{[^}]*white-space:normal;[^}]*overflow-wrap:anywhere/);
+ assert.match(css,/\.cat-left\{[^}]*min-width:0;[^}]*align-items:center/);assert.match(css,/\.toggle\{[^}]*flex:0 0 auto/);
 });
 
 test('Home and overlay reuse the byte-locked approved transparent logo',()=>{
@@ -121,7 +134,29 @@ test('non-romantic priority cards use context-safe visible messages without chan
  const codes=['Devil','Tower','Justice','Hierophant','Judgement','World','High Priestess','Swords11','Swords08','Cups02','Fool'];
  for(const context of ['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL'])for(const code of codes){
   const result=api.result('합성 비연애 질문',context,code),before=result.score,d=api.describe(result),message=p.visibleMessage(d);
-  const guidance=p.visibleContextMessage(d);assert.ok(message.length>=35&&message.length<=90,context+' '+code);assert.doesNotMatch(message+' '+guidance,/강한 관심|집착성|호감|연애/);assert.equal(result.score,before);
+  const guidance=p.visibleContextMessage(d);assert.ok(message.length>=35&&message.length<=110,context+' '+code);assert.doesNotMatch(message+' '+guidance,/강한 관심|집착성|호감|연애/);assert.equal(result.score,before);
+ }
+});
+
+test('all 78 cards compose deterministic context-aware strength, form, and caveat messages in all seven contexts',()=>{
+ const h=harness(),api=h.context.LUNEA_MESSAGE_ORACLE_V1,p=h.context.__messagePresentation;
+ const tokens={LOVE:'연락·응답',REUNION:'재접촉·소식',OFFICIAL:'공식 통지·소식',WORK_BIZ:'업무 회신·소식',SOCIAL:'온라인 반응·메시지',PERSONAL:'개인 연락·소식',GENERAL:'연락·소식'};
+ const nonRomantic=new Set(['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']);
+ for(const card of api.cards){
+  const messages=[];
+  for(const context of Object.keys(api.CONTEXTS)){
+   const result=api.result('합성 연락 질문',context,card.code),score=result.score,d=api.describe(result),message=p.visibleMessage(d);
+   assert.equal(message,p.visibleMessage(d),`${card.code} ${context} deterministic`);assert.equal(result.score,score);
+   if(context==='WORK_BIZ'&&card.code==='Devil')assert.match(message,/연락·결과 통지/);
+   else assert.match(message,new RegExp(tokens[context].replace('·','\\·')),`${card.code} ${context} context`);
+   assert.match(message,/신호(?:가 강해요|는 중간 이상이에요|는 제한적이며 조율이 먼저예요|는 약하고 관망·지연 쪽이에요)/,`${card.code} ${context} strength`);
+   assert.ok(message.includes('형태로')||context==='WORK_BIZ'&&card.code==='Devil',`${card.code} ${context} form`);
+   const sentences=(message.match(/\./g)||[]).length;assert.ok(sentences>=2&&sentences<=3,`${card.code} ${context} caveat`);
+   assert.ok(message.length>=47&&message.length<=110,`${card.code} ${context} length ${message.length}`);
+   if(nonRomantic.has(context))assert.doesNotMatch(message+/ ${p.visibleContextMessage(d)}/,/강한 관심|집착|호감|연애|감정|마음/,`${card.code} ${context} wording`);
+   messages.push(message);
+  }
+  assert.equal(new Set(messages).size,7,`${card.code} context differentiation`);
  }
 });
 
