@@ -123,7 +123,7 @@
     ],
     message:[
       './lunea-message-oracle-v1.js?v=101',
-      './lunea-message-oracle-ui-v1.js?v=101'
+      './lunea-message-oracle-ui-v1.js?v=102'
     ],
     timing:[
       './lunea-timing-ab-v1.js?v=102',
@@ -186,7 +186,7 @@
       if(name!=='journal'&&name!=='learning'&&name!=='message') await homeRuntimePromise;
       document.documentElement.dataset.luneaLoadingGroup=name;
       for(const src of sources) await load(src);
-      if(name==='message' && (!W.LUNEA_MESSAGE_ORACLE_UI_V1 || !document.getElementById('luneaMessageOracleStyle'))) throw new Error('Message final presentation unavailable');
+      if(name==='message' && (!W.LUNEA_MESSAGE_ORACLE_UI_V1 || !document.getElementById('luneaMessageOracleStyle') || !await W.LUNEA_MESSAGE_ORACLE_UI_V1.ready())) throw new Error('Message final presentation unavailable');
       if(name==='reading'){
         const readingUiReady=!!(
           W.__LUNEA_MOBILE_READING_CONTROLS_V12__ &&
