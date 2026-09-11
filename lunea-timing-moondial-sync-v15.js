@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA TIMING IMAGE ASSETS V15.3
+  LUNEA TIMING IMAGE ASSETS V15.4
   --------------------------------
   Visual-only Timing Oracle presentation.
   - Keeps timing-oracle-v1.js as semantic/card-flow owner.
@@ -208,11 +208,14 @@
         html.lunea-timing-image-assets-v15 #timingOverlay .timing-modal{
           height:92dvh!important;max-height:92dvh!important;
         }
+        html.lunea-timing-image-assets-v15 #timingOverlay .timing-stage{
+          min-height:350px!important;
+        }
       }
       @media(max-width:390px){
         html.lunea-timing-image-assets-v15 #timingOverlay .timing-modal{padding-left:14px!important;padding-right:14px!important}
         html.lunea-timing-image-assets-v15 #timingOverlay .modal-h{font-size:24px!important}
-        html.lunea-timing-image-assets-v15 #timingOverlay .timing-stage{min-height:292px!important;padding-top:16px!important}
+        html.lunea-timing-image-assets-v15 #timingOverlay .timing-stage{min-height:350px!important;padding-top:16px!important}
         html.lunea-timing-image-assets-v15 #timingOverlay .timing-flip{width:min(190px,56vw)!important}
       }
     `;
@@ -231,6 +234,6 @@
     }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['src']});
   }
 
-  function boot(){addStyles();tagAll();installObserver();console.info('🃏 LUNEA Timing semantic artwork guard V15.3 loaded')}
+  function boot(){addStyles();tagAll();installObserver();console.info('🃏 LUNEA Timing semantic artwork guard V15.4 loaded')}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
