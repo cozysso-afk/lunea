@@ -12,6 +12,21 @@
   document.documentElement.classList.add('lunea-booting');
   document.documentElement.classList.remove('lunea-ui-ready');
 
+  /* Overlay-specific first-paint gate. The base DOM may exist early, but an
+     overlay cannot become visible until its final presentation owner has been
+     installed and verified. Home and unrelated overlays are never gated. */
+  const firstPaintGate=document.createElement('style');
+  firstPaintGate.id='luneaFeatureFirstPaintGateV4';
+  firstPaintGate.textContent=`
+    html:not([data-lunea-reading-ui-ready="1"]) #spreadOverlay.show,
+    html:not([data-lunea-timing-ui-ready="1"]) #timingOverlay.show{
+      visibility:hidden!important;
+      opacity:0!important;
+      pointer-events:none!important;
+    }
+  `;
+  (document.head||document.documentElement).appendChild(firstPaintGate);
+
   /* Final Home owners first. The boot curtain can lift as soon as this set is
      complete; feature/runtime helpers continue without holding first paint. */
   const HOME_VISUAL_SOURCES=[
@@ -110,7 +125,7 @@
       './lunea-timing-ab-v1.js?v=102',
       './lunea-timing-prompt-repair-v1.js?v=101',
       './lunea-timing-result-copy-v35.js?v=3501',
-      './lunea-timing-moondial-sync-v15.js?v=1502',
+      './lunea-timing-moondial-sync-v15.js?v=1503',
       './lunea-timing-image-assets-v16.js?v=1602',
       './lunea-timing-ab-inline-v16.js?v=1601',
       './lunea-daily-timing-v49.js?v=4901',
@@ -167,9 +182,24 @@
       if(name!=='journal'&&name!=='learning') await homeRuntimePromise;
       document.documentElement.dataset.luneaLoadingGroup=name;
       for(const src of sources) await load(src);
+      if(name==='reading'){
+        const readingUiReady=!!(
+          W.__LUNEA_MOBILE_READING_CONTROLS_V12__ &&
+          document.getElementById('luneaMobileReadingControlsV12Style')
+        );
+        if(!readingUiReady) throw new Error('Reading final action dock unavailable');
+        document.documentElement.dataset.luneaReadingUiReady='1';
+      }
       if(name==='timing'){
+        const timingPresentationReady=!!(
+          W.__LUNEA_TIMING_MOONDIAL_SYNC_V15__ &&
+          document.documentElement.classList.contains('lunea-timing-image-assets-v15') &&
+          document.getElementById('luneaTimingImageAssetsV15Style')
+        );
+        if(!timingPresentationReady) throw new Error('Timing final presentation unavailable');
         const timingReady=await W.LUNEA_RECOVERY_UI_V65?.ready;
         if(!timingReady) throw new Error('Timing authoritative artwork unavailable');
+        document.documentElement.dataset.luneaTimingUiReady='1';
       }
       W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
       if(document.documentElement.dataset.luneaLoadingGroup===name) delete document.documentElement.dataset.luneaLoadingGroup;
@@ -236,7 +266,7 @@
     const key=String(el.dataset?.key||'').toLowerCase();
     const text=String(el.textContent||'').replace(/\s+/g,' ').trim();
 
-    if(id==='luneaDraftRestore' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
+    if(id==='luneaDraftRestore' || id==='dailyBtn' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
     if(id==='timingSupportBtn' || id==='luneaTimingInline') return 'timing';
     /* Profile shell, V45 picker and the eager Natal client are Home-ready.
        Only genuinely lazy astrology surfaces should enter the Astro group. */
