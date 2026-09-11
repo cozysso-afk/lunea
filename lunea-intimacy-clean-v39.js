@@ -10,8 +10,7 @@
     category visible beneath the other portal tiles;
   - remove the legacy circular sparkle/orbit artwork from the final DOM and use
     the approved Home artwork while list headers use the shared small symbol;
-  - align the opened INTIMACY list with LOVE/CAREER/etc: simple divider rows,
-    normal-flow count pills, and only the AI entry receiving a contained card;
+  - give every opened INTIMACY spread the same card geometry and badge system;
   - keep all existing click handlers, fixed spread semantics, RNG, and adult
     acknowledgement logic untouched.
 */
@@ -90,65 +89,64 @@
       .lunea-intimacy-category .toggle{color:var(--dim)!important;text-shadow:none!important}
       .lunea-intimacy-category.active .toggle{color:var(--moon)!important;transform:rotate(45deg)!important}
 
-      /* Same information rhythm as LOVE: divider rows, not cards inside cards. */
-      .lunea-intimacy-category .category-content{
-        padding:0 17px 9px!important;gap:0!important
+      /* V39 owns every list card, including AI, direct input and ORIGINAL.
+         Scope beats the older readability rules regardless of load order. */
+      html .lunea-intimacy-category .category-content{
+        padding:0 16px 12px!important;gap:0!important;
+        grid-template-columns:minmax(0,1fr)!important;
       }
-      .lunea-intimacy-category .reading-item{
-        display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;
-        min-height:0!important;margin:0!important;padding:13px 1px!important;
-        border:0!important;border-top:1px solid rgba(255,255,255,.065)!important;border-radius:0!important;
-        background:transparent!important;box-shadow:none!important;
-        transform:none!important;animation:none!important;opacity:1!important;
-        pointer-events:auto!important;touch-action:manipulation!important
+      html .lunea-intimacy-category .category-content .reading-item{
+        position:relative!important;display:flex!important;align-items:center!important;
+        justify-content:space-between!important;gap:12px!important;
+        width:100%!important;max-width:100%!important;min-width:0!important;min-height:0!important;
+        box-sizing:border-box!important;margin:0 0 9px!important;padding:14px!important;
+        border:1px solid var(--lio-list-border,rgba(224,139,171,.20))!important;border-radius:16px!important;
+        background:var(--lio-list-bg,linear-gradient(145deg,rgba(69,22,43,.50),rgba(27,13,25,.76)))!important;
+        box-shadow:none!important;transform:none!important;animation:none!important;opacity:1!important;
+        white-space:normal!important;overflow:visible!important;
+        pointer-events:auto!important;touch-action:manipulation!important;
       }
-      .lunea-intimacy-category .reading-item:hover,
-      .lunea-intimacy-category .reading-item:focus-visible{
-        transform:none!important;background:transparent!important;box-shadow:none!important;
-        border-color:rgba(255,255,255,.095)!important
+      html .lunea-intimacy-category .category-content .reading-item:last-child{margin-bottom:0!important}
+      html .lunea-intimacy-category .category-content .reading-item:active{
+        border-color:rgba(239,164,193,.44)!important;
+        background:linear-gradient(145deg,rgba(92,34,59,.62),rgba(40,18,32,.84))!important;
       }
-      .lunea-intimacy-category .reading-item > div:first-child{min-width:0!important;max-width:calc(100% - 46px)!important}
-      .lunea-intimacy-category .reading-item h4{
-        margin:0 0 3px!important;color:#eee8f8!important;font-size:13px!important;line-height:1.35!important;
-        font-weight:600!important;letter-spacing:0!important
+      html .lunea-intimacy-category .category-content .reading-item:focus-visible{
+        outline:2px solid rgba(239,164,193,.70)!important;outline-offset:2px!important;
       }
-      .lunea-intimacy-category .reading-item p{
-        margin:0!important;color:var(--dim)!important;font-size:10.5px!important;line-height:1.45!important;
-        display:block!important;overflow:visible!important;-webkit-line-clamp:unset!important;word-break:keep-all!important
+      html .lunea-intimacy-category .category-content .reading-item > div:first-child{
+        flex:1 1 0!important;min-width:0!important;max-width:100%!important;
       }
-      .lunea-intimacy-category .reading-item .count{
+      html .lunea-intimacy-category .category-content .reading-item h4{
+        display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:5px!important;
+        margin:0 0 5px!important;color:var(--lio-list-title,#f6edf1)!important;
+        font-size:14px!important;font-weight:600!important;line-height:1.4!important;letter-spacing:0!important;
+        white-space:normal!important;overflow-wrap:anywhere!important;word-break:keep-all!important;
+      }
+      html .lunea-intimacy-category .category-content .reading-item p{
+        margin:0!important;color:var(--lio-list-description,rgba(224,206,216,.84))!important;
+        font-size:11px!important;line-height:1.55!important;display:block!important;
+        max-height:none!important;overflow:visible!important;white-space:normal!important;
+        text-overflow:clip!important;-webkit-line-clamp:unset!important;
+        overflow-wrap:anywhere!important;word-break:keep-all!important;
+      }
+      html .lunea-intimacy-category .category-content .reading-item .count{
         position:static!important;right:auto!important;top:auto!important;transform:none!important;
-        width:auto!important;height:auto!important;min-width:34px!important;min-height:0!important;
-        padding:4px 9px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
-        border-radius:12px!important;border:1px solid rgba(189,164,248,.30)!important;
-        background:rgba(189,164,248,.11)!important;color:#d6c5ff!important;
-        font-size:10.5px!important;font-weight:700!important;line-height:1.2!important;box-shadow:none!important;
-        pointer-events:none!important;white-space:nowrap!important;flex:0 0 auto!important
+        box-sizing:border-box!important;flex:0 0 auto!important;align-self:center!important;
+        width:auto!important;height:28px!important;min-width:40px!important;min-height:28px!important;
+        margin:0!important;padding:0 9px!important;display:inline-flex!important;
+        align-items:center!important;justify-content:center!important;
+        border-radius:999px!important;border:1px solid var(--lio-list-pill-border,rgba(231,143,178,.28))!important;
+        background:var(--lio-list-pill-bg,rgba(130,39,77,.19))!important;color:var(--lio-list-pill-text,#f0bfd0)!important;
+        font-size:10.5px!important;font-weight:700!important;line-height:1!important;box-shadow:none!important;
+        pointer-events:none!important;white-space:nowrap!important;
       }
-      .lunea-intimacy-category .reading-item .count.lunea-count-label{min-width:0!important;padding:4px 9px!important}
-
-      /* Match LOVE's one contained AI row. Everything else stays a simple row. */
-      .lunea-intimacy-category .reading-item[data-intimacy-ai="1"]{
-        margin:5px -4px 8px!important;padding:12px 11px!important;
-        border:1px solid rgba(210,186,229,.14)!important;border-radius:14px!important;
-        background:linear-gradient(145deg,rgba(116,86,145,.09),rgba(67,83,116,.045))!important;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important
-      }
-      .lunea-intimacy-category .reading-item[data-intimacy-ai="1"] .count{
-        color:#e9dff4!important;border-color:rgba(205,177,226,.20)!important;background:rgba(154,124,185,.09)!important
-      }
-      .lunea-intimacy-category .reading-item.lunea-intimacy-legacy9{
-        min-height:0!important;padding:13px 1px!important;border-radius:0!important;background:transparent!important;
-        box-shadow:none!important;border-left:0!important;border-right:0!important;border-bottom:0!important
-      }
-      .lunea-intimacy-category .reading-item.lunea-intimacy-legacy9 h4{
-        display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:5px!important;color:#f1e8ef!important
-      }
-      .lunea-intimacy-category .lunea-intimacy-legacy-badge{
-        display:inline-flex!important;margin:0!important;padding:2px 6px!important;transform:none!important;
+      html .lunea-intimacy-category .category-content .lunea-intimacy-legacy-badge{
+        display:inline-flex!important;align-items:center!important;position:static!important;
+        flex:0 0 auto!important;margin:0!important;padding:2px 6px!important;transform:none!important;
         border:1px solid rgba(226,144,181,.28)!important;border-radius:999px!important;
         background:rgba(127,54,89,.10)!important;color:#dfa1b9!important;
-        font-size:7.8px!important;line-height:1.1!important;letter-spacing:.55px!important;box-shadow:none!important
+        font-size:8px!important;line-height:1.2!important;letter-spacing:.55px!important;box-shadow:none!important;
       }
       .lunea-intimacy-category .lunea-intimacy-list-label{display:none!important}
 
@@ -192,9 +190,6 @@
         font:700 7.5px/1 system-ui,sans-serif;letter-spacing:.55px;vertical-align:2px
       }
       @media(max-width:390px){
-        .lunea-intimacy-category .reading-item{padding:12px 1px!important}
-        .lunea-intimacy-category .reading-item h4{font-size:12.7px!important}
-        .lunea-intimacy-category .reading-item p{font-size:10.2px!important}
         #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]{grid-template-columns:54px minmax(0,1fr) 20px!important;min-height:96px!important;padding:12px!important}
         #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-object{width:54px!important;height:54px!important;border-radius:16px!important}
       }

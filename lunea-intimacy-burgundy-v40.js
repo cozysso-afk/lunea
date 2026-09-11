@@ -46,14 +46,15 @@
       .lunea-intimacy-category .cat-text h3{color:#fff2f6!important}
       .lunea-intimacy-category .cat-text p{color:rgba(222,197,207,.73)!important}
       .lunea-intimacy-category .category-content{background:linear-gradient(180deg,rgba(79,17,44,.085),transparent 18%)!important}
-      .lunea-intimacy-category .reading-item{border-top-color:rgba(238,169,196,.095)!important}
-      .lunea-intimacy-category .reading-item h4{color:#f6edf1!important}
-      .lunea-intimacy-category .reading-item p{color:rgba(211,194,202,.73)!important}
-      .lunea-intimacy-category .reading-item .count{
-        border-color:rgba(231,143,178,.28)!important;background:rgba(130,39,77,.19)!important;color:#f0bfd0!important
-      }
-      .lunea-intimacy-category .reading-item[data-intimacy-ai="1"]{
-        border-color:rgba(237,148,184,.18)!important;background:linear-gradient(145deg,rgba(128,31,73,.17),rgba(77,37,77,.08))!important
+      /* List structure belongs to V39; all roles share these color tokens. */
+      .lunea-intimacy-category .category-content{
+        --lio-list-border:rgba(224,139,171,.20);
+        --lio-list-bg:linear-gradient(145deg,rgba(69,22,43,.50),rgba(27,13,25,.76));
+        --lio-list-title:#f6edf1;
+        --lio-list-description:rgba(224,206,216,.84);
+        --lio-list-pill-border:rgba(231,143,178,.28);
+        --lio-list-pill-bg:rgba(130,39,77,.19);
+        --lio-list-pill-text:#f0bfd0;
       }
 
       body.lunea-intimacy-reading #sheet[data-lunea-sector="intimacy"]{
