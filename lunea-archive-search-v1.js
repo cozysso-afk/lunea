@@ -92,13 +92,13 @@
     const style = document.createElement('style');
     style.id = 'archiveSearchV1Style';
     style.textContent = `
-      #archiveOverlay .archive-search-advanced{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:7px 0 6px}
-      #archiveOverlay .archive-search-advanced input,#archiveOverlay .archive-search-advanced select{min-width:0;min-height:39px;padding:8px 9px;border-radius:12px;border:1px solid rgba(130,234,220,.18);background:rgba(7,13,21,.62);color:#eefafa;font-size:10px}
+      #archiveOverlay .archive-search-advanced{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));box-sizing:border-box;min-width:0;max-width:100%;gap:7px;margin:7px 0 6px}
+      #archiveOverlay .archive-search-advanced input,#archiveOverlay .archive-search-advanced select{box-sizing:border-box;width:100%;max-width:100%;min-width:0;min-height:39px;padding:8px 9px;border-radius:12px;border:1px solid rgba(130,234,220,.18);background:rgba(7,13,21,.62);color:#eefafa;font-size:10px}
       #archiveOverlay .archive-search-advanced input:focus,#archiveOverlay .archive-search-advanced select:focus{outline:none;border-color:rgba(130,234,220,.58);box-shadow:0 0 0 2px rgba(130,234,220,.08)}
       #archiveOverlay .archive-search-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 9px}
       #archiveOverlay #archiveSearchSummary{font-size:9px;color:#8fded4}
       #archiveOverlay #archiveSearchReset{flex:0 0 auto}
-      @media(max-width:430px){#archiveOverlay .archive-search-advanced{grid-template-columns:1fr}.archive-search-foot{position:sticky;top:0;z-index:2}}
+      @media(max-width:430px){#archiveOverlay .archive-search-advanced{grid-template-columns:minmax(0,1fr)}.archive-search-foot{position:sticky;top:0;z-index:2}}
     `;
     document.head.appendChild(style);
   }

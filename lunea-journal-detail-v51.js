@@ -254,10 +254,7 @@
       #archiveOverlay .archive-toolbar>#copyAllArchive{width:auto!important;min-width:76px!important;white-space:nowrap!important}
       #archiveOverlay #archiveSearchAdvanced #archiveCategoryFilter,
       #archiveOverlay #archiveSearchAdvanced #archiveStatusFilter{display:none!important}
-      #archiveOverlay #archiveSearchAdvanced{min-width:0;max-width:100%;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}
-      #archiveOverlay #archiveSearchAdvanced>input{box-sizing:border-box;min-width:0!important;max-width:100%!important;width:100%!important}
       @media(max-width:390px){
-        #archiveOverlay #archiveSearchAdvanced{grid-template-columns:minmax(0,1fr)!important}
         #archiveOverlay .lunea-v51-recovery-row{grid-template-columns:1fr 1fr!important}
         #archiveOverlay .lunea-v51-recovery-row button{font-size:9px!important;padding:7px 5px!important}
       }

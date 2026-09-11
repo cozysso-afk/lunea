@@ -62,7 +62,7 @@
     './lunea-reading-draft-v1.js?v=101',
     './lunea-journal-header-fix-v1.js?v=101',
     './lunea-mobile-journal-polish-v27.js?v=2701',
-    './lunea-journal-detail-v51.js?v=5102',
+    './lunea-journal-detail-v51.js?v=5103',
     './lunea-sheet-scroll-fix-v1.js?v=106',
     './lunea-cardback-restore-v19.js?v=d2198d8c5779',
     './lunea-cardback-sector-v20.js?v=2001'
@@ -101,7 +101,7 @@
       './lunea-manual-everywhere-v1.js?v=103',
       './lunea-manual-library-v1.js?v=101',
       './lunea-reading-journal-v2.js?v=202',
-      './lunea-archive-search-v1.js?v=101',
+      './lunea-archive-search-v1.js?v=102',
       './lunea-manual-limit20-v17.js?v=1705'
     ],
     learning:[

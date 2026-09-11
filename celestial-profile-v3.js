@@ -117,6 +117,21 @@
       .cpv3-note{color:var(--dim);font-size:9.7px;line-height:1.55;margin:0 0 9px}
       .cpv3-grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
       .cpv3-grid2>.wide{grid-column:1/-1}
+      #profileOverlay #cpv3PanelWestern,
+      #profileOverlay #cpv3PanelWestern .cpv3-section,
+      #profileOverlay #cpv3BirthGrid,
+      #profileOverlay #cpv3BirthGrid .field,
+      #profileOverlay #cpv3BirthGrid .lunea-place-picker-v45{
+        box-sizing:border-box;min-width:0;max-width:100%
+      }
+      #profileOverlay #cpv3BirthGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      #profileOverlay #cpv3BirthGrid input:not([type="checkbox"]):not([type="radio"]),
+      #profileOverlay #cpv3BirthGrid select{
+        box-sizing:border-box;min-width:0;max-width:100%;width:100%
+      }
+      @media(max-width:430px){
+        #profileOverlay #cpv3BirthGrid{grid-template-columns:minmax(0,1fr)}
+      }
       .cpv3-policy{
         display:flex;align-items:center;justify-content:space-between;gap:10px;
         border-top:1px solid rgba(255,255,255,.06);padding:9px 0
