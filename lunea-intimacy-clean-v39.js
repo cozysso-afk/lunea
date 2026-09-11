@@ -97,10 +97,10 @@
       }
       html .lunea-intimacy-category .category-content .reading-item{
         position:relative!important;display:flex!important;align-items:center!important;
-        justify-content:space-between!important;gap:12px!important;
+        justify-content:space-between!important;gap:10px!important;
         width:100%!important;max-width:100%!important;min-width:0!important;min-height:0!important;
-        box-sizing:border-box!important;margin:0 0 9px!important;padding:14px!important;
-        border:1px solid var(--lio-list-border,rgba(224,139,171,.20))!important;border-radius:16px!important;
+        box-sizing:border-box!important;margin:0 0 7px!important;padding:11px 12px!important;
+        border:1px solid var(--lio-list-border,rgba(224,139,171,.20))!important;border-radius:14px!important;
         background:var(--lio-list-bg,linear-gradient(145deg,rgba(69,22,43,.50),rgba(27,13,25,.76)))!important;
         box-shadow:none!important;transform:none!important;animation:none!important;opacity:1!important;
         white-space:normal!important;overflow:visible!important;
@@ -119,13 +119,13 @@
       }
       html .lunea-intimacy-category .category-content .reading-item h4{
         display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:5px!important;
-        margin:0 0 5px!important;color:var(--lio-list-title,#f6edf1)!important;
-        font-size:14px!important;font-weight:600!important;line-height:1.4!important;letter-spacing:0!important;
+        margin:0 0 3px!important;color:var(--lio-list-title,#f6edf1)!important;
+        font-size:13.2px!important;font-weight:600!important;line-height:1.35!important;letter-spacing:0!important;
         white-space:normal!important;overflow-wrap:anywhere!important;word-break:keep-all!important;
       }
       html .lunea-intimacy-category .category-content .reading-item p{
         margin:0!important;color:var(--lio-list-description,rgba(224,206,216,.84))!important;
-        font-size:11px!important;line-height:1.55!important;display:block!important;
+        font-size:10.3px!important;line-height:1.45!important;display:block!important;
         max-height:none!important;overflow:visible!important;white-space:normal!important;
         text-overflow:clip!important;-webkit-line-clamp:unset!important;
         overflow-wrap:anywhere!important;word-break:keep-all!important;
@@ -133,12 +133,12 @@
       html .lunea-intimacy-category .category-content .reading-item .count{
         position:static!important;right:auto!important;top:auto!important;transform:none!important;
         box-sizing:border-box!important;flex:0 0 auto!important;align-self:center!important;
-        width:auto!important;height:28px!important;min-width:40px!important;min-height:28px!important;
-        margin:0!important;padding:0 9px!important;display:inline-flex!important;
+        width:auto!important;height:26px!important;min-width:38px!important;min-height:26px!important;
+        margin:0!important;padding:0 8px!important;display:inline-flex!important;
         align-items:center!important;justify-content:center!important;
         border-radius:999px!important;border:1px solid var(--lio-list-pill-border,rgba(231,143,178,.28))!important;
         background:var(--lio-list-pill-bg,rgba(130,39,77,.19))!important;color:var(--lio-list-pill-text,#f0bfd0)!important;
-        font-size:10.5px!important;font-weight:700!important;line-height:1!important;box-shadow:none!important;
+        font-size:10px!important;font-weight:700!important;line-height:1!important;box-shadow:none!important;
         pointer-events:none!important;white-space:nowrap!important;
       }
       html .lunea-intimacy-category .category-content .lunea-intimacy-legacy-badge{
