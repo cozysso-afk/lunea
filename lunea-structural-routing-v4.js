@@ -81,7 +81,7 @@
       './lunea-learning-success-gate-v1.js?v=101',
       './lunea-ai-spread-preflight-v2.js?v=105',
       './lunea-reading-flow-v5.js?v=501',
-      './lunea-mobile-reading-controls-v12.js?v=1202',
+      './lunea-mobile-reading-controls-v12.js?v=1203',
       './lunea-opal-light-polish-v13.js?v=1301',
       './lunea-reading-polish-v14.js?v=1401',
       './lunea-flip-all-fix-v1.js?v=102',
@@ -128,7 +128,7 @@
       './lunea-timing-moondial-sync-v15.js?v=1504',
       './lunea-timing-image-assets-v16.js?v=1602',
       './lunea-timing-ab-inline-v16.js?v=1601',
-      './lunea-daily-timing-v49.js?v=4901',
+      './lunea-daily-timing-v49.js?v=4902',
       './lunea-draft-timing-v50.js?v=5001',
       './lunea-timing-uploaded-art-v58.js?v=5801',
       './lunea-recovery-ui-v65.js?v=6502'
