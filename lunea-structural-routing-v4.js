@@ -37,7 +37,7 @@
     './lunea-daily-lock-v1.js?v=101',
     './lunea-home-portal-v8.js?v=801',
     './lunea-intimacy-v34.js?v=d2198d8c5779',
-    './lunea-intimacy-clean-v39.js?v=3901',
+    './lunea-intimacy-clean-v39.js?v=20260911-list-symbol',
     './lunea-thai-standalone-v24.js?v=2401',
     './lunea-thai-art-v25.js?v=2501',
     './lunea-thai-art-polish-v26.js?v=2602',
@@ -89,7 +89,7 @@
       './lunea-fixed-spread-depth-v30.js?v=3003',
       './lunea-general-order-v30-5.js?v=3005',
       './lunea-reading-boundary-reset-v31.js?v=3102',
-      './lunea-reading-action-order-v33.js?v=d2198d8c5779',
+      './lunea-reading-action-order-v33.js?v=20260911-list-symbol',
       './lunea-manual-structure-v1.js?v=105',
       './lunea-manual-everywhere-v1.js?v=103',
       './lunea-manual-library-v1.js?v=101',
@@ -114,11 +114,11 @@
     ],
     intimacy:[
       './lunea-intimacy-ai-bridge-v34.js?v=3431',
-      './lunea-intimacy-legacy-v35.js?v=d2198d8c5779',
+      './lunea-intimacy-legacy-v35.js?v=20260911-list-symbol',
       './lunea-intimacy-oracle-v35.js?v=352',
       './lunea-intimacy-oracle-ui-v36.js?v=3615',
-      './lunea-intimacy-readability-v36.js?v=3602',
-      './lunea-intimacy-burgundy-v40.js?v=4005',
+      './lunea-intimacy-readability-v36.js?v=20260911-list-symbol',
+      './lunea-intimacy-burgundy-v40.js?v=20260911-list-symbol',
       './lunea-intimacy-repair-v43.js?v=4301'
     ],
     timing:[

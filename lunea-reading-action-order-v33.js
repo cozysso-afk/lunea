@@ -122,17 +122,6 @@
         background:linear-gradient(145deg,rgba(112,34,69,.16),rgba(67,22,55,.09))!important;
       }
 
-      /* Screenshot-marked INTIMACY list correction: keep the expanded cabinet
-         on the same square artwork as the Home tile. V40 may still maintain its
-         legacy img node for compatibility, but the final visual is the square
-         final PNG through this higher-specificity presentation rule. */
-      html body .lunea-intimacy-category .cat-icon{
-        background:#310b20 url('./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}') center/cover no-repeat!important;
-      }
-      html body .lunea-intimacy-category .cat-icon img{
-        display:none!important;visibility:hidden!important;opacity:0!important;
-      }
-
       #${BOTTOM_ID}{
         display:grid;grid-template-columns:1fr 1fr;gap:8px;
         max-width:360px;margin:8px auto 2px;padding:0 2px;

@@ -9,7 +9,7 @@
   - make INTIMACY a real Home Portal tile instead of leaving the raw source
     category visible beneath the other portal tiles;
   - remove the legacy circular sparkle/orbit artwork from the final DOM and use
-    the dedicated square celestial artwork everywhere;
+    the approved Home artwork while list headers use the shared small symbol;
   - align the opened INTIMACY list with LOVE/CAREER/etc: simple divider rows,
     normal-flow count pills, and only the AI entry receiving a contained card;
   - keep all existing click handlers, fixed spread semantics, RNG, and adult
@@ -50,9 +50,8 @@
       style.id = STYLE_ID;
       document.head.appendChild(style);
     }
-    // Always refresh the text. This matters for long-lived iOS/PWA documents:
-    // an old style node must never block a newer release from taking effect.
-    style.textContent = `
+    // Refresh stale CSS once, without rewriting identical text on repeat apply.
+    const css = `
       .lunea-intimacy-category{
         background:var(--panel)!important;
         border-color:var(--border)!important;
@@ -69,21 +68,7 @@
       .lunea-intimacy-category .category-header::before,
       .lunea-intimacy-category .category-header::after{display:none!important}
       .lunea-intimacy-category .cat-left{gap:11px!important;min-width:0!important}
-      .lunea-intimacy-category .cat-icon{
-        width:52px!important;height:52px!important;min-width:52px!important;min-height:52px!important;
-        padding:0!important;overflow:hidden!important;border-radius:16px!important;
-        display:block!important;position:relative!important;
-        border:1px solid rgba(226,211,240,.20)!important;
-        background:#151326 url('${ICON_SRC}') center/cover no-repeat!important;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 6px 17px rgba(0,0,0,.16)!important;
-        animation:none!important;
-      }
-      .lunea-intimacy-category .cat-icon::before,
-      .lunea-intimacy-category .cat-icon::after{display:none!important}
-      .lunea-intimacy-category .lunea-intimacy-sector-art-v39{
-        display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;
-        border-radius:15px!important;pointer-events:none!important
-      }
+      .lunea-intimacy-category .cat-icon{flex-shrink:0}
       .lunea-intimacy-category .cat-text{min-width:0!important}
       .lunea-intimacy-category .cat-text h3{
         margin:0!important;color:#f2edf5!important;text-shadow:none!important;
@@ -204,7 +189,6 @@
         font:700 7.5px/1 system-ui,sans-serif;letter-spacing:.55px;vertical-align:2px
       }
       @media(max-width:390px){
-        .lunea-intimacy-category .cat-icon{width:48px!important;height:48px!important;min-width:48px!important;min-height:48px!important;border-radius:15px!important}
         .lunea-intimacy-category .reading-item{padding:12px 1px!important}
         .lunea-intimacy-category .reading-item h4{font-size:12.7px!important}
         .lunea-intimacy-category .reading-item p{font-size:10.2px!important}
@@ -212,22 +196,18 @@
         #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-object{width:54px!important;height:54px!important;border-radius:16px!important}
       }
     `;
+    if (style.textContent !== css) style.textContent = css;
   }
 
   function ensureCategoryIcon(category) {
     const icon = $('.cat-icon', category);
     if (!icon) return false;
-    const img = document.createElement('img');
-    img.className = 'lunea-intimacy-sector-art-v39';
-    img.src = ICON_SRC;
-    img.alt = '';
-    img.setAttribute('aria-hidden', 'true');
-    icon.replaceChildren(img);
-    icon.classList.add('lunea-intimacy-v39-icon');
-    icon.style.setProperty('background-image', `url("${ICON_SRC}")`, 'important');
-    icon.style.setProperty('background-position', 'center', 'important');
-    icon.style.setProperty('background-size', 'cover', 'important');
-    icon.style.setProperty('background-repeat', 'no-repeat', 'important');
+    // The source category already uses this shared text-symbol treatment.
+    // Only repair stale markup once; repeated apply/pageshow is a no-op here.
+    if (icon.textContent !== '♡' || icon.children.length) icon.textContent = '♡';
+    for (const property of ['background-image','background-position','background-size','background-repeat']) {
+      if (icon.style.getPropertyValue(property)) icon.style.removeProperty(property);
+    }
     return true;
   }
 

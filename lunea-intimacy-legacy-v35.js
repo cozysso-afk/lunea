@@ -22,22 +22,7 @@
     '행위 후의 여운 & 정서적 교감'
   ]);
 
-  const SECTOR_MARK = `
-    <svg class="lunea-intimacy-sector-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id="luneaIntimacyRose" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#ffe0d4"/>
-          <stop offset=".42" stop-color="#efb0bd"/>
-          <stop offset=".78" stop-color="#d99fc9"/>
-          <stop offset="1" stop-color="#b596ef"/>
-        </linearGradient>
-      </defs>
-      <path class="lunea-intimacy-orbit orbit-a" d="M34 12C22 13 14 21 14 32s8 19 20 20c-7-4-11-11-11-20s4-16 11-20Z"/>
-      <path class="lunea-intimacy-orbit orbit-b" d="M30 12c12 1 20 9 20 20s-8 19-20 20c7-4 11-11 11-20s-4-16-11-20Z"/>
-      <path class="lunea-intimacy-star" d="M32 23.3 34.8 29l5.9 3-5.9 3-2.8 5.7L29.2 35l-5.9-3 5.9-3L32 23.3Z"/>
-      <circle class="lunea-intimacy-dot dot-a" cx="32" cy="16" r="1.45"/>
-      <circle class="lunea-intimacy-dot dot-b" cx="32" cy="48" r="1.45"/>
-    </svg>`;
+
 
   const $ = (selector, root = document) => root.querySelector(selector);
 
@@ -94,37 +79,6 @@
         box-shadow:0 15px 38px rgba(60,18,49,.22),0 0 0 1px rgba(142,106,183,.06),inset 0 1px rgba(255,255,255,.03);
       }
       .lunea-intimacy-category.active .category-header::after{animation:luneaIntimacySweep .82s cubic-bezier(.2,.7,.2,1) 1 both}
-      .lunea-intimacy-category .cat-icon{
-        position:relative!important;
-        display:grid!important;
-        place-items:center!important;
-        overflow:visible!important;
-        border-color:rgba(236,176,197,.42)!important;
-        background:
-          radial-gradient(circle at 33% 26%,rgba(255,255,255,.25),transparent 19%),
-          radial-gradient(circle at 50% 58%,rgba(121,73,154,.36),transparent 72%),
-          linear-gradient(145deg,rgba(114,78,139,.52),rgba(41,29,62,.82))!important;
-        box-shadow:0 0 0 4px rgba(221,157,189,.035),0 0 28px rgba(174,112,160,.18),inset 0 0 18px rgba(202,156,226,.09)!important;
-      }
-      .lunea-intimacy-category .cat-icon::after{
-        content:'';
-        position:absolute;
-        inset:-5px;
-        border-radius:inherit;
-        border:1px solid rgba(234,170,199,.08);
-        box-shadow:0 0 24px rgba(205,116,172,.08);
-        opacity:.8;
-        pointer-events:none;
-      }
-      .lunea-intimacy-sector-mark{width:66%;height:66%;display:block;overflow:visible;filter:drop-shadow(0 0 5px rgba(239,164,193,.17))}
-      .lunea-intimacy-sector-mark .lunea-intimacy-orbit{fill:url(#luneaIntimacyRose);opacity:.93;transform-origin:32px 32px}
-      .lunea-intimacy-sector-mark .orbit-b{opacity:.76}
-      .lunea-intimacy-sector-mark .lunea-intimacy-star{fill:#ffe1d2;filter:drop-shadow(0 0 4px rgba(239,164,193,.45));transform-origin:32px 32px}
-      .lunea-intimacy-sector-mark .lunea-intimacy-dot{fill:#e8b2c7;opacity:.82}
-      .lunea-intimacy-category.active .cat-icon{animation:luneaIntimacyBreath 3.8s ease-in-out infinite}
-      .lunea-intimacy-category.active .lunea-intimacy-sector-mark .orbit-a{animation:luneaIntimacyOrbitA 5.4s ease-in-out infinite}
-      .lunea-intimacy-category.active .lunea-intimacy-sector-mark .orbit-b{animation:luneaIntimacyOrbitB 5.4s ease-in-out infinite}
-      .lunea-intimacy-category.active .lunea-intimacy-sector-mark .lunea-intimacy-star{animation:luneaIntimacyStar 2.8s ease-in-out infinite}
       .lunea-intimacy-category .cat-text h3{letter-spacing:.45px;color:#f6edf4!important;text-shadow:0 0 18px rgba(232,171,201,.06)}
       .lunea-intimacy-category .cat-text p{line-height:1.45!important;color:rgba(210,202,217,.70)!important}
       .lunea-intimacy-category .lunea-intimacy-18-badge{
@@ -210,7 +164,6 @@
         .lunea-intimacy-category .reading-item h4{font-size:13.8px!important}
         .lunea-intimacy-category .reading-item p{font-size:10.15px!important;line-height:1.47!important}
         .lunea-intimacy-category .reading-item .count{right:10px!important;width:31px!important;height:31px!important;min-width:31px!important}
-        .lunea-intimacy-category .cat-icon{box-shadow:0 0 0 3px rgba(221,157,189,.035),0 0 22px rgba(174,112,160,.16)!important}
       }
       @media(prefers-reduced-motion:reduce){
         .lunea-intimacy-category *,.lunea-intimacy-category *::before,.lunea-intimacy-category *::after{animation:none!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}
@@ -283,16 +236,7 @@
     return item;
   }
 
-  function installSectorMark(category) {
-    const icon = $('.cat-icon', category);
-    if (!icon) return;
-    if (!$('.lunea-intimacy-sector-mark', icon)) icon.innerHTML = SECTOR_MARK;
-    icon.setAttribute('aria-hidden', 'true');
-    icon.classList.add('lunea-intimacy-branded-icon');
-  }
-
   function polishExisting(category) {
-    installSectorMark(category);
     const content = $('.category-content', category);
     if (!content) return;
     const fixedFirst = $('.reading-item[data-title="신체적 속궁합 · CORE 5"]', content);
