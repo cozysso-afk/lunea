@@ -701,6 +701,7 @@
       </div>`;
     const btn = byId('timingSupportBtn');
     if (btn) btn.textContent = `⏳ ${timingState.primary.label_ko}`;
+    notifyAttachmentChanged();
   }
 
   function clearSupportTiming() {
@@ -851,6 +852,24 @@ ${timingState.refine ? `정밀화: ${timingState.refine.label_ko} (${timingState
     };
   }
 
+  function attachmentSnapshot() {
+    let question = '';
+    try { question = String(state?.question || '').trim(); } catch {}
+    if (!timingState.primary || timingState.mode !== 'support' || timingState.question !== question) return null;
+    return {version:1, question, result:timingArchiveObject()};
+  }
+
+  function registerAttachment() {
+    const adapter = {group:'timing', draft:false, capture:attachmentSnapshot, toArchive:snapshot => snapshot?.result || null, clear:clearSupportTiming};
+    const registry = window.LUNEA_READING_ATTACHMENTS_V1;
+    if (registry?.register) registry.register('timing', adapter);
+    else (window.__LUNEA_READING_ATTACHMENT_QUEUE_V1 ||= []).push({name:'timing', adapter});
+  }
+
+  function notifyAttachmentChanged() {
+    window.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('timing');
+  }
+
   function installArchiveIntegration() {
     // Existing saveReading remains the source of truth. After it saves, enrich only the newest item.
     try {
@@ -860,6 +879,7 @@ ${timingState.refine ? `정밀화: ${timingState.refine.label_ko} (${timingState
         const old = saveBtn.onclick;
         saveBtn.onclick = function(e) {
           if (old) old.call(this,e);
+          if (window.LUNEA_READING_ATTACHMENTS_V1) return;
           let q = '';
           try { q = state?.question || ''; } catch {}
           if (!timingState.primary || timingState.mode !== 'support' || timingState.question !== q) return;
@@ -930,6 +950,7 @@ ${item.timing.refine.meaning}`;
     installStartSpreadReset();
     installPromptIntegration();
     installArchiveIntegration();
+    registerAttachment();
     console.info('✦ LUNEA TIMING ORACLE V1 loaded', {cards:TIMING_CARDS.length});
   }
 

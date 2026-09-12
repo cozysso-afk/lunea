@@ -18,6 +18,8 @@
 
   let lastQuestion = '';
   let observer = null;
+  let restoringDraft = false;
+  let cleanupGeneration = 0;
 
   function currentQuestion() {
     let q = unquote($('spreadQuestion')?.textContent || '');
@@ -101,17 +103,21 @@
   }
 
   function clearAuxiliaryState(reason = 'question-boundary') {
+    const generation = ++cleanupGeneration;
     try { W.LUNEA_ASTRO_JOB_QUEUE?.resetForQuestionBoundary?.(); } catch {}
     try { W.LUNEA_ASTRO_RESUME_V23?.clear?.(); } catch {}
     try { W.LUNEA_THAI_TAROT_BRIDGE_V32?.clear?.(); } catch {}
     try { localStorage.removeItem(PENDING_KEY); } catch {}
     try { localStorage.removeItem(LONG_KEY); } catch {}
     resetVisibleUi();
-    [60,220,700,1600].forEach(ms => setTimeout(resetVisibleUi,ms));
+    [60,220,700,1600].forEach(ms => setTimeout(() => {
+      if (generation === cleanupGeneration && !restoringDraft) resetVisibleUi();
+    },ms));
     try { document.documentElement.dataset.luneaAuxBoundary = reason; } catch {}
   }
 
   function inspectForStaleState() {
+    if (restoringDraft) return false;
     const live = currentQuestion();
     if (!live) return false;
 
@@ -149,6 +155,7 @@
       if (next === lastQuestion) return;
       const previous = lastQuestion;
       lastQuestion = next;
+      if (restoringDraft) return;
       if (previous || next) clearAuxiliaryState('question-change');
     });
     observer.observe(node,{childList:true,subtree:true,characterData:true});
@@ -161,6 +168,7 @@
       if (!el || el.dataset.luneaQuestionGateV56 === '1') return;
       el.dataset.luneaQuestionGateV56 = '1';
       new MutationObserver(() => {
+        if (restoringDraft) return;
         const live = currentQuestion();
         if (!live) return;
         const field = id.startsWith('astroTransit') ? $('astroTransitQuestion') : $('astroReturnQuestion');
@@ -171,6 +179,8 @@
   }
 
   function bootPass(){installQuestionObserver();installResultMutationGate();inspectForStaleState()}
+  function beginDraftRestore(){cleanupGeneration+=1;restoringDraft=true}
+  function endDraftRestore(){lastQuestion=currentQuestion();restoringDraft=false}
   function boot(){
     bootPass();
     let tries=0;
@@ -180,6 +190,13 @@
   W.addEventListener('pageshow',()=>setTimeout(bootPass,30),{passive:true});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(bootPass,30)});
 
-  W.LUNEA_RUNTIME_STATE_V56=Object.freeze({clear:clearAuxiliaryState,inspect:inspectForStaleState,currentQuestion,version:'56.1'});
+  W.LUNEA_RUNTIME_STATE_V56=Object.freeze({
+    clear:clearAuxiliaryState,
+    inspect:inspectForStaleState,
+    currentQuestion,
+    beginDraftRestore,
+    endDraftRestore,
+    version:'56.1'
+  });
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

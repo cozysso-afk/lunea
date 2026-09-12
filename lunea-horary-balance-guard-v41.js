@@ -172,12 +172,26 @@
     });
   }
 
+  function restoreResult(data) {
+    if (!data || data.schema !== 'LUNEA_HORARY_V1') return false;
+    latestHorary = data;
+    W.__LUNEA_LAST_HORARY_V41__ = data;
+    render();
+    return true;
+  }
+
+  function clearResult() {
+    latestHorary = null;
+    W.__LUNEA_LAST_HORARY_V41__ = null;
+    $(BOX_ID)?.remove();
+  }
+
   function boot() {
     addStyle();
     installFetchBridge();
     new MutationObserver(schedule).observe(document.documentElement, {subtree:true, childList:true, attributes:true, attributeFilter:['class']});
     [150,450,1000,1800].forEach(ms => setTimeout(schedule, ms));
-    W.LUNEA_HORARY_BALANCE_GUARD_V41 = Object.freeze({version:RELEASE,coreOf,promptAddon,render});
+    W.LUNEA_HORARY_BALANCE_GUARD_V41 = Object.freeze({version:RELEASE,coreOf,promptAddon,render,restoreResult,clearResult});
     console.info('☿ LUNEA Horary Balance Guard V41 loaded');
   }
 

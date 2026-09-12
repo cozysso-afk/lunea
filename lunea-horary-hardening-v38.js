@@ -175,7 +175,11 @@
       const tz = clean($('luneaHoraryTimezoneV38')?.value || 'Asia/Seoul');
       if (tz && tz !== 'Asia/Seoul') {
         const value = localDateTimeForZone(new Date(), tz);
-        if (value && $('astroHoraryMoment')) $('astroHoraryMoment').value = value;
+        const moment = $('astroHoraryMoment');
+        if (value && moment) {
+          moment.value = value;
+          moment.dispatchEvent(new Event('input', {bubbles:true}));
+        }
       }
     }, 0));
     return true;
@@ -494,12 +498,31 @@
     }
   }
 
+  function restoreResult(data) {
+    if (!data || data.schema !== 'LUNEA_HORARY_V1') return false;
+    latestHorary = data;
+    W.__LUNEA_LAST_HORARY_HARDENING_V38__ = data;
+    applyModeUI();
+    renderConditionEvidence();
+    return true;
+  }
+
+  function clearResult() {
+    latestHorary = null;
+    manualOverride = null;
+    W.__LUNEA_LAST_HORARY_HARDENING_V38__ = null;
+    $(MANUAL_BOX_ID)?.remove();
+    $(CONDITION_BOX_ID)?.remove();
+    const select = $(MANUAL_SELECT_ID);
+    if (select) select.value = 'auto';
+  }
+
   function boot() {
     addStyles();
     installFetchBridge();
     bind();
     [120,360,900,1800].forEach(ms => setTimeout(() => { bind(); syncExtendedTopic(); applyModeUI(); }, ms));
-    W.LUNEA_HORARY_HARDENING_V38 = Object.freeze({version:RELEASE,effectiveMode,inferExtendedTopic,enrichedArchiveObject,prepareGeminiRequest,rewriteHoraryRequest});
+    W.LUNEA_HORARY_HARDENING_V38 = Object.freeze({version:RELEASE,effectiveMode,inferExtendedTopic,enrichedArchiveObject,prepareGeminiRequest,rewriteHoraryRequest,restoreResult,clearResult});
     console.info('☿ LUNEA Horary Hardening V38 loaded');
   }
 

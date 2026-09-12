@@ -6,6 +6,8 @@
   if (W.__LUNEA_HORARY_MOBILE_STABILITY_V42__) return;
   W.__LUNEA_HORARY_MOBILE_STABILITY_V42__ = true;
   const RELEASE = '42.0';
+  const MOMENT_SHELL = 'horary-v42-moment-shell';
+  const MOMENT_VISIBLE = 'horary-v42-moment-visible';
   let locked = false;
   let savedY = 0;
   let saved = null;
@@ -32,6 +34,8 @@
       #astroHoraryOverlay .horary-modal textarea,#astroHoraryOverlay .horary-modal input,#astroHoraryOverlay .horary-modal select{
         scroll-margin-top:88px!important;
       }
+      #astroHoraryOverlay .${MOMENT_SHELL}{display:contents}
+      #astroHoraryOverlay .${MOMENT_VISIBLE}{display:none}
       /* Final Horary presentation owner: midnight celestial, scoped to this sheet. */
       #astroHoraryOverlay,#astroHoraryOverlay *{box-sizing:border-box}
       #astroHoraryOverlay{
@@ -65,6 +69,38 @@
       #astroHoraryOverlay .horary-actions{flex-wrap:wrap}
       #astroHoraryOverlay .horary-actions button{flex:1 1 125px}
       @media(max-width:420px){#astroHoraryOverlay :is(.horary-grid,.v38-grid){grid-template-columns:minmax(0,1fr)!important}}
+      @media(max-width:430px){
+        @supports (-webkit-touch-callout:none){
+          #astroHoraryOverlay .horary-v42-moment-field{width:100%!important;max-width:100%!important;min-width:0!important;box-sizing:border-box!important}
+          #astroHoraryOverlay .${MOMENT_SHELL}{
+            position:relative!important;display:block!important;width:100%!important;max-width:100%!important;
+            min-width:0!important;min-height:46px!important;margin-top:0!important;box-sizing:border-box!important;
+            overflow:hidden!important;border-radius:10px!important
+          }
+          #astroHoraryOverlay .${MOMENT_VISIBLE}{
+            position:absolute!important;inset:0!important;z-index:1!important;display:flex!important;
+            align-items:center!important;justify-content:center!important;box-sizing:border-box!important;
+            padding:10px 12px!important;border:1px solid rgba(117,169,210,.28)!important;
+            border-radius:10px!important;background:#09111f!important;color:#e6eff8!important;
+            font-size:12px!important;font-weight:550!important;line-height:1.25!important;text-align:center!important;
+            white-space:nowrap!important;font-variant-numeric:tabular-nums!important;pointer-events:none!important
+          }
+          #astroHoraryOverlay .${MOMENT_SHELL}:focus-within .${MOMENT_VISIBLE}{border-color:#9fc8e8!important;box-shadow:0 0 0 2px rgba(117,169,210,.14)!important}
+          #astroHoraryOverlay .${MOMENT_SHELL}>#astroHoraryMoment{
+            position:absolute!important;inset:0!important;z-index:2!important;display:block!important;
+            inline-size:100%!important;max-inline-size:100%!important;min-inline-size:0!important;
+            -webkit-min-logical-width:0!important;width:100%!important;height:100%!important;min-height:0!important;
+            margin:0!important;padding:0!important;border:0!important;border-radius:10px!important;
+            opacity:.001!important;background:transparent!important;color:transparent!important;
+            -webkit-text-fill-color:transparent!important;caret-color:transparent!important;
+            -webkit-appearance:none!important;appearance:none!important;cursor:pointer!important
+          }
+          #astroHoraryOverlay .${MOMENT_SHELL}>#astroHoraryMoment::-webkit-calendar-picker-indicator{
+            position:absolute!important;inset:0!important;width:100%!important;height:100%!important;
+            margin:0!important;padding:0!important;opacity:0!important;cursor:pointer!important
+          }
+        }
+      }
       html.lunea-horary-v42-locked,html.lunea-horary-v42-locked body{overscroll-behavior:none!important}
     `;
     document.head.appendChild(style);
@@ -107,8 +143,52 @@
     requestAnimationFrame(() => W.scrollTo?.(0, y));
   }
 
+  function formatMoment(value) {
+    const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (!match) return '날짜와 시각 선택';
+    const hour = Number(match[4]);
+    const period = hour < 12 ? '오전' : '오후';
+    const displayHour = hour % 12 || 12;
+    return `${Number(match[1])}. ${Number(match[2])}. ${Number(match[3])}. ${period} ${displayHour}:${match[5]}`;
+  }
+
+  function syncMoment() {
+    const input = document.getElementById('astroHoraryMoment');
+    const visible = input?.closest?.(`.${MOMENT_SHELL}`)?.querySelector?.(`.${MOMENT_VISIBLE}`);
+    if (!visible) return false;
+    const next = formatMoment(input.value);
+    if (visible.textContent !== next) visible.textContent = next;
+    return true;
+  }
+
+  function enhanceMoment() {
+    const input = document.getElementById('astroHoraryMoment');
+    if (!input || input.type !== 'datetime-local') return false;
+    if (input.closest?.(`.${MOMENT_SHELL}`)) return syncMoment();
+    const field = input.closest?.('.field');
+    if (!field || !input.parentNode) return false;
+    field.classList.add('horary-v42-moment-field');
+    const shell = document.createElement('span');
+    shell.className = MOMENT_SHELL;
+    const visible = document.createElement('span');
+    visible.className = MOMENT_VISIBLE;
+    visible.setAttribute('aria-hidden', 'true');
+    input.parentNode.insertBefore(shell, input);
+    shell.append(visible, input);
+    input.addEventListener('input', syncMoment);
+    input.addEventListener('change', syncMoment);
+    const now = document.getElementById('astroHoraryNow');
+    if (now && !now.dataset.luneaHoraryMomentSyncV42) {
+      now.dataset.luneaHoraryMomentSyncV42 = '1';
+      now.addEventListener('click', () => queueMicrotask(syncMoment));
+    }
+    return syncMoment();
+  }
+
   function sync(overlay) {
     if (!overlay) return;
+    enhanceMoment();
+    syncMoment();
     if (overlay.classList.contains('show')) lockPage();
     else unlockPage();
   }
@@ -129,7 +209,10 @@
       observer.observe(document.documentElement, {childList:true, subtree:true});
     }
     W.addEventListener?.('pagehide', unlockPage, {passive:true});
-    W.LUNEA_HORARY_MOBILE_STABILITY_V42 = Object.freeze({version:RELEASE, lockPage, unlockPage});
+    W.addEventListener?.('pageshow', () => { enhanceMoment(); syncMoment(); }, {passive:true});
+    W.LUNEA_HORARY_MOBILE_STABILITY_V42 = Object.freeze({
+      version:RELEASE, lockPage, unlockPage, enhanceMoment, syncMoment, formatMoment
+    });
     console.info('☿ LUNEA Horary mobile stability V42 loaded');
   }
 

@@ -87,6 +87,13 @@
       manualPositions: clone(s.__luneaManualPositions || null)
     };
 
+    const attachmentOwner = W.LUNEA_READING_ATTACHMENTS_V1;
+    const attachments = attachmentOwner?.captureDraft?.(s);
+    if (attachments) {
+      payload.attachments = attachments;
+      payload.readingSignature = attachments.readingSignature;
+    }
+
     try {
       localStorage.setItem(KEY, JSON.stringify(payload));
       renderResumeBar();
@@ -256,6 +263,8 @@
 
     try {
       restoring = true;
+      W.LUNEA_RUNTIME_STATE_V56?.beginDraftRestore?.();
+      W.LUNEA_READING_ATTACHMENTS_V1?.prepareRestore?.();
       const s = setStateFromDraft(d);
       $('cards')?.replaceChildren();
       $('results')?.replaceChildren();
@@ -285,24 +294,32 @@
         document.body.classList.add('modal-open');
       }
 
-      requestAnimationFrame(() => {
-        const flipped = new Set((d.flipped || []).map(Number));
-        s.drawn.forEach((_, i) => {
-          if (!flipped.has(i)) return;
-          try {
-            const fn = W.flipAt || flipAt;
-            fn(i);
-          } catch {
-            $('card-' + i)?.classList.add('flipped');
-          }
-          appendSavedClarifiers(i);
-        });
-        restoreAI(d.aiText || '');
-        restoring = false;
-        renderResumeBar();
-        scheduleSave(120);
+      requestAnimationFrame(async () => {
+        try {
+          const flipped = new Set((d.flipped || []).map(Number));
+          s.drawn.forEach((_, i) => {
+            if (!flipped.has(i)) return;
+            try {
+              const fn = W.flipAt || flipAt;
+              fn(i);
+            } catch {
+              $('card-' + i)?.classList.add('flipped');
+            }
+            appendSavedClarifiers(i);
+          });
+          restoreAI(d.aiText || '');
+          await W.LUNEA_READING_ATTACHMENTS_V1?.restoreDraft?.(d);
+        } catch (error) {
+          console.warn('[LUNEA Draft] attachment restore failed', error);
+        } finally {
+          W.LUNEA_RUNTIME_STATE_V56?.endDraftRestore?.();
+          restoring = false;
+          renderResumeBar();
+          scheduleSave(120);
+        }
       });
     } catch (err) {
+      W.LUNEA_RUNTIME_STATE_V56?.endDraftRestore?.();
       restoring = false;
       console.error('[LUNEA Draft] restore failed', err);
       alert('마지막 리딩 복원 중 오류가 났어: ' + (err?.message || err));

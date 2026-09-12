@@ -554,6 +554,27 @@
     installCopyOverride();
   }
 
+  function restoreResult(data) {
+    if (!data || data.schema !== 'LUNEA_HORARY_V1') return false;
+    latestHorary = data;
+    latestQuestion = clean(data.question?.text || '');
+    W.__LUNEA_LAST_HORARY_MODE_V37__ = data;
+    syncMode();
+    renderModeResult();
+    return true;
+  }
+
+  function clearResult() {
+    latestHorary = null;
+    latestQuestion = '';
+    W.__LUNEA_LAST_HORARY_MODE_V37__ = null;
+    modeState = {key:'outcome', label:'성사·결과', subject:'event', forceTopic:null};
+    $(MODE_BOX_ID)?.remove();
+    $(MODE_HEAD_ID)?.remove();
+    $(MODE_CHIP_ID)?.remove();
+    $('astroHoraryOverlay')?.removeAttribute?.('data-horary-mode');
+  }
+
   function boot() {
     addStyles();
     installFetchBridge();
@@ -569,6 +590,8 @@
       modePromptRules,
       syncMode,
       renderModeResult,
+      restoreResult,
+      clearResult,
     });
     console.info('☿ LUNEA Horary Question Modes V37 loaded');
   }

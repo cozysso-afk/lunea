@@ -18,7 +18,7 @@
     Saturn:{symbol:'♄',label:'Saturn Return',ko:'토성회귀'}
   };
 
-  const stateReturn={question:'',selected:[],result:null};
+  const stateReturn={question:'',selected:[],place:'',result:null};
 
   function safeJSON(k,f=null){try{return JSON.parse(localStorage.getItem(k)||'')||f}catch{return f}}
   function apiUrl(){return String(localStorage.getItem(API_KEY)||'').trim().replace(/\/+$/,'')}
@@ -99,15 +99,18 @@
   }
 
   function open(){
-    const natal=safeJSON(NATAL_KEY);if(!natal)return alert('먼저 Natal 자동 계산을 완료해줘.');
-    if(!apiUrl())return alert('Astro Core API 주소를 확인해줘.');
     const q=question();if(!q)return alert('현재 질문을 찾지 못했어.');
-    stateReturn.question=q;stateReturn.selected=autoBodies(q);stateReturn.result=null;
+    const changed=stateReturn.question!==q;
+    const hasSavedResult=!changed&&!!stateReturn.result;
+    const natal=safeJSON(NATAL_KEY);
+    if(!hasSavedResult&&!natal)return alert('먼저 Natal 자동 계산을 완료해줘.');
+    if(!hasSavedResult&&!apiUrl())return alert('Astro Core API 주소를 확인해줘.');
+    if(changed){stateReturn.question=q;stateReturn.selected=autoBodies(q);stateReturn.place='';stateReturn.result=null}
     $('astroReturnQuestion').value=q;
     document.querySelectorAll('#astroReturnChecks input').forEach(x=>x.checked=stateReturn.selected.includes(x.value));
-    $('astroReturnPlace').value=natal?.birth?.place_resolved||natal?.birth?.place_input||'';
-    $('astroReturnResult').innerHTML='';
-    $('astroReturnStatus').textContent=`질문 기준 AUTO: ${stateReturn.selected.map(x=>BODY_META[x].ko).join(' · ')}`;
+    $('astroReturnPlace').value=stateReturn.place||natal?.birth?.place_resolved||natal?.birth?.place_input||'';
+    if(stateReturn.result){render();$('astroReturnStatus').textContent='현재 질문에 저장된 리턴 계산 결과야.'}
+    else{$('astroReturnResult').innerHTML='';$('astroReturnStatus').textContent=`질문 기준 AUTO: ${stateReturn.selected.map(x=>BODY_META[x].ko).join(' · ')}`}
     $('astroReturnOverlay').classList.add('show');document.body.classList.add('modal-open');
   }
   function close(){$('astroReturnOverlay')?.classList.remove('show');if(!document.querySelector('.overlay.show'))document.body.classList.remove('modal-open')}
@@ -124,7 +127,7 @@
       })});
       let data=null;try{data=await res.json()}catch{}
       if(!res.ok)throw new Error(data?.detail||`${res.status} ${res.statusText}`);
-      stateReturn.selected=bodies;stateReturn.result=data;render();renderInline();
+      stateReturn.selected=bodies;stateReturn.place=$('astroReturnPlace').value.trim();stateReturn.result=data;render();renderInline();notifyAttachmentChanged();
       $('astroReturnStatus').textContent=`계산 완료 · ${data.location?.place_resolved||'위치'} 기준`;
     }catch(e){$('astroReturnStatus').textContent='계산 실패: '+(e?.message||e)}
     finally{btn.disabled=false;btn.textContent='↻ 리턴 계산'}
@@ -165,6 +168,58 @@
     const b=$('astroReturnBtn');if(b)b.textContent='↻ Return 완료';
   }
 
+  function clearReturn(){
+    stateReturn.question='';stateReturn.selected=[];stateReturn.place='';stateReturn.result=null;
+    $('luneaReturnInline')?.remove();
+    const button=$('astroReturnBtn');if(button)button.textContent='↻ Returns';
+    if($('astroReturnResult'))$('astroReturnResult').innerHTML='';
+  }
+
+  function archiveObject(){
+    const data=stateReturn.result;if(!data)return null;
+    const returns={};
+    Object.entries(data.returns||{}).slice(0,7).forEach(([body,row])=>{
+      const chart=row?.anchor_chart||{};
+      returns[body]={
+        return_label_ko:row?.return_label_ko,
+        previous:row?.previous||null,
+        next:row?.next||null,
+        all_passes:(row?.all_passes||[]).slice(0,8),
+        anchor_chart:{planets:{[body]:chart.planets?.[body]||null},angles:{ASC:chart.angles?.ASC||null,MC:chart.angles?.MC||null}}
+      };
+    });
+    return {schema:data.schema,location:data.location||null,returns};
+  }
+
+  function attachmentSnapshot(){
+    const q=question();
+    if(!stateReturn.result||stateReturn.question!==q)return null;
+    return {version:1,question:q,selected:stateReturn.selected.slice(0,7),place:stateReturn.place,result:archiveObject()};
+  }
+
+  function restoreAttachment(snapshot){
+    const q=question();
+    if(!snapshot||String(snapshot.question||'').trim()!==q||!snapshot.result?.returns)return false;
+    stateReturn.question=q;
+    stateReturn.selected=Array.isArray(snapshot.selected)?snapshot.selected.filter(body=>BODY_META[body]).slice(0,7):Object.keys(snapshot.result.returns).filter(body=>BODY_META[body]);
+    stateReturn.place=String(snapshot.place||snapshot.result.location?.place_resolved||snapshot.result.location?.place_input||'').slice(0,240);
+    stateReturn.result=snapshot.result;
+    if($('astroReturnQuestion'))$('astroReturnQuestion').value=q;
+    document.querySelectorAll('#astroReturnChecks input').forEach(input=>{input.checked=stateReturn.selected.includes(input.value)});
+    if($('astroReturnPlace'))$('astroReturnPlace').value=stateReturn.place;
+    render();renderInline();
+    return true;
+  }
+
+  function registerAttachment(){
+    const adapter={group:'astro',capture:attachmentSnapshot,restore:restoreAttachment,toArchive:s=>s?.result||null,clear:clearReturn};
+    const registry=window.LUNEA_READING_ATTACHMENTS_V1;
+    if(registry?.register)registry.register('astroReturns',adapter);
+    else (window.__LUNEA_READING_ATTACHMENT_QUEUE_V1||=[]).push({name:'astroReturns',adapter});
+  }
+
+  function notifyAttachmentChanged(){window.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('astroReturns')}
+
   function promptBlock(){
     const d=stateReturn.result;if(!d)return '';
     const rows=Object.entries(d.returns||{}).map(([body,r])=>{
@@ -194,11 +249,11 @@ ${rows}
   function wrapSave(){
     try{const save=$('saveReading');if(!save||window.__LUNEA_RETURN_SAVE_WRAPPED__)return;
       window.__LUNEA_RETURN_SAVE_WRAPPED__=true;const old=save.onclick;
-      save.onclick=function(e){if(old)old.call(this,e);if(!stateReturn.result||stateReturn.question!==question())return;
+      save.onclick=function(e){if(old)old.call(this,e);if(window.LUNEA_READING_ATTACHMENTS_V1)return;if(!stateReturn.result||stateReturn.question!==question())return;
         try{if(typeof getArchive==='function'&&typeof setArchive==='function'){const a=getArchive();if(a.length){a[0].astroReturns=stateReturn.result;setArchive(a)}}}catch{}}}
     catch{}
   }
 
-  function boot(){addStyle();inject();injectButton();wrapPrompt();wrapSave();console.info('✦ LUNEA RETURN CONTEXT V1 loaded')}
+  function boot(){addStyle();inject();injectButton();wrapPrompt();wrapSave();registerAttachment();console.info('✦ LUNEA RETURN CONTEXT V1 loaded')}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();

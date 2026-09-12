@@ -63,7 +63,7 @@
 
   function bestArchiveMatch(item) {
     const rows = readArchive().slice().sort((a,b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0));
-    return bestArchiveFor(rows, itemTitle(item), itemQuestion(item));
+    return bestArchiveFor(rows, itemTitle(item), itemQuestion(item), item?.dataset?.sourceArchiveId || item?.dataset?.archiveId || '');
   }
 
   async function journalEntryMatch(item) {
@@ -71,6 +71,9 @@
       const rows = await W.LUNEA_READING_JOURNAL?.getAll?.();
       if (!Array.isArray(rows)) return null;
       const title = itemTitle(item), q = itemQuestion(item);
+      const sourceArchiveId = String(item?.dataset?.sourceArchiveId || item?.dataset?.archiveId || '');
+      const bySource = sourceArchiveId && rows.find(x => String(x?.sourceArchiveId || '') === sourceArchiveId);
+      if (bySource?.reading) return bySource;
       const exact = rows.find(x => norm(x?.reading?.title) === title && norm(x?.reading?.q) === q);
       if (exact?.reading) return exact;
       const byQ = q && rows.find(x => norm(x?.reading?.q) === q);

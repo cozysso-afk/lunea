@@ -28,6 +28,8 @@
   const tarotState = {
     question: '',
     topic: 'general',
+    start: '',
+    end: '',
     result: null,
     running: false,
     renderSignature: '',
@@ -384,11 +386,17 @@
   function openTarotRange() {
     const question = currentQuestion();
     if (!question) return alert('먼저 타로 질문을 입력하고 카드를 뽑아줘.');
-    if (!safeJSON(NATAL_KEY)) return alert('먼저 Natal(네이탈·출생차트) 자동 계산을 완료해줘.');
-    if (!apiUrl()) return alert('Astro Core API 주소를 확인해줘.');
     ensureTarotQuestionScope();
+    const hasSavedResult = tarotState.question === question && !!tarotState.result;
+    if (!hasSavedResult && !safeJSON(NATAL_KEY)) return alert('먼저 Natal(네이탈·출생차트) 자동 계산을 완료해줘.');
+    if (!hasSavedResult && !apiUrl()) return alert('Astro Core API 주소를 확인해줘.');
     injectTarotOverlay();
     const overlay = $(TAROT_OVERLAY_ID);
+    if (tarotState.start && tarotState.end) {
+      $('luneaThaiTarotRangeStart').value = tarotState.start;
+      $('luneaThaiTarotRangeEnd').value = tarotState.end;
+      syncDateDisplay($('luneaThaiTarotRangeStart'), $('luneaThaiTarotRangeEnd'));
+    }
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden','false');
     document.body.classList.add('modal-open');
@@ -428,10 +436,13 @@
       }
       tarotState.question = question;
       tarotState.topic = topic;
+      tarotState.start = range.start;
+      tarotState.end = range.end;
       tarotState.result = data;
       tarotState.renderSignature = '';
       renderCalendar(data, $('luneaThaiTarotRangeResult'));
       renderTarotInline(true);
+      notifyAttachmentChanged();
       status.textContent = `${data.start_date}부터 ${data.days}일 · AI 해석에도 이 질문의 기간 Taksa를 보조 근거로 연결해.`;
     } catch (error) {
       status.textContent = '기간 계산 실패: ' + (error?.message || error);
@@ -473,6 +484,8 @@
   function clearTarotResult() {
     tarotState.question = '';
     tarotState.topic = 'general';
+    tarotState.start = '';
+    tarotState.end = '';
     tarotState.result = null;
     tarotState.running = false;
     tarotState.renderSignature = '';
@@ -538,6 +551,90 @@ ${rows.map(row => `  · ${row}`).join('\n')}
 5. 정확한 사건 시기는 실제 Transit/Return/Timing Oracle 근거가 있을 때 그 계산을 우선한다.`;
   }
 
+  function periodRow(row) {
+    if (!row) return null;
+    return {
+      date:row.date,
+      weekday_label:row.weekday_label,
+      daytime:row.daytime ? {
+        ruler:row.daytime.ruler || null,
+        position:row.daytime.position,
+        position_ko:row.daytime.position_ko,
+        tone:row.daytime.tone || null,
+        focus_match:!!row.daytime.focus_match,
+        meaning_ko:row.daytime.meaning_ko
+      } : null,
+      night_variant:row.night_variant ? {
+        ruler:row.night_variant.ruler || null,
+        position:row.night_variant.position,
+        position_ko:row.night_variant.position_ko,
+        tone:row.night_variant.tone || null,
+        focus_match:!!row.night_variant.focus_match,
+        meaning_ko:row.night_variant.meaning_ko
+      } : null
+    };
+  }
+
+  function archiveObject() {
+    const data = tarotState.result;
+    if (!data) return null;
+    const summary = data.summary || {};
+    return {
+      schema:data.schema,
+      start_date:data.start_date,
+      end_date:data.end_date,
+      days:Number(data.days || 0),
+      summary:{
+        supportive_segments:Number(summary.supportive_segments || 0),
+        neutral_segments:Number(summary.neutral_segments || 0),
+        caution_segments:Number(summary.caution_segments || 0),
+        focus_match_segments:Number(summary.focus_match_segments || 0),
+        supportive_dates:(summary.supportive_dates || []).slice(0,90),
+        caution_dates:(summary.caution_dates || []).slice(0,90),
+        focus_match_dates:(summary.focus_match_dates || []).slice(0,90)
+      },
+      calendar:(data.calendar || []).slice(0,90).map(periodRow)
+    };
+  }
+
+  function attachmentSnapshot() {
+    const question = currentQuestion();
+    if (!tarotState.result || tarotState.question !== question) return null;
+    return {version:1,question,topic:tarotState.topic,start:tarotState.start || tarotState.result.start_date || '',end:tarotState.end || tarotState.result.end_date || '',result:archiveObject()};
+  }
+
+  function restoreAttachment(snapshot) {
+    const question = currentQuestion();
+    if (!snapshot || String(snapshot.question || '').trim() !== question || !snapshot.result?.calendar) return false;
+    tarotState.question = question;
+    tarotState.topic = snapshot.topic || 'general';
+    tarotState.start = String(snapshot.start || snapshot.result.start_date || '');
+    tarotState.end = String(snapshot.end || snapshot.result.end_date || '');
+    tarotState.result = snapshot.result;
+    tarotState.running = false;
+    tarotState.renderSignature = '';
+    injectTarotOverlay();
+    const start = $('luneaThaiTarotRangeStart');
+    const end = $('luneaThaiTarotRangeEnd');
+    if (start) start.value = tarotState.start;
+    if (end) end.value = tarotState.end;
+    syncDateDisplay(start, end);
+    renderCalendar(tarotState.result, $('luneaThaiTarotRangeResult'));
+    renderTarotInline(true);
+    return true;
+  }
+
+  function registerAttachment() {
+    const adapter = {group:'finish', capture:attachmentSnapshot, restore:restoreAttachment, toArchive:snapshot => snapshot?.result || null, clear:clearTarotResult};
+    const registry = W.LUNEA_READING_ATTACHMENTS_V1;
+    if (registry?.register) registry.register('thaiTaksaRange', adapter);
+    else (W.__LUNEA_READING_ATTACHMENT_QUEUE_V1 ||= []).push({name:'thaiTaksaRange', adapter});
+  }
+
+  function notifyAttachmentChanged() {
+    W.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('thaiTaksaRange');
+  }
+
   function installPromptBridge() {
     if (W.__LUNEA_THAI_RANGE_PROMPT_WRAPPED_V33__) return true;
     const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
@@ -560,6 +657,7 @@ ${rows.map(row => `  · ${row}`).join('\n')}
     injectTarotOverlay();
     injectStandaloneControls();
     installPromptBridge();
+    registerAttachment();
 
     let tries = 0;
     const timer = setInterval(() => {

@@ -577,7 +577,7 @@ function migrateOldArchive(){if(localStorage.getItem('LUNEA_ARCHIVE_V3'))return;
 migrateOldArchive();
 $('saveReading').onclick=()=>{const a=getArchive();const ai=$('aiText')?.textContent||'';const item={id:secureId(),createdAt:Date.now(),date:new Date().toLocaleString('ko-KR'),title:state.title,q:state.question,rationale:state.rationale,cards:state.drawn.map(c=>({position:c.position,name:c.name,isReversed:c.isReversed,gd:c.gdAttribution,keyword:c.keyword,subCards:c.subCards.map(s=>({name:s.name,isReversed:s.isReversed}))})),ai};a.unshift(item);setArchive(a);alert('✨ 기록함에 저장했어.')};
 function archiveText(item){return `${item.date}\n${item.title}\n질문: ${item.q}\n\n${(item.cards||[]).map(c=>c.text||`${c.position}: ${c.name} (${c.isReversed?'역':'정'})${c.subCards?.length?' / 보조 '+c.subCards.map(s=>s.name).join(', '):''}`).join('\n')}\n\n${item.ai?'[AI 해석]\n'+item.ai:''}`}
-function renderArchive(){const q=$('archiveSearch').value.trim().toLowerCase();const a=getArchive();$('archiveCount').textContent=`${a.length}개`;$('archiveList').innerHTML='';const rows=a.filter(x=>!q||[x.title,x.q,x.ai].join(' ').toLowerCase().includes(q));if(!rows.length){$('archiveList').innerHTML='<div class="empty">저장된 리딩이 없거나 검색 결과가 없어.</div>';return}rows.forEach(item=>{const el=document.createElement('div');el.className='archive-item';el.innerHTML=`<div class="archive-meta">${esc(item.date||new Date(item.createdAt).toLocaleString('ko-KR'))}</div><div class="archive-title">${esc(item.title)}</div><div class="archive-q">${esc(item.q)}</div><div class="archive-actions"><button class="mini" data-a="detail">카드/해석 펼치기</button><button class="mini" data-a="copy">복사</button><button class="mini danger" data-a="delete">삭제</button></div><div class="archive-detail"></div>`;const det=el.querySelector('.archive-detail');det.textContent=archiveText(item);el.addEventListener('click',async e=>{const b=e.target.closest?.('[data-a]');if(!b)return;if(b.dataset.a==='detail')det.classList.toggle('open');if(b.dataset.a==='copy'){try{await navigator.clipboard.writeText(archiveText(item));alert('복사했어.')}catch{alert('복사 권한을 확인해줘.')}}if(b.dataset.a==='delete'){if(confirm('이 기록을 삭제할까?')){setArchive(getArchive().filter(x=>x.id!==item.id));renderArchive()}}});$('archiveList').appendChild(el)})}
+function renderArchive(){const q=$('archiveSearch').value.trim().toLowerCase();const a=getArchive();$('archiveCount').textContent=`${a.length}개`;$('archiveList').innerHTML='';const rows=a.filter(x=>!q||[x.title,x.q,x.ai].join(' ').toLowerCase().includes(q));if(!rows.length){$('archiveList').innerHTML='<div class="empty">저장된 리딩이 없거나 검색 결과가 없어.</div>';return}rows.forEach(item=>{const el=document.createElement('div');el.className='archive-item';if(item.id)el.dataset.sourceArchiveId=String(item.id);el.innerHTML=`<div class="archive-meta">${esc(item.date||new Date(item.createdAt).toLocaleString('ko-KR'))}</div><div class="archive-title">${esc(item.title)}</div><div class="archive-q">${esc(item.q)}</div><div class="archive-actions"><button class="mini" data-a="detail">카드/해석 펼치기</button><button class="mini" data-a="copy">복사</button><button class="mini danger" data-a="delete">삭제</button></div><div class="archive-detail"></div>`;const det=el.querySelector('.archive-detail');det.textContent=archiveText(item);el.addEventListener('click',async e=>{const b=e.target.closest?.('[data-a]');if(!b)return;if(b.dataset.a==='detail')det.classList.toggle('open');if(b.dataset.a==='copy'){try{await navigator.clipboard.writeText(archiveText(item));alert('복사했어.')}catch{alert('복사 권한을 확인해줘.')}}if(b.dataset.a==='delete'){if(confirm('이 기록을 삭제할까?')){setArchive(getArchive().filter(x=>x.id!==item.id));renderArchive()}}});$('archiveList').appendChild(el)})}
 $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{const t=getArchive().map(archiveText).join('\n\n────────────\n\n');if(!t)return alert('기록이 없어.');try{await navigator.clipboard.writeText(t);alert('전체 기록 복사 완료')}catch{alert('복사 권한을 확인해줘.')}};$('clearArchive').onclick=()=>{if(confirm('기록함 전체를 비울까? 되돌릴 수 없어.')){setArchive([]);renderArchive()}};
 
 // Initial memory + iOS resume robustness
@@ -585,17 +585,17 @@ window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
 </script><script src="./lunea-cache-refresh-v1.js?v=d2198d8c5779"></script>
   <script src="./spread-engine-v7.4.js?v=75"></script>
-  <script src="./lunea-structural-routing-v4.js?v=20260911-message-intent"></script>
-  <script src="./timing-oracle-v1.js?v=102"></script>
+  <script src="./lunea-structural-routing-v4.js?v=20260911-reading-attachments"></script>
+  <script src="./timing-oracle-v1.js?v=20260911-attachments-v1"></script>
   <script src="./general-5-6-v1.js?v=101"></script>
   <script src="./profile-advanced-v2.js?v=201"></script>
   <script src="./profile-select-ui-v2.1.js?v=211"></script>
   <script src="./celestial-profile-v3.js?v=303"></script>
   <script src="./astro-natal-client-v1.js?v=103"></script>
-  <script src="./astro-transit-v1.js?v=101"></script>
-  <script src="./astro-return-v1.js?v=101"></script>
+  <script src="./astro-transit-v1.js?v=20260911-attachments-v1"></script>
+  <script src="./astro-return-v1.js?v=20260911-attachments-v1"></script>
 <script src="./thai-taksa-v1.js?v=101"></script>
-  <script src="./astro-horary-v1.js?v=103"></script>
+  <script src="./astro-horary-v1.js?v=20260911-attachments-v1"></script>
   <script src="./lunea-lag-guard-v1.js?v=101"></script>
   <script src="./lunea-astro-stability-v2.js?v=d2198d8c5779"></script>
    <script src="./lunea-ios-performance-v3.js?v=d2198d8c5779"></script>

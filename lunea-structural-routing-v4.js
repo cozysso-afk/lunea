@@ -53,16 +53,17 @@
     './lunea-gemini-model-picker-v1.js?v=101',
     './lunea-structural-routing-v4-base.js?v=412',
     './lunea-card-motion-timing-v7.js?v=701',
-    './lunea-thai-tarot-bridge-v32.js?v=d2198d8c5779',
-    './lunea-thai-range-v33.js?v=20260911-range-90-ui'
+    './lunea-thai-tarot-bridge-v32.js?v=20260911-attachments-v1',
+    './lunea-thai-range-v33.js?v=20260911-attachments-v1'
   ];
 
   // Audited UI only. No journal migration, timing fetch, AI or global observer.
   const SHELL_SOURCES=[
-    './lunea-reading-draft-v1.js?v=101',
+    './lunea-reading-draft-v1.js?v=20260911-attachments-v1',
+    './lunea-reading-attachments-v1.js?v=20260911-attachments-v1',
     './lunea-journal-header-fix-v1.js?v=101',
     './lunea-mobile-journal-polish-v27.js?v=2701',
-    './lunea-journal-detail-v51.js?v=5103',
+    './lunea-journal-detail-v51.js?v=20260911-attachments-v1',
     './lunea-sheet-scroll-fix-v1.js?v=106',
     './lunea-cardback-restore-v19.js?v=d2198d8c5779',
     './lunea-cardback-sector-v20.js?v=2001'
@@ -73,7 +74,7 @@
 
   const GROUPS={
     reading:[
-      './lunea-runtime-state-v56.js?v=5601',
+      './lunea-runtime-state-v56.js?v=20260911-attachments-v1',
       './lunea-question-casebook-v1.js?v=101',
       './lunea-question-casebook-web-v1.js?v=101',
       './lunea-question-casebook-ranker-v1.js?v=101',
@@ -100,7 +101,7 @@
       './lunea-manual-structure-v1.js?v=105',
       './lunea-manual-everywhere-v1.js?v=103',
       './lunea-manual-library-v1.js?v=101',
-      './lunea-reading-journal-v2.js?v=202',
+      './lunea-reading-journal-v2.js?v=20260911-attachments-v1',
       './lunea-archive-search-v1.js?v=103',
       './lunea-manual-limit20-v17.js?v=1705'
     ],
@@ -140,13 +141,13 @@
     ],
     astro:[
       './lunea-horary-ab-v1.js?v=104',
-      './lunea-horary-balance-v19-5.js?v=1905',
-      './lunea-horary-question-modes-v37.js?v=3701',
-      './lunea-horary-hardening-v38.js?v=3801',
+      './lunea-horary-balance-v19-5.js?v=20260911-attachments-v1',
+      './lunea-horary-question-modes-v37.js?v=20260911-attachments-v1',
+      './lunea-horary-hardening-v38.js?v=20260911-datetime-shell',
       './lunea-horary-location-button-v39.js?v=3901',
-      './lunea-horary-traditional-core-v40.js?v=4001',
-      './lunea-horary-balance-guard-v41.js?v=4101',
-      './lunea-horary-mobile-stability-v42.js?v=4202',
+      './lunea-horary-traditional-core-v40.js?v=20260911-attachments-v1',
+      './lunea-horary-balance-guard-v41.js?v=20260911-attachments-v1',
+      './lunea-horary-mobile-stability-v42.js?v=20260911-datetime-shell',
       './lunea-transit-range-v1.js?v=103',
       './lunea-transit-long-run-v1.js?v=102',
       './lunea-astro-job-queue-v56.js?v=5601',

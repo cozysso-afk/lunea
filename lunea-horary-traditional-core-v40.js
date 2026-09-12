@@ -365,6 +365,22 @@
     });
   }
 
+  function restoreResult(data) {
+    if (!data || data.schema !== 'LUNEA_HORARY_V1') return false;
+    latestHorary = data;
+    W.__LUNEA_LAST_HORARY_V40__ = data;
+    renderCore();
+    return true;
+  }
+
+  function clearResult() {
+    latestHorary = null;
+    W.__LUNEA_LAST_HORARY_V40__ = null;
+    $(BOX_ID)?.remove();
+    $(MODERN_ID)?.remove();
+    $(DEBUG_ID)?.remove();
+  }
+
   function boot() {
     addStyle();
     installFetchBridge();
@@ -377,6 +393,8 @@
       renderCore,
       promptAddon,
       questionMode,
+      restoreResult,
+      clearResult,
     });
     console.info('☿ LUNEA Horary Traditional Core V40 loaded');
   }

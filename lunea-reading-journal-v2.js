@@ -538,6 +538,7 @@
     const reading = entry.reading || {};
     const el = document.createElement('div');
     el.className = 'archive-item';
+    if (entry.sourceArchiveId) el.dataset.sourceArchiveId = entry.sourceArchiveId;
 
     const badge = document.createElement('span');
     badge.className = 'lj-badge';

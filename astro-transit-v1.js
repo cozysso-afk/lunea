@@ -192,23 +192,27 @@
   }
 
   function openModal() {
-    const natal=safeJSON(NATAL_KEY);
-    if (!natal) return alert('먼저 서양점성술 프로필에서 Natal 자동 계산을 완료해줘.');
-    if (!apiUrl()) return alert('Astro Core API 주소가 없어. 서양점성술 프로필에서 서버 주소를 확인해줘.');
     const q=currentQuestion();
     if (!q) return alert('현재 RWS 질문을 찾지 못했어.');
 
-    transitState.question=q;
-    transitState.topic=inferTopic(q);
-    transitState.days=inferDays(q);
-    transitState.result=null;
+    const changed=transitState.question!==q;
+    const hasSavedResult=!changed&&!!transitState.result;
+    const natal=safeJSON(NATAL_KEY);
+    if (!hasSavedResult&&!natal) return alert('먼저 서양점성술 프로필에서 Natal 자동 계산을 완료해줘.');
+    if (!hasSavedResult&&!apiUrl()) return alert('Astro Core API 주소가 없어. 서양점성술 프로필에서 서버 주소를 확인해줘.');
+    if(changed){transitState.question=q;transitState.topic=inferTopic(q);transitState.days=inferDays(q);transitState.result=null}
 
     $('astroTransitQuestion').value=q;
     $('astroTransitTopic').value=transitState.topic;
     setDaysSelect(transitState.days);
-    $('astroTransitResult').classList.remove('show');
-    $('astroTransitResult').innerHTML='';
-    $('astroTransitStatus').textContent=`질문에서 ${transitState.days}일 범위를 우선 감지했어. 필요하면 바꿔도 돼.`;
+    if(transitState.result){
+      renderResult();
+      $('astroTransitStatus').textContent='현재 질문에 저장된 트랜짓 계산 결과야.';
+    }else{
+      $('astroTransitResult').classList.remove('show');
+      $('astroTransitResult').innerHTML='';
+      $('astroTransitStatus').textContent=`질문에서 ${transitState.days}일 범위를 우선 감지했어. 필요하면 바꿔도 돼.`;
+    }
     syncRangeChips();
 
     $('astroTransitOverlay').classList.add('show');
@@ -261,6 +265,7 @@
       transitState.result=data;
       renderResult();
       renderInline();
+      notifyAttachmentChanged();
       $('astroTransitStatus').textContent=`계산 완료 · ${data.range.sample_step_hours}시간 간격 기본 스캔 + 정확각 별도 정밀화`;
     }catch(err){
       $('astroTransitStatus').textContent='계산 실패: '+(err?.message||err);
@@ -408,13 +413,49 @@ ${hits?`[정확각/근접 정확각]\n${hits}`:''}
 
   function archiveObject() {
     const d=transitState.result;if(!d)return null;
+    const pointRow=row=>row ? {...row,evidence:(row.evidence||[]).slice(0,4)} : row;
     return {
       schema:d.schema,topic:d.topic,topic_label:d.topic_label,range:d.range,
       overall:d.overall,peak_windows:d.peak_windows?.slice(0,5)||[],
       caution_windows:d.caution_windows?.slice(0,3)||[],
-      exact_hits:d.exact_hits?.slice(0,8)||[]
+      exact_hits:d.exact_hits?.slice(0,8)||[],
+      top_points:(d.top_points||[]).slice(0,12).map(pointRow)
     };
   }
+
+  function attachmentSnapshot(){
+    const q=currentQuestion();
+    if(!transitState.result||transitState.question!==q)return null;
+    const result=archiveObject();
+    result.peak_windows=(result.peak_windows||[]).map(row=>({...row,evidence:(row.evidence||[]).slice(0,4)}));
+    result.caution_windows=(result.caution_windows||[]).map(row=>({...row,evidence:(row.evidence||[]).slice(0,4)}));
+    return {version:1,question:q,topic:transitState.topic,days:transitState.days,result};
+  }
+
+  function restoreAttachment(snapshot){
+    const q=currentQuestion();
+    if(!snapshot||snapshot.result?.schema!=='LUNEA_TRANSIT_SCAN_V1'||String(snapshot.question||'').trim()!==q)return false;
+    transitState.question=q;
+    transitState.topic=String(snapshot.topic||snapshot.result.topic||'general');
+    transitState.days=Number(snapshot.days||30);
+    transitState.result=snapshot.result;
+    if($('astroTransitQuestion'))$('astroTransitQuestion').value=q;
+    if($('astroTransitTopic'))$('astroTransitTopic').value=transitState.topic;
+    if($('astroTransitDays'))setDaysSelect(transitState.days);
+    syncRangeChips();
+    renderResult();
+    renderInline();
+    return true;
+  }
+
+  function registerAttachment(){
+    const adapter={group:'astro',capture:attachmentSnapshot,restore:restoreAttachment,toArchive:s=>s?.result||null,clear:clearTransit};
+    const registry=window.LUNEA_READING_ATTACHMENTS_V1;
+    if(registry?.register)registry.register('astroTransit',adapter);
+    else (window.__LUNEA_READING_ATTACHMENT_QUEUE_V1||=[]).push({name:'astroTransit',adapter});
+  }
+
+  function notifyAttachmentChanged(){window.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('astroTransit')}
 
   function installArchiveIntegration() {
     try{
@@ -424,6 +465,7 @@ ${hits?`[정확각/근접 정확각]\n${hits}`:''}
       const old=save.onclick;
       save.onclick=function(e){
         if(old)old.call(this,e);
+        if(window.LUNEA_READING_ATTACHMENTS_V1)return;
         const q=currentQuestion();
         if(!transitState.result||transitState.question!==q)return;
         try{
@@ -437,7 +479,7 @@ ${hits?`[정확각/근접 정확각]\n${hits}`:''}
   }
 
   function boot(){
-    addStyles();injectModal();injectButton();installStartReset();installPromptIntegration();installArchiveIntegration();
+    addStyles();injectModal();injectButton();installStartReset();installPromptIntegration();installArchiveIntegration();registerAttachment();
     console.info('✦ LUNEA ASTRO TRANSIT V1 loaded');
   }
 

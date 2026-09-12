@@ -309,6 +309,24 @@
     }
   }
 
+  function restoreResult(data) {
+    if (!data || data.schema !== 'LUNEA_HORARY_V1') return false;
+    latestHorary = data;
+    lastQuestion = String(data.question?.text || '');
+    W.__LUNEA_LAST_HORARY_BALANCE_V31__ = data;
+    W.__LUNEA_LAST_HORARY_BALANCE_V3__ = data;
+    renderBalance();
+    return true;
+  }
+
+  function clearResult() {
+    latestHorary = null;
+    lastQuestion = null;
+    W.__LUNEA_LAST_HORARY_BALANCE_V31__ = null;
+    W.__LUNEA_LAST_HORARY_BALANCE_V3__ = null;
+    document.getElementById('luneaHoraryBalanceEvidenceV195')?.remove();
+  }
+
   function boot() {
     ensureStyle();
     installFetchBridge();
@@ -327,7 +345,7 @@
     });
     observer.observe(document.documentElement, {subtree:true, childList:true});
 
-    W.LUNEA_HORARY_TOPIC_V19 = {version:19.5, inferTopic, syncTopic, getBalance};
+    W.LUNEA_HORARY_TOPIC_V19 = {version:19.5, inferTopic, syncTopic, getBalance, restoreResult, clearResult};
     console.info('☿ LUNEA Horary Balance V19.5 loaded · V3.1 first / V3 fallback');
   }
 
