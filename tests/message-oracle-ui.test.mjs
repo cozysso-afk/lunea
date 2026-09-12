@@ -113,8 +113,9 @@ test('final policy and refreshed engine ledger include Message evidence once aft
 
 test('production clipboard and AI request both carry the same current Message evidence and final policy',async()=>{
  const h=supportHarness();await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
- installFinalPrompt(h);
  vm.runInContext(read('lunea-tarot-reference-v1.js'),h.context);
+ vm.runInContext(read('lunea-tarot-expert-engine-v1.js'),h.context);
+ installFinalPrompt(h);
  for(const id of ['aiRead','copyPrompt','aiBox']){const n=h.document.createElement(id==='aiBox'?'div':'button');n.id=id;h.host.appendChild(n)}
  h.context.$=id=>h.document.getElementById(id);h.context.flipAt=()=>{};h.context.alert=()=>{};
  h.map.set('LUNEA_API_KEY','synthetic-test-key');h.map.set('LUNEA_MODEL','synthetic-test-model');
@@ -124,6 +125,7 @@ test('production clipboard and AI request both carry the same current Message ev
  vm.runInContext(html.slice(start,end),h.context);
  const before=h.draws();await h.query('#copyPrompt').onclick();await h.query('#aiRead').onclick();
  assert.equal(sent.contents[0].parts[0].text,h.copied());
+ assert.equal(h.copied().match(/\[LUNEA TAROT EXPERT ENGINE V1 ·/g)?.length,1);
  assert.equal(h.copied().match(/\[RWS REFERENCE V1 ·/g)?.length,1);
  assert.match(h.copied(),/수단과 기술을 활용해 의도를 행동으로/);
  assert.equal(h.copied().match(/\[MESSAGE ORACLE ·/g)?.length,1);

@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const read=n=>fs.readFileSync(new URL('../'+n,import.meta.url),'utf8');
 
 function harness(){
-  const c={console,setTimeout,clearTimeout};
+  const c={console,setTimeout(){},clearTimeout(){}};
   c.window=c;
   vm.createContext(c);
   vm.runInContext(read('lunea-tarot-expert-engine-v1.js'),c);
@@ -51,7 +51,7 @@ test('engine installs without replacing the base prompt body',()=>{
   const out=h.promptString();
   assert.match(out,/\[질문 원문\]/);
   assert.match(out,/\[LUNEA TAROT EXPERT ENGINE V1 · 동적 해석 프로토콜\]/);
-  assert.equal(out.match(/LUNEA TAROT EXPERT ENGINE V1/g).length,1);
+  assert.equal(out.match(/\[LUNEA TAROT EXPERT ENGINE V1 ·/g).length,1);
 });
 
 test('question axes explicitly separate feelings, contact and action',()=>{
@@ -106,4 +106,42 @@ test('engine is idempotent when installed twice',()=>{
   h.LUNEA_TAROT_EXPERT_ENGINE_V1.install();
   const second=h.promptString();
   assert.equal(second,first);
+});
+
+test('compact deck codes retain suit and court roles without inventing major courts',()=>{
+  const api=harness().LUNEA_TAROT_EXPERT_ENGINE_V1;
+  const input=prompt.replace('Two of Cups','Cups02').replace('Two of Swords','Pents08').replace('Queen of Swords','Swords13');
+  const out=api.build(input);
+  assert.match(out,/Cups02: 수트=Cups/);
+  assert.match(out,/Pents08: 수트=Pentacles/);
+  assert.match(out,/Swords13: 수트=Swords/);
+  assert.doesNotMatch(api.build(prompt.replace('Queen of Swords','Major13')),/Major13: 인물\/역할/);
+});
+
+test('rebuilding expert block preserves subsequent oracle and final instructions',()=>{
+  const h=harness();h.promptString=()=>prompt;
+  h.LUNEA_TAROT_EXPERT_ENGINE_V1.install();
+  const prior=h.promptString()+'\n\n[메시지 오라클]\n현재 질문의 오라클 근거\n[최종 지시]\n보존할 지시';
+  h.promptString=()=>prior;h.LUNEA_TAROT_EXPERT_ENGINE_V1.install();
+  const result=h.promptString();
+  assert.match(result,/현재 질문의 오라클 근거/);assert.match(result,/보존할 지시/);
+  assert.equal(result.match(/\[LUNEA TAROT EXPERT ENGINE V1 ·/g).length,1);
+});
+
+test('no card section means no fabricated card map from unrelated text',()=>{
+  const out=harness().LUNEA_TAROT_EXPERT_ENGINE_V1.build(prompt.replace('[뽑힌 카드]','[인용된 예시]'));
+  assert.doesNotMatch(out,/1번 \[감정\] Two of Cups/);
+});
+
+test('all live minor names including Pents and Korean suffixes receive structure; majors do not',()=>{
+  const h=harness(),html=read('index.html');
+  vm.runInContext(html.slice(html.indexOf('const MAJORS='),html.indexOf('// State / profile / storage'))+'this.deck=TAROT_DECK;',h);
+  let minors=0,courts=0;
+  for(const card of h.deck){
+    const input=prompt.slice(0,prompt.indexOf('[뽑힌 카드]'))+'[뽑힌 카드]\n1. [역할]\n- Card: '+card.name+'\n- Orientation: Upright\n';
+    const out=h.LUNEA_TAROT_EXPERT_ENGINE_V1.build(input);
+    if(!/^(Wands|Cups|Swords|Pents)\d{2}$/.test(card.code))assert.doesNotMatch(out,/수트=|1번 .*: (?:사람을 특정|인물\/역할)/);
+    else{assert.match(out,/수트=/,card.name);minors++;if(card.primaryType==='Court'){assert.match(out,/해당 포지션의 행동 양식/);courts++;}}
+  }
+  assert.equal(minors,56);assert.equal(courts,16);
 });

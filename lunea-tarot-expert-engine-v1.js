@@ -5,6 +5,7 @@
   W.__LUNEA_TAROT_EXPERT_ENGINE_V1__ = true;
 
   const MARKER = '[LUNEA TAROT EXPERT ENGINE V1 · 동적 해석 프로토콜]';
+  const END = '[END LUNEA TAROT EXPERT ENGINE V1]';
   const AXES = [
     ['feelings','감정/호감','감정의 질·강도·개방성. 호감과 행동을 분리한다.'],
     ['thoughts','생각/인식','상대가 무엇을 어떻게 인식하는지. 감정이나 행동으로 자동 확장하지 않는다.'],
@@ -48,7 +49,7 @@
   }
   function cards(prompt){
     const s = String(prompt || '');
-    const block = s.split('[뽑힌 카드]')[1]?.split(/\n\s*\[/)[0] || s;
+    const block = s.split('[뽑힌 카드]')[1]?.split(/\n\s*\[/)[0] || '';
     const out=[];
     const re=/(\d+)\.\s*\[([^\]]+)\]\s*\n-\s*Card:\s*([^\n]+)\n-\s*Orientation:\s*([^\n]+)([\s\S]*?)(?=\n\s*\d+\.\s*\[|$)/g;
     let m;
@@ -79,17 +80,19 @@
     return hits.length?hits:['neutral'];
   }
   function suitRank(name){
-    const n=clean(name);
-    const suit=Object.keys(SUITS).find(x=>new RegExp('\\b'+x+'\\b','i').test(n));
-    if(!suit) return null;
-    let rank=(n.match(/(\d{1,2})$/)?.[1]||'');
-    if(!rank){ const w=Object.keys(WORD_RANKS).find(x=>new RegExp('\\b'+x+'\\b','i').test(n)); rank=WORD_RANKS[w]||''; }
-    rank=rank?String(Number(rank)).padStart(2,'0'):'';
-    return {suit,rank,domain:SUITS[suit],stage:RANKS[rank]||''};
+    const n=clean(name).replace(/\([^)]*\)/g,'').trim();
+    const compact=n.match(/^(Wands|Cups|Swords|Pents|Pentacles)(0?[1-9]|1[0-4])$/i);
+    const words=n.match(/^(Ace|Two|Three|Four|Five|Six|Seven|Eight|Nine|Ten|Page|Knight|Queen|King) of (Wands|Cups|Swords|Pents|Pentacles)$/i);
+    if(!compact && !words) return null;
+    const rawSuit=(compact?.[1] || words[2]).toLowerCase();
+    const suit=/^(pents|pentacles)$/.test(rawSuit)?'Pentacles':Object.keys(SUITS).find(x=>x.toLowerCase()===rawSuit);
+    const rank=compact?String(Number(compact[2])).padStart(2,'0'):WORD_RANKS[Object.keys(WORD_RANKS).find(x=>x.toLowerCase()===words[1].toLowerCase())];
+    return {suit,rank,domain:SUITS[suit],stage:RANKS[rank]};
   }
+
   function courtRole(name,position,q){
-    const s=String(name||'');
-    if(!/(11|12|13|14)$/.test(s) && !/\b(?:Page|Knight|Queen|King)\b/i.test(s)) return '';
+    const sr=suitRank(name);
+    if(!sr || Number(sr.rank)<11) return '';
     const p=String(position||'');
     const other=/(상대|그\s*사람|타인|상대방)/.test(q||'') || /(상대|그\s*사람|인물)/.test(p);
     if(/누가|어떤\s*사람|인물|상대/.test(p) && other) return '실제 인물 후보가 아니라 질문 속 역할을 수행하는 사람의 스타일/역할로 우선 읽고, 인물 특정은 하지 않는다.';
@@ -124,7 +127,7 @@
       ...cs.map(c=>{const sr=suitRank(c.name);return sr?`- ${c.index}번 ${c.name}: 수트=${sr.suit}(${sr.domain}); 단계=${sr.stage}. 이 조합을 포지션의 문제에 번역하고, 숫자만으로 사건을 예언하지 않는다.`:null}).filter(Boolean),
       '',
       'F. 궁정 카드 규칙',
-      '궁정 카드는 자동으로 특정 남자/여자를 뜻하지 않는다. 포지션이 사람을 묻는지, 역할·태도·행동 양식을 묻는지 판정한 뒤 그 층에서 읽는다.',
+      '궁정 카드는 자동으로 특정 남자/여자를 뜻하지 않는다. 포지션이 사람을 묻는지, 역할·태도·행동 양식을 묻는지 판정한 뒤 그 층에서 읽는다. 성별·신원·특정 제3자를 카드만으로 만들지 않는다.',
       ...cs.map(c=>{const x=courtRole(c.name,c.position,q);return x?`- ${c.index}번 ${c.name}: ${x}`:null}).filter(Boolean),
       '',
       'G. 보조 카드와 반증',
@@ -133,7 +136,7 @@
       'H. 최종 답변 형식',
       '첫 문장에 질문에 대한 직접 결론을 쓴다. 그다음 포지션별 근거를 카드명+방향+포지션으로 연결한다. 이어서 반증/제한을 한 번 명시한다. 마지막으로 필요한 경우에만 보조 오라클을 짧게 교차참고한다. 날짜·확률·제3자·실제 디지털 행동을 카드에서 새로 만들지 않는다.'
     ];
-    return lines.join('\n');
+    return [...lines,END].join('\n');
   }
 
   function install(){
@@ -143,7 +146,11 @@
     const wrapped=function(){
       const p=String(prior.apply(this,arguments)||'');
       const markerAt=p.indexOf(MARKER);
-      const without=(markerAt>=0?p.slice(0,markerAt):p).trimEnd();
+      const endAt=markerAt>=0?p.indexOf(END,markerAt):-1;
+      // Legacy blocks had no end marker: preserve the next top-level section.
+      const legacyTail=markerAt>=0?p.slice(markerAt+MARKER.length).search(/\n\s*\[/):-1;
+      const stop=endAt>=0?endAt+END.length:legacyTail>=0?markerAt+MARKER.length+legacyTail:p.length;
+      const without=(markerAt>=0?p.slice(0,markerAt)+p.slice(stop):p).trimEnd();
       const block=build(without);
       return `${without}${block ? `\n\n${block}`:''}`;
     };
