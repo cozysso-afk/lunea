@@ -126,7 +126,7 @@
     ],
     message:[
       './lunea-message-oracle-v1.js?v=103',
-      './lunea-message-oracle-ui-v1.js?v=20260912-message-polish-1'
+      './lunea-message-oracle-ui-v1.js?v=20260912-message-optical-2'
     ],
     timing:[
       './lunea-timing-ab-v1.js?v=102',

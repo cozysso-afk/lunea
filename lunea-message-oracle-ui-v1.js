@@ -63,7 +63,7 @@
        The bottom rectangle follows the optically even ivory core so every
        context label shares one font-metric correction through slot geometry. */
     #luneaMessageOracleOverlay .mo-score{left:42.434988%;top:6.361687%;width:14.893617%;height:9.006433%;display:flex;align-items:center;justify-content:center;text-align:center;font:600 6.969697cqw/1 'Noto Serif KR',serif;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.04em;white-space:nowrap;color:#745832}
-    #luneaMessageOracleOverlay .mo-score-text{display:grid;place-items:center;width:100%;height:100%;text-align:center;line-height:1;transform:translateY(-.30303cqw)}
+    #luneaMessageOracleOverlay .mo-score-text{display:grid;place-items:center;width:100%;height:100%;text-align:center;line-height:1;transform:translateY(.30303cqw)}
     #luneaMessageOracleOverlay .mo-score[data-digits="3"] .mo-score-text{font-size:5.454545cqw}
     #luneaMessageOracleOverlay .mo-image-slot{left:29.8%;top:18%;width:40.3%;height:33.1%}
     #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;background:transparent;margin:0}
@@ -72,13 +72,17 @@
     #luneaMessageOracleOverlay .mo-name-en,#luneaMessageOracleOverlay .mo-name-ko{display:block;margin:0;line-height:1.12}
     #luneaMessageOracleOverlay .mo-name-ko{font-size:3.636364cqw;font-weight:500}
     #luneaMessageOracleOverlay .mo-message{left:11.938534%;top:62.544675%;width:76.004728%;height:14.367405%;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;padding:0}
-    #luneaMessageOracleOverlay .mo-message-inner{display:flex;align-items:center;justify-content:center;width:88%;height:100%;max-height:100%;margin:auto;text-align:center}
-    #luneaMessageOracleOverlay .mo-message-text{margin:0;font:500 4.242424cqw/1.46 'Noto Serif KR',serif;text-align:center;word-break:normal;overflow-wrap:normal;text-wrap:pretty}
+    #luneaMessageOracleOverlay .mo-message-inner{display:flex;align-items:center;justify-content:center;width:94%;height:100%;max-height:100%;margin:auto;text-align:center}
+    #luneaMessageOracleOverlay .mo-message-text{margin:0;font:500 4.242424cqw/1.46 'Noto Serif KR',serif;text-align:center;word-break:keep-all;overflow-wrap:normal;text-wrap:balance;transform:translateY(-.606061cqw)}
     #luneaMessageOracleOverlay .mo-details{position:absolute;left:13.3%;top:79.4%;width:73.4%;height:6.5%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3.8%;margin:0}
-    #luneaMessageOracleOverlay .mo-detail{display:grid;grid-template-rows:auto auto;place-content:center;place-items:center;text-align:center;gap:.30303cqw;line-height:1;min-height:0}
+    #luneaMessageOracleOverlay .mo-detail{display:grid;place-items:center;min-height:0}
+    #luneaMessageOracleOverlay .mo-detail-inner{display:grid;grid-template-rows:auto auto;place-content:center;place-items:center;text-align:center;gap:.30303cqw;line-height:1;transform:translateY(-.606061cqw)}
     #luneaMessageOracleOverlay .mo-detail-label{display:block;margin:0;font-size:3.030303cqw;line-height:1.08;color:#75604a;font-weight:500}
     #luneaMessageOracleOverlay .mo-detail-value{display:block;margin:0;font-size:3.636364cqw;line-height:1.1;font-weight:650;color:#493747;word-break:keep-all}
     #luneaMessageOracleOverlay .mo-bottom{left:34.633570%;top:89.635454%;width:30.614657%;height:3.716941%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:3.636364cqw;line-height:1;color:#6d5439}
+    /* Screenshot-based optical offsets, scaled with the unchanged frame.
+       Move glyph groups only; never move or crop their ornamental slots. */
+    #luneaMessageOracleOverlay .mo-bottom-text{display:block;line-height:1;transform:translateY(-.606061cqw)}
     #luneaMessageOracleOverlay .mo-full-reading{font-size:12px;line-height:1.7;margin:12px 0}
     #luneaMessageOracleOverlay .mo-full-reading summary{cursor:pointer}
     #luneaMessageOracleOverlay .mo-full-text{white-space:pre-wrap}
@@ -105,7 +109,7 @@
         <strong class="mo-slot mo-score" aria-label="카드 기반 연락 신호 점수"><span class="mo-score-text"></span></strong>
         <div class="mo-slot mo-image-slot"><img class="mo-image" alt=""></div>
         <h3 class="mo-slot mo-identity"><span class="mo-identity-inner"><span class="mo-name-en"></span><span class="mo-name-ko"></span></span></h3>
-        <div class="mo-slot mo-message"><div class="mo-message-inner"><p class="mo-message-text"></p></div></div><div class="mo-details"></div><div class="mo-slot mo-bottom"></div>
+        <div class="mo-slot mo-message"><div class="mo-message-inner"><p class="mo-message-text"></p></div></div><div class="mo-details"></div><div class="mo-slot mo-bottom"><span class="mo-bottom-text"></span></div>
       </article>
     </div></div>
     <p class="mo-note" id="moScoreNote"><strong>연락·소식 발생·전달 신호 강도</strong> · 합격·승인·긍정 결과 확률이 아니며, 카드 상징을 환산한 지표예요.</p>
@@ -171,8 +175,8 @@
     $('.mo-message-text').textContent=reading.shortMessage;
     $('.mo-details').replaceChildren(...reading.details.map(({label,value})=>{const cell=document.createElement('div');cell.className='mo-detail';
       const l=document.createElement('span');l.className='mo-detail-label';l.textContent=label;
-      const v=document.createElement('span');v.className='mo-detail-value';v.textContent=value;cell.appendChild(l);cell.appendChild(v);return cell}));
-    $('.mo-bottom').textContent=reading.contextLabel;
+      const v=document.createElement('span');v.className='mo-detail-value';v.textContent=value;const group=document.createElement('div');group.className='mo-detail-inner';group.appendChild(l);group.appendChild(v);cell.appendChild(group);return cell}));
+    $('.mo-bottom-text').textContent=reading.contextLabel;
     $('.mo-question-summary').textContent=`질문: ${d.question}\n${reading.contextLabel} · ${E.INTENTS[reading.intent]} · 연락·소식 신호 ${d.score}% · 결과 방향과 별도`;
     $('.mo-full-text').textContent=`${reading.fullMessage}\nKey Details: ${reading.details.map(item=>`${item.label} ${item.value}`).join(' · ')}`;
     reveal(animate);

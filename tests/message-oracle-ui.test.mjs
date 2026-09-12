@@ -181,7 +181,7 @@ test('one card coordinate scale keeps aspect and typographic ratios with symmetr
  const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
  assert.match(css,/width:calc\(100% - 32px\);max-width:340px;aspect-ratio:846\/1399;container-type:inline-size/);
  for(const viewport of [390,402,430]){const content=viewport-24-2-32,card=Math.min(340,content-32);assert.equal((content-card)/2,16);assert.ok(card<content);assert.ok(4.242424*card/100>=12.5)}
- assert.match(css,/font:500 4\.242424cqw\/1\.46/);assert.match(css,/word-break:normal;overflow-wrap:normal;text-wrap:pretty/);
+ assert.match(css,/font:500 4\.242424cqw\/1\.46/);assert.match(css,/word-break:keep-all;overflow-wrap:normal;text-wrap:balance/);
  assert.doesNotMatch(css,/line-clamp|text-overflow:ellipsis/);
 });
 test('standalone and support opening plus redraw reset stale sheet scroll without extra draws',async()=>{
@@ -222,7 +222,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=20260912-message-polish-1']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=20260912-message-optical-2']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -280,10 +280,10 @@ test('all seven contexts produce four concise labeled cells and context-safe pre
  const questions={LOVE:'그가 연락할까?',REUNION:'전남친이 다시 연락할까?',OFFICIAL:'심사 결과 연락 올까?',WORK_BIZ:'면접 결과 연락 올까?',SOCIAL:'내 인스타 스토리 보고 있을까?',PERSONAL:'오래 연락 없던 친구 소식 올까?',GENERAL:'새로운 소식이 궁금해'};
  for(const c of ['LOVE','REUNION','OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']){
   const h=harness({reduced:true});await h.entry.click();h.query('#moQuestion').value=questions[c];await h.query('[data-context="'+c+'"]').click();await h.query('.mo-form').emit('submit');
-  const cells=h.query('.mo-details').children;assert.equal(cells.length,4);for(const cell of cells){assert.equal(cell.children.length,2);assert.ok(cell.children[0].textContent.length<=5);assert.ok(cell.children[1].textContent.length<=5)}
+  const cells=h.query('.mo-details').children;assert.equal(cells.length,4);for(const cell of cells){assert.equal(cell.children.length,1);const pair=cell.children[0];assert.equal(pair.className,'mo-detail-inner');assert.equal(pair.children.length,2);assert.ok(pair.children[0].textContent.length<=5);assert.ok(pair.children[1].textContent.length<=5)}
   const row=JSON.parse(h.map.get('LUNEA_MESSAGE_ORACLE_LAST_V1')),d=h.context.LUNEA_MESSAGE_ORACLE_V1.describe(row),reading=h.context.LUNEA_MESSAGE_ORACLE_V1.interpret(row);
   const shown=h.context.__messagePresentation.visibleMessage(d);assert.equal(h.query('.mo-score').textContent,d.score+'%');assert.equal(h.query('.mo-bottom').textContent,h.context.LUNEA_MESSAGE_ORACLE_V1.CONTEXTS[c]);assert.ok(h.query('.mo-full-text').textContent.includes(reading.fullMessage));assert.equal(h.query('.mo-message').textContent,shown);assert.equal(shown,reading.shortMessage);
-  if(c==='OFFICIAL'||c==='WORK_BIZ')assert.equal(cells[0].children[0].textContent,'통지');if(c==='SOCIAL')assert.equal(cells[0].children[0].textContent,'관찰');
+  if(c==='OFFICIAL'||c==='WORK_BIZ')assert.equal(cells[0].children[0].children[0].textContent,'통지');if(c==='SOCIAL')assert.equal(cells[0].children[0].children[0].textContent,'관찰');
  }
 });
 
@@ -322,7 +322,7 @@ test('Devil work result distinguishes contact strength from outcome and gives co
  ]);
  api.storage(h.context.localStorage).remember(result);await h.entry.click();
  assert.equal(h.query('.mo-message').textContent,p.visibleMessage(d));assert.doesNotMatch(h.query('.mo-full-text').textContent,/강한 관심|집착성/);assert.match(h.query('#moScoreNote').textContent,/합격·승인·긍정 결과 확률이 아니/);assert.match(h.query('.mo-question-summary').textContent,/결과 방향과 별도/);
- assert.deepEqual(h.query('.mo-details').children.map(cell=>cell.children.map(n=>n.textContent)),[['통지','중간 이상'],['검토','반복 가능'],['제약','큼'],['속도','지연 가능']]);
+ assert.deepEqual(h.query('.mo-details').children.map(cell=>cell.children[0].children.map(n=>n.textContent)),[['통지','중간 이상'],['검토','반복 가능'],['제약','큼'],['속도','지연 가능']]);
  await h.query('[data-action="copy"]').click();assert.doesNotMatch(h.copied(),/강한 관심|집착성/);assert.match(h.copied(),/합격·승인·긍정 결과 확률이 아니라/);
 });
 test('all 78 restored identities get stable names and upright canonical images without drawing',async()=>{
@@ -356,8 +356,8 @@ test('approved source-space slots keep geometry while inner typography is optica
  assert.equal(specs['mo-bottom'].x+specs['mo-bottom'].w/2,422.5);assert.equal(specs['mo-bottom'].y+specs['mo-bottom'].h/2,1280);
  assert.match(rule('mo-message'),/margin:0/);assert.match(rule('mo-message'),/padding:0/);assert.match(rule('mo-bottom'),/line-height:1/);
  const scoreText=rule('mo-score-text'),messageInner=rule('mo-message-inner'),messageText=rule('mo-message-text');
- assert.match(scoreText,/display:grid/);assert.match(scoreText,/place-items:center/);assert.match(scoreText,/line-height:1/);assert.match(scoreText,/transform:translateY\(-\.30303cqw\)/);
- assert.match(messageInner,/display:flex/);assert.match(messageInner,/align-items:center/);assert.match(messageInner,/justify-content:center/);assert.match(messageInner,/width:88%/);assert.match(messageInner,/max-height:100%/);
+ assert.match(scoreText,/display:grid/);assert.match(scoreText,/place-items:center/);assert.match(scoreText,/line-height:1/);assert.match(scoreText,/transform:translateY\(\.30303cqw\)/);
+ assert.match(messageInner,/display:flex/);assert.match(messageInner,/align-items:center/);assert.match(messageInner,/justify-content:center/);assert.match(messageInner,/width:94%/);assert.match(messageInner,/max-height:100%/);
  assert.match(messageText,/margin:0/);assert.match(messageText,/font:500 4\.242424cqw\/1\.46/);assert.match(messageText,/text-align:center/);
 });
 test('title and each detail pair are centered as compact typographic units',()=>{
@@ -365,7 +365,7 @@ test('title and each detail pair are centered as compact typographic units',()=>
  const rule=name=>css.match(new RegExp(`#luneaMessageOracleOverlay \\.${name}\\{([^}]*)\\}`))?.[1]||'';
  assert.match(rule('mo-identity'),/display:grid/);assert.match(rule('mo-identity'),/grid-template: minmax\(0,1fr\)\/minmax\(0,1fr\)/);assert.match(rule('mo-identity'),/place-items:stretch/);
  assert.match(rule('mo-identity-inner'),/display:grid/);assert.match(rule('mo-identity-inner'),/place-content:center/);assert.match(rule('mo-identity-inner'),/place-self:stretch/);assert.match(rule('mo-identity-inner'),/margin:0 4%/);assert.match(rule('mo-identity-inner'),/text-align:center/);
- assert.match(rule('mo-detail'),/display:grid/);assert.match(rule('mo-detail'),/place-content:center/);assert.match(rule('mo-detail'),/place-items:center/);assert.match(rule('mo-detail'),/gap:\.30303cqw/);
+ assert.match(rule('mo-detail'),/display:grid/);assert.match(rule('mo-detail-inner'),/place-content:center/);assert.match(rule('mo-detail'),/place-items:center/);assert.match(rule('mo-detail-inner'),/gap:\.30303cqw/);
  assert.match(rule('mo-detail-label'),/margin:0/);assert.match(rule('mo-detail-value'),/margin:0/);
  assert.ok(h.query('.mo-identity-inner'));assert.ok(h.query('.mo-message-inner'));assert.ok(h.query('.mo-message-text'));
 });
