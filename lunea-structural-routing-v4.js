@@ -40,7 +40,7 @@
     './lunea-intimacy-clean-v39.js?v=20260911-list-compact',
     './lunea-thai-standalone-v24.js?v=2401',
     './lunea-thai-art-v25.js?v=2501',
-    './lunea-thai-art-polish-v26.js?v=2602',
+    './lunea-thai-art-polish-v26.js?v=20260912-quick-owner-1',
     './lunea-home-timing-polish-v9.js?v=901',
     './lunea-category-art-v10.js?v=1001',
     './lunea-daily-orbit6-v21.js?v=2101',

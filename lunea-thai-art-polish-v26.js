@@ -60,7 +60,16 @@
       }
       :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.thai-v24-topic.active,.thai-v33-chip.active){background:#49341f!important;border-color:#d8aa5b!important;color:#fff0d0!important}
       :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) :is(.thai-v24-grid,.thai-v33-dates){grid-template-columns:repeat(2,minmax(0,1fr))}
-      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .thai-v33-quick{grid-template-columns:repeat(3,minmax(0,1fr))}
+      /* Final Thai theme owns quick-range geometry. Its ID specificity used
+         to override V33's five tracks with three, regardless of load order. */
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .thai-v33-quick{
+        display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+        grid-auto-flow:row!important;gap:6px!important;width:100%!important;min-width:0!important;
+      }
+      :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .thai-v33-quick > .thai-v33-chip{
+        grid-row:auto!important;grid-column:auto!important;width:100%!important;min-width:0!important;
+        max-width:none!important;box-sizing:border-box!important;white-space:nowrap!important;
+      }
       :is(#luneaThaiStandaloneOverlay,#luneaThaiRangeOverlay) .modal *{overflow-wrap:anywhere}
       #luneaThaiTarotBridgeInline{box-sizing:border-box;max-width:100%;overflow-wrap:anywhere;background:#1d1510!important;border-color:rgba(216,170,91,.28)!important}
       #luneaThaiTarotBridgeInline :is(small,b){color:#efd39b!important}
