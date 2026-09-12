@@ -67,8 +67,8 @@
     #luneaMessageOracleOverlay .mo-score[data-digits="3"] .mo-score-text{font-size:18px}
     #luneaMessageOracleOverlay .mo-image-slot{left:29.8%;top:18%;width:40.3%;height:33.1%}
     #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;background:transparent;margin:0}
-    #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;display:grid;place-items:center;font:600 12.5px/1.12 'Noto Serif KR',serif}
-    #luneaMessageOracleOverlay .mo-identity-inner{display:grid;place-content:center;width:92%;height:100%;text-align:center;gap:0;min-width:0}
+    #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;display:grid;grid-template: minmax(0,1fr)/minmax(0,1fr);place-items:stretch;font:600 12.5px/1.12 'Noto Serif KR',serif}
+    #luneaMessageOracleOverlay .mo-identity-inner{display:grid;place-content:center;place-self:stretch;width:auto;height:auto;margin:0 4%;text-align:center;gap:0;min-width:0;min-height:0}
     #luneaMessageOracleOverlay .mo-name-en,#luneaMessageOracleOverlay .mo-name-ko{display:block;margin:0;line-height:1.12}
     #luneaMessageOracleOverlay .mo-name-ko{font-size:12px;font-weight:500}
     #luneaMessageOracleOverlay .mo-message{left:11.938534%;top:62.544675%;width:76.004728%;height:14.367405%;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;padding:0}

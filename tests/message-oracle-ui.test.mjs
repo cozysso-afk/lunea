@@ -65,7 +65,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=109']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=110']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -206,8 +206,8 @@ test('approved source-space slots keep geometry while inner typography is optica
 test('title and each detail pair are centered as compact typographic units',()=>{
  const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
  const rule=name=>css.match(new RegExp(`#luneaMessageOracleOverlay \\.${name}\\{([^}]*)\\}`))?.[1]||'';
- assert.match(rule('mo-identity'),/display:grid/);assert.match(rule('mo-identity'),/place-items:center/);
- assert.match(rule('mo-identity-inner'),/display:grid/);assert.match(rule('mo-identity-inner'),/place-content:center/);assert.match(rule('mo-identity-inner'),/text-align:center/);
+ assert.match(rule('mo-identity'),/display:grid/);assert.match(rule('mo-identity'),/grid-template: minmax\(0,1fr\)\/minmax\(0,1fr\)/);assert.match(rule('mo-identity'),/place-items:stretch/);
+ assert.match(rule('mo-identity-inner'),/display:grid/);assert.match(rule('mo-identity-inner'),/place-content:center/);assert.match(rule('mo-identity-inner'),/place-self:stretch/);assert.match(rule('mo-identity-inner'),/margin:0 4%/);assert.match(rule('mo-identity-inner'),/text-align:center/);
  assert.match(rule('mo-detail'),/display:grid/);assert.match(rule('mo-detail'),/place-content:center/);assert.match(rule('mo-detail'),/place-items:center/);assert.match(rule('mo-detail'),/gap:1px/);
  assert.match(rule('mo-detail-label'),/margin:0/);assert.match(rule('mo-detail-value'),/margin:0/);
  assert.ok(h.query('.mo-identity-inner'));assert.ok(h.query('.mo-message-inner'));assert.ok(h.query('.mo-message-text'));
