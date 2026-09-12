@@ -155,6 +155,7 @@ test('V57 keeps exactly one visible date mirror and synchronizes without polling
 test('V33 exposes five presets, accepts 90 inclusive days, rejects 91, and explicitly syncs mirrors', () => {
   const source = read('lunea-thai-range-v33.js');
   const loader = read('lunea-structural-routing-v4.js');
+  const index = read('index.html');
   const stopped = source.replace(
     /if\(document\.readyState==='loading'\)[\s\S]*?else boot\(\);\n\}\)\(\);\s*$/,
     '})();'
@@ -178,6 +179,8 @@ test('V33 exposes five presets, accepts 90 inclusive days, rejects 91, and expli
   assert.doesNotMatch(source, /\.thai-v33-chip:nth-child\(/);
   assert.match(source, /\.thai-v33-chip\{width:100%;min-width:0;min-height:40px;box-sizing:border-box;white-space:nowrap;/);
   assert.equal((source.match(/직접 날짜 선택 가능 · 최대 90일/g) || []).length, 2);
+  assert.match(index, /lunea-structural-routing-v4\.js\?v=20260912-thai-quick-row-1/);
+  assert.doesNotMatch(index, /lunea-structural-routing-v4\.js\?v=20260911-reading-attachments/);
   assert.match(loader, /lunea-thai-range-v33\.js\?v=20260912-quick-row-1/);
   assert.match(loader, /lunea-thai-date-display-v57\.js\?v=5703/);
 
