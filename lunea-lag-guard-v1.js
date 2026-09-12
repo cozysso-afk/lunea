@@ -82,6 +82,7 @@
     // A Return/Transit click can still be inside the Render health warm-up and
     // have no POST request to abort yet. Advance the Stability generation first
     // so that old click is dropped after warm-up instead of starting late.
+    try { W.LUNEA_ASTRO_REQUEST_V1?.cancelScope('reading'); W.LUNEA_ASTRO_REQUEST_V1?.cancelScope('horary-support'); } catch {}
     try { W.LUNEA_ASTRO_STABILITY?.cancelForQuestionBoundary?.(); } catch {}
     try { W.LUNEA_ASTRO_JOB_QUEUE?.resetForQuestionBoundary?.(); } catch {}
     try { W.LUNEA_ASTRO_RESUME_V23?.clear?.(); } catch {}

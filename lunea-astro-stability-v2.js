@@ -161,35 +161,11 @@
   }
 
   async function fetchHealth(api) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      try { controller.abort('astro-health-timeout'); }
-      catch { controller.abort(); }
-    }, 120000);
-
-    try {
-      const res = await baseFetch(`${api}/health`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {'Accept':'application/json'},
-        signal: controller.signal
-      });
-
-      if (!res.ok) {
-        const e = new Error(`Astro Core 준비 확인 실패: HTTP ${res.status}`);
-        e.httpStatus = res.status;
-        throw e;
-      }
-
-      let data = null;
-      try { data = await res.json(); } catch {}
-      if (data && data.ok === false) {
-        throw new Error('Astro Core health 응답이 정상 상태가 아니야.');
-      }
-      return true;
-    } finally {
-      clearTimeout(timer);
-    }
+    const {data} = await W.LUNEA_ASTRO_REQUEST_V1.json(`${api}/health`, {
+      method:'GET',cache:'no-store',headers:{Accept:'application/json'}
+    }, {timeoutMs:30000,scope:'health',fetcher:baseFetch});
+    if (!data || data.ok === false) throw new Error('Astro Core 준비 확인 실패');
+    return true;
   }
 
   function ensureReady(force = false) {

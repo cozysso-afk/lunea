@@ -611,19 +611,46 @@
   function natalPromptSummary() {
     const natal = safeJSON(NATAL_KEY, null);
     if (!natal || !Object.keys(natal).length) return '';
-
     const planets = natal.planets || natal;
     const angles = natal.angles || {};
     const keys = [
       ['Sun','태양'],['Moon','달'],['ASC','상승점'],['MC','중천점'],
       ['Mercury','수성'],['Venus','금성'],['Mars','화성'],
-      ['Jupiter','목성'],['Saturn','토성'],['Vertex','버텍스']
+      ['Jupiter','목성'],['Saturn','토성'],['Uranus','천왕성'],
+      ['Neptune','해왕성'],['Pluto','명왕성'],['Vertex','버텍스']
     ];
-
-    return keys.map(([k,ko]) => {
+    const finite = value => typeof value === 'number' && Number.isFinite(value);
+    const rows = keys.map(([k,ko]) => {
       const v = planets[k] ?? angles[k];
-      return v ? `- ${k}(${ko}): ${formatNatalValue(v)}` : '';
-    }).filter(Boolean).join('\n');
+      if (v === undefined || v === null) return '';
+      if (typeof v === 'object' && (!String(v.sign || v.sign_ko || '').trim() || !finite(v.degree ?? v.deg) || (v.degree ?? v.deg) < 0 || (v.degree ?? v.deg) >= 30)) return '';
+      const motion = [];
+      if (typeof v === 'object') {
+        if (v.retrograde === true) motion.push('역행');
+        else if (v.retrograde === false) motion.push('순행');
+        else if (['역행','순행','정지'].includes(v.direction)) motion.push(v.direction);
+        if (finite(v.speed_deg_per_day)) motion.push(`속도 ${v.speed_deg_per_day}°/일`);
+      }
+      return `- ${k}(${ko}): ${formatNatalValue(v)}${motion.length ? ' · '+motion.join(' · ') : ''}`;
+    }).filter(Boolean);
+    if (!rows.length) return '';
+    if (['day','night'].includes(natal.sect)) rows.push(`- Sect(주야 구분): ${natal.sect === 'day' ? '주간' : '야간'}`);
+    const known = new Set(keys.map(([key]) => key));
+    const aspectAngles = {'합':0, '육십분위':60, '사분위':90, '삼분위':120, '충':180};
+    const seen = new Set();
+    const aspects = (Array.isArray(natal.aspects) ? natal.aspects : []).filter(a => {
+      if (!a || !known.has(a.a) || !known.has(a.b) || a.a === a.b || !planets[a.a] || !planets[a.b]) return false;
+      if (!Object.hasOwn(aspectAngles,a.aspect) || a.angle !== aspectAngles[a.aspect] || !finite(a.orb) || a.orb < 0 || a.orb > 180) return false;
+      const id = [a.a,a.b].sort().join(':')+':'+a.aspect;
+      if (seen.has(id)) return false;
+      seen.add(id); return true;
+    });
+    if (aspects.length) {
+      rows.push('- Natal aspects(출생차트에서 계산된 행성 간 각):');
+      for (const a of aspects) rows.push(`  · ${a.a} ${a.aspect} ${a.b}: 각 ${a.angle}° · orb(허용각 차이) ${a.orb}°`);
+      rows.push('- 출생차트의 각·역행은 출생 당시 배경이다. 현재 트랜짓이나 연락 시점으로 바꾸지 않는다.');
+    }
+    return rows.join('\n');
   }
 
   function buildSeparatedProfileBlock() {
@@ -644,7 +671,7 @@
       ``,
       `[SAJU / FOUR PILLARS · 사주명리]`,
       profileLine('일간', p.saju),
-      profileLine('원국 年/月/日/時', [pi.year,pi.month,pi.day,pi.hour].map(x=>String(x||'미입력')).join(' / ')),
+      profileLine('원국 年/月/日/時', [pi.year,pi.month,pi.day,pi.hour].some(x=>String(x ?? '').trim()) ? [pi.year,pi.month,pi.day,pi.hour].map(x=>String(x||'미입력')).join(' / ') : ''),
       profileLine('오행 분포', elementSummary(d.elements || {})),
       profileLine('신강·신약', d.strength),
       profileLine('주요 십성·특징', d.tenGods),

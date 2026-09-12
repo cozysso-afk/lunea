@@ -188,10 +188,10 @@
 
   function resumePending() {
     if (document.hidden || autoLaunching) return;
-    const rows = cleanOld(readAll());
     if (succeeded('transit')) clearPending('transit');
-    if (succeeded('returns')) clearPending('returns');
+    if (succeeded('returns') || /^계산 실패:/.test(String($('astroReturnStatus')?.textContent || ''))) clearPending('returns');
 
+    const rows = cleanOld(readAll());
     const queue = activeState();
     if (queue.active) {
       paintBadge();
@@ -211,7 +211,7 @@
 
   function checkSuccess() {
     if (succeeded('transit')) clearPending('transit');
-    if (succeeded('returns')) clearPending('returns');
+    if (succeeded('returns') || /^계산 실패:/.test(String($('astroReturnStatus')?.textContent || ''))) clearPending('returns');
     paintBadge();
   }
 
