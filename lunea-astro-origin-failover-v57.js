@@ -4,7 +4,7 @@
    Stable-host adapter for the two official Astro Core origins.
    - V2 preferred; legacy fallback.
    - health checks tolerate free-tier cold starts instead of failing on the first 502.
-   - calculation requests retry transient edge/network failures with bounded spacing.
+   - calculation requests are sent once; only health probes may fail over.
    - custom API URLs remain untouched.
    - no localStorage / IndexedDB writes. */
 (() => {
@@ -19,6 +19,7 @@
     calculation:[12000,25000]
   });
   const nativeFetch=W.fetch.bind(W);
+  let lastHealthyOrigin=null;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const rawUrl=input=>{try{return typeof input==='string'?input:(input instanceof URL?input.href:String(input?.url||''))}catch{return''}};
   const official=url=>ORIGINS.find(o=>url===o||url.startsWith(o+'/'))||'';
@@ -62,7 +63,7 @@
         const timeoutMs=(isHealth?ORIGIN_TIMEOUT_MS.health:ORIGIN_TIMEOUT_MS.calculation)[index];
         const response=await runFetch(input,init,targetUrl(originalUrl,origin),timeoutMs);
         lastResponse=response;
-        if(!TRANSIENT.has(response.status))return {done:true,response};
+        if(!TRANSIENT.has(response.status)){if(isHealth&&response.ok)lastHealthyOrigin=origin;return {done:true,response};}
       }catch(error){
         lastError=error;
         const upstream=init?.signal||input?.signal||null;
@@ -78,6 +79,13 @@
 
     const path=(()=>{try{return new URL(originalUrl).pathname}catch{return''}})();
     const isHealth=/\/health\/?$/i.test(path);
+    // A timed-out computation may still consume server CPU. Never duplicate a
+    // calculation across origins; its owner controls the full request deadline.
+    if(!isHealth){
+      const target=targetUrl(originalUrl,lastHealthyOrigin||official(originalUrl));
+      if(typeof input==='string'||input instanceof URL)return nativeFetch(target,init);
+      return nativeFetch(new Request(target,input.clone()),init);
+    }
     /* Health is the wake gate. Free services can need tens of seconds after sleep. */
     const waits=isHealth?[0,4200,5200,6200,7200,8200]:[0,1100,2800];
     let lastResponse=null,lastError=null;
@@ -104,6 +112,6 @@
     for(const origin of ORIGINS)nativeFetch(`${origin}/health?t=${Date.now()}`,{method:'GET',cache:'no-store'}).catch(()=>{});
   },150);
 
-  W.LUNEA_ASTRO_ORIGIN_FAILOVER_V57=Object.freeze({version:'57.1',origins:ORIGINS.slice()});
+  W.LUNEA_ASTRO_ORIGIN_FAILOVER_V57=Object.freeze({version:'57.2',origins:ORIGINS.slice()});
   console.info('✦ LUNEA Astro Origin Failover V57.1 active · cold-start tolerant');
 })();

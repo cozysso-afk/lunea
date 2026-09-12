@@ -153,7 +153,7 @@
       './lunea-transit-range-v1.js?v=103',
       './lunea-transit-long-run-v1.js?v=102',
       './lunea-astro-job-queue-v56.js?v=5601',
-      './lunea-astro-origin-failover-v57.js?v=5701',
+      './lunea-astro-origin-failover-v57.js?v=20260912-single-calculation-1',
       './lunea-astro-resume-v23.js?v=20260912-bounded-request-1'
     ],
     finish:[
