@@ -28,6 +28,33 @@
   function sync() {
     if (saved && !capture()) clear();
   }
+  function promptBlock() {
+    const value = capture();
+    const result = value && engine()?.interpret(value);
+    if (!result) return '';
+    return ['[MESSAGE ORACLE · 현재 리딩의 연락·소식 보조]',
+      '질문: ' + value.question,
+      '맥락: ' + result.contextLabel,
+      '질문 의도: ' + (engine().INTENTS[result.intent] || result.intent),
+      '카드: ' + names(value.cardCode) + ' · 정방향',
+      '카드 기반 연락·소식 전달 신호: ' + result.score + '%',
+      result.fullMessage || result.shortMessage,
+      ...(result.details || []).map(item => item.label + ': ' + item.value),
+      '※ 이 점수는 실제 통계 확률이나 합격·승인·긍정 결과 확률이 아니다.',
+      '※ RWS 포지션을 바꾸지 말고 연락·소식 관점의 보조로만 참고한다. 다른 체계와 상충하면 차이를 명시한다.'
+    ].join('\n');
+  }
+  function installPrompt() {
+    const previous = W.promptString || (typeof promptString === 'function' ? promptString : null);
+    if (typeof previous !== 'function' || previous.__luneaMessageSupportPrompt) return;
+    const wrapped = function() {
+      const original = previous.apply(this, arguments), block = promptBlock();
+      return block ? original + '\n\n' + block : original;
+    };
+    wrapped.__luneaMessageSupportPrompt = true;
+    W.promptString = wrapped;
+    try { promptString = wrapped; } catch {}
+  }
   function names(code) {
     const deck = typeof TAROT_DECK !== 'undefined' ? TAROT_DECK : [];
     return engine()?.identity(code, deck)?.name || code;
@@ -111,5 +138,6 @@
     button.textContent = '✉ 메시지 오라클'; button.addEventListener('click', open);
     bar.appendChild(button);
   }
-  W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1 = Object.freeze({open, capture, restore, sync});
+  installPrompt();
+  W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1 = Object.freeze({open, capture, restore, sync, promptBlock});
 })();

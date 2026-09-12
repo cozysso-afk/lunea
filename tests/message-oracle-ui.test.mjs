@@ -52,6 +52,7 @@ function supportHarness(){
  let snapshots=0,draft;
  h.context.LUNEA_READING_DRAFT_V1={snapshot(){snapshots++;draft={...h.context.state,attachments:h.context.LUNEA_READING_ATTACHMENTS_V1.captureDraft()}}};
  h.context.LUNEA_LOAD_FEATURE_GROUP=async()=>true;
+ h.context.promptString=()=> '[타로 원문]\n[SAJU / FOUR PILLARS]\n[Timing]\n[Transit]\n[Returns]\n[Thai]\n[Horary]';
  vm.runInContext(read('lunea-reading-attachments-v1.js'),h.context);
  vm.runInContext(read('lunea-message-oracle-support-v1.js'),h.context);
  const api=h.context.LUNEA_MESSAGE_ORACLE_SUPPORT_V1;
@@ -68,6 +69,19 @@ test('support opens without draw; inherits canonical question; one draw autosave
  assert.equal(h.document.querySelectorAll('#luneaMessageOracleInline').length,1);
  assert.equal(h.map.has('LUNEA_MESSAGE_ORACLE_LAST_V1'),false);assert.equal(JSON.stringify(h.context.state),original);
  assert.equal(h.context.LUNEA_MESSAGE_ORACLE_V1.interpret(h.api.capture()).intent,'RESULT_NOTICE');
+});
+
+test('master/AI prompt includes only exact-reading Message evidence without a new draw',async()=>{
+ const h=supportHarness(),base=h.context.promptString();
+ await h.api.open();assert.equal(h.context.promptString(),base);
+ await h.query('.mo-form').emit('submit');await h.finishFlips();
+ const before=h.draws(),text=h.context.promptString();
+ assert.ok(text.startsWith(base));assert.equal(text.match(/\[MESSAGE ORACLE/g)?.length,1);
+ assert.ok(text.includes(h.context.state.question));assert.ok(text.includes(h.api.capture().score+'%'));
+ assert.match(text,/결과 확률이 아니다/);assert.doesNotMatch(text,/undefined/);assert.equal(h.draws(),before);
+ const snapshot=JSON.parse(JSON.stringify(h.api.capture()));h.api.sync();assert.equal(h.context.promptString(),text);
+ h.context.state={...h.context.state,question:'다른 질문'};assert.equal(h.context.promptString(),base);
+ h.context.state={...h.context.state,question:snapshot.question};assert.equal(h.api.restore(snapshot),true);assert.equal(h.context.promptString(),text);assert.equal(h.draws(),before);
 });
 
 test('support close/reopen, redraw cancel/confirm and standalone storage stay independent',async()=>{

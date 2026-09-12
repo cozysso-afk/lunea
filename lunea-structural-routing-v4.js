@@ -61,7 +61,7 @@
   const SHELL_SOURCES=[
     './lunea-reading-draft-v1.js?v=20260911-attachments-v1',
     './lunea-reading-attachments-v1.js?v=20260912-message-support-1',
-    './lunea-message-oracle-support-v1.js?v=20260912-message-polish-1',
+    './lunea-message-oracle-support-v1.js?v=20260912-message-prompt-1',
     './lunea-journal-header-fix-v1.js?v=101',
     './lunea-mobile-journal-polish-v27.js?v=2701',
     './lunea-journal-detail-v51.js?v=20260912-message-support-1',
