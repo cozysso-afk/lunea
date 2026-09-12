@@ -40,7 +40,7 @@
 
   function evidenceScore(row) {
     if (!row || typeof row !== 'object') return 0;
-    const keys = ['astroNatal','astroTransit','astroReturns','thaiTaksa','thaiTaksaRange','thaiRange','horary','timing','legacyImportedText'];
+    const keys = ['astroNatal','astroTransit','astroReturns','thaiTaksa','thaiTaksaRange','thaiRange','horary','timing','messageOracle','legacyImportedText'];
     return keys.reduce((n, key) => n + (row[key] != null && row[key] !== '' ? 1 : 0), 0)
       + (row.ai ? 1 : 0)
       + (Array.isArray(row.cards) ? Math.min(2, row.cards.length) : 0);
@@ -110,6 +110,7 @@
       ['Thai Period · 태국 기간', reading.thaiTaksaRange || reading.thaiRange],
       ['Horary · 호라리', reading.horary],
       ['Timing Oracle · 시기 오라클', reading.timing],
+      ['Message Oracle · 연락/소식', messageText(reading.messageOracle)],
       ['기존 주소에서 가져온 기록', reading.legacyImportedText]
     ];
     for (const [label, value] of sections) {
@@ -124,9 +125,18 @@
     try {
       const fn = W.LUNEA_EMERGENCY_REPAIR_V43?.archiveText;
       const text = fn?.(reading);
-      if (text) return String(text);
+      if (text) return String(text) + (reading?.messageOracle ? '\n\n[Message Oracle · 연락/소식]\n' + messageText(reading.messageOracle) : '');
     } catch {}
     return fallbackRichText(reading);
+  }
+
+  function messageText(value) {
+    if (!value) return '';
+    return ['질문: ' + String(value.question || ''),
+      '맥락: ' + String(value.contextLabel || value.context || ''),
+      '카드: ' + String(value.cardName || value.cardCode || ''),
+      '연락·소식 신호: ' + Number(value.score || 0) + '% · 결과 성공 확률 아님',
+      value.fullMessage || value.shortMessage || ''].join('\n');
   }
 
   async function resolveRichRecord(item) {

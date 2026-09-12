@@ -22,7 +22,11 @@ function harness({loader=false,denied=false,reduced=false,assetFail=false,holdAs
   addEventListener(type,f){(this.events[type]??=[]).push(f)}
   async emit(type,extra={}){const e={target:this,preventDefault(){},stopImmediatePropagation(){},...extra};for(const f of this.events[type]||[])await f(e)}
   animate(frames,options){animations++;assert.deepEqual(JSON.parse(JSON.stringify(frames)),[{transform:'rotateY(0deg)'},{transform:'rotateY(180deg)'}]);assert.equal(options.duration,640);let finish;const finished=new Promise(r=>finish=r);const animation={finished,cancel:()=>finish(),finish};activeAnimations.push(animation);return animation}
-  click(){if(this.disabled)return;return this.emit('click')}focus(){document.activeElement=this}getClientRects(){return this.hidden||this.parentElement?.hidden?[]:[{}]}remove(){}
+  get parentNode(){return this.parentElement}
+  get nextSibling(){return this.parentElement?.children[this.parentElement.children.indexOf(this)+1]||null}
+  get nextElementSibling(){return this.nextSibling}
+  insertBefore(node,before){node.remove();node.parentElement=this;const i=this.children.indexOf(before);this.children.splice(i<0?this.children.length:i,0,node);return node}
+  click(){if(this.disabled)return;return this.emit('click')}focus(){document.activeElement=this}getClientRects(){return this.hidden||this.parentElement?.hidden?[]:[{}]}remove(){if(this.parentElement){const i=this.parentElement.children.indexOf(this);if(i>=0)this.parentElement.children.splice(i,1);this.parentElement=null}}
  }
  document=new Node('document');document.readyState='loading';document.documentElement=new Node('html');document.head=new Node('head');document.body=new Node('body');document.appendChild(document.documentElement);document.documentElement.appendChild(document.head);document.documentElement.appendChild(document.body);document.createElement=tag=>new Node(tag);document.getElementById=id=>document.querySelector('#'+id);
  const sourceHtml=read('index.html');const host=new Node();host.innerHTML=sourceHtml.match(/<section class="category" id="luneaSignalMessageSection"[\s\S]*?<\/section>/)[0];document.body.appendChild(host);const entry=document.getElementById('luneaMessageOracleEntry');
@@ -35,6 +39,130 @@ function harness({loader=false,denied=false,reduced=false,assetFail=false,holdAs
  return {document,entry,context,map,loaded,query:s=>document.querySelector(s),draws:()=>draws,setConfirm:v=>confirm=v,copied:()=>copied,animations:()=>animations,finishFlips:async()=>{activeAnimations.forEach(a=>a.finish());activeAnimations=[];await Promise.resolve()},releaseAssets:()=>{pendingAssets.forEach(f=>f());pendingAssets=[]}};
 }
 async function start(h){await h.entry.click();h.query('#moQuestion').value='합성 면접 결과 연락';await h.query('#moQuestion').emit('input');await h.query('.mo-form').emit('submit');await h.finishFlips()}
+
+function supportHarness(){
+ const h=harness();
+ h.context.state={category:'CAREER',title:'합성 배열',question:'면접 결과 연락 올까?',positions:['현재'],drawn:[{code:'M1',name:'The Magician',position:'현재',isReversed:false}]};
+ const host=h.document.createElement('div');host.id='spreadOverlay';
+ const bar=h.document.createElement('div');bar.className='actionbar';host.appendChild(bar);
+ const cards=h.document.createElement('div');cards.id='cards';host.appendChild(cards);h.document.body.appendChild(host);
+ // This DOM double's document selector does not parse descendant combinators.
+ const query=h.document.querySelector.bind(h.document);
+ h.document.querySelector=s=>s==='#spreadOverlay .actionbar'?bar:query(s);
+ let snapshots=0,draft;
+ h.context.LUNEA_READING_DRAFT_V1={snapshot(){snapshots++;draft={...h.context.state,attachments:h.context.LUNEA_READING_ATTACHMENTS_V1.captureDraft()}}};
+ h.context.LUNEA_LOAD_FEATURE_GROUP=async()=>true;
+ vm.runInContext(read('lunea-reading-attachments-v1.js'),h.context);
+ vm.runInContext(read('lunea-message-oracle-support-v1.js'),h.context);
+ const api=h.context.LUNEA_MESSAGE_ORACLE_SUPPORT_V1;
+ return {...h,api,registry:h.context.LUNEA_READING_ATTACHMENTS_V1,host,cards,bar,snapshots:()=>snapshots,draft:()=>JSON.parse(JSON.stringify(draft))};
+}
+
+test('support opens without draw; inherits canonical question; one draw autosaves only attachment',async()=>{
+ const h=supportHarness(),original=JSON.stringify(h.context.state);
+ await h.api.open();assert.equal(h.draws(),0);assert.equal(h.query('#moQuestion').readOnly,true);
+ assert.equal(h.query('#moQuestion').value,h.context.state.question);assert.equal(h.query('#luneaMessageOracleInline'),null);
+ assert.equal(h.query('[data-action="new"]').hidden,true);
+ await h.query('.mo-form').emit('submit');await h.finishFlips();
+ assert.equal(h.draws(),1);assert.equal(h.snapshots(),1);assert.ok(h.draft().attachments.messageOracle);
+ assert.equal(h.document.querySelectorAll('#luneaMessageOracleInline').length,1);
+ assert.equal(h.map.has('LUNEA_MESSAGE_ORACLE_LAST_V1'),false);assert.equal(JSON.stringify(h.context.state),original);
+ assert.equal(h.context.LUNEA_MESSAGE_ORACLE_V1.interpret(h.api.capture()).intent,'RESULT_NOTICE');
+});
+
+test('support close/reopen, redraw cancel/confirm and standalone storage stay independent',async()=>{
+ const h=supportHarness();await start(h);const standalone=h.map.get('LUNEA_MESSAGE_ORACLE_LAST_V1');
+ await h.api.open();assert.equal(h.query('.mo-card').dataset.face,'back');
+ await h.query('.mo-form').emit('submit');await h.finishFlips();const first=h.api.capture().cardCode;
+ await h.query('.mo-close').click();await h.api.open();assert.equal(h.draws(),2);
+ h.setConfirm(false);await h.query('[data-action="redraw"]').click();assert.equal(h.draws(),2);
+ h.setConfirm(true);await h.query('[data-action="redraw"]').click();await h.finishFlips();assert.equal(h.draws(),3);
+ assert.notEqual(h.api.capture().cardCode,first);assert.equal(h.document.querySelectorAll('#luneaMessageOracleInline').length,1);
+ assert.equal(h.map.get('LUNEA_MESSAGE_ORACLE_LAST_V1'),standalone);
+ await h.entry.click();assert.equal(h.query('#moQuestion').readOnly,false);
+ assert.equal(h.query('.mo-score-text').textContent,JSON.parse(standalone).score+'%');
+});
+
+test('cold exact draft restore uses saved Message identity with zero draw and rejects different cards',async()=>{
+ const h=supportHarness();await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
+ const draft=h.draft(),fresh=supportHarness();
+ assert.equal(await fresh.registry.restoreDraft(draft),true);assert.equal(fresh.draws(),0);
+ assert.equal(fresh.api.capture().cardCode,h.api.capture().cardCode);
+ assert.equal(fresh.document.querySelectorAll('#luneaMessageOracleInline').length,1);
+ fresh.registry.clearForNewReading();fresh.context.state={...fresh.context.state,drawn:[{name:'Different',isReversed:true}]};
+ assert.equal(await fresh.registry.restoreDraft(draft),false);assert.equal(fresh.api.capture(),null);
+ assert.equal(fresh.document.querySelectorAll('#luneaMessageOracleInline').length,0);
+ await fresh.api.open();assert.equal(fresh.query('.mo-card').dataset.face,'back');assert.equal(fresh.draws(),0);
+});
+
+test('support cannot draw into a reading changed while modal or assets are pending',async()=>{
+ const h=supportHarness();await h.api.open();h.context.state.question='다른 질문';
+ await h.query('.mo-form').emit('submit');assert.equal(h.draws(),0);assert.equal(h.api.capture(),null);
+});
+
+test('support archive enriches exact new ID and coexists with all other evidence',async()=>{
+ const h=supportHarness(),c=h.context.state;
+ for(const name of ['timing','astroTransit','thaiTaksa','thaiTaksaRange','astroReturns','horary']){
+  h.registry.register(name,{capture:()=>({keep:name})});h.registry.notifyChanged(name);
+ }
+ const intimacy=h.document.createElement('div');intimacy.id='intimacy-keep';h.host.appendChild(intimacy);
+ await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
+ const row=id=>({id,title:c.title,q:c.question,cards:c.drawn});
+ h.map.set('LUNEA_ARCHIVE_V3',JSON.stringify([{...row('decoy'),q:'unrelated'},row('new'),row('old')]));
+ assert.equal(h.registry.enrichNewArchive(new Set(['old']),c),true);
+ const rows=JSON.parse(h.map.get('LUNEA_ARCHIVE_V3'));assert.equal(rows[0].messageOracle,undefined);
+ for(const key of ['messageOracle','timing','astroTransit','thaiTaksa','thaiTaksaRange','astroReturns','horary'])assert.ok(rows[1][key],key);
+ assert.ok(rows[1].messageOracle.fullMessage);assert.equal(rows[2].messageOracle,undefined);assert.ok(h.query('#intimacy-keep'));
+ // Execute the production Journal text helper, with no engine or network.
+ vm.runInContext(read('lunea-journal-detail-v51.js').replace('  function richText(reading) {','  W.__journalMessageText=messageText;\n  function richText(reading) {').replace(/  if \(document.readyState[\s\S]*$/, '})();'),h.context);
+ assert.match(h.context.__journalMessageText(rows[1].messageOracle),/면접 결과 연락/);
+});
+
+test('all normal Tarot categories use the same support engine and isolated signature',async()=>{
+ for(const [category,question,intent] of [
+  ['LOVE','그 사람이 연락할까?','CONTACT_ARRIVAL'],['CAREER','면접 결과 연락 올까?','RESULT_NOTICE'],
+  ['SOCIAL','인스타 스토리 보고 있을까?','SOCIAL_OBSERVE'],['LOVE','전남친이 다시 연락할까?','RECONTACT'],
+  ['INTIMACY','상대가 답장할까?','REPLY'],['DAILY','오늘 연락 올까?','CONTACT_ARRIVAL'],
+  ['GENERAL','소식 올까?','CONTACT_ARRIVAL'],['STOCK','거래처 답장 올까?','REPLY']]){
+   const h=supportHarness();h.context.state={...h.context.state,category,question};
+   await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
+   assert.ok(h.api.capture(),category);assert.equal(h.context.LUNEA_MESSAGE_ORACLE_V1.interpret(h.api.capture()).intent,intent,question);
+ }
+});
+
+test('production authoring-row owner orders every sector idempotently and retains node handlers',()=>{
+ const h=supportHarness();let source=read('lunea-manual-everywhere-v1.js');
+ source=source.slice(0,source.lastIndexOf("  if (document.readyState === 'loading')"))+'  W.__orderRows=orderAuthoringRows;})();';
+ vm.runInContext(source,h.context);
+ for(const category of ['GENERAL','CAREER','LOVE','STOCK','INTIMACY']){
+  const parent=h.document.createElement('div');
+  const row=(id,dataset)=>{const n=h.document.createElement('div');n.id=id;n.className='reading-item';n.dataset={cat:category,...dataset};parent.appendChild(n);return n};
+  const direct=row('manual',{manualSpread:'1'}),fixed=row('fixed',{count:'5'}),ai=row('ai',{count:'0'});
+  const handler=()=>{};direct.addEventListener('click',handler);
+  h.context.__orderRows(parent);assert.deepEqual(parent.children.map(n=>n.id),['ai','manual','fixed']);
+  h.context.__orderRows(parent);assert.deepEqual(parent.children,[ai,direct,fixed]);assert.equal(direct.events.click[0],handler);
+ }
+ const noAi=h.document.createElement('div');const fixed=h.document.createElement('div');fixed.className='reading-item';noAi.appendChild(fixed);
+ h.context.__orderRows(noAi);assert.deepEqual(noAi.children,[fixed]);
+});
+
+test('production action owner orders coexisting support nodes, leaves intimacy intact, and is idempotent',async()=>{
+ const h=supportHarness();
+ for(const id of ['luneaHoraryInline','luneaReturnInline','luneaThaiRangeInline','luneaThaiTarotBridgeInline','luneaAstroTransitInline','luneaTimingInline','intimacy-keep']){
+  const n=h.document.createElement('div');n.id=id;h.host.appendChild(n);
+ }
+ let source=read('lunea-reading-action-order-v33.js');
+ source=source.slice(0,source.lastIndexOf("  if (document.readyState"))+'})();';
+ vm.runInContext(source,h.context);
+ await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
+ const expected=['cards','luneaTimingInline','luneaMessageOracleInline','luneaAstroTransitInline','luneaThaiTarotBridgeInline','luneaThaiRangeInline','luneaReturnInline','luneaHoraryInline','intimacy-keep'];
+ assert.deepEqual(h.host.children.filter(n=>n!==h.bar).map(n=>n.id),expected);
+ h.context.LUNEA_READING_ACTION_ORDER_V33.reorder();
+ assert.deepEqual(h.host.children.filter(n=>n!==h.bar).map(n=>n.id),expected);
+ h.context.state.drawn[0].subCards=[{name:'New clarifier'}];
+ h.context.LUNEA_READING_ACTION_ORDER_V33.reorder();
+ assert.equal(h.query('#luneaMessageOracleInline'),null);assert.ok(h.query('#luneaTimingInline'));
+});
 test('first entry installs final style before opening and base draw has no API/state mutation',async()=>{
  const h=harness();assert.ok(h.query('#luneaMessageOracleStyle'));assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,undefined);
  await start(h);assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.query('.mo-result').hidden,false);assert.equal(h.query('.mo-form').hidden,true);assert.equal(h.query('.mo-image').src,'https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_00_Fool.jpg');
@@ -65,7 +193,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=110']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=20260912-message-support-1']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -83,9 +211,9 @@ test('Home Message section gains moderate weight without becoming a hero tile',(
  const px=(selector,property)=>Number(css.match(new RegExp(`${selector}\\{[^}]*${property}:([\\d.]+)px`))?.[1]);
  const logo=px('#luneaSignalMessageSection \\.message-oracle-home-logo','width');
  const padding=px('#luneaSignalMessageSection \\.category-header','padding');
- const oldHeight=34+15*2,newHeight=logo+padding*2;
- assert.equal(logo,50);assert.ok(newHeight/oldHeight>=1.25&&newHeight/oldHeight<=1.30,newHeight/oldHeight);
- assert.equal(px('#luneaSignalMessageSection \\.cat-text h3','font-size'),14.5);assert.equal(px('#luneaSignalMessageSection \\.cat-text p','font-size'),11);
+ const oldHeight=50+16*2,newHeight=logo+padding*2;
+ assert.equal(logo,56);assert.ok(newHeight/oldHeight>=1.20&&newHeight/oldHeight<=1.30,newHeight/oldHeight);
+ assert.equal(px('#luneaSignalMessageSection \\.cat-text h3','font-size'),15.5);assert.equal(px('#luneaSignalMessageSection \\.cat-text p','font-size'),12);
  assert.match(css,/\.message-oracle-home-contexts\{[^}]*white-space:normal;[^}]*overflow-wrap:anywhere/);
  assert.match(css,/\.cat-left\{[^}]*min-width:0;[^}]*align-items:center/);assert.match(css,/\.toggle\{[^}]*flex:0 0 auto/);
 });

@@ -60,10 +60,11 @@
   // Audited UI only. No journal migration, timing fetch, AI or global observer.
   const SHELL_SOURCES=[
     './lunea-reading-draft-v1.js?v=20260911-attachments-v1',
-    './lunea-reading-attachments-v1.js?v=20260911-attachments-v1',
+    './lunea-reading-attachments-v1.js?v=20260912-message-support-1',
+    './lunea-message-oracle-support-v1.js?v=20260912-support-1',
     './lunea-journal-header-fix-v1.js?v=101',
     './lunea-mobile-journal-polish-v27.js?v=2701',
-    './lunea-journal-detail-v51.js?v=20260911-attachments-v1',
+    './lunea-journal-detail-v51.js?v=20260912-message-support-1',
     './lunea-sheet-scroll-fix-v1.js?v=106',
     './lunea-cardback-restore-v19.js?v=d2198d8c5779',
     './lunea-cardback-sector-v20.js?v=2001'
@@ -90,16 +91,16 @@
       './lunea-fixed-spread-depth-v30.js?v=3003',
       './lunea-general-order-v30-5.js?v=3005',
       './lunea-reading-boundary-reset-v31.js?v=3102',
-      './lunea-reading-action-order-v33.js?v=20260911-list-symbol',
+      './lunea-reading-action-order-v33.js?v=20260912-message-support-1',
       './lunea-manual-structure-v1.js?v=105',
-      './lunea-manual-everywhere-v1.js?v=103',
+      './lunea-manual-everywhere-v1.js?v=20260912-message-support-1',
       './lunea-manual-library-v1.js?v=101',
       './lunea-manual-limit20-v17.js?v=1705',
       './lunea-final-prompt-priority-v1.js?v=d2198d8c5779'
     ],
     journal:[
       './lunea-manual-structure-v1.js?v=105',
-      './lunea-manual-everywhere-v1.js?v=103',
+      './lunea-manual-everywhere-v1.js?v=20260912-message-support-1',
       './lunea-manual-library-v1.js?v=101',
       './lunea-reading-journal-v2.js?v=20260911-attachments-v1',
       './lunea-archive-search-v1.js?v=103',
@@ -125,7 +126,7 @@
     ],
     message:[
       './lunea-message-oracle-v1.js?v=103',
-      './lunea-message-oracle-ui-v1.js?v=110'
+      './lunea-message-oracle-ui-v1.js?v=20260912-message-support-1'
     ],
     timing:[
       './lunea-timing-ab-v1.js?v=102',

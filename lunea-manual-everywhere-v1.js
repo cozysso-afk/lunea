@@ -79,6 +79,7 @@
   function scanCategories() {
     if (!W.LUNEA_MANUAL_SPREAD_V1 || !document.getElementById('luneaManualPanel')) return false;
     document.querySelectorAll('.category-content').forEach(content => {
+      orderAuthoringRows(content);
       const firstReading = content.querySelector('.reading-item[data-cat]');
       if (!firstReading) return;
 
@@ -89,9 +90,22 @@
       if (content.querySelector('.lunea-manual-anywhere-item')) return;
 
       const item = makeManualItem(category);
-      firstReading.insertAdjacentElement('beforebegin', item);
+      const ai = [...content.querySelectorAll('.reading-item')].find(row =>
+        row.dataset.intimacyAi === '1' || row.dataset.count === '0');
+      if (ai) ai.insertAdjacentElement('afterend', item);
+      else firstReading.insertAdjacentElement('beforebegin', item);
+      orderAuthoringRows(content);
     });
     return true;
+  }
+
+  function orderAuthoringRows(content) {
+    const rows = [...content.querySelectorAll('.reading-item')].filter(row => row.parentElement === content);
+    const ai = rows.find(row => row.dataset.intimacyAi === '1' || row.dataset.count === '0');
+    const direct = rows.find(row => row.id === 'luneaManualReadingItem' || row.dataset.manualSpread === '1');
+    if (!ai || !direct) return;
+    if (rows[0] !== ai) content.insertBefore(ai, rows[0]);
+    if (ai.nextElementSibling !== direct) content.insertBefore(direct, ai.nextSibling);
   }
 
   function install() {
@@ -117,8 +131,10 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(install, 0), {once:true});
+    document.addEventListener('DOMContentLoaded', install, {once:true});
   } else {
-    setTimeout(install, 0);
+    install();
   }
+  W.addEventListener('pageshow', scanCategories);
+  W.addEventListener('lunea:feature-group-ready', scanCategories);
 })();

@@ -116,6 +116,7 @@
   let backing; try{backing=W.localStorage}catch{backing={getItem(){return null},setItem(){throw new Error('Storage unavailable')},removeItem(){throw new Error('Storage unavailable')}}}
   const store=E.storage(backing);
   let current=null, override='AUTO', returnFocus=null, flipAnimation=null, openRequest=0;
+  let support=null;
   const announce=text=>{$('.mo-status').textContent=text};
   for(const [code,label] of [['AUTO','자동'],...Object.entries(E.CONTEXTS)]){
     const button=document.createElement('button');button.type='button';button.textContent=label;button.dataset.context=code;
@@ -186,26 +187,45 @@
   }
   function commitDraw(q,context){
     if(flipAnimation)return;
-    try{current=E.draw(q,context);render(true);announce(store.remember(current)?'카드 한 장을 정방향으로 읽었어요.':'카드는 뽑았지만 이 기기에 저장하지 못했어요. 결과를 복사해 주세요.')}
+    if(support && !support.isCurrent()){close();return}
+    try{
+      const next=E.draw(support?support.question:q,context);
+      if(support && !support.onResult(next)){announce('현재 리딩이 바뀌어 결과를 연결하지 않았어요.');return}
+      current=next;render(true);
+      announce(support?'현재 리딩에 메시지 카드를 연결했어요.':store.remember(current)?'카드 한 장을 정방향으로 읽었어요.':'카드는 뽑았지만 이 기기에 저장하지 못했어요. 결과를 복사해 주세요.');
+    }
     catch{announce('카드를 뽑지 못했어요. 질문과 브라우저의 보안 연결을 확인해 주세요.')}
   }
   question.addEventListener('input',syncContext);
   $('.mo-form').addEventListener('submit',e=>{e.preventDefault();if(!question.value.trim()){announce('궁금한 연락이나 소식을 입력해 주세요.');question.focus();return}commitDraw(question.value,override)});
-  $('[data-action="redraw"]').addEventListener('click',()=>{if(!flipAnimation&&current&&W.confirm('같은 질문으로 새 카드를 다시 뽑을까?'))commitDraw(current.question,current.context)});
-  $('[data-action="new"]').addEventListener('click',()=>{const cleared=store.clear();current=null;question.value='';override='AUTO';syncContext();render();announce(cleared?'': '현재 화면은 초기화했지만 기기 저장소를 지우지 못했어요.');question.focus()});
+  $('[data-action="redraw"]').addEventListener('click',()=>{if(!flipAnimation&&current&&W.confirm(support?'같은 질문으로 메시지 카드를 새로 뽑을까?':'같은 질문으로 새 카드를 다시 뽑을까?'))commitDraw(current.question,current.context)});
+  $('[data-action="new"]').addEventListener('click',()=>{if(support)return;const cleared=store.clear();current=null;question.value='';override='AUTO';syncContext();render();announce(cleared?'': '현재 화면은 초기화했지만 기기 저장소를 지우지 못했어요.');question.focus()});
   $('[data-action="save"]').addEventListener('click',()=>{announce(store.save(current)?'이 기기의 메시지 카드 목록에 저장했어요.':'저장 공간을 사용할 수 없어요. 결과를 복사해 주세요.');renderSaved()});
   $('[data-action="copy"]').addEventListener('click',async()=>{try{await W.navigator.clipboard.writeText(copyResultText(current));announce('결과를 복사했어요.')}catch{announce('복사를 허용하지 않은 브라우저예요. 결과 텍스트를 선택해 복사해 주세요.')}});
-  async function open(){
+  async function open(options=null){
+    // DOM click events are not support-session options.
+    const session=options?.isCurrent?options:null;
     const request=++openRequest;
     if(!await ready()){
       const note=document.getElementById('luneaMessageOracleLoadStatus');if(note)note.textContent='승인된 카드 이미지를 불러오지 못했어요. 다시 눌러 주세요.';
       return;
     }
     if(request!==openRequest)return;
-    returnFocus=document.activeElement;current=current||store.last();
+    if(session && !session.isCurrent())return false;
+    returnFocus=document.activeElement;
+    const wasSupport=!!support;support=session;
+    current=support?support.result:(wasSupport?store.last():current||store.last());
+    question.readOnly=!!support;
+    $('label').textContent=support?'현재 질문':'어떤 연락이나 소식이 궁금해?';
+    $('.mo-primary').textContent=support?'✉ 현재 질문으로 한 장 뽑기':'✉️ 메시지 카드 한 장 뽑기';
+    $('[data-action="new"]').hidden=!!support;
+    $('[data-action="save"]').hidden=!!support;
+    $('.mo-saved').hidden=!!support;
+    if(support){question.value=support.question;override=current?.context||'AUTO'}
     if(current){question.value=current.question;override=current.context}
     syncContext();render();renderSaved();announce('');document.body.classList.add('lunea-message-open');overlay.dataset.open='true';overlay.setAttribute('aria-hidden','false');$('.mo-sheet').focus();
   }
+  function closeSupport(){if(support){close();support=null;current=null;question.value='';override='AUTO'}}
   function close(){++openRequest;stopFlip();document.body.classList.remove('lunea-message-open');delete overlay.dataset.open;overlay.setAttribute('aria-hidden','true');returnFocus?.focus?.()}
   $('.mo-close').addEventListener('click',close);
   overlay.addEventListener('click',e=>{if(e.target===overlay)close()});
@@ -219,5 +239,5 @@
     }
   });
   document.getElementById('luneaMessageOracleEntry').addEventListener('click',open);
-  W.LUNEA_MESSAGE_ORACLE_UI_V1=Object.freeze({open,close,ready});
+  W.LUNEA_MESSAGE_ORACLE_UI_V1=Object.freeze({open,openSupport:open,closeSupport,close,ready});
 })();

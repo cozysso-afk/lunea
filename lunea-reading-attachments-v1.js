@@ -17,6 +17,7 @@
   const MAX_DRAFT_ATTACHMENT_BYTES = 700000;
   const INLINE_IDS = [
     'luneaTimingInline',
+    'luneaMessageOracleInline',
     'luneaAstroTransitInline',
     'luneaReturnInline',
     'luneaThaiTarotBridgeInline',

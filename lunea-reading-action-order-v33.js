@@ -52,6 +52,7 @@
     'retry',
     'extraCard',
     'timingSupportBtn',
+    'luneaMessageOracleSupportBtn',
     'astroTransitBtn',
     'thaiTaksaBtn',
     'luneaThaiTarotRangeBtn',
@@ -73,6 +74,7 @@
   }
 
   function reorder() {
+    reorderSupport();
     const bar = actionBar();
     if (!bar) return false;
     const children = [...bar.children];
@@ -99,6 +101,23 @@
     return true;
   }
 
+  // One order for all attached evidence; reuse this owner's existing observer.
+  function reorderSupport() {
+    W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.sync?.();
+    const ids = ['luneaTimingInline','luneaMessageOracleInline','luneaAstroTransitInline',
+      'luneaThaiTarotBridgeInline','luneaThaiTaksaInline','luneaThaiRangeInline',
+      'luneaReturnInline','luneaHoraryInline'];
+    const cards = document.getElementById('cards');
+    if (!cards?.parentNode) return;
+    let anchor = cards;
+    for (const id of ids) {
+      const node = document.getElementById(id);
+      if (!node || node.parentNode !== cards.parentNode) continue;
+      if (anchor.nextSibling !== node) anchor.parentNode.insertBefore(node, anchor.nextSibling);
+      anchor = node;
+    }
+  }
+
   function ensureBottomStyle() {
     if (document.getElementById(BOTTOM_STYLE_ID)) return;
     const style = document.createElement('style');
@@ -109,7 +128,7 @@
       }
       #spreadOverlay .actionbar #${TOP_COPY_ID}{
         width:100%!important;min-height:43px!important;margin:0!important;padding:10px 9px!important;
-        grid-column:auto!important;border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
+        grid-column:1 / -1!important;border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
         background:linear-gradient(145deg,rgba(167,145,217,.10),rgba(91,125,168,.06))!important;
         color:#e9e3ef!important;font:650 11.5px/1.22 system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif!important;
         white-space:normal!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
@@ -302,6 +321,10 @@
         else setTimeout(run, 16);
       });
       observer.observe(bar, {childList:true,attributes:true,attributeFilter:['disabled']});
+      const supportParent = document.getElementById('cards')?.parentNode;
+      if (supportParent && supportParent !== bar) observer.observe(supportParent, {childList:true});
+      const cards = document.getElementById('cards');
+      if (cards) observer.observe(cards, {childList:true,subtree:true});
     }
 
   }
