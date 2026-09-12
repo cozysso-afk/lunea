@@ -17,15 +17,6 @@
   const BIRTH_TIME_KEY = 'LUNEA_BIRTH_TIME';
   const BIRTH_PLACE_KEY = 'LUNEA_BIRTH_PLACE';
 
-  const FALLBACK = {
-    thaiDay: '목요일',
-    thaiRuler: 'Jupiter ♃',
-    thaiDirect: 'Wheel',
-    thaiRuled: 'Temperance,Moon',
-    saju: '庚(경금)',
-    zodiac: 'Pisces ♓ (물고기자리)'
-  };
-
   function readProfile() {
     try {
       const raw = JSON.parse(localStorage.getItem(PROFILE_KEY) || '{}');
@@ -37,30 +28,6 @@
 
   function writeProfile(p) {
     localStorage.setItem(PROFILE_KEY, JSON.stringify(p));
-  }
-
-  function isOldHardcodedFallback(p) {
-    return (!localStorage.getItem(PROFILE_KEY)) ||
-      (
-        p &&
-        p.saju === '癸(계수)' &&
-        /^Scorpio/.test(p.zodiac || '') &&
-        p.thaiDay === '화요일'
-      );
-  }
-
-  function applySafeFallbackOnlyIfUnsaved() {
-    try {
-      const saved = localStorage.getItem(PROFILE_KEY);
-      if (saved) return;
-      if (typeof profile !== 'undefined' && isOldHardcodedFallback(profile)) {
-        profile = {...profile, ...FALLBACK};
-        writeProfile(profile);
-        if (typeof syncProfile === 'function') syncProfile();
-      }
-    } catch (e) {
-      console.warn('[Profile V2] fallback migration skipped', e);
-    }
   }
 
   function addStyles() {
@@ -240,12 +207,12 @@
 
       const next = {
         ...existing,
-        thaiDay: t[0] || existing.thaiDay || FALLBACK.thaiDay,
-        thaiRuler: t[1] || existing.thaiRuler || FALLBACK.thaiRuler,
-        thaiDirect: t[2] || existing.thaiDirect || FALLBACK.thaiDirect,
-        thaiRuled: t[3] || existing.thaiRuled || FALLBACK.thaiRuled,
-        saju: document.getElementById('saju')?.value || existing.saju || FALLBACK.saju,
-        zodiac: document.getElementById('zodiac')?.value || existing.zodiac || FALLBACK.zodiac,
+        thaiDay: thai ? (t[0] || '') : (existing.thaiDay || ''),
+        thaiRuler: thai ? (t[1] || '') : (existing.thaiRuler || ''),
+        thaiDirect: thai ? (t[2] || '') : (existing.thaiDirect || ''),
+        thaiRuled: thai ? (t[3] || '') : (existing.thaiRuled || ''),
+        saju: document.getElementById('saju')?.value ?? existing.saju ?? '',
+        zodiac: document.getElementById('zodiac')?.value ?? existing.zodiac ?? '',
         sajuDetail: getDetailFromForm(),
         profileSchema: 2
       };
@@ -377,7 +344,6 @@
   function boot() {
     addStyles();
     injectAdvancedFields();
-    applySafeFallbackOnlyIfUnsaved();
     installLoadWrapper();
     installSaveHandler();
     installSyncWrapper();
