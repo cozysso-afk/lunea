@@ -63,16 +63,21 @@
        The bottom rectangle follows the optically even ivory core so every
        context label shares one font-metric correction through slot geometry. */
     #luneaMessageOracleOverlay .mo-score{left:42.434988%;top:6.361687%;width:14.893617%;height:9.006433%;display:flex;align-items:center;justify-content:center;text-align:center;font:600 23px/1 'Noto Serif KR',serif;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.04em;white-space:nowrap;color:#745832}
-    #luneaMessageOracleOverlay .mo-score[data-digits="3"]{font-size:18px}
+    #luneaMessageOracleOverlay .mo-score-text{display:grid;place-items:center;width:100%;height:100%;text-align:center;line-height:1;transform:translateY(-1px)}
+    #luneaMessageOracleOverlay .mo-score[data-digits="3"] .mo-score-text{font-size:18px}
     #luneaMessageOracleOverlay .mo-image-slot{left:29.8%;top:18%;width:40.3%;height:33.1%}
     #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;background:transparent;margin:0}
-    #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;flex-direction:column;gap:1px;font:600 12.5px/1.15 'Noto Serif KR',serif}
+    #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;display:grid;place-items:center;font:600 12.5px/1.12 'Noto Serif KR',serif}
+    #luneaMessageOracleOverlay .mo-identity-inner{display:grid;place-content:center;width:92%;height:100%;text-align:center;gap:0;min-width:0}
+    #luneaMessageOracleOverlay .mo-name-en,#luneaMessageOracleOverlay .mo-name-ko{display:block;margin:0;line-height:1.12}
     #luneaMessageOracleOverlay .mo-name-ko{font-size:12px;font-weight:500}
-    #luneaMessageOracleOverlay .mo-message{left:11.938534%;top:62.544675%;width:76.004728%;height:14.367405%;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;padding:2px 5px;font:500 14px/1.34 'Noto Serif KR',serif;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-message{left:11.938534%;top:62.544675%;width:76.004728%;height:14.367405%;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;padding:0}
+    #luneaMessageOracleOverlay .mo-message-inner{display:flex;align-items:center;justify-content:center;width:88%;height:100%;max-height:100%;margin:auto;text-align:center}
+    #luneaMessageOracleOverlay .mo-message-text{margin:0;font:500 14px/1.46 'Noto Serif KR',serif;text-align:center;word-break:keep-all}
     #luneaMessageOracleOverlay .mo-details{position:absolute;left:13.3%;top:79.4%;width:73.4%;height:6.5%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3.8%;margin:0}
-    #luneaMessageOracleOverlay .mo-detail{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;line-height:1.25}
-    #luneaMessageOracleOverlay .mo-detail-label{font-size:10px;color:#75604a;font-weight:500}
-    #luneaMessageOracleOverlay .mo-detail-value{font-size:12px;font-weight:650;color:#493747;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-detail{display:grid;grid-template-rows:auto auto;place-content:center;place-items:center;text-align:center;gap:1px;line-height:1;min-height:0}
+    #luneaMessageOracleOverlay .mo-detail-label{display:block;margin:0;font-size:10px;line-height:1.08;color:#75604a;font-weight:500}
+    #luneaMessageOracleOverlay .mo-detail-value{display:block;margin:0;font-size:12px;line-height:1.1;font-weight:650;color:#493747;word-break:keep-all}
     #luneaMessageOracleOverlay .mo-bottom{left:34.633570%;top:89.635454%;width:30.614657%;height:3.716941%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1;color:#6d5439}
     #luneaMessageOracleOverlay .mo-full-reading{font-size:12px;line-height:1.7;margin:12px 0}
     #luneaMessageOracleOverlay .mo-full-reading summary{cursor:pointer}
@@ -97,10 +102,10 @@
       <div class="mo-card-back" aria-hidden="true"><img class="mo-back-art" src="${ASSETS.back}" alt="" width="1024" height="1536"></div>
       <article class="mo-card-front mo-result" hidden aria-label="메시지 카드 결과" aria-describedby="moScoreNote">
         <img class="mo-frame-art" src="${ASSETS.front}" alt="" aria-hidden="true" width="846" height="1399">
-        <strong class="mo-slot mo-score" aria-label="카드 기반 연락 신호 점수"></strong>
+        <strong class="mo-slot mo-score" aria-label="카드 기반 연락 신호 점수"><span class="mo-score-text"></span></strong>
         <div class="mo-slot mo-image-slot"><img class="mo-image" alt=""></div>
-        <h3 class="mo-slot mo-identity"><span class="mo-name-en"></span><span class="mo-name-ko"></span></h3>
-        <p class="mo-slot mo-message"></p><div class="mo-details"></div><div class="mo-slot mo-bottom"></div>
+        <h3 class="mo-slot mo-identity"><span class="mo-identity-inner"><span class="mo-name-en"></span><span class="mo-name-ko"></span></span></h3>
+        <div class="mo-slot mo-message"><div class="mo-message-inner"><p class="mo-message-text"></p></div></div><div class="mo-details"></div><div class="mo-slot mo-bottom"></div>
       </article>
     </div></div>
     <p class="mo-note" id="moScoreNote"><strong>연락·소식 발생·전달 신호 강도</strong> · 합격·승인·긍정 결과 확률이 아니며, 카드 상징을 환산한 지표예요.</p>
@@ -154,7 +159,7 @@
     const finish=()=>{if(flipAnimation===animation){flipAnimation=null;$('.mo-card').removeAttribute('aria-busy');$('[data-action="redraw"]').disabled=false}};
     animation.finished.then(finish,finish);
   }
-  function renderScore(score){const node=$('.mo-score');node.textContent=`${score}%`;node.dataset.digits=String(String(score).length);node.setAttribute('aria-label',`카드 기반 연락·소식 발생·전달 신호 강도 ${score}퍼센트. 결과 성공 확률이 아님`);}
+  function renderScore(score){const node=$('.mo-score');$('.mo-score-text').textContent=`${score}%`;node.dataset.digits=String(String(score).length);node.setAttribute('aria-label',`카드 기반 연락·소식 발생·전달 신호 강도 ${score}퍼센트. 결과 성공 확률이 아님`);}
   function render(animate=false){
     const d=E.describe(current),reading=E.interpret(current);$('.mo-result').hidden=!reading;$('.mo-actions').hidden=!reading;$('.mo-form').hidden=!!reading;$('.mo-result-context').hidden=!reading;
     if(!d||!reading){reveal(false);return}
@@ -162,7 +167,7 @@
     renderScore(d.score);
     $('.mo-name-en').textContent=names.english;$('.mo-name-ko').textContent=names.korean;
     const img=$('.mo-image');img.src=id.img;img.alt=id.name;
-    $('.mo-message').textContent=reading.shortMessage;
+    $('.mo-message-text').textContent=reading.shortMessage;
     $('.mo-details').replaceChildren(...reading.details.map(({label,value})=>{const cell=document.createElement('div');cell.className='mo-detail';
       const l=document.createElement('span');l.className='mo-detail-label';l.textContent=label;
       const v=document.createElement('span');v.className='mo-detail-value';v.textContent=value;cell.appendChild(l);cell.appendChild(v);return cell}));

@@ -65,7 +65,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=102','./lunea-message-oracle-ui-v1.js?v=108']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=109']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -135,7 +135,7 @@ test('non-romantic priority cards use context-safe visible messages without chan
  const codes=['Devil','Tower','Justice','Hierophant','Judgement','World','High Priestess','Swords11','Swords08','Cups02','Fool'];
  for(const context of ['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL'])for(const code of codes){
   const result=api.result('합성 비연애 질문',context,code),before=result.score,d=api.describe(result),message=p.visibleMessage(d);
-  const guidance=p.visibleContextMessage(d);assert.ok(message.length>=35&&message.length<=110,context+' '+code);assert.doesNotMatch(message+' '+guidance,/강한 관심|집착성|호감|연애/);assert.equal(result.score,before);
+  const guidance=p.visibleContextMessage(d);assert.ok(message.length>=20&&message.length<=60,context+' '+code);assert.doesNotMatch(message+' '+guidance,/강한 관심|집착성|호감|연애/);assert.equal(result.score,before);
  }
 });
 
@@ -159,7 +159,7 @@ test('Devil work result distinguishes contact strength from outcome and gives co
  const h=harness({reduced:true}),api=h.context.LUNEA_MESSAGE_ORACLE_V1,p=h.context.__messagePresentation;
  const result=api.result('면접 결과','WORK_BIZ','Devil'),d=api.describe(result);
  assert.equal(d.score,67);
- assert.equal(p.visibleMessage(d),'연락·결과 통지 신호는 중간 이상이에요. 내부 제약과 압박으로 검토가 반복될 수 있으며, 연락과 긍정 결과는 별개예요.');
+ assert.equal(p.visibleMessage(d),'결과 통지 신호는 중간 이상이에요. 제약·압박으로 검토가 반복되며, 연락과 긍정 결과는 별개예요.');
  assert.deepEqual(JSON.parse(JSON.stringify(p.detailCells(d))),[
   {label:'통지',value:'중간 이상'},{label:'검토',value:'반복 가능'},{label:'제약',value:'큼'},{label:'속도',value:'지연 가능'}
  ]);
@@ -176,10 +176,10 @@ test('all 78 restored identities get stable names and upright canonical images w
 });
 
 
-test('score typography distinguishes 9%, 34% and 100% without changing a result',()=>{
- const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[100,'3']]){h.context.__messagePresentation.renderScore(score);assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits);assert.match(h.query('.mo-score').getAttribute('aria-label'),/결과 성공 확률이 아님/)}assert.equal(h.draws(),0);
+test('score typography distinguishes 9%, 34%, 57%, 67% and 100% without changing a result',()=>{
+ const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[57,'2'],[67,'2'],[100,'3']]){h.context.__messagePresentation.renderScore(score);assert.equal(h.query('.mo-score-text').textContent,score+'%');assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits);assert.match(h.query('.mo-score').getAttribute('aria-label'),/결과 성공 확률이 아님/)}assert.equal(h.draws(),0);
 });
-test('approved source-space slots center score, multiline message, and every context label without transforms',()=>{
+test('approved source-space slots keep geometry while inner typography is optically centered',()=>{
  const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
  const rule=name=>css.match(new RegExp(`#luneaMessageOracleOverlay \\.${name}\\{([^}]*)\\}`))?.[1]||'';
  const value=(body,property)=>Number(body.match(new RegExp(`${property}:([\\d.]+)%`))?.[1]);
@@ -197,7 +197,20 @@ test('approved source-space slots center score, multiline message, and every con
  assert.equal(specs['mo-score'].x+specs['mo-score'].w/2,422);assert.equal(specs['mo-score'].y+specs['mo-score'].h/2,152);
  assert.equal(specs['mo-message'].x+specs['mo-message'].w/2,422.5);assert.equal(specs['mo-message'].y+specs['mo-message'].h/2,975.5);
  assert.equal(specs['mo-bottom'].x+specs['mo-bottom'].w/2,422.5);assert.equal(specs['mo-bottom'].y+specs['mo-bottom'].h/2,1280);
- assert.match(rule('mo-message'),/margin:0/);assert.match(rule('mo-message'),/padding:2px 5px/);assert.match(rule('mo-bottom'),/line-height:1/);
+ assert.match(rule('mo-message'),/margin:0/);assert.match(rule('mo-message'),/padding:0/);assert.match(rule('mo-bottom'),/line-height:1/);
+ const scoreText=rule('mo-score-text'),messageInner=rule('mo-message-inner'),messageText=rule('mo-message-text');
+ assert.match(scoreText,/display:grid/);assert.match(scoreText,/place-items:center/);assert.match(scoreText,/line-height:1/);assert.match(scoreText,/transform:translateY\(-1px\)/);
+ assert.match(messageInner,/display:flex/);assert.match(messageInner,/align-items:center/);assert.match(messageInner,/justify-content:center/);assert.match(messageInner,/width:88%/);assert.match(messageInner,/max-height:100%/);
+ assert.match(messageText,/margin:0/);assert.match(messageText,/font:500 14px\/1\.46/);assert.match(messageText,/text-align:center/);
+});
+test('title and each detail pair are centered as compact typographic units',()=>{
+ const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
+ const rule=name=>css.match(new RegExp(`#luneaMessageOracleOverlay \\.${name}\\{([^}]*)\\}`))?.[1]||'';
+ assert.match(rule('mo-identity'),/display:grid/);assert.match(rule('mo-identity'),/place-items:center/);
+ assert.match(rule('mo-identity-inner'),/display:grid/);assert.match(rule('mo-identity-inner'),/place-content:center/);assert.match(rule('mo-identity-inner'),/text-align:center/);
+ assert.match(rule('mo-detail'),/display:grid/);assert.match(rule('mo-detail'),/place-content:center/);assert.match(rule('mo-detail'),/place-items:center/);assert.match(rule('mo-detail'),/gap:1px/);
+ assert.match(rule('mo-detail-label'),/margin:0/);assert.match(rule('mo-detail-value'),/margin:0/);
+ assert.ok(h.query('.mo-identity-inner'));assert.ok(h.query('.mo-message-inner'));assert.ok(h.query('.mo-message-text'));
 });
 test('header uses the approved transparent PNG logo and styles scope the dark input override to Message',()=>{
  const h=harness();assert.equal(h.query('.mo-symbol').tagName,'img');assert.equal(h.query('.mo-symbol').getAttribute('src'),'./assets/message-oracle/message_oracle_logo.png?v=101');assert.equal(h.query('.mo-symbol').getAttribute('aria-hidden'),'true');

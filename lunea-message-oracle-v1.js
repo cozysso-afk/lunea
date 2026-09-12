@@ -239,11 +239,25 @@
     return /사랑|호감|마음|연애|감정|집착|수줍|그리움|아쉬움/.test(card.contactStyle)?SAFE_PROFILE_STYLE[card.profile]:card.contactStyle;
   }
   function signalName(intent,context){
-    const names={REPLY:'회신',RESULT_NOTICE:'결과 통지',APPROVAL:'승인·선정 통지',RECONTACT:'재접촉',SOCIAL_OBSERVE:'온라인 관찰·확인',SOCIAL_ACTION:'온라인 직접 반응',SCHEDULE:'일정 확정 연락',PERSONAL_NEWS:'지인 소식',GENERAL_NEWS:CONTEXT_COPY[context].signal};
-    return names[intent]||CONTEXT_COPY[context].signal;
+    const general={LOVE:'연락·응답',REUNION:'재접촉',OFFICIAL:'공식 통지',WORK_BIZ:'업무 회신',SOCIAL:'온라인 반응',PERSONAL:'개인 소식',GENERAL:'연락·소식'};
+    const names={REPLY:'회신',RESULT_NOTICE:'결과 통지',APPROVAL:'승인 통지',RECONTACT:'재접촉',SOCIAL_OBSERVE:'온라인 관찰',SOCIAL_ACTION:'온라인 반응',SCHEDULE:'일정 연락',PERSONAL_NEWS:'지인 소식',GENERAL_NEWS:general[context]};
+    return names[intent]||general[context];
   }
   function strengthSentence(signal,score){
     return score>=75?`${signal} 신호가 강해요.`:score>=55?`${signal} 신호는 중간 이상이에요.`:score>=35?`${signal} 신호는 제한적이고 조율이 필요해요.`:`${signal} 신호는 약하며 대기·지연 쪽이에요.`;
+  }
+  function shortStrengthSentence(signal,score){
+    return score>=75?`${signal} 신호가 강해요.`:score>=55?`${signal} 신호는 중간 이상이에요.`:score>=35?`${signal} 신호는 제한적이에요.`:`${signal} 신호는 약하고 지연돼요.`;
+  }
+  function shortStyleFor(card,context){
+    const style=safeStyle(card,context);
+    return ({
+      '용건이 분명한 직접 전달':'직접 전달','상호 확인이 오가는 전달':'상호 회신',
+      '기준과 절차를 따른 전달':'절차형 전달','확인·관찰이 앞서는 간접 신호':'확인·관찰 우선',
+      '이전 사안이 다시 이어지는 전달':'이전 사안 재개','보류·대기가 앞서는 흐름':'보류·대기',
+      '예고 없이 움직이는 전달':'돌발 전달','실무·조건을 확인하는 전달':'조건 확인',
+      '압박·이견이 얽힌 전달':'제약·압박','종결·완료를 알리는 전달':'완료 통지'
+    })[style]||style;
   }
   function caveatFor(card,context,intent){
     if(intent==='RESULT_NOTICE')return'연락 강도와 결과의 유불리는 별개예요.';
@@ -260,15 +274,35 @@
     if(has('마무리'))return'마무리 통지가 새로운 시작을 뜻하지는 않아요.';
     return CONTEXT_COPY[context].caveat;
   }
+  function shortCaveatFor(card,context,intent){
+    if(intent==='RESULT_NOTICE')return'소식과 결과의 유불리는 별개예요.';
+    if(intent==='APPROVAL')return'소식과 승인 여부는 별개예요.';
+    if(intent==='SOCIAL_OBSERVE')return'관찰과 직접 행동은 별개예요.';
+    if(intent==='SOCIAL_ACTION')return'반응과 지속 연락은 별개예요.';
+    if(intent==='RECONTACT')return'연락과 관계 회복은 별개예요.';
+    if(intent==='SCHEDULE')return'최종 확정 전에는 바뀔 수 있어요.';
+    const has=(...values)=>values.some(value=>card.tags.includes(value));
+    if(has('관망'))return'관찰과 직접 행동은 별개예요.';
+    if(has('불확실'))return'간접 신호를 확답으로 보지 말아요.';
+    if(has('차단/제약','지연'))return'제약·지연을 확인해야 해요.';
+    if(has('갑작스러운 소식','변경/충격'))return'빠른 소식과 긍정 결과는 별개예요.';
+    if(has('마무리'))return'마무리 통지와 새 시작은 별개예요.';
+    return ({
+      LOVE:'연락과 관계 방향은 별개예요.',REUNION:'연락과 관계 회복은 별개예요.',
+      OFFICIAL:'소식과 승인 여부는 별개예요.',WORK_BIZ:'회신과 최종 결과는 별개예요.',
+      SOCIAL:'반응과 직접 연락은 별개예요.',PERSONAL:'소식과 관계 변화는 별개예요.',
+      GENERAL:'소식과 결과 방향은 별개예요.'
+    })[context];
+  }
   const SPECIAL_MESSAGES=Object.freeze({
-    'High Priestess|LOVE|CONTACT_ARRIVAL':'상대를 의식하고 지켜보는 신호는 있지만 직접 연락 행동은 약해요. 생각과 실제 행동을 구분해서 봐야 해요.',
-    'High Priestess|SOCIAL|SOCIAL_OBSERVE':'온라인 관찰·확인 신호는 강한 편이에요. 다만 보고 있는 것과 직접 DM하는 것은 별개예요.',
-    'High Priestess|WORK_BIZ|RESULT_NOTICE':'내부 확인이나 비공개 검토가 이어지는 흐름이에요. 직접 결과 통지까지는 시간이 더 필요할 수 있어요.',
-    'Justice|OFFICIAL|RESULT_NOTICE':'결정·통지 신호는 강한 편이에요. 공식 기준과 절차를 거친 안내에 가깝지만, 결과의 유불리는 카드 점수와 별개예요.',
-    'Swords11|SOCIAL|SOCIAL_OBSERVE':'확인·관찰 신호가 강해요. 직접 메시지보다 먼저 지켜보거나 정보를 확인하는 흐름이에요.',
-    'Swords11|SOCIAL|SOCIAL_ACTION':'온라인 관심은 있지만 직접 DM 행동은 그보다 약해요. 관찰과 실제 접촉을 구분해서 봐야 해요.',
-    'Tower|WORK_BIZ|RESULT_NOTICE':'갑작스러운 연락이나 변경 통지 신호가 강해요. 빠른 소식일 수 있지만 긍정 결과를 뜻하지는 않아요.',
-    'Devil|WORK_BIZ|RESULT_NOTICE':'연락·결과 통지 신호는 중간 이상이에요. 내부 제약과 압박으로 검토가 반복될 수 있으며, 연락과 긍정 결과는 별개예요.'
+    'High Priestess|LOVE|CONTACT_ARRIVAL':'관찰 신호는 있지만 직접 연락은 약해요. 생각과 행동은 구분해야 해요.',
+    'High Priestess|SOCIAL|SOCIAL_OBSERVE':'온라인 관찰 신호는 강해요. 확인과 직접 DM은 별개예요.',
+    'High Priestess|WORK_BIZ|RESULT_NOTICE':'비공개 검토가 이어져요. 직접 결과 통지는 더 늦어질 수 있어요.',
+    'Justice|OFFICIAL|RESULT_NOTICE':'결정·통지 신호는 강해요. 공식 절차를 따르지만 결과의 유불리는 별개예요.',
+    'Swords11|SOCIAL|SOCIAL_OBSERVE':'확인·관찰 신호가 강해요. 직접 메시지보다 정보 확인이 앞서요.',
+    'Swords11|SOCIAL|SOCIAL_ACTION':'온라인 관심은 있지만 직접 DM은 더 약해요. 관찰과 접촉은 별개예요.',
+    'Tower|WORK_BIZ|RESULT_NOTICE':'갑작스러운 변경 통지 신호가 강해요. 빠른 소식과 긍정 결과는 별개예요.',
+    'Devil|WORK_BIZ|RESULT_NOTICE':'결과 통지 신호는 중간 이상이에요. 제약·압박으로 검토가 반복되며, 연락과 긍정 결과는 별개예요.'
   });
   const shortTag=value=>({'직접 연락':'직접','SNS/온라인':'온라인','공식 경로':'공식','제3자/중간 전달':'중간 전달','갑작스러운 소식':'돌발','상호 호응':'호응','차단/제약':'제약','문서/결과':'문서','거리/선택':'거리','조심스러운 시작':'조심','변경/충격':'변경','빠른 진행':'빠름','초대/약속':'약속','가족/모임':'모임','업무 회신':'실무','결과 통보':'통지','반복 연락':'반복'})[value]||value;
   const signalValue=score=>score>=75?'강함':score>=55?'중간 이상':score>=35?'제한적':'약함';
@@ -327,9 +361,9 @@
     const d=describe(candidate);if(!d)return null;
     const intent=classifyIntent(d.question,d.context),axes=semanticProfile(d.card),group=formGroup(d.card,d.context,intent,axes);
     const form=FORM_COPY[group][d.context]||FORM_COPY[group].DEFAULT;
-    const style=safeStyle(d.card,d.context),signal=signalName(intent,d.context),caveat=caveatFor(d.card,d.context,intent);
+    const style=safeStyle(d.card,d.context),shortStyle=shortStyleFor(d.card,d.context),signal=signalName(intent,d.context),caveat=caveatFor(d.card,d.context,intent);
     const specialKey=`${d.cardCode}|${d.context}|${intent}`;
-    const shortMessage=SPECIAL_MESSAGES[specialKey]||`${strengthSentence(signal,d.score)} ${form} 쪽의 ${style} 흐름이에요. ${caveat}`;
+    const shortMessage=SPECIAL_MESSAGES[specialKey]||`${shortStrengthSentence(signal,d.score)} ${shortStyle} 흐름이에요. ${shortCaveatFor(d.card,d.context,intent)}`;
     const strength=d.score>=75?'전달 동력이 강한 편이에요':d.score>=55?'전달 가능성이 중간 이상이에요':d.score>=35?'추가 확인과 조율이 필요해요':'지금은 대기와 지연 쪽이 강해요';
     const fullMessage=`이 질문은 ${INTENTS[intent]} 흐름으로 읽어요. ${style} 성격과 ${form} 신호를 함께 보면 ${strength}. ${caveat}`;
     return Object.freeze({

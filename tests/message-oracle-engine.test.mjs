@@ -87,13 +87,13 @@ test('interpret API works without storage timestamps and is deeply deterministic
  assert.equal(a.details.length,4);assert.ok(a.shortMessage);assert.ok(a.fullMessage);assert.ok(a.caveat);assert.equal(a.contextLabel,'업무');
 });
 
-test('all 78 x 7 visible interpretations are nonempty, bounded, context-safe and diverse',()=>{
+test('all 78 x 7 visible interpretations are nonempty, card-fit bounded, context-safe and diverse',()=>{
  const questions={LOVE:'그가 연락할까?',REUNION:'전남친이 다시 연락할까?',OFFICIAL:'심사 결과 연락 올까?',WORK_BIZ:'면접 결과 연락 올까?',SOCIAL:'내 인스타 스토리 보고 있을까?',PERSONAL:'오래 연락 없던 친구 소식 올까?',GENERAL:'새로운 소식이 궁금해'};
- const nonRomantic=new Set(['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']),all=[];
+ const nonRomantic=new Set(['OFFICIAL','WORK_BIZ','SOCIAL','PERSONAL','GENERAL']),all=[],shortLengths=[];
  for(const card of E.cards)for(const context of Object.keys(E.CONTEXTS)){
   const value=E.result(questions[context],context,card.code,'2026-09-11T00:00:00Z'),reading=E.interpret(value);
   assert.ok(reading.shortMessage);assert.ok(reading.fullMessage);assert.ok(reading.caveat);assert.equal(reading.details.length,4);
-  assert.ok(reading.shortMessage.length<=110,`${card.code} ${context} short ${reading.shortMessage.length}`);
+  assert.ok(reading.shortMessage.length<=60,`${card.code} ${context} short ${reading.shortMessage.length}`);shortLengths.push(reading.shortMessage.length);
   assert.ok(reading.fullMessage.length<=125,`${card.code} ${context} full ${reading.fullMessage.length}`);
   for(const detail of reading.details){assert.ok(detail.label&&detail.value);assert.ok(detail.label.length<=5);assert.ok(detail.value.length<=5)}
   const visible=reading.shortMessage+' '+reading.fullMessage+' '+reading.details.map(x=>x.label+x.value).join(' ');
@@ -105,7 +105,21 @@ test('all 78 x 7 visible interpretations are nonempty, bounded, context-safe and
  const distinct=new Set(all.map(x=>x.shortMessage)).size;
  assert.ok(distinct>=450,`distinct short messages ${distinct}`);
  assert.equal(E.diagnostics.specialOverrideCount,8);assert.equal(E.diagnostics.fallbackCount,0);
- console.log(`Message Oracle quality: ${distinct} distinct short messages / ${E.diagnostics.specialOverrideCount} overrides / ${E.diagnostics.fallbackCount} fallbacks`);
+ const maximum=Math.max(...shortLengths),average=shortLengths.reduce((sum,n)=>sum+n,0)/shortLengths.length;
+ assert.ok(maximum<=60);assert.ok(average<52,`average short message ${average}`);
+ console.log(`Message Oracle quality: ${distinct} distinct / max ${maximum} / avg ${average.toFixed(2)} / ${E.diagnostics.specialOverrideCount} overrides / ${E.diagnostics.fallbackCount} fallbacks`);
+});
+
+test('card-facing message budget holds across every intent-triggering prompt and context',()=>{
+ const prompts=['그가 연락할까?','내 카톡에 답장할까?','면접 결과 연락 올까?','승인됐다는 연락이 올까?','전남친이 다시 연락할까?','내 인스타 스토리 보고 있을까?','DM 보낼까?','미팅 일정 확정 연락 올까?','오래 연락 없던 친구 소식 올까?','새로운 소식이 궁금해','합성 비연애 질문'];
+ const lengths=[];
+ for(const card of E.cards)for(const context of Object.keys(E.CONTEXTS))for(const question of prompts){
+  const message=E.interpret({question,context,cardCode:card.code}).shortMessage;lengths.push(message.length);
+  assert.ok(message.length<=60,`${card.code} ${context} ${E.classifyIntent(question,context)} ${message.length}`);
+ }
+ const maximum=Math.max(...lengths),average=lengths.reduce((sum,n)=>sum+n,0)/lengths.length;
+ assert.equal(maximum,59);assert.equal(lengths.filter(length=>length>60).length,0);
+ console.log(`Message Oracle fit budget: ${lengths.length} interpretations / max ${maximum} / avg ${average.toFixed(2)} / 0 over budget`);
 });
 
 test('every supported intent returns a useful deterministic result',()=>{
@@ -120,16 +134,32 @@ test('every supported intent returns a useful deterministic result',()=>{
 
 test('priority cards keep intent-specific distinctions without score changes',()=>{
  const cases=[
-  ['그가 연락할까?','LOVE','High Priestess',/지켜보는 신호/],
-  ['내 인스타 스토리 보고 있을까?','SOCIAL','High Priestess',/관찰·확인/],
+  ['그가 연락할까?','LOVE','High Priestess',/관찰 신호/],
+  ['내 인스타 스토리 보고 있을까?','SOCIAL','High Priestess',/온라인 관찰 신호/],
   ['면접 결과 연락 올까?','WORK_BIZ','High Priestess',/비공개 검토/],
   ['심사 결과 연락 올까?','OFFICIAL','Justice',/결과의 유불리/],
   ['내 인스타 스토리 보고 있을까?','SOCIAL','Swords11',/확인·관찰/],
-  ['DM 보낼까?','SOCIAL','Swords11',/직접 DM 행동/],
-  ['면접 결과 연락 올까?','WORK_BIZ','Tower',/긍정 결과를 뜻하지/],
+  ['DM 보낼까?','SOCIAL','Swords11',/직접 DM은 더 약/],
+  ['면접 결과 연락 올까?','WORK_BIZ','Tower',/빠른 소식과 긍정 결과는 별개/],
   ['면접 결과','WORK_BIZ','Devil',/연락과 긍정 결과는 별개/]
  ];
  for(const [question,context,cardCode,pattern] of cases){const before=E.result(question,context,cardCode).score,reading=E.interpret({question,context,cardCode});assert.match(reading.shortMessage,pattern);assert.equal(reading.score,before);assert.equal(reading.specialOverride,true)}
+});
+
+test('representative card-facing messages stay concise while full messages retain context and caveats',()=>{
+ const cases=[
+  ['전남친이 다시 연락할까?','REUNION','Temperance'],['면접 결과 연락 올까?','WORK_BIZ','Devil'],
+  ['심사 결과 연락 올까?','OFFICIAL','Justice'],['내 인스타 스토리 보고 있을까?','SOCIAL','Swords11'],
+  ['그가 연락할까?','LOVE','Cups02'],['면접 결과 연락 올까?','WORK_BIZ','Tower']
+ ];
+ for(const [question,context,cardCode] of cases){
+  const reading=E.interpret({question,context,cardCode});assert.ok(reading.shortMessage.length<=60,`${context} ${cardCode}`);
+  assert.ok(reading.fullMessage.length>reading.shortMessage.length,`${context} ${cardCode} full nuance`);
+  assert.equal(reading.score,E.result(question,context,cardCode).score);
+ }
+ const temperance=E.interpret({question:'전남친이 다시 연락할까?',context:'REUNION',cardCode:'Temperance'});
+ assert.equal(temperance.shortMessage,'재접촉 신호는 중간 이상이에요. 간격을 조율하는 회신 흐름이에요. 연락과 관계 회복은 별개예요.');
+ assert.match(temperance.fullMessage,/오래된 채널의 재접촉/);assert.match(temperance.fullMessage,/실제 관계 회복은 별개/);
 });
 
 test('all requested priority cards stay useful and non-romantic in result-notice contexts',()=>{
