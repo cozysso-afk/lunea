@@ -133,7 +133,7 @@
       stateReturn.selected=bodies;stateReturn.place=selectedPlace;stateReturn.result=data;render();renderInline();notifyAttachmentChanged();
       $('astroReturnStatus').textContent=`계산 완료 · ${data.location?.place_resolved||'위치'} 기준`;
     }catch(e){if(!current())return;$('astroReturnStatus').textContent='계산 실패: '+(e?.message||e)}
-    finally{if(current()){btn.disabled=false;btn.textContent='↻ 리턴 계산'}}
+    finally{if(requestEpoch===window.LUNEA_ASTRO_REQUEST_V1.generation('reading')){btn.disabled=false;btn.textContent='↻ 리턴 계산';if(!current())$('astroReturnStatus').textContent='질문이 바뀌어 이전 계산을 사용하지 않았어. 다시 계산해줘.';}}
   }
 
   function render(){

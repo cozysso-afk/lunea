@@ -43,3 +43,8 @@ test('Return production success still renders and restores the run button',async
  vm.runInContext(read('astro-return-v1.js').replace('  function boot(){','  window.testRunReturn=run;\n  function boot(){'),h.c);
  h.node('astroReturnPlace').value='서울';await h.c.testRunReturn();assert.equal(h.node('astroReturnRun').disabled,false);assert.match(h.node('astroReturnStatus').textContent,/계산 완료/);
 });
+test('editing Horary input during a request clears the calculating status as well as button',async()=>{
+ let resolve;const h=harness(()=>new Promise(r=>resolve=r));const src=read('astro-horary-v1.js'),end=src.lastIndexOf('})();');vm.runInContext(src.slice(0,end)+'window.testRunHorary=runHorary;'+src.slice(end),h.c);
+ for(const [k,v] of Object.entries({astroHoraryQuestion:'연락이 올까?',astroHoraryMoment:'2026-09-12T12:00',astroHoraryPlace:'서울',astroHoraryTopic:'contact'}))h.node(k).value=v;
+ const p=h.c.testRunHorary();await flush();h.node('astroHoraryQuestion').value='다른 질문';resolve({ok:true,json:async()=>({schema:'LUNEA_HORARY_V1'})});await p;assert.equal(h.node('astroHoraryRun').disabled,false);assert.match(h.node('astroHoraryStatus').textContent,/입력이 바뀌어/);
+});

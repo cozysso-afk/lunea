@@ -437,7 +437,8 @@
       $('astroHoraryActions').classList.remove('show');
     } finally {
       if(sequence===calculationSequence){button.disabled = false;
-      button.textContent = '☿ 호라리 차트 계산';}
+      button.textContent = '☿ 호라리 차트 계산';
+      if(!current()){$('astroHoraryStatus').className='horary-status';$('astroHoraryStatus').textContent='입력이 바뀌어 이전 계산을 사용하지 않았어. 다시 계산해줘.';}}
     }
   }
 
