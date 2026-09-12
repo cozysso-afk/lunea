@@ -163,6 +163,35 @@ test('production action owner orders coexisting support nodes, leaves intimacy i
  h.context.LUNEA_READING_ACTION_ORDER_V33.reorder();
  assert.equal(h.query('#luneaMessageOracleInline'),null);assert.ok(h.query('#luneaTimingInline'));
 });
+test('final action ranks preserve handlers and canonical relative order with optional controls',()=>{
+ const h=supportHarness();
+ const expected=['flipAll','extraCard','saveReading','retry','timingSupportBtn','luneaMessageOracleSupportBtn','astroTransitBtn','astroReturnBtn','astroHoraryBtn','thaiTaksaBtn','luneaThaiTarotRangeBtn','aiRead','luneaTopCopyPrompt'];
+ h.bar.replaceChildren();
+ const handler=()=>{};
+ for(const id of [...expected].reverse()){const n=h.document.createElement('button');n.id=id;n.addEventListener('click',handler);h.bar.appendChild(n)}
+ let source=read('lunea-reading-action-order-v33.js');source=source.slice(0,source.lastIndexOf('  if (document.readyState'))+'})();';vm.runInContext(source,h.context);
+ const api=h.context.LUNEA_READING_ACTION_ORDER_V33;api.reorder();
+ assert.deepEqual(h.bar.children.map(n=>n.id),expected);assert.ok(h.bar.children.every(n=>n.events.click[0]===handler));
+ h.query('#thaiTaksaBtn').id='luneaThaiTarotBridgeBtn';h.query('#astroReturnBtn').remove();api.reorder();
+ assert.deepEqual(h.bar.children.map(n=>n.id),expected.filter(id=>id!=='astroReturnBtn').map(id=>id==='thaiTaksaBtn'?'luneaThaiTarotBridgeBtn':id));
+ assert.match(source,/actionbar\.actionbar\{[\s\S]*?repeat\(3,minmax\(0,1fr\)\)/);
+ assert.match(source,/ORDER\.map\(\(id,index\)=>/);assert.match(source,/grid-column:1 \/ -1!important/);
+});
+test('one card coordinate scale keeps aspect and typographic ratios with symmetric content gutters',()=>{
+ const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
+ assert.match(css,/width:calc\(100% - 32px\);max-width:340px;aspect-ratio:846\/1399;container-type:inline-size/);
+ for(const viewport of [390,402,430]){const content=viewport-24-2-32,card=Math.min(340,content-32);assert.equal((content-card)/2,16);assert.ok(card<content);assert.ok(4.242424*card/100>=12.5)}
+ assert.match(css,/font:500 4\.242424cqw\/1\.46/);assert.match(css,/word-break:normal;overflow-wrap:normal;text-wrap:pretty/);
+ assert.doesNotMatch(css,/line-clamp|text-overflow:ellipsis/);
+});
+test('standalone and support opening plus redraw reset stale sheet scroll without extra draws',async()=>{
+ const h=supportHarness(),sheet=h.query('.mo-sheet');sheet.scrollTop=900;sheet.scrollLeft=8;
+ await h.entry.click();assert.equal(sheet.scrollTop,0);assert.equal(sheet.scrollLeft,0);assert.equal(h.draws(),0);
+ sheet.scrollTop=900;await h.api.open();assert.equal(sheet.scrollTop,0);assert.equal(h.draws(),0);
+ await h.query('.mo-form').emit('submit');await h.finishFlips();sheet.scrollTop=900;
+ await h.query('.mo-close').click();await h.api.open();assert.equal(sheet.scrollTop,0);assert.equal(h.draws(),1);
+ sheet.scrollTop=900;await h.query('[data-action="redraw"]').click();await h.finishFlips();assert.equal(sheet.scrollTop,0);assert.equal(h.draws(),2);
+});
 test('first entry installs final style before opening and base draw has no API/state mutation',async()=>{
  const h=harness();assert.ok(h.query('#luneaMessageOracleStyle'));assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,undefined);
  await start(h);assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.query('.mo-result').hidden,false);assert.equal(h.query('.mo-form').hidden,true);assert.equal(h.query('.mo-image').src,'https://commons.wikimedia.org/wiki/Special:FilePath/RWS_Tarot_00_Fool.jpg');
@@ -193,7 +222,7 @@ test('actual loader Message group loads only engine+UI, gates/replays entry once
  const h=harness({loader:true});assert.equal(h.context.__messageTest.groupForTarget(h.entry),'message');assert.equal(h.context.__messageTest.groupForTarget(h.entry.parentElement),null);
  assert.equal(h.query('#luneaMessageOracleOverlay'),null);
  await h.document.emit('click',{target:h.entry});await new Promise(setImmediate);await new Promise(setImmediate);
- assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=20260912-message-support-1']);
+ assert.deepEqual(h.loaded,['./lunea-message-oracle-v1.js?v=103','./lunea-message-oracle-ui-v1.js?v=20260912-message-polish-1']);
  assert.equal(h.query('#luneaMessageOracleOverlay').dataset.open,'true');assert.equal(h.draws(),0);
  assert.ok(h.document.head.children.findIndex(n=>n.id==='luneaMessageOracleStyle')>=0);
 });
@@ -305,7 +334,7 @@ test('all 78 restored identities get stable names and upright canonical images w
 
 
 test('score typography distinguishes 9%, 34%, 57%, 67% and 100% without changing a result',()=>{
- const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[57,'2'],[67,'2'],[100,'3']]){h.context.__messagePresentation.renderScore(score);assert.equal(h.query('.mo-score-text').textContent,score+'%');assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits);assert.match(h.query('.mo-score').getAttribute('aria-label'),/결과 성공 확률이 아님/)}assert.equal(h.draws(),0);
+ const h=harness();for(const [score,digits] of [[9,'1'],[34,'2'],[57,'2'],[67,'2'],[68,'2'],[100,'3']]){h.context.__messagePresentation.renderScore(score);assert.equal(h.query('.mo-score-text').textContent,score+'%');assert.equal(h.query('.mo-score').textContent,score+'%');assert.equal(h.query('.mo-score').dataset.digits,digits);assert.match(h.query('.mo-score').getAttribute('aria-label'),/결과 성공 확률이 아님/)}assert.equal(h.draws(),0);
 });
 test('approved source-space slots keep geometry while inner typography is optically centered',()=>{
  const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
@@ -327,16 +356,16 @@ test('approved source-space slots keep geometry while inner typography is optica
  assert.equal(specs['mo-bottom'].x+specs['mo-bottom'].w/2,422.5);assert.equal(specs['mo-bottom'].y+specs['mo-bottom'].h/2,1280);
  assert.match(rule('mo-message'),/margin:0/);assert.match(rule('mo-message'),/padding:0/);assert.match(rule('mo-bottom'),/line-height:1/);
  const scoreText=rule('mo-score-text'),messageInner=rule('mo-message-inner'),messageText=rule('mo-message-text');
- assert.match(scoreText,/display:grid/);assert.match(scoreText,/place-items:center/);assert.match(scoreText,/line-height:1/);assert.match(scoreText,/transform:translateY\(-1px\)/);
+ assert.match(scoreText,/display:grid/);assert.match(scoreText,/place-items:center/);assert.match(scoreText,/line-height:1/);assert.match(scoreText,/transform:translateY\(-\.30303cqw\)/);
  assert.match(messageInner,/display:flex/);assert.match(messageInner,/align-items:center/);assert.match(messageInner,/justify-content:center/);assert.match(messageInner,/width:88%/);assert.match(messageInner,/max-height:100%/);
- assert.match(messageText,/margin:0/);assert.match(messageText,/font:500 14px\/1\.46/);assert.match(messageText,/text-align:center/);
+ assert.match(messageText,/margin:0/);assert.match(messageText,/font:500 4\.242424cqw\/1\.46/);assert.match(messageText,/text-align:center/);
 });
 test('title and each detail pair are centered as compact typographic units',()=>{
  const h=harness(),css=h.query('#luneaMessageOracleStyle').textContent;
  const rule=name=>css.match(new RegExp(`#luneaMessageOracleOverlay \\.${name}\\{([^}]*)\\}`))?.[1]||'';
  assert.match(rule('mo-identity'),/display:grid/);assert.match(rule('mo-identity'),/grid-template: minmax\(0,1fr\)\/minmax\(0,1fr\)/);assert.match(rule('mo-identity'),/place-items:stretch/);
  assert.match(rule('mo-identity-inner'),/display:grid/);assert.match(rule('mo-identity-inner'),/place-content:center/);assert.match(rule('mo-identity-inner'),/place-self:stretch/);assert.match(rule('mo-identity-inner'),/margin:0 4%/);assert.match(rule('mo-identity-inner'),/text-align:center/);
- assert.match(rule('mo-detail'),/display:grid/);assert.match(rule('mo-detail'),/place-content:center/);assert.match(rule('mo-detail'),/place-items:center/);assert.match(rule('mo-detail'),/gap:1px/);
+ assert.match(rule('mo-detail'),/display:grid/);assert.match(rule('mo-detail'),/place-content:center/);assert.match(rule('mo-detail'),/place-items:center/);assert.match(rule('mo-detail'),/gap:\.30303cqw/);
  assert.match(rule('mo-detail-label'),/margin:0/);assert.match(rule('mo-detail-value'),/margin:0/);
  assert.ok(h.query('.mo-identity-inner'));assert.ok(h.query('.mo-message-inner'));assert.ok(h.query('.mo-message-text'));
 });

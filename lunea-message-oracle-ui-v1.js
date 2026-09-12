@@ -47,7 +47,7 @@
     #luneaMessageOracleOverlay .mo-primary{width:100%;background:linear-gradient(110deg,#796184,#5c506e);color:#fff;border-color:#796184}
     /* Source-space slot map on the 846 x 1399 approved front; percentages
        refer to its unmodified full canvas, not the RWS image dimensions. */
-    #luneaMessageOracleOverlay .mo-card{position:relative;width:330px;max-width:100%;aspect-ratio:846/1399;margin:18px auto 10px;perspective:1100px}
+    #luneaMessageOracleOverlay .mo-card{position:relative;width:calc(100% - 32px);max-width:340px;aspect-ratio:846/1399;container-type:inline-size;margin:18px auto 10px;perspective:1100px}
     #luneaMessageOracleOverlay .mo-card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateY(0deg)}
     #luneaMessageOracleOverlay .mo-card[data-face="front"] .mo-card-inner{transform:rotateY(180deg)}
     #luneaMessageOracleOverlay .mo-card-back,#luneaMessageOracleOverlay .mo-card-front{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}
@@ -62,23 +62,23 @@
        score 359,89 126x126; message 101,875 643x201; bottom 293,1254 259x52.
        The bottom rectangle follows the optically even ivory core so every
        context label shares one font-metric correction through slot geometry. */
-    #luneaMessageOracleOverlay .mo-score{left:42.434988%;top:6.361687%;width:14.893617%;height:9.006433%;display:flex;align-items:center;justify-content:center;text-align:center;font:600 23px/1 'Noto Serif KR',serif;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.04em;white-space:nowrap;color:#745832}
-    #luneaMessageOracleOverlay .mo-score-text{display:grid;place-items:center;width:100%;height:100%;text-align:center;line-height:1;transform:translateY(-1px)}
-    #luneaMessageOracleOverlay .mo-score[data-digits="3"] .mo-score-text{font-size:18px}
+    #luneaMessageOracleOverlay .mo-score{left:42.434988%;top:6.361687%;width:14.893617%;height:9.006433%;display:flex;align-items:center;justify-content:center;text-align:center;font:600 6.969697cqw/1 'Noto Serif KR',serif;font-variant-numeric:lining-nums tabular-nums;letter-spacing:-.04em;white-space:nowrap;color:#745832}
+    #luneaMessageOracleOverlay .mo-score-text{display:grid;place-items:center;width:100%;height:100%;text-align:center;line-height:1;transform:translateY(-.30303cqw)}
+    #luneaMessageOracleOverlay .mo-score[data-digits="3"] .mo-score-text{font-size:5.454545cqw}
     #luneaMessageOracleOverlay .mo-image-slot{left:29.8%;top:18%;width:40.3%;height:33.1%}
     #luneaMessageOracleOverlay .mo-image{display:block;width:100%;height:100%;object-fit:contain;filter:none;transform:none;background:transparent;margin:0}
-    #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;display:grid;grid-template: minmax(0,1fr)/minmax(0,1fr);place-items:stretch;font:600 12.5px/1.12 'Noto Serif KR',serif}
+    #luneaMessageOracleOverlay .mo-identity{left:21%;top:54.9%;width:58%;height:5.4%;display:grid;grid-template: minmax(0,1fr)/minmax(0,1fr);place-items:stretch;font:600 3.787879cqw/1.12 'Noto Serif KR',serif}
     #luneaMessageOracleOverlay .mo-identity-inner{display:grid;place-content:center;place-self:stretch;width:auto;height:auto;margin:0 4%;text-align:center;gap:0;min-width:0;min-height:0}
     #luneaMessageOracleOverlay .mo-name-en,#luneaMessageOracleOverlay .mo-name-ko{display:block;margin:0;line-height:1.12}
-    #luneaMessageOracleOverlay .mo-name-ko{font-size:12px;font-weight:500}
+    #luneaMessageOracleOverlay .mo-name-ko{font-size:3.636364cqw;font-weight:500}
     #luneaMessageOracleOverlay .mo-message{left:11.938534%;top:62.544675%;width:76.004728%;height:14.367405%;display:flex;align-items:center;justify-content:center;text-align:center;margin:0;padding:0}
     #luneaMessageOracleOverlay .mo-message-inner{display:flex;align-items:center;justify-content:center;width:88%;height:100%;max-height:100%;margin:auto;text-align:center}
-    #luneaMessageOracleOverlay .mo-message-text{margin:0;font:500 14px/1.46 'Noto Serif KR',serif;text-align:center;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-message-text{margin:0;font:500 4.242424cqw/1.46 'Noto Serif KR',serif;text-align:center;word-break:normal;overflow-wrap:normal;text-wrap:pretty}
     #luneaMessageOracleOverlay .mo-details{position:absolute;left:13.3%;top:79.4%;width:73.4%;height:6.5%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3.8%;margin:0}
-    #luneaMessageOracleOverlay .mo-detail{display:grid;grid-template-rows:auto auto;place-content:center;place-items:center;text-align:center;gap:1px;line-height:1;min-height:0}
-    #luneaMessageOracleOverlay .mo-detail-label{display:block;margin:0;font-size:10px;line-height:1.08;color:#75604a;font-weight:500}
-    #luneaMessageOracleOverlay .mo-detail-value{display:block;margin:0;font-size:12px;line-height:1.1;font-weight:650;color:#493747;word-break:keep-all}
-    #luneaMessageOracleOverlay .mo-bottom{left:34.633570%;top:89.635454%;width:30.614657%;height:3.716941%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:12px;line-height:1;color:#6d5439}
+    #luneaMessageOracleOverlay .mo-detail{display:grid;grid-template-rows:auto auto;place-content:center;place-items:center;text-align:center;gap:.30303cqw;line-height:1;min-height:0}
+    #luneaMessageOracleOverlay .mo-detail-label{display:block;margin:0;font-size:3.030303cqw;line-height:1.08;color:#75604a;font-weight:500}
+    #luneaMessageOracleOverlay .mo-detail-value{display:block;margin:0;font-size:3.636364cqw;line-height:1.1;font-weight:650;color:#493747;word-break:keep-all}
+    #luneaMessageOracleOverlay .mo-bottom{left:34.633570%;top:89.635454%;width:30.614657%;height:3.716941%;display:flex;align-items:center;justify-content:center;text-align:center;font-size:3.636364cqw;line-height:1;color:#6d5439}
     #luneaMessageOracleOverlay .mo-full-reading{font-size:12px;line-height:1.7;margin:12px 0}
     #luneaMessageOracleOverlay .mo-full-reading summary{cursor:pointer}
     #luneaMessageOracleOverlay .mo-full-text{white-space:pre-wrap}
@@ -191,7 +191,7 @@
     try{
       const next=E.draw(support?support.question:q,context);
       if(support && !support.onResult(next)){announce('현재 리딩이 바뀌어 결과를 연결하지 않았어요.');return}
-      current=next;render(true);
+      current=next;render(true);resetScroll();
       announce(support?'현재 리딩에 메시지 카드를 연결했어요.':store.remember(current)?'카드 한 장을 정방향으로 읽었어요.':'카드는 뽑았지만 이 기기에 저장하지 못했어요. 결과를 복사해 주세요.');
     }
     catch{announce('카드를 뽑지 못했어요. 질문과 브라우저의 보안 연결을 확인해 주세요.')}
@@ -223,8 +223,9 @@
     $('.mo-saved').hidden=!!support;
     if(support){question.value=support.question;override=current?.context||'AUTO'}
     if(current){question.value=current.question;override=current.context}
-    syncContext();render();renderSaved();announce('');document.body.classList.add('lunea-message-open');overlay.dataset.open='true';overlay.setAttribute('aria-hidden','false');$('.mo-sheet').focus();
+    syncContext();render();renderSaved();announce('');document.body.classList.add('lunea-message-open');overlay.dataset.open='true';overlay.setAttribute('aria-hidden','false');$('.mo-sheet').focus({preventScroll:true});resetScroll();
   }
+  function resetScroll(){const sheet=$('.mo-sheet');sheet.scrollTop=0;sheet.scrollLeft=0;}
   function closeSupport(){if(support){close();support=null;current=null;question.value='';override='AUTO'}}
   function close(){++openRequest;stopFlip();document.body.classList.remove('lunea-message-open');delete overlay.dataset.open;overlay.setAttribute('aria-hidden','true');returnFocus?.focus?.()}
   $('.mo-close').addEventListener('click',close);

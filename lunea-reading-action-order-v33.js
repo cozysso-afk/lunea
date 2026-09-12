@@ -47,17 +47,17 @@
 
   const ORDER = [
     'flipAll',
-    'aiRead',
+    'extraCard',
     'saveReading',
     'retry',
-    'extraCard',
     'timingSupportBtn',
     'luneaMessageOracleSupportBtn',
     'astroTransitBtn',
-    'thaiTaksaBtn',
-    'luneaThaiTarotRangeBtn',
     'astroReturnBtn',
     'astroHoraryBtn',
+    'thaiTaksaBtn',
+    'luneaThaiTarotRangeBtn',
+    'aiRead',
     'luneaTopCopyPrompt',
   ];
 
@@ -123,6 +123,19 @@
     const style = document.createElement('style');
     style.id = BOTTOM_STYLE_ID;
     style.textContent = `
+      /* Final three-column action geometry, including the <=390px surface. */
+      #spreadOverlay .actionbar.actionbar{
+        display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        grid-auto-flow:row!important;grid-auto-rows:minmax(48px,auto);gap:7px!important;
+      }
+      #spreadOverlay .actionbar.actionbar > button{
+        grid-column:auto!important;grid-row:auto!important;
+        width:100%!important;min-width:0!important;height:100%!important;min-height:48px!important;
+        margin:0!important;box-sizing:border-box;white-space:normal!important;
+      }
+      #spreadOverlay .actionbar.actionbar #${TOP_COPY_ID}{grid-column:1 / -1!important}
+      ${ORDER.map((id,index)=>`#spreadOverlay .actionbar.actionbar #${id}{order:${index}!important}`).join('\n')}
+      #spreadOverlay .actionbar.actionbar #luneaThaiTarotBridgeBtn{order:${ORDER.indexOf('thaiTaksaBtn')}!important}
       #${TOP_COPYBOX_ID}{
         display:none!important;margin:0!important;padding:0!important;
       }
