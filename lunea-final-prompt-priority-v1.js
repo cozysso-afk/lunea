@@ -68,7 +68,10 @@
   }
 
   function assembleEvidence(prompt){
-    let text = String(prompt || '');
+    const reference=W.LUNEA_TAROT_REFERENCE_V1;
+    let text = reference ? reference.strip(prompt) : String(prompt || '');
+    const cardEvidence=reference?.build?.() || '';
+    if(cardEvidence)text+=`\n\n${cardEvidence}`;
     // Read the live, exact-reading adapter at call time. This also restores
     // evidence if a later feature replaced the earlier Message prompt wrapper.
     const message = W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.promptBlock?.() || '';

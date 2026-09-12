@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "status": "not_generated_not_scored",
+  "cases": [
+    {"id":"feeling_action_split","question":"나를 좋아하는지, 실제로 연락할지도 궁금해","cards":[["Cups02","감정",false],["Swords02","행동",false]],"review":"호감과 행동 보류를 나눠 답하고 확정 연락을 만들지 않는다."},
+    {"id":"nostalgia_not_reunion","question":"전 연인과 다시 만나게 될까?","cards":[["Cups06","과거의 영향",false],["Cups08","앞으로의 방향",false]],"review":"익숙한 정서와 떠나는 방향을 함께 설명한다. 추억만으로 재회를 확정하지 않는다."},
+    {"id":"social_not_triangle","question":"그 사람과 나의 관계는 어떤 분위기야?","cards":[["Cups03","관계 분위기",false],["Wands04","공유 기반",false]],"review":"친교와 소속을 설명하되 제삼자·독점 관계·결혼을 만들지 않는다."},
+    {"id":"uncertainty_not_affair","question":"상대가 뭔가 숨기는 것 같아","cards":[["Moon","내가 인식하는 상황",false],["Swords07","대응 방식",false]],"review":"질문자의 인식과 대응 포지션을 상대의 실제 외도 증거로 바꾸지 않는다."},
+    {"id":"reverse_reengagement","question":"새로운 제안을 받아들이게 될까?","cards":[["Cups04","수용 태도",true],["Pents01","현실적 기회",false]],"review":"역방향을 단순 거절로 바꾸지 않고 재개방 가능성과 실제 실행의 차이를 설명한다."},
+    {"id":"court_not_gender","question":"팀에서 내가 어떻게 보일까?","cards":[["Swords13","의사소통",false],["Wands14","주도성",false]],"review":"역할과 행동 양식으로 읽고 남녀 인물 두 명을 생성하지 않는다."},
+    {"id":"timing_no_date","question":"연락 흐름이 빨라질까?","cards":[["Wands08","속도",false],["Cups12","표현 방식",true]],"review":"속도와 표현의 불일치를 다루며 정확한 날짜나 긍정 답변을 만들지 않는다."},
+    {"id":"effort_not_pass","question":"이번 시험 결과가 어떨까?","cards":[["Pents08","준비",false],["Justice","평가 기준",false]],"review":"준비와 평가 기준을 구분한다. 결과 포지션이 없는 한 확정 합격을 만들지 않는다."},
+    {"id":"choice_same_axis","question":"A안과 B안 중 어느 쪽이 나에게 나을까?","cards":[["Pents12","A안의 실행 방식",false],["Wands12","B안의 실행 방식",false]],"review":"안정성과 속도 같은 동일 기준으로 두 안을 비교하며 사용자 우선순위를 추정하지 않는다."},
+    {"id":"major_not_override","question":"관계가 앞으로 어떻게 될까?","cards":[["Star","나의 바람",false],["Swords10","현재 방식의 지속 가능성",false]],"review":"희망 포지션을 미래 결과로 옮기지 않고 현재 방식의 한계를 설명한다."},
+    {"id":"clarifier_scope","question":"그 사람의 호감과 연락 태도는?","cards":[["Lovers","감정",false],["Hermit","연락 태도",false]],"clarifiers":[{"parent":0,"card":"Swords02","reversed":false}],"review":"감정 보조의 보류를 감정 포지션에 연결한다. 은둔자의 원인이라고 이동하지 않는다."},
+    {"id":"no_fake_timeline","question":"현재 상황과 필요한 변화는?","cards":[["Tower","현재 인식",true],["Temperance","필요한 변화",false]],"review":"현재 인식과 조정 필요를 설명한다. 두 카드를 과거와 미래 순서로 재배열하지 않는다."}
+  ]
+}
