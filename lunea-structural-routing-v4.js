@@ -12,9 +12,6 @@
   document.documentElement.classList.add('lunea-booting');
   document.documentElement.classList.remove('lunea-ui-ready');
 
-  /* Overlay-specific first-paint gate. The base DOM may exist early, but an
-     overlay cannot become visible until its final presentation owner has been
-     installed and verified. Home and unrelated overlays are never gated. */
   const firstPaintGate=document.createElement('style');
   firstPaintGate.id='luneaFeatureFirstPaintGateV4';
   firstPaintGate.textContent=`
@@ -27,8 +24,6 @@
   `;
   (document.head||document.documentElement).appendChild(firstPaintGate);
 
-  /* Final Home owners first. The boot curtain can lift as soon as this set is
-     complete; feature/runtime helpers continue without holding first paint. */
   const HOME_VISUAL_SOURCES=[
     './lunea-luminous-theme-v1.js?v=101',
     './lunea-luminous-layout-v2.js?v=201',
@@ -57,7 +52,6 @@
     './lunea-thai-range-v33.js?v=20260912-quick-row-1'
   ];
 
-  // Audited UI only. No journal migration, timing fetch, AI or global observer.
   const SHELL_SOURCES=[
     './lunea-reading-draft-v1.js?v=20260911-attachments-v1',
     './lunea-reading-attachments-v1.js?v=20260912-message-support-1',
@@ -97,6 +91,7 @@
       './lunea-manual-library-v1.js?v=101',
       './lunea-manual-limit20-v17.js?v=1705',
       './lunea-tarot-reference-v1.js?v=20260912-expert-reference-1',
+      './lunea-tarot-expert-engine-v1.js?v=20260913-expert-engine-1',
       './lunea-final-prompt-priority-v1.js?v=20260912-expert-reference-1'
     ],
     journal:[
@@ -279,8 +274,6 @@
     if(el.closest('#luneaSignalMessageSection')) return id==='luneaMessageOracleEntry'?'message':null;
     if(id==='luneaDraftRestore' || id==='dailyBtn' || id==='drawBtn' || id==='aiRead' || id==='copyPrompt') return 'reading';
     if(id==='timingSupportBtn' || id==='luneaTimingInline') return 'timing';
-    /* Profile shell, V45 picker and the eager Natal client are Home-ready.
-       Only genuinely lazy astrology surfaces should enter the Astro group. */
     if(id==='luneaThaiHomeTileV24' || /Thai|태국점성술|Taksa/i.test(text)) return 'finish';
     if(key==='timing' || /TIMING ORACLE|Astro Timing|시기 오라클/i.test(text)) return 'timing';
     if(key==='horary' || /HORARY|호라리|Returns?|Transit/i.test(text)) return 'astro';
@@ -310,8 +303,6 @@
       if(!trigger||replaying.has(trigger)) return;
       const name=groupForTarget(trigger);
       if(!name) return;
-      /* Opening a category is navigation, not a reading. Prime its runtime on
-         pointerdown, but let the first tap reveal the category immediately. */
       if(name==='reading' && (trigger.matches('#luneaHomePortalV8 .lunea-v8-tile') || trigger.matches('.category-header'))) return;
       if(ready(name)){
         W.LUNEA_FINAL_PROMPT_PRIORITY_V1?.ensure?.();
@@ -360,10 +351,6 @@
 
   async function boot(){
     if(document.readyState==='loading') await new Promise(r=>document.addEventListener('DOMContentLoaded',r,{once:true}));
-
-    /* async=false preserves insertion-order execution for these dynamic classic
-       scripts; start their fetches together so Home readiness is not gated by
-       seventeen serial network round trips. */
     await Promise.all(HOME_VISUAL_SOURCES.map(load));
     if(!homeLooksReady()) console.warn('[LUNEA deterministic] home readiness markers incomplete; keeping legacy shell hidden');
     applyStaticHomeBranding();
@@ -381,11 +368,8 @@
       W.dispatchEvent(new CustomEvent('lunea:home-runtime-ready'));
     })();
     installLazyTriggers();
-    /* Home is already visible. Prime only the small learning group after the
-       shell, without waiting for it or pulling in the reading runtime. */
     primeLearningUI();
     await Promise.all([shellPromise,homeRuntimePromise]);
-    /* Stop after the finite shell. Feature groups require user intent. */
     document.documentElement.dataset.luneaDeterministicReady='1';
     document.documentElement.dataset.luneaLazyRuntime='1';
     W.dispatchEvent(new CustomEvent('lunea:deterministic-ready'));
