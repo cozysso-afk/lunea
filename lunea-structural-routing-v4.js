@@ -155,7 +155,7 @@
       './lunea-astro-resume-v23.js?v=2301'
     ],
     finish:[
-      './lunea-thai-date-display-v57.js?v=5702',
+      './lunea-thai-date-display-v57.js?v=5703',
       './lunea-timing-result-copy-v35.js?v=3501',
       './lunea-recovery-finish-v59.js?v=5901'
     ]

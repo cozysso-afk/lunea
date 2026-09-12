@@ -17,6 +17,7 @@ test('V57 keeps exactly one visible date mirror and synchronizes without polling
       this.events = {};
       this.value = '';
       this.type = '';
+      this.id = '';
       this.textContent = '';
     }
     appendChild(node) {
@@ -31,6 +32,10 @@ test('V57 keeps exactly one visible date mirror and synchronizes without polling
       const index = this.children.indexOf(before);
       this.children.splice(index < 0 ? this.children.length : index, 0, node);
       return node;
+    }
+    remove() {
+      if (this.parentNode) this.parentNode.children = this.parentNode.children.filter(child => child !== this);
+      this.parentNode = null;
     }
     matches(selector) {
       if (selector.startsWith('.')) return this.className.split(/\s+/).includes(selector.slice(1));
@@ -60,11 +65,38 @@ test('V57 keeps exactly one visible date mirror and synchronizes without polling
   const inputs = fields.map((field, index) => {
     field.className = 'thai-v33-field';
     const input = new HTMLInputElement();
+    input.id = index ? 'luneaThaiTarotRangeEnd' : 'luneaThaiTarotRangeStart';
     input.value = index ? '2026-09-24' : '2026-09-11';
     field.appendChild(input);
     root.appendChild(field);
     return input;
   });
+
+  /* Reproduce both malformed lifecycle states that the old dataset-only guard
+     could leave behind: nested shells and duplicate mirrors. */
+  const malformedShell = (field, input, nested = false) => {
+    const outer = new Element('span');
+    outer.className = 'thai-v57-date-shell';
+    const firstMirror = new Element('span');
+    firstMirror.className = 'thai-v57-date-visible';
+    const extraMirror = new Element('span');
+    extraMirror.className = 'thai-v57-date-visible';
+    field.insertBefore(outer, input);
+    outer.appendChild(firstMirror);
+    if (nested) {
+      const inner = new Element('span');
+      inner.className = 'thai-v57-date-shell';
+      inner.appendChild(extraMirror);
+      inner.appendChild(input);
+      outer.appendChild(inner);
+    } else {
+      outer.appendChild(extraMirror);
+      outer.appendChild(input);
+    }
+    input.dataset.luneaThaiDateV57 = '1';
+  };
+  malformedShell(fields[0], inputs[0], true);
+  malformedShell(fields[1], inputs[1], false);
   const document = {
     readyState: 'complete',
     documentElement: root,
@@ -85,10 +117,21 @@ test('V57 keeps exactly one visible date mirror and synchronizes without polling
   assert.doesNotMatch(source, /new MutationObserver/);
   assert.match(source, /opacity:0!important/);
   assert.match(source, /-webkit-text-fill-color:transparent!important/);
+  assert.match(source, /font-size:0!important/);
+  assert.match(source, /text-shadow:none!important/);
+  assert.match(source, /caret-color:transparent!important/);
+  assert.match(source, /::-webkit-date-and-time-value/);
+  assert.match(source, /::-webkit-datetime-edit-fields-wrapper/);
+  assert.match(source, /::-webkit-datetime-edit-year-field/);
+  assert.match(source, /::-webkit-datetime-edit-month-field/);
+  assert.match(source, /::-webkit-datetime-edit-day-field/);
+  assert.equal(root.querySelectorAll('.thai-v57-date-shell').length, 2);
+  assert.equal(root.querySelectorAll('.thai-v57-date-visible').length, 2);
   for (const [index, input] of inputs.entries()) {
     const shell = input.closest('.thai-v57-date-shell');
     assert.ok(shell, `input ${index} has a date shell`);
     assert.equal(shell.querySelectorAll('.thai-v57-date-visible').length, 1);
+    assert.equal(input.type, 'date', 'native date input type is preserved');
     assert.equal(shell.children.at(-1), input, 'native date input remains the top interactive element');
   }
   assert.equal(inputs[0].closest('.thai-v57-date-shell').querySelector('.thai-v57-date-visible').textContent, '2026. 9. 11.');
@@ -100,7 +143,13 @@ test('V57 keeps exactly one visible date mirror and synchronizes without polling
   assert.equal(inputs[1].closest('.thai-v57-date-shell').querySelector('.thai-v57-date-visible').textContent, '2026. 10. 1.');
   api.syncAll();
   api.syncAll();
-  for (const input of inputs) assert.equal(input.closest('.thai-v57-date-shell').querySelectorAll('.thai-v57-date-visible').length, 1);
+  assert.equal(root.querySelectorAll('.thai-v57-date-shell').length, 2);
+  assert.equal(root.querySelectorAll('.thai-v57-date-visible').length, 2);
+  for (const input of inputs) {
+    assert.equal(input.closest('.thai-v57-date-shell').querySelectorAll('.thai-v57-date-visible').length, 1);
+    assert.equal(input.events.input.length, 1, 'input sync listener is bound once');
+    assert.equal(input.events.change.length, 1, 'change sync listener is bound once');
+  }
 });
 
 test('V33 exposes five presets, accepts 90 inclusive days, rejects 91, and explicitly syncs mirrors', () => {
