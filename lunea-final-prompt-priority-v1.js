@@ -55,6 +55,27 @@
     return String(prompt || '').includes('[THAI ASTROLOGY · MAHA TAKSA 계산 결과]');
   }
 
+  const MESSAGE_MARKER = '[MESSAGE ORACLE · 현재 리딩의 연락·소식 보조]';
+  function hasMessageOracle(prompt){
+    return String(prompt || '').includes(MESSAGE_MARKER);
+  }
+
+  function messagePolicy(prompt){
+    if (!hasMessageOracle(prompt)) {
+      return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 결과가 없으면 참고했다고 말하거나 카드·점수·메시지를 만들어내지 않는다. 독립 화면의 마지막 결과를 가져오지 않는다.';
+    }
+    return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 실제 결과가 있으므로 최종 답변에 짧은 "메시지 오라클 보조"를 최소 1회 반영한다. 실제 카드명과 질문 의도, 연락 방식·전달 경로·제한 중 관련 근거를 짚고 RWS 카드의 지지·반증과 연결한다. 점수는 카드 상징의 신호 강도이며 실제 연락 확률·합격률·긍정 결과 확률이 아니다. 시기 오라클과 구분하고 날짜나 상대의 실제 행동을 이 점수에서 만들어내지 않는다. RWS와 방향이 다르면 차이를 숨기거나 한쪽 결론으로 덮어쓰지 않는다.';
+  }
+
+  function assembleEvidence(prompt){
+    let text = String(prompt || '');
+    // Read the live, exact-reading adapter at call time. This also restores
+    // evidence if a later feature replaced the earlier Message prompt wrapper.
+    const message = W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.promptBlock?.() || '';
+    if (message && !hasMessageOracle(text)) text += `\n\n${message}`;
+    return W.LUNEA_INTERPRETATION_GLOSS_V2?.refreshEngineLedger?.(text) || text;
+  }
+
   function sajuBlock(prompt){
     const s = String(prompt || '');
     const m = s.match(/\[SAJU \/ FOUR PILLARS · 사주명리\]([\s\S]*?)(?=\n\[THAI ASTROLOGY|\n\[프로필 체계 사용 규칙|\n\n\[뽑힌 카드\]|$)/);
@@ -133,8 +154,9 @@
     const returns = returnPolicy(prompt);
     const thai = thaiPolicy(prompt);
     const saju = sajuPolicy(prompt);
+    const message = messagePolicy(prompt);
 
-    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n${FINAL_LINE}`;
+    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n${message}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n${FINAL_LINE}`;
   }
 
   function withoutFinalBlocks(prompt){
@@ -156,7 +178,7 @@
     if (prior.__luneaFinalPromptPriorityV2) return true;
 
     const wrapped = function(){
-      const p = withoutFinalBlocks(prior.apply(this, arguments));
+      const p = assembleEvidence(withoutFinalBlocks(prior.apply(this, arguments)));
       return `${p}\n\n${finalBlock(p)}`;
     };
     wrapped.__luneaFinalPromptPriorityV2 = true;
@@ -177,6 +199,7 @@
     hasTransit,
     hasReturns,
     hasThaiComputed,
+    hasMessageOracle,
     hasSaju:() => {
       const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
       if (typeof prior !== 'function') return false;

@@ -84,6 +84,60 @@ test('master/AI prompt includes only exact-reading Message evidence without a ne
  h.context.state={...h.context.state,question:snapshot.question};assert.equal(h.api.restore(snapshot),true);assert.equal(h.context.promptString(),text);assert.equal(h.draws(),before);
 });
 
+function installFinalPrompt(h){
+ h.context.setInterval=()=>0;h.context.clearInterval=()=>{};
+ vm.runInContext(read('interpretation-gloss-v1.js'),h.context);
+ vm.runInContext(read('lunea-final-prompt-priority-v1.js'),h.context);
+}
+
+test('final policy and refreshed engine ledger include Message evidence once after a late wrapper replacement',async()=>{
+ const h=supportHarness();await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
+ const before=h.draws(),saved=h.api.capture();
+ // A legacy/late owner replaces the chain, leaving a previously built ledger.
+ h.context.promptString=()=> '[질문 원문]\n"면접 결과 연락 올까?"\n\n[질문 유형]\ncareer\n\n[현재 리딩에서 실제 사용 가능한 보조 엔진 — 자동 감지]\n- Timing Oracle(시기 오라클): 없음\n\n[기존 보조 근거]\n보존';
+ installFinalPrompt(h);
+ const text=h.context.promptString();
+ assert.equal(text.match(/\[MESSAGE ORACLE ·/g)?.length,1);
+ assert.equal(text.match(/\[현재 리딩에서 실제 사용 가능한 보조 엔진/g)?.length,1);
+ assert.match(text,/Message Oracle\(연락·소식 메시지 오라클\): 현재 리딩에 연결된 결과 있음/);
+ assert.match(text,/"메시지 오라클 보조"를 최소 1회 반영/);
+ assert.match(text,/\[기존 보조 근거\]\n보존/);
+ assert.ok(text.includes(saved.score+'%'));assert.equal(h.draws(),before);
+ assert.equal(h.context.promptString(),text);
+ h.context.state={...h.context.state,question:'다른 질문'};
+ const other=h.context.promptString();
+ assert.doesNotMatch(other,/\[MESSAGE ORACLE ·/);
+ assert.match(other,/연결된 결과 없음/);
+ assert.match(other,/독립 화면의 마지막 결과를 가져오지 않는다/);
+});
+
+test('production clipboard and AI request both carry the same current Message evidence and final policy',async()=>{
+ const h=supportHarness();await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
+ installFinalPrompt(h);
+ for(const id of ['aiRead','copyPrompt','aiBox']){const n=h.document.createElement(id==='aiBox'?'div':'button');n.id=id;h.host.appendChild(n)}
+ h.context.$=id=>h.document.getElementById(id);h.context.flipAt=()=>{};h.context.alert=()=>{};
+ h.map.set('LUNEA_API_KEY','synthetic-test-key');h.map.set('LUNEA_MODEL','synthetic-test-model');
+ let sent;
+ h.context.fetch=async(url,init)=>{sent=JSON.parse(init.body);return{json:async()=>({candidates:[{content:{parts:[{text:'검증용 해설'}]}}]})}};
+ const html=read('index.html'),start=html.indexOf("$('aiRead').onclick=async"),end=html.indexOf('// Archive —',start);
+ vm.runInContext(html.slice(start,end),h.context);
+ const before=h.draws();await h.query('#copyPrompt').onclick();await h.query('#aiRead').onclick();
+ assert.equal(sent.contents[0].parts[0].text,h.copied());
+ assert.equal(h.copied().match(/\[MESSAGE ORACLE ·/g)?.length,1);
+ assert.match(h.copied(),/"메시지 오라클 보조"를 최소 1회 반영/);
+ assert.match(h.copied(),/현재 리딩에 연결된 결과 있음/);assert.equal(h.draws(),before);
+});
+
+test('final prompt does not attach standalone Message draws, or results invalidated by a card change',async()=>{
+ const h=supportHarness();await start(h);installFinalPrompt(h);
+ assert.doesNotMatch(h.context.promptString(),/\[MESSAGE ORACLE ·/);
+ await h.api.open();await h.query('.mo-form').emit('submit');await h.finishFlips();
+ assert.match(h.context.promptString(),/\[MESSAGE ORACLE ·/);
+ h.context.state.drawn[0].subCards=[{name:'새 보조 카드'}];
+ assert.doesNotMatch(h.context.promptString(),/\[MESSAGE ORACLE ·/);
+ assert.match(h.context.promptString(),/연결된 결과 없음/);
+});
+
 test('support close/reopen, redraw cancel/confirm and standalone storage stay independent',async()=>{
  const h=supportHarness();await start(h);const standalone=h.map.get('LUNEA_MESSAGE_ORACLE_LAST_V1');
  await h.api.open();assert.equal(h.query('.mo-card').dataset.face,'back');

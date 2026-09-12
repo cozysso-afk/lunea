@@ -79,9 +79,11 @@ F. 숫자·날짜·각도·하우스 계산값을 임의로 바꾸지 않았는�
     const hasThai = s.includes('[THAI ASTROLOGY · MAHA TAKSA 계산 결과]');
     const hasSaju = s.includes('[SAJU / FOUR PILLARS · 사주명리]');
     const hasWesternProfile = s.includes('[WESTERN ASTROLOGY · 서양점성술]');
+    const hasMessage = s.includes('[MESSAGE ORACLE · 현재 리딩의 연락·소식 보조]');
 
     const rows = [
       `- Timing Oracle(시기 오라클): ${hasTiming ? '현재 프롬프트에 있음 → 사용 가능' : '없음 → 사용했다고 말하면 안 됨'}`,
+      `- Message Oracle(연락·소식 메시지 오라클): ${hasMessage ? '현재 리딩에 연결된 결과 있음 → 연락·소식 보조로 사용' : '연결된 결과 없음 → 사용했다고 말하면 안 됨'}`,
       `- Transit Scanner(트랜짓 스캐너): ${hasTransit ? '현재 프롬프트에 있음 → 계산값만 사용 가능' : '없음 → 트랜짓 시기 생성 금지'}`,
       `- Planetary Returns(행성 회귀): ${hasReturns ? '현재 프롬프트에 있음 → 배경 주기로 사용 가능' : '없음 → 사용 금지'}`,
       `- Thai Taksa(태국 탁사): ${hasThai ? '현재 프롬프트에 있음 → 구조 보조로 사용 가능' : '없음 → 사용 금지'}`,
@@ -91,6 +93,17 @@ F. 숫자·날짜·각도·하우스 계산값을 임의로 바꾸지 않았는�
 
     return `[현재 리딩에서 실제 사용 가능한 보조 엔진 — 자동 감지]\n${rows}`;
   }
+
+  // Auxiliary wrappers can append evidence after Gloss has run. Refresh the
+  // ledger from the assembled prompt, not from an earlier wrapper's snapshot.
+  function refreshEngineLedger(prompt) {
+    const text = String(prompt || '').replace(
+      /\[현재 리딩에서 실제 사용 가능한 보조 엔진 — 자동 감지\]\n(?:- [^\n]*(?:\n|$))*/g,
+      ''
+    ).trim();
+    return `${text}\n\n${engineLedger(text)}`;
+  }
+  window.LUNEA_INTERPRETATION_GLOSS_V2 = Object.freeze({refreshEngineLedger});
 
   function installPromptWrapper() {
     if (typeof promptString !== 'function' || window.__LUNEA_GLOSS_V2_PROMPT_WRAPPED__) return;
