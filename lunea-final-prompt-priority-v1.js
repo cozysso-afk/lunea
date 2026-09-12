@@ -84,7 +84,8 @@
 
   function hasSaju(prompt){
     const b = sajuBlock(prompt);
-    return /-\s*(?:일간|원국|오행 분포|신강·신약|주요 십성·특징|용신|희신|기신|기타 확인사항):\s*\S/.test(b);
+    const rows = [...b.matchAll(/-\s*(?:일간|원국(?: 年\/月\/日\/時)?|오행 분포|신강·신약|주요 십성·특징|용신|희신|기신|기타 확인사항):([^\n]*)/g)];
+    return rows.some(([,value]) => value.replace(/미입력|미확인|없음|unknown|not provided|n\/a|[\s/—-]/gi,'').length > 0);
   }
 
   function classify(question){
@@ -200,7 +201,8 @@
     hasReturns,
     hasThaiComputed,
     hasMessageOracle,
-    hasSaju:() => {
+    hasSaju:(prompt) => {
+      if (typeof prompt === 'string') return hasSaju(prompt);
       const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
       if (typeof prior !== 'function') return false;
       try { return hasSaju(prior()); } catch { return false; }

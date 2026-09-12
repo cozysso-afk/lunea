@@ -318,7 +318,12 @@
     $('astroHorarySave').onclick = saveStandalone;
   }
 
+  let calculationSequence=0;
   function openModal(mode, question) {
+    calculationSequence++;
+    window.LUNEA_ASTRO_REQUEST_V1?.cancelScope('horary');
+    window.LUNEA_ASTRO_REQUEST_V1?.cancelScope('horary-support');
+    if($('astroHoraryRun')){$('astroHoraryRun').disabled=false;$('astroHoraryRun').textContent='☿ 호라리 차트 계산';}
     stateHorary.mode = mode;
     const q = String(question || '').trim();
     const changed = q && q !== stateHorary.question;
@@ -363,18 +368,6 @@
     if (!document.querySelector('.overlay.show')) document.body.classList.remove('modal-open');
   }
 
-  async function fetchWithTimeout(url, options, timeoutMs=120000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      try { controller.abort('horary-timeout'); } catch { controller.abort(); }
-    }, timeoutMs);
-    try {
-      return await fetch(url, {...options, signal:controller.signal});
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
   async function runHorary() {
     const question = $('astroHoraryQuestion').value.trim();
     const moment = $('astroHoraryMoment').value;
@@ -398,18 +391,18 @@
       return;
     }
 
+    const scope=stateHorary.mode==='support'?'horary-support':'horary';
+    const sequence=++calculationSequence;
+    const requestEpoch=window.LUNEA_ASTRO_REQUEST_V1.generation(scope);
+    const current=()=>sequence===calculationSequence&&requestEpoch===window.LUNEA_ASTRO_REQUEST_V1.generation(scope)&&question===$('astroHoraryQuestion').value.trim()&&moment===$('astroHoraryMoment').value&&place===$('astroHoraryPlace').value.trim()&&topic===$('astroHoraryTopic').value;
     const button = $('astroHoraryRun');
     button.disabled = true;
     button.textContent = '☿ 계산 중…';
     $('astroHoraryStatus').className = 'horary-status';
     $('astroHoraryStatus').textContent = '질문 시각의 행성·레지오몬타누스 하우스·적용각을 계산하고 있어…';
-    localStorage.setItem(PLACE_KEY, place);
-
     try {
-      if (window.LUNEA_ASTRO_STABILITY?.ensureReady) {
-        try { await window.LUNEA_ASTRO_STABILITY.ensureReady(false); } catch {}
-      }
-      const response = await fetchWithTimeout(`${apiUrl()}/v1/horary`, {
+      try { localStorage.setItem(PLACE_KEY, place); } catch {}
+      const {data} = await window.LUNEA_ASTRO_REQUEST_V1.json(`${apiUrl()}/v1/horary`, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -419,10 +412,8 @@
           timezone:'Asia/Seoul',
           place
         })
-      });
-      let data = null;
-      try { data = await response.json(); } catch {}
-      if (!response.ok) throw new Error(data?.detail || `${response.status} ${response.statusText}`);
+      }, {scope,prepare:async()=>{try{await window.LUNEA_ASTRO_STABILITY?.ensureReady?.(false);}catch{}}});
+      if(!current())return;
       if (data?.schema !== 'LUNEA_HORARY_V1') throw new Error('Horary 응답 형식이 예상과 달라.');
 
       stateHorary.question = question;
@@ -439,13 +430,14 @@
       $('astroHoraryStatus').className = 'horary-status ok';
       $('astroHoraryStatus').textContent = `계산 완료 · ${data.moment?.place_resolved || place} · Regiomontanus(레지오몬타누스)`;
     } catch (error) {
+      if(!current())return;
       $('astroHoraryStatus').className = 'horary-status err';
       $('astroHoraryStatus').textContent = '계산 실패: ' + (error?.message || error);
       $('astroHoraryResult').classList.remove('show');
       $('astroHoraryActions').classList.remove('show');
     } finally {
-      button.disabled = false;
-      button.textContent = '☿ 호라리 차트 계산';
+      if(sequence===calculationSequence){button.disabled = false;
+      button.textContent = '☿ 호라리 차트 계산';}
     }
   }
 

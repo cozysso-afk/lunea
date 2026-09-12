@@ -96,7 +96,7 @@
       './lunea-manual-everywhere-v1.js?v=20260912-message-support-1',
       './lunea-manual-library-v1.js?v=101',
       './lunea-manual-limit20-v17.js?v=1705',
-      './lunea-final-prompt-priority-v1.js?v=20260912-evidence-integrity-1'
+      './lunea-final-prompt-priority-v1.js?v=20260912-natal-evidence-1'
     ],
     journal:[
       './lunea-manual-structure-v1.js?v=105',
@@ -154,7 +154,7 @@
       './lunea-transit-long-run-v1.js?v=102',
       './lunea-astro-job-queue-v56.js?v=5601',
       './lunea-astro-origin-failover-v57.js?v=5701',
-      './lunea-astro-resume-v23.js?v=2301'
+      './lunea-astro-resume-v23.js?v=20260912-bounded-request-1'
     ],
     finish:[
       './lunea-thai-date-display-v57.js?v=5703',

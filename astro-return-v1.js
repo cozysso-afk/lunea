@@ -119,18 +119,21 @@
     const natal=safeJSON(NATAL_KEY),api=apiUrl();
     const bodies=[...document.querySelectorAll('#astroReturnChecks input:checked')].map(x=>x.value);
     if(!bodies.length)return alert('리턴을 하나 이상 선택해줘.');
+    const requestEpoch=window.LUNEA_ASTRO_REQUEST_V1.generation('reading'),startedQuestion=question();
+    const current=()=>requestEpoch===window.LUNEA_ASTRO_REQUEST_V1.generation('reading')&&startedQuestion===question();
+    const selectedPlace=$('astroReturnPlace').value.trim();
     const btn=$('astroReturnRun');btn.disabled=true;btn.textContent='↻ 계산 중…';
     $('astroReturnStatus').textContent='회귀 경도를 탐색하고 정확 통과 시각을 정밀화 중…';
     try{
-      const res=await fetch(`${api}/v1/returns/context`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
-        natal,bodies,center_iso:new Date().toISOString(),timezone:'Asia/Seoul',place:$('astroReturnPlace').value.trim()||null
+      const {data}=await window.LUNEA_ASTRO_REQUEST_V1.json(`${api}/v1/returns/context`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+        natal,bodies,center_iso:new Date().toISOString(),timezone:'Asia/Seoul',place:selectedPlace||null
       })});
-      let data=null;try{data=await res.json()}catch{}
-      if(!res.ok)throw new Error(data?.detail||`${res.status} ${res.statusText}`);
-      stateReturn.selected=bodies;stateReturn.place=$('astroReturnPlace').value.trim();stateReturn.result=data;render();renderInline();notifyAttachmentChanged();
+      if(!current())return;
+      if(!data?.returns||typeof data.returns!=='object'||!Object.keys(data.returns).length)throw new Error('리턴 계산 결과가 비어 있어. 다시 시도해줘.');
+      stateReturn.selected=bodies;stateReturn.place=selectedPlace;stateReturn.result=data;render();renderInline();notifyAttachmentChanged();
       $('astroReturnStatus').textContent=`계산 완료 · ${data.location?.place_resolved||'위치'} 기준`;
-    }catch(e){$('astroReturnStatus').textContent='계산 실패: '+(e?.message||e)}
-    finally{btn.disabled=false;btn.textContent='↻ 리턴 계산'}
+    }catch(e){if(!current())return;$('astroReturnStatus').textContent='계산 실패: '+(e?.message||e)}
+    finally{if(current()){btn.disabled=false;btn.textContent='↻ 리턴 계산'}}
   }
 
   function render(){

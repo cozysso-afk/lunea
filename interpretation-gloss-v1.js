@@ -77,8 +77,9 @@ F. 숫자·날짜·각도·하우스 계산값을 임의로 바꾸지 않았는�
     const hasTransit = s.includes('[WESTERN ASTROLOGY — TRANSIT SCANNER');
     const hasReturns = s.includes('[PLANETARY RETURNS · 회귀 계산 결과]');
     const hasThai = s.includes('[THAI ASTROLOGY · MAHA TAKSA 계산 결과]');
-    const hasSaju = s.includes('[SAJU / FOUR PILLARS · 사주명리]');
-    const hasWesternProfile = s.includes('[WESTERN ASTROLOGY · 서양점성술]');
+    const evidence = window.LUNEA_FINAL_PROMPT_PRIORITY_V1;
+    const hasSaju = evidence?.hasSaju?.(s) === true;
+    const hasWesternProfile = evidence?.hasWesternNatal?.(s) === true;
     const hasMessage = s.includes('[MESSAGE ORACLE · 현재 리딩의 연락·소식 보조]');
 
     const rows = [
