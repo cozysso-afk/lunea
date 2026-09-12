@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>LUNEA · 사이트 이전</title>
+<style>body{margin:0;background:#100d19;color:#eee6f2;font:16px/1.6 system-ui,sans-serif}main{box-sizing:border-box;max-width:560px;margin:32px auto;padding:24px}h1{font-size:24px}button,a,input{box-sizing:border-box;max-width:100%;font:inherit}button,a{display:block;width:100%;margin:12px 0;padding:12px;border:1px solid #73637c;border-radius:12px;background:#2c2337;color:inherit;text-align:center;text-decoration:none}input{width:100%;padding:10px 0}p{color:#d3c6db}</style></head>
+<body><main><h1>LUNEA · 사이트 이전</h1>
+<p>이 화면은 리딩 자동저장과 계산을 실행하지 않아. 같은 사이트의 다른 LUNEA 탭을 닫은 뒤 이전해줘.</p>
+<p>기록·초안·학습·프로필·메시지 이력을 옮겨. API 키와 로그인은 옮기지 않아. 백업에는 개인 질문과 출생 정보가 들어 있으므로 안전하게 보관해줘.</p>
+<button id="transferExport">현재 사이트 데이터 백업</button>
+<label for="transferFile">기존 사이트에서 받은 이전 백업 선택</label><input type="file" id="transferFile" accept="application/json,.json">
+<button id="transferImport">선택한 백업 복원</button>
+<p>복원 전에 현재 사이트의 안전 백업을 먼저 내려받아. 같은 ID의 기록과 프로필·초안은 가져온 값으로 갱신하고, 다른 기록은 유지해. 복원이 끝나면 홈에서 초안과 기록을 확인해줘.</p>
+<a href="./">LUNEA 홈으로</a></main>
+<script src="./lunea-host-migration-v1.js?v=20260912-pages-transfer-1"></script>
+<script>document.getElementById('transferExport').onclick=()=>LUNEA_HOST_MIGRATION_V1.exportFile();document.getElementById('transferImport').onclick=()=>LUNEA_HOST_MIGRATION_V1.importFile(document.getElementById('transferFile').files[0]);</script>
+</body></html>

@@ -434,6 +434,8 @@
       tools.innerHTML =
         '<button class="mini" id="ljExport">JSON 백업</button>' +
         '<button class="mini" id="ljImport">JSON 복원</button>' +
+        '<button class="mini" id="ljHostExport">사이트 이전 백업</button>' +
+        '<button class="mini" id="ljHostImport">사이트 이전 복원</button>' +
         '<input class="lj-hidden" type="file" id="ljFile" accept="application/json,.json">';
       filters.after(tools);
     }
@@ -834,6 +836,10 @@
 
     const exportBtn = $('ljExport');
     if (exportBtn) exportBtn.onclick = exportJournal;
+
+    const hostExport = $('ljHostExport'), hostImport = $('ljHostImport');
+    if (hostExport) hostExport.onclick = () => window.LUNEA_HOST_MIGRATION_V1?.exportFile();
+    if (hostImport) hostImport.onclick = () => { window.location.href = new URL('./lunea-host-transfer.html', document.baseURI).href; };
 
     const importBtn = $('ljImport');
     const file = $('ljFile');

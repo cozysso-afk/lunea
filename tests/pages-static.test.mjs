@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {createRequire} from 'node:module';
+const require=createRequire(import.meta.url),{build,plan,references}=require('../scripts/build-pages-static.cjs');
+const root=path.resolve(import.meta.dirname,'..'),out=path.join(root,'dist-pages');
+const files=build(),published=new Set(files);
+test('current index and every discovered runtime dependency are byte-identical',()=>{for(const file of files)assert.ok(fs.readFileSync(path.join(root,file)).equals(fs.readFileSync(path.join(out,file))),file);assert.ok(fs.existsSync(path.join(out,'.nojekyll')));});
+test('all local script, JSON, image and lazy-loader literals resolve under /lunea/',()=>{for(const file of files.filter(f=>/\.(html|js|json|webmanifest|css)$/.test(f)))for(const ref of references(fs.readFileSync(path.join(root,file),'utf8'))){assert.ok(published.has(ref),file+' -> '+ref);const url=new URL(ref,'https://cozysso-afk.github.io/lunea/');assert.ok(url.pathname.startsWith('/lunea/'));}});
+test('60 Timing cards, 36 Intimacy faces and approved Message assets published',()=>{assert.equal(files.filter(f=>/^assets\/timing-oracle\/cards\/LT-\d{3}\.png$/.test(f)).length,60);assert.equal(files.filter(f=>/^assets\/intimacy-oracle\/cards\//.test(f)).length,36);for(const f of ['message_oracle_front_frame.jpeg','message_oracle_back.jpeg','message_oracle_logo.png','message_oracle_front_mask.png','message_oracle_back_mask.png'])assert.ok(published.has('assets/message-oracle/'+f));});
+test('no server proxy or historical Netlify injection in runtime closure',()=>{assert.ok(!published.has('lunea-netlify-astro-route-v57.js'));assert.ok(!published.has('lunea-runtime-state-v55.js'));for(const file of files.filter(f=>/\.(js|html)$/.test(f))){const text=fs.readFileSync(path.join(root,file),'utf8');assert.doesNotMatch(text,/\/__lunea_api|\/\.netlify\/functions|serviceWorker\.register/);}});
+test('artifact excludes infrastructure, tests, packages and scripts',()=>{for(const file of files)assert.doesNotMatch(file,/^(?:\.|netlify\/|scripts\/|tests\/|node_modules\/|dist-|vercel\.json|netlify\.toml)/);assert.deepEqual(plan(),files);});
+test('explicit missing relative asset is retained as dependency and root paths rejected',()=>{assert.ok(references("'./assets/missing.png'").includes('assets/missing.png'));assert.throws(()=>references("'/root.js'"));});

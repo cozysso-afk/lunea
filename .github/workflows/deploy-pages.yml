@@ -1,0 +1,38 @@
+name: LUNEA Pages
+on:
+  workflow_dispatch:
+  push:
+    branches: [verify-662f40e-iphone]
+permissions:
+  contents: read
+concurrency:
+  group: lunea-pages
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/verify-662f40e-iphone'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/pages-static.test.mjs tests/host-migration.test.mjs
+      - run: node scripts/build-pages-static.cjs
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist-pages
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Deploy branch artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
