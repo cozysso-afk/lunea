@@ -54,7 +54,7 @@
     './lunea-structural-routing-v4-base.js?v=412',
     './lunea-card-motion-timing-v7.js?v=701',
     './lunea-thai-tarot-bridge-v32.js?v=20260911-attachments-v1',
-    './lunea-thai-range-v33.js?v=20260911-attachments-v1'
+    './lunea-thai-range-v33.js?v=20260912-quick-grid-1'
   ];
 
   // Audited UI only. No journal migration, timing fetch, AI or global observer.

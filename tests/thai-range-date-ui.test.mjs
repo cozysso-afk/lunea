@@ -154,6 +154,7 @@ test('V57 keeps exactly one visible date mirror and synchronizes without polling
 
 test('V33 exposes five presets, accepts 90 inclusive days, rejects 91, and explicitly syncs mirrors', () => {
   const source = read('lunea-thai-range-v33.js');
+  const loader = read('lunea-structural-routing-v4.js');
   const stopped = source.replace(
     /if\(document\.readyState==='loading'\)[\s\S]*?else boot\(\);\n\}\)\(\);\s*$/,
     '})();'
@@ -169,8 +170,17 @@ test('V33 exposes five presets, accepts 90 inclusive days, rejects 91, and expli
   const api = window.LUNEA_THAI_RANGE_V33;
   assert.ok(api);
   assert.equal(api.maxDays, 90);
-  for (const days of [7,14,30,60,90]) assert.equal((source.match(new RegExp(`data-days="${days}"`, 'g')) || []).length, 2);
+  for (const days of [7,14,30,60,90]) {
+    assert.equal((source.match(new RegExp(`<button[^>]+data-days="${days}"`, 'g')) || []).length, 2);
+  }
+  for (const [days, row, columns] of [[7,1,'1/3'],[14,1,'3/5'],[30,1,'5/7'],[60,2,'1/4'],[90,2,'4/7']]) {
+    assert.match(source, new RegExp(`\\.thai-v33-chip\\[data-days="${days}"\\]\\{grid-row:${row};grid-column:${columns.replace('/', '\\/')}\\}`));
+  }
+  assert.doesNotMatch(source, /\.thai-v33-chip:nth-child\(/);
+  assert.match(source, /\.thai-v33-chip\{width:100%;min-width:0;min-height:40px;box-sizing:border-box;/);
   assert.equal((source.match(/직접 날짜 선택 가능 · 최대 90일/g) || []).length, 2);
+  assert.match(loader, /lunea-thai-range-v33\.js\?v=20260912-quick-grid-1/);
+  assert.match(loader, /lunea-thai-date-display-v57\.js\?v=5703/);
 
   const chips = [7,14,30,60,90].map(days => ({dataset:{days:String(days)}, classList:{toggle(){}}}));
   const root = {querySelectorAll(selector) { return selector === '.thai-v33-chip' ? chips : []; }};

@@ -138,9 +138,13 @@
 
       .thai-v33-range-panel{margin-top:13px;padding:12px;border-radius:15px;border:1px solid rgba(213,190,126,.14);background:rgba(255,255,255,.025)}
       .thai-v33-range-kicker{color:#c5ae72;font:700 8px 'Cinzel',serif;letter-spacing:1.2px;margin-bottom:8px}
-      .thai-v33-quick{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-bottom:6px}
-      .thai-v33-chip{grid-column:span 2;min-width:0;min-height:34px;border-radius:10px;border:1px solid rgba(222,210,178,.12);background:rgba(255,255,255,.035);color:#aaa6b1;font-size:9.4px;font-weight:700}
-      .thai-v33-chip:nth-child(4){grid-column:2/span 2}.thai-v33-chip:nth-child(5){grid-column:4/span 2}
+      .thai-v33-quick{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;width:100%;box-sizing:border-box;margin-bottom:8px}
+      .thai-v33-chip{width:100%;min-width:0;min-height:40px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(222,210,178,.12);background:rgba(255,255,255,.035);color:#aaa6b1;font-size:9.4px;font-weight:700}
+      .thai-v33-chip[data-days="7"]{grid-row:1;grid-column:1/3}
+      .thai-v33-chip[data-days="14"]{grid-row:1;grid-column:3/5}
+      .thai-v33-chip[data-days="30"]{grid-row:1;grid-column:5/7}
+      .thai-v33-chip[data-days="60"]{grid-row:2;grid-column:1/4}
+      .thai-v33-chip[data-days="90"]{grid-row:2;grid-column:4/7}
       .thai-v33-chip.active{color:#f1e7c7;border-color:rgba(214,184,108,.34);background:rgba(200,163,80,.10)}
       .thai-v33-range-help{margin:0 1px 8px;color:#888591;font-size:8.7px;line-height:1.4;text-align:center}
       .thai-v33-dates{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
