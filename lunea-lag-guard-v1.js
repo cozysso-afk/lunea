@@ -1,11 +1,13 @@
 'use strict';
 
 /*
-  LUNEA LAG GUARD V1
+  LUNEA LAG GUARD V1.1
   iPhone Safari / multi-module cleanup guard.
 
   Purpose:
-  - Abort stale astrology requests when a new spread starts.
+  - Abort stale astrology requests as soon as the user enters a new reading.
+  - Invalidate an Astro Core warm-up so an old click cannot start later.
+  - Clear persisted Transit / Return queue + resume state at the reading boundary.
   - Clear heavy hidden result DOM from Transit / Return / Thai Taksa.
   - Reset stale "완료" button labels and inline summary cards.
   - Close auxiliary overlays before the next reading is rendered.
@@ -24,7 +26,10 @@
   if (window.__LUNEA_LAG_GUARD_V1__) return;
   window.__LUNEA_LAG_GUARD_V1__ = true;
 
+  const W = window;
   const $ = id => document.getElementById(id);
+  const ASTRO_PENDING_KEY = 'LUNEA_ASTRO_PENDING_V23';
+  const TRANSIT_LONG_KEY = 'LUNEA_TRANSIT_LONG_RUN_V2_CHECKPOINT';
 
   const AUX_ENDPOINTS = [
     '/v1/transits/scan',
@@ -45,12 +50,12 @@
   }
 
   function installFetchAbortGuard() {
-    if (window.__LUNEA_LAG_GUARD_FETCH_WRAPPED__ || typeof window.fetch !== 'function') return;
-    window.__LUNEA_LAG_GUARD_FETCH_WRAPPED__ = true;
+    if (W.__LUNEA_LAG_GUARD_FETCH_WRAPPED__ || typeof W.fetch !== 'function') return;
+    W.__LUNEA_LAG_GUARD_FETCH_WRAPPED__ = true;
 
-    const originalFetch = window.fetch.bind(window);
+    const originalFetch = W.fetch.bind(W);
 
-    window.fetch = function(input, init = {}) {
+    W.fetch = function(input, init = {}) {
       if (!isAuxRequest(input)) return originalFetch(input, init);
 
       // Current LUNEA astrology modules do not supply their own signal.
@@ -71,6 +76,21 @@
       try { controller.abort('new-reading-reset'); } catch { try { controller.abort(); } catch {} }
     }
     pendingControllers.clear();
+  }
+
+  function invalidateAsyncAstroState() {
+    // A Return/Transit click can still be inside the Render health warm-up and
+    // have no POST request to abort yet. Advance the Stability generation first
+    // so that old click is dropped after warm-up instead of starting late.
+    try { W.LUNEA_ASTRO_STABILITY?.cancelForQuestionBoundary?.(); } catch {}
+    try { W.LUNEA_ASTRO_JOB_QUEUE?.resetForQuestionBoundary?.(); } catch {}
+    try { W.LUNEA_ASTRO_RESUME_V23?.clear?.(); } catch {}
+    try { W.LUNEA_THAI_TAROT_BRIDGE_V32?.clear?.(); } catch {}
+    try { localStorage.removeItem(ASTRO_PENDING_KEY); } catch {}
+    try { localStorage.removeItem(TRANSIT_LONG_KEY); } catch {}
+
+    const badge = $('luneaAstroJobBadgeV23');
+    badge?.classList.remove('show','waiting');
   }
 
   function closeAuxOverlays() {
@@ -129,6 +149,8 @@
       btn.disabled = false;
       btn.textContent = label;
       btn.removeAttribute('aria-busy');
+      btn.removeAttribute('data-lunea-warm-busy');
+      delete btn.dataset.luneaWarmBusy;
     });
   }
 
@@ -163,6 +185,7 @@
     lastResetAt = now;
     cleanupEpoch += 1;
 
+    invalidateAsyncAstroState();
     abortPendingAuxRequests();
     closeAuxOverlays();
     clearHeavyAuxDOM();
@@ -182,10 +205,10 @@
   }
 
   function installStartSpreadReset() {
-    if (window.__LUNEA_LAG_GUARD_START_WRAPPED__) return;
+    if (W.__LUNEA_LAG_GUARD_START_WRAPPED__) return;
     if (typeof startSpread !== 'function') return;
 
-    window.__LUNEA_LAG_GUARD_START_WRAPPED__ = true;
+    W.__LUNEA_LAG_GUARD_START_WRAPPED__ = true;
     const previousStartSpread = startSpread;
 
     startSpread = function(...args) {
@@ -195,12 +218,22 @@
   }
 
   function installRerollCapture() {
-    if (window.__LUNEA_LAG_GUARD_REROLL_CAPTURE__) return;
-    window.__LUNEA_LAG_GUARD_REROLL_CAPTURE__ = true;
+    if (W.__LUNEA_LAG_GUARD_REROLL_CAPTURE__) return;
+    W.__LUNEA_LAG_GUARD_REROLL_CAPTURE__ = true;
 
-    // Safety net in case a future version changes the startSpread call path.
+    // Selecting a different reading opens only the bottom sheet first. Waiting
+    // until startSpread is too late: an old Return warm-up/POST can keep running
+    // and its global badge can leak into the new question sheet.
     document.addEventListener('click', event => {
-      const btn = event.target?.closest?.('button');
+      const target = event.target instanceof Element ? event.target : null;
+      if (!target) return;
+
+      if (target.closest('.reading-item,#dailyBtn,#luneaDraftRestore')) {
+        hardResetAux('reading-entry');
+        return;
+      }
+
+      const btn = target.closest('button');
       if (!btn) return;
       const text = (btn.textContent || '').replace(/\s+/g, ' ').trim();
       if (/다시\s*뽑기|새\s*리딩|새\s*질문/.test(text)) {
@@ -245,11 +278,11 @@
   }
 
   function installPageShowRepair() {
-    if (window.__LUNEA_LAG_GUARD_PAGESHOW__) return;
-    window.__LUNEA_LAG_GUARD_PAGESHOW__ = true;
+    if (W.__LUNEA_LAG_GUARD_PAGESHOW__) return;
+    W.__LUNEA_LAG_GUARD_PAGESHOW__ = true;
 
     // iOS Safari can restore a page from back/forward cache with stale UI locks.
-    window.addEventListener('pageshow', () => {
+    W.addEventListener('pageshow', () => {
       closeAuxOverlays();
       repairModalLock();
       resetAuxButtons();
@@ -262,8 +295,13 @@
     installStartSpreadReset();
     installRerollCapture();
     installPageShowRepair();
-    console.info('✦ LUNEA LAG GUARD V1 loaded');
+    console.info('✦ LUNEA LAG GUARD V1.1 loaded · reading-entry Astro reset ON');
   }
+
+  W.LUNEA_LAG_GUARD = Object.freeze({
+    hardResetAux,
+    version:'1.1'
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot, {once:true});

@@ -1,14 +1,15 @@
 'use strict';
 
 /*
-  LUNEA ASTRO STABILITY V2
-  ========================
+  LUNEA ASTRO STABILITY V2.1
+  ==========================
   Purpose:
   - remove the old global 60s cutoff from Astro requests without touching
     iOS card/compositor code
   - keep one Gemini watchdog, allowing 75s for long tarot/profile prompts
   - actively abort a timed-out Gemini request so it does not keep running
   - warm Astro Core before Transit / Return buttons run
+  - invalidate a pending warm-up when the user starts another reading
   - leave Natal V1.1's own one-tap lifecycle intact
   - preserve Lag Guard's AbortController for stale auxiliary requests
 
@@ -48,10 +49,15 @@
   // At this point Lag Guard is already loaded, so this retains its stale-request
   // AbortController behavior for Transit / Return / Thai.
   const baseFetch = typeof W.fetch === 'function' ? W.fetch.bind(W) : null;
+  let boundaryGeneration = 0;
 
   if (!baseFetch) {
     console.warn('[LUNEA Astro Stability V2] fetch unavailable');
     return;
+  }
+
+  function cancelForQuestionBoundary() {
+    boundaryGeneration += 1;
   }
 
   // ------------------------------------------------------------
@@ -237,6 +243,7 @@
     btn.onclick = async function(event) {
       if (btn.dataset.luneaWarmBusy === '1') return;
 
+      const generation = boundaryGeneration;
       btn.dataset.luneaWarmBusy = '1';
       const oldDisabled = btn.disabled;
       const oldText = btn.textContent;
@@ -262,6 +269,9 @@
         btn.textContent = oldText;
       }
 
+      // The user may have entered another reading while the Render health check
+      // was still waiting. Never spend that old click after the boundary moved.
+      if (generation !== boundaryGeneration) return;
       return original.call(this, event);
     };
   }
@@ -292,7 +302,7 @@
       });
     }, 0);
 
-    console.info('✦ LUNEA ASTRO STABILITY V2 loaded · Gemini 75s watchdog · Astro 60s cutoff disabled');
+    console.info('✦ LUNEA ASTRO STABILITY V2.1 loaded · stale warm-up boundary guard ON');
   }
 
   if (document.readyState === 'loading') {
@@ -303,11 +313,13 @@
 
   W.LUNEA_ASTRO_STABILITY = {
     ensureReady,
+    cancelForQuestionBoundary,
     getState: () => ({
       api: warm.api || apiUrl(),
       readyAt: warm.readyAt,
       warming: !!warm.promise,
-      lastError: warm.lastError
+      lastError: warm.lastError,
+      boundaryGeneration
     })
   };
 })();
