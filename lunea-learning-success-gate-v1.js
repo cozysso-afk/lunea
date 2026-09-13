@@ -14,6 +14,12 @@
    Base AI preflight already performs its own post-start commit. This
    gate targets only the V20 universal preview and otherwise stays out
    of the learning path.
+
+   V59 lifecycle note:
+   - installation is one-shot at load; no polling/re-wrapping loop
+   - compatibility markers already present on the prior reading entrypoint
+     are propagated onto this wrapper so later legacy installers do not
+     mistake the outer function for an unwrapped entrypoint.
 */
 (() => {
   const W=window;
@@ -25,6 +31,15 @@
   let pendingTimer=0;
   let recordInstalled=false;
   let startInstalled=false;
+
+  const START_MARKERS=[
+    '__luneaMobileV57Yield',
+    '__luneaAiRepeatFlowV58',
+    '__luneaReadingBoundaryV31',
+    '__luneaV14Wrapped',
+    '__luneaV27Wrapped',
+    '__luneaManualWrapped'
+  ];
 
   function previewOpen(){
     return !!document.getElementById('luneaV20PreviewOverlay')?.classList?.contains('show');
@@ -51,7 +66,7 @@
   function installRecordGate(){
     const api=W.LUNEA_SPREAD_LEARNING_V1;
     if(!api||typeof api.record!=='function')return false;
-    if(api.record.__luneaSuccessGate)return true;
+    if(api.record.__luneaSuccessGate){recordInstalled=true;return true;}
     const prior=api.record.bind(api);
     const gated=function(payload){
       if(previewOpen())return stage(payload);
@@ -79,7 +94,7 @@
   function installStartGate(){
     const start=W.startSpread;
     if(typeof start!=='function')return false;
-    if(start.__luneaLearningSuccessGate)return true;
+    if(start.__luneaLearningSuccessGate){startInstalled=true;return true;}
     const prior=start;
     const wrapped=function(...args){
       const hit=takeFor(args[0]);
@@ -94,6 +109,9 @@
     };
     wrapped.__luneaLearningSuccessGate=true;
     wrapped.__luneaPriorStart=prior;
+    START_MARKERS.forEach(marker=>{
+      if(prior?.[marker])wrapped[marker]=true;
+    });
     W.startSpread=wrapped;
     try{startSpread=wrapped}catch{}
     startInstalled=true;
@@ -101,19 +119,15 @@
   }
 
   function boot(){
-    let tries=0;
-    const timer=setInterval(()=>{
-      tries++;
-      installRecordGate();
-      installStartGate();
-      if((recordInstalled&&startInstalled)||tries>200)clearInterval(timer);
-    },80);
     installRecordGate();
     installStartGate();
+    if(!recordInstalled||!startInstalled){
+      console.warn('[LUNEA Learning Success Gate] one-shot install incomplete; lifecycle left unchanged');
+    }
   }
 
   W.LUNEA_LEARNING_SUCCESS_GATE_V1={
-    version:1,
+    version:1.1,
     installRecordGate,
     installStartGate,
     pending:()=>pending?{question:pending.question,stagedAt:pending.stagedAt}:null,
@@ -122,5 +136,5 @@
 
   if(document.readyState==='complete')setTimeout(boot,0);
   else W.addEventListener('load',boot,{once:true});
-  console.info('🛡️ LUNEA Learning Success Gate V1 loaded · V20 corrections commit after successful draw');
+  console.info('🛡️ LUNEA Learning Success Gate V1.1 loaded · one-shot install · lifecycle markers preserved');
 })();
