@@ -15,12 +15,16 @@ test('base manual entry resolves its owning category instead of hard-coding GENE
   assert.match(manual, /state\.__luneaIntimacyReading = originCategory === 'INTIMACY'/);
 });
 
-test('category-specific manual entry preserves category and catches late INTIMACY cabinets', () => {
+test('category-specific manual hydration preserves category without late DOM insertion machinery', () => {
   assert.match(everywhere, /item\.dataset\.cat = category/);
   assert.match(everywhere, /state\.__luneaManualOriginCategory = cat/);
   assert.match(everywhere, /state\.category = cat/);
-  assert.match(everywhere, /MutationObserver/);
-  assert.match(everywhere, /scanCategories/);
+  assert.match(everywhere, /hydrateCategories/);
+  assert.match(everywhere, /\[data-manual-spread="1"\]/);
+  assert.doesNotMatch(everywhere, /MutationObserver/);
+  assert.doesNotMatch(everywhere, /setInterval/);
+  assert.doesNotMatch(everywhere, /insertAdjacentElement/);
+  assert.doesNotMatch(everywhere, /makeManualItem/);
 });
 
 test('13-20 card manual path preserves origin category', () => {
