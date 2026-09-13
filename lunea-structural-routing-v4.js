@@ -31,17 +31,17 @@
     document.write('<script src="./lunea-learning-cloud-sync-v1.js?v=104"><\/script>');
     document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=105"><\/script>');
     document.write('<script src="./lunea-reading-flow-v5.js?v=501"><\/script>');
-    document.write('<script src="./lunea-transit-range-v1.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-transit-long-run-v1.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-astro-job-queue-v1.js?v=33ac067fd9db"><\/script>');
+    document.write('<script src="./lunea-transit-range-v1.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-transit-long-run-v1.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-astro-job-queue-v1.js?v=3ec8a0b0751e"><\/script>');
     document.write('<script src="./lunea-sheet-scroll-fix-v1.js?v=106"><\/script>');
     document.write('<script src="./lunea-horary-ab-v1.js?v=104"><\/script>');
     document.write('<script src="./lunea-timing-ab-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-timing-prompt-repair-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-timing-result-copy-v35.js?v=3501"><\/script>');
-    document.write('<script src="./lunea-thai-tarot-bridge-v32.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-thai-range-v33.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-final-prompt-priority-v1.js?v=33ac067fd9db"><\/script>');
+    document.write('<script src="./lunea-thai-tarot-bridge-v32.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-thai-range-v33.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-final-prompt-priority-v1.js?v=3ec8a0b0751e"><\/script>');
     document.write('<script src="./lunea-daily-lock-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-card-motion-timing-v7.js?v=701"><\/script>');
     document.write('<script src="./lunea-home-portal-v8.js?v=801"><\/script>');
@@ -54,26 +54,26 @@
     document.write('<script src="./lunea-timing-ab-inline-v16.js?v=1601"><\/script>');
     document.write('<script src="./lunea-manual-limit20-v17.js?v=1705"><\/script>');
     document.write('<script src="./lunea-horary-balance-v19-5.js?v=1905"><\/script>');
-    document.write('<script src="./lunea-cardback-restore-v19.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-universal-ai-opal-v20.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-intimacy-v34.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-intimacy-ai-bridge-v34.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-intimacy-legacy-v35.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-intimacy-readability-v36.js?v=33ac067fd9db"><\/script>');
+    document.write('<script src="./lunea-cardback-restore-v19.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-universal-ai-opal-v20.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-intimacy-v34.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-intimacy-ai-bridge-v34.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-intimacy-legacy-v35.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-intimacy-readability-v36.js?v=3ec8a0b0751e"><\/script>');
     document.write('<script src="./lunea-learning-success-gate-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-daily-orbit6-v21.js?v=2101"><\/script>');
     document.write('<script src="./lunea-daily-celestial-v22.js?v=2201"><\/script>');
-    document.write('<script src="./lunea-astro-resume-v23.js?v=33ac067fd9db"><\/script>');
+    document.write('<script src="./lunea-astro-resume-v23.js?v=3ec8a0b0751e"><\/script>');
     document.write('<script src="./lunea-thai-standalone-v24.js?v=2401"><\/script>');
     document.write('<script src="./lunea-thai-art-v25.js?v=2501"><\/script>');
     document.write('<script src="./lunea-thai-art-polish-v26.js?v=2601"><\/script>');
     document.write('<script src="./lunea-mobile-journal-polish-v27.js?v=2701"><\/script>');
     document.write('<script src="./lunea-sector-color-system-v28.js?v=2801"><\/script>');
-    document.write('<script src="./lunea-fixed-spread-depth-v30.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-general-order-v30-5.js?v=33ac067fd9db"><\/script>');
+    document.write('<script src="./lunea-fixed-spread-depth-v30.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-general-order-v30-5.js?v=3ec8a0b0751e"><\/script>');
     document.write('<script src="./lunea-reading-boundary-reset-v31.js?v=3102"><\/script>');
-    document.write('<script src="./lunea-reading-action-order-v33.js?v=33ac067fd9db"><\/script>');
-    document.write('<script src="./lunea-boot-reveal-v29.js?v=33ac067fd9db"><\/script>');
+    document.write('<script src="./lunea-reading-action-order-v33.js?v=3ec8a0b0751e"><\/script>');
+    document.write('<script src="./lunea-boot-reveal-v29.js?v=3ec8a0b0751e"><\/script>');
     return;
   }
 
@@ -98,17 +98,17 @@
     './lunea-learning-cloud-sync-v1.js?v=104',
     './lunea-ai-spread-preflight-v2.js?v=105',
     './lunea-reading-flow-v5.js?v=501',
-    './lunea-transit-range-v1.js?v=33ac067fd9db',
-    './lunea-transit-long-run-v1.js?v=33ac067fd9db',
-    './lunea-astro-job-queue-v1.js?v=33ac067fd9db',
+    './lunea-transit-range-v1.js?v=3ec8a0b0751e',
+    './lunea-transit-long-run-v1.js?v=3ec8a0b0751e',
+    './lunea-astro-job-queue-v1.js?v=3ec8a0b0751e',
     './lunea-sheet-scroll-fix-v1.js?v=106',
     './lunea-horary-ab-v1.js?v=104',
     './lunea-timing-ab-v1.js?v=102',
     './lunea-timing-prompt-repair-v1.js?v=101',
     './lunea-timing-result-copy-v35.js?v=3501',
-    './lunea-thai-tarot-bridge-v32.js?v=33ac067fd9db',
-    './lunea-thai-range-v33.js?v=33ac067fd9db',
-    './lunea-final-prompt-priority-v1.js?v=33ac067fd9db',
+    './lunea-thai-tarot-bridge-v32.js?v=3ec8a0b0751e',
+    './lunea-thai-range-v33.js?v=3ec8a0b0751e',
+    './lunea-final-prompt-priority-v1.js?v=3ec8a0b0751e',
     './lunea-daily-lock-v1.js?v=101',
     './lunea-card-motion-timing-v7.js?v=701',
     './lunea-home-portal-v8.js?v=801',
@@ -121,25 +121,25 @@
     './lunea-timing-ab-inline-v16.js?v=1601',
     './lunea-manual-limit20-v17.js?v=1705',
     './lunea-horary-balance-v19-5.js?v=1905',
-    './lunea-cardback-restore-v19.js?v=33ac067fd9db',
-    './lunea-universal-ai-opal-v20.js?v=33ac067fd9db',
-    './lunea-intimacy-v34.js?v=33ac067fd9db',
-    './lunea-intimacy-ai-bridge-v34.js?v=33ac067fd9db',
-    './lunea-intimacy-legacy-v35.js?v=33ac067fd9db',
-    './lunea-intimacy-readability-v36.js?v=33ac067fd9db',
+    './lunea-cardback-restore-v19.js?v=3ec8a0b0751e',
+    './lunea-universal-ai-opal-v20.js?v=3ec8a0b0751e',
+    './lunea-intimacy-v34.js?v=3ec8a0b0751e',
+    './lunea-intimacy-ai-bridge-v34.js?v=3ec8a0b0751e',
+    './lunea-intimacy-legacy-v35.js?v=3ec8a0b0751e',
+    './lunea-intimacy-readability-v36.js?v=3ec8a0b0751e',
     './lunea-learning-success-gate-v1.js?v=101',
     './lunea-daily-orbit6-v21.js?v=2101',
     './lunea-daily-celestial-v22.js?v=2201',
-    './lunea-astro-resume-v23.js?v=33ac067fd9db',
+    './lunea-astro-resume-v23.js?v=3ec8a0b0751e',
     './lunea-thai-standalone-v24.js?v=2401',
     './lunea-thai-art-v25.js?v=2501',
     './lunea-thai-art-polish-v26.js?v=2601',
     './lunea-mobile-journal-polish-v27.js?v=2701',
     './lunea-sector-color-system-v28.js?v=2801',
-    './lunea-fixed-spread-depth-v30.js?v=33ac067fd9db',
-    './lunea-general-order-v30-5.js?v=33ac067fd9db',
+    './lunea-fixed-spread-depth-v30.js?v=3ec8a0b0751e',
+    './lunea-general-order-v30-5.js?v=3ec8a0b0751e',
     './lunea-reading-boundary-reset-v31.js?v=3102',
-    './lunea-reading-action-order-v33.js?v=33ac067fd9db',
-    './lunea-boot-reveal-v29.js?v=33ac067fd9db'
+    './lunea-reading-action-order-v33.js?v=3ec8a0b0751e',
+    './lunea-boot-reveal-v29.js?v=3ec8a0b0751e'
   ]).catch(err => console.error('[LUNEA Structural V4 loader]', err));
 })();
