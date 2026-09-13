@@ -11,10 +11,12 @@ const runtimeState = read('lunea-runtime-state-v56.js');
 const universal = read('lunea-universal-ai-opal-v20.js');
 const manual = read('lunea-manual-structure-v1.js');
 const manualEverywhere = read('lunea-manual-everywhere-v1.js');
+const manual20 = read('lunea-manual-limit20-v17.js');
 const polish = read('lunea-reading-polish-v14.js');
 const timingIsolation = read('lunea-thai-archive-timing-isolation-v27.js');
 const mobile = read('lunea-mobile-runtime-fixes-v57.js');
 const lagGuard = read('lunea-lag-guard-v1.js');
+const intimacy = read('lunea-intimacy-oracle-ui-v36.js');
 const bootReveal = read('lunea-boot-reveal-v29.js');
 
 const noStartAssignment = (source, label) => {
@@ -36,6 +38,7 @@ assert.match(lifecycle, /function isCurrent\(id\)/);
 assert.match(lifecycle, /function guard\(id, fn\)/);
 assert.match(lifecycle, /LUNEA_LAG_GUARD_V1\?\.reset/);
 assert.match(lifecycle, /luneaDraftRestore/);
+assert.match(lifecycle, /__LUNEA_AI_REPEAT_FLOW_V58__ = true/);
 
 // V31 is synchronous DOM/source reset only: no Timing-open reset, no wrapper,
 // no polling, and no delayed cleanup that can cross reading sessions.
@@ -59,8 +62,10 @@ for (const [label, source] of [
   ['V27', timingIsolation],
   ['V57', mobile],
   ['Manual V1', manual],
+  ['Manual V17', manual20],
   ['Lag Guard', lagGuard],
   ['Learning Gate', learning],
+  ['Intimacy V36', intimacy],
 ]) {
   noStartAssignment(source, label);
   assert.ok(!/setInterval\s*\(/.test(source), `${label} must not poll/re-wrap`);
@@ -69,8 +74,11 @@ assert.ok(!/wrapStartSpread/.test(polish), 'V14 wrapStartSpread must be removed'
 assert.ok(!/installStartSpreadYield/.test(mobile), 'V57 global async yield installer must be removed');
 assert.ok(!/installStartSpreadReset/.test(lagGuard), 'Lag Guard startSpread wrapper must be removed');
 assert.ok(!/installStartGate/.test(learning), 'Learning gate startSpread wrapper must be removed');
+assert.ok(!/function\s+patchStart/.test(intimacy), 'Intimacy startSpread wrapper must be removed');
 assert.match(lagGuard, /LUNEA_LAG_GUARD_V1 = Object\.freeze/);
 assert.match(timingIsolation, /version:27\.1/);
+assert.match(manual20, /Manual Limit V17\.1/);
+assert.match(intimacy, /RELEASE='36\.4'/);
 
 // V14 delayed A/B work must use the V59 session-aware scheduler.
 assert.match(polish, /currentSessionId/);
@@ -93,19 +101,30 @@ assert.match(universal, /gate\?\.commit/);
 assert.ok(!/\.record\s*=/.test(learning), 'learning gate must not replace learning.record');
 assert.match(learning, /function commit\(payload\)/);
 
-// Manual entries are hydrate-only. Manual rendering may keep its own one-shuffle
-// renderer, but it must not discover/create a row through the AI DOM.
+// Manual entries are hydrate-only. Manual renderers keep one shuffle but run
+// behind the V59 capture boundary. No global AI-row dependency or polling remains.
 assert.ok(!/ensureManualReadingItem/.test(manual), 'Manual V1 must not dynamically create its menu row');
 assert.ok(!/dataset\?\.title === '질문 맞춤 AI 배열'/.test(manual), 'Manual V1 must not depend on first AI row');
 assert.match(manual, /dataset\.luneaLifecycleBound/);
 assert.match(manual, /function startManualSpread/);
 assert.match(manual, /const shuffled = secureShuffle\(TAROT_DECK\)/);
+assert.match(manual20, /currentSessionId/);
+assert.match(manual20, /isCurrent\(session\)/);
+assert.match(manual20, /secureShuffle\(TAROT_DECK\)\.slice/);
 
 assert.ok(!/function\s+makeManualItem/.test(manualEverywhere), 'Manual Everywhere must not create rows');
 assert.ok(!/insertAdjacentElement/.test(manualEverywhere), 'Manual Everywhere must not insert rows');
 assert.ok(!/MutationObserver/.test(manualEverywhere), 'Manual Everywhere must not late-insert via observer');
 assert.ok(!/setInterval\s*\(/.test(manualEverywhere), 'Manual Everywhere must not poll');
+assert.match(manualEverywhere, /dataset\.luneaLifecycleBound/);
 assert.match(manualEverywhere, /hydrateCategories/);
+
+// Intimacy post-draw behavior observes committed card DOM and uses session-aware
+// timers rather than wrapping startSpread or scheduling stale retry callbacks.
+assert.match(intimacy, /const sessionTimeout=/);
+assert.match(intimacy, /function syncOracleToCards/);
+assert.match(intimacy, /new MutationObserver\(syncOracleToCards\)/);
+assert.ok(!/setTimeout\(\(\)=>\{if\(intimacy\(\)\)performOracleDraw/.test(intimacy), 'Intimacy old post-start timer must be gone');
 
 // Core rows are parser-time and deterministically ordered. V29 refuses to reveal
 // a menu without them even if auxiliary boot work is late.
