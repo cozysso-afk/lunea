@@ -82,6 +82,10 @@
     loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2');
   }
   function loadEmergencyRepair() {
+    // V56 already retries once against the alternate official Astro origin.
+    // Pre-claim V43's older 3-attempt retry wrapper so one calculation cannot
+    // fan out into up to six serial HTTP attempts on a transient Render error.
+    W.__LUNEA_ASTRO_RETRY_V43__ = true;
     loadBuildScopedScript('luneaEmergencyRepairV43Loader', './lunea-emergency-repair-v43.js', 'emergency repair V43');
   }
   function loadMobileRuntimeFixesV57() {
