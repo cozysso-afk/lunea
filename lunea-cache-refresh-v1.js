@@ -1,13 +1,12 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1 · Pages V58
-  - Build-scoped hotfix loader + stale-build refresh.
-  - Loads Pages-only Astro origin failover before the user can trigger Thai/Astro.
-  - Loads hard reading-question state boundaries so old calculations cannot leak.
-  - Loads the iOS Thai period date centering repair.
-  - Loads V57 mobile draw / Transit / Horary / draft auxiliary reliability fixes.
-  - Loads V58 repeated Universal AI draw transition guard.
+  LUNEA Cache Refresh V1 · Pages V59.3
+  - Loads V59 reading lifecycle synchronously while the page is still parsing.
+  - Loads Pages-only Astro origin failover before user-triggered Thai/Astro work.
+  - Loads question-boundary, iOS and auxiliary reliability modules.
+  - V58 repeated-AI wrapper is retired.
+  - V57.1 no longer owns startSpread, so no compatibility marker suppression exists.
 */
 (() => {
   if (window.__LUNEA_CACHE_REFRESH_V1__) return;
@@ -38,6 +37,16 @@
     script.async = false;
     script.onerror = () => console.info(`[LUNEA cache refresh] ${label} skipped`);
     (document.head || document.documentElement).appendChild(script);
+  }
+
+  function loadReadingLifecycleV59() {
+    if (document.getElementById('luneaReadingLifecycleV59Loader')) return;
+    const src = `./lunea-reading-lifecycle-v59.js?v=${encodeURIComponent(SELF_BUILD || '59')}`;
+    if (document.readyState === 'loading') {
+      document.write(`<script id="luneaReadingLifecycleV59Loader" src="${src}"><\/script>`);
+      return;
+    }
+    loadBuildScopedScript('luneaReadingLifecycleV59Loader', './lunea-reading-lifecycle-v59.js', 'reading lifecycle V59');
   }
 
   function loadAstroOriginFailover() {
@@ -83,17 +92,11 @@
     loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2');
   }
   function loadEmergencyRepair() {
-    // V56 already retries once against the alternate official Astro origin.
-    // Pre-claim V43's older 3-attempt retry wrapper so one calculation cannot
-    // fan out into up to six serial HTTP attempts on a transient Render error.
     W.__LUNEA_ASTRO_RETRY_V43__ = true;
     loadBuildScopedScript('luneaEmergencyRepairV43Loader', './lunea-emergency-repair-v43.js', 'emergency repair V43');
   }
   function loadMobileRuntimeFixesV57() {
-    loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57');
-  }
-  function loadAiRepeatFlowV58() {
-    loadBuildScopedScript('luneaAiRepeatFlowV58Loader', './lunea-ai-repeat-flow-v58.js', 'repeated Universal AI draw transition V58');
+    loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57.1');
   }
 
   function refreshTo(build) {
@@ -114,6 +117,7 @@
       });
       if (!res.ok) return;
       const data = await res.json();
+      if (data.error) return;
       const remote = String(data?.version || '').trim();
       if (!remote) return;
       const embedded = currentPageBuild();
@@ -124,13 +128,10 @@
   }
 
   function boot() {
-    // Order matters: failover wraps fetch first; runtime boundary starts watching
-    // the live reading before any user-triggered auxiliary calculation.
     loadAstroOriginFailover();
     loadRuntimeStateV56();
     loadThaiDateCenterV54();
     loadHorizontalTouchStability();
-
     loadJournalHeaderFix();
     loadSectorCardBacks();
     loadTimingUploadedArt();
@@ -143,9 +144,11 @@
     loadLearningAuthRecovery();
     loadEmergencyRepair();
     loadMobileRuntimeFixesV57();
-    loadAiRepeatFlowV58();
     checkBuild();
   }
+
+  // Core reading rows + session boundary are parser-time work.
+  loadReadingLifecycleV59();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();

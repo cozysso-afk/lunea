@@ -1,9 +1,12 @@
 'use strict';
 
-/* LUNEA RUNTIME STATE V56
+/* LUNEA RUNTIME STATE V56.1
    Question boundaries are hard state boundaries. No Transit / Return / Thai
    request, busy label, inline result, or auto-resume marker from a previous
    tarot question may survive into the next reading.
+
+   V56.1 adds an epoch gate to every delayed cleanup pass. A timeout created for
+   reading N is not allowed to mutate reading N+1 after the question changes.
 */
 (() => {
   const W = window;
@@ -18,6 +21,7 @@
 
   let lastQuestion = '';
   let observer = null;
+  let boundaryEpoch = 0;
 
   function currentQuestion() {
     let q = unquote($('spreadQuestion')?.textContent || '');
@@ -88,6 +92,9 @@
   }
 
   function clearAuxiliaryState(reason = 'question-boundary') {
+    const epoch = ++boundaryEpoch;
+    const questionAtBoundary = currentQuestion();
+
     try { W.LUNEA_ASTRO_JOB_QUEUE?.resetForQuestionBoundary?.(); } catch {}
     try { W.LUNEA_ASTRO_RESUME_V23?.clear?.(); } catch {}
     try { W.LUNEA_THAI_TAROT_BRIDGE_V32?.clear?.(); } catch {}
@@ -95,9 +102,15 @@
     try { localStorage.removeItem(LONG_KEY); } catch {}
     resetVisibleUi();
 
-    // Several legacy wrappers finish asynchronously. Reassert the new-reading
-    // state after their queued microtasks/finally blocks have run.
-    [60, 220, 700, 1600].forEach(ms => setTimeout(resetVisibleUi, ms));
+    // Legacy request/finally handlers can settle later. Reassert this boundary,
+    // but only while it is still the CURRENT boundary and the live question has
+    // not advanced. Old reading N timers must never clean reading N+1.
+    [60, 220, 700, 1600].forEach(ms => setTimeout(() => {
+      if (epoch !== boundaryEpoch) return;
+      if (currentQuestion() !== questionAtBoundary) return;
+      resetVisibleUi();
+    }, ms));
+
     try { document.documentElement.dataset.luneaAuxBoundary = reason; } catch {}
   }
 
@@ -118,9 +131,6 @@
       || (returnQ && returnQ !== live)
     );
 
-    // Thai bridge has no persistent/resumable request contract. If iOS restores
-    // a page with that button still busy, it is stale by definition and must be
-    // released immediately.
     if (mismatch || thaiBusy) {
       clearAuxiliaryState(mismatch ? 'stale-question' : 'stale-thai-busy');
       return true;
@@ -185,7 +195,8 @@
     clear: clearAuxiliaryState,
     inspect: inspectForStaleState,
     currentQuestion,
-    version: 56,
+    epoch: () => boundaryEpoch,
+    version: 56.1,
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});

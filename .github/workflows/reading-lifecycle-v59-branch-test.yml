@@ -1,0 +1,71 @@
+name: Reading lifecycle V59 branch checks
+
+on:
+  push:
+    branches:
+      - fix/reading-lifecycle-entry-init-audit
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lifecycle-source-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check changed runtime files
+        run: |
+          node --check lunea-reading-lifecycle-v59.js
+          node --check lunea-reading-boundary-reset-v31.js
+          node --check lunea-runtime-state-v56.js
+          node --check lunea-reading-polish-v14.js
+          node --check lunea-thai-archive-timing-isolation-v27.js
+          node --check lunea-mobile-runtime-fixes-v57.js
+          node --check lunea-universal-ai-opal-v20.js
+          node --check lunea-learning-success-gate-v1.js
+          node --check lunea-manual-structure-v1.js
+          node --check lunea-manual-everywhere-v1.js
+          node --check lunea-manual-limit20-v17.js
+          node --check lunea-lag-guard-v1.js
+          node --check lunea-intimacy-oracle-ui-v36.js
+          node --check lunea-boot-reveal-v29.js
+          node --check lunea-cache-refresh-v1.js
+          node --check tests/reading-lifecycle-v59.e2e.mjs
+      - name: Source invariant regression test
+        run: node tests/reading-lifecycle-v59.test.mjs
+
+  mixed-sector-10-run-webkit:
+    needs: lifecycle-source-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-http.log 2>&1 &
+          echo $! >/tmp/lunea-http.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-http.log
+          exit 1
+      - name: Run same-session 10-reading mixed-sector regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/reading-lifecycle-v59.e2e.mjs
+      - name: Show local server log
+        if: always()
+        run: cat /tmp/lunea-http.log || true

@@ -1,15 +1,12 @@
 'use strict';
 
 /*
-  LUNEA MANUAL SPREAD EVERYWHERE V1
-  =================================
-  Additive UI layer loaded after lunea-manual-structure-v1.js.
+  LUNEA MANUAL SPREAD EVERYWHERE V1.2
+  ===================================
+  Hydration-only fallback for category-scoped Manual Spread entries.
 
-  - Adds the existing user-authored manual spread entry to every tarot category.
-  - Preserves the selected category (CAREER / LOVE / STOCK / future categories)
-    so existing category-aware reading directives still apply.
-  - Reuses the single manual spread panel and draw pipeline from Manual Structure V1.
-  - Does not alter fixed spreads, RNG/card draw logic, or Horary.
+  Parser-time rows created/bound by Reading Lifecycle V59 are left alone.
+  This module never inserts menu rows, polls, or observes the body.
 */
 (() => {
   const W = window;
@@ -27,12 +24,7 @@
       state.__luneaIntimacyReading = cat === 'INTIMACY';
     } catch {}
 
-    opener(
-      cat,
-      '직접 입력 배열',
-      '이 파트의 질문에 맞춰 카드 포지션을 직접 고정합니다. AI가 배열을 다시 설계하지 않습니다.',
-      1
-    );
+    opener(cat, '직접 입력 배열', '이 파트의 질문에 맞춰 카드 포지션을 직접 고정합니다. AI가 배열을 다시 설계하지 않습니다.', 1);
 
     try {
       state.__luneaManualMode = true;
@@ -47,78 +39,54 @@
     if (cat === 'INTIMACY') {
       W.__LUNEA_INTIMACY_ACTIVE__ = true;
       document.body?.classList?.add('lunea-intimacy-reading');
-      [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));
+      W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.();
     }
+
     const label = document.getElementById('drawLabel');
     if (label) label.textContent = '직접 배열로 카드 펼치기';
-    setTimeout(() => document.getElementById('luneaManualPositions')?.focus(), 0);
+    document.getElementById('luneaManualPositions')?.focus?.({preventScroll:true});
   }
 
-  function makeManualItem(category) {
-    const item = document.createElement('div');
-    item.className = 'reading-item lunea-manual-anywhere-item';
-    item.dataset.cat = category;
-    item.dataset.manualSpread = '1';
-    item.setAttribute('role', 'button');
-    item.setAttribute('tabindex', '0');
-    item.innerHTML = `
-      <div><h4>직접 입력 배열</h4><p>이 파트에서도 포지션을 직접 고정 · 필요하면 A/B 대칭 복제.</p></div>
-      <div class="count">직접</div>`;
+  function bindManualItem(item, category) {
+    if (!item) return false;
+    if (item.dataset.luneaLifecycleBound === '1') return true;
+    if (item.dataset.luneaManualHydrated === '1') return true;
 
+    item.dataset.luneaManualHydrated = '1';
     const open = () => openManualForCategory(category);
     item.addEventListener('click', open);
     item.addEventListener('keydown', event => {
-      if (event.key === 'Enter' || event.key === ' ') {
-        event.preventDefault();
-        open();
-      }
-    });
-    return item;
-  }
-
-  function scanCategories() {
-    if (!W.LUNEA_MANUAL_SPREAD_V1 || !document.getElementById('luneaManualPanel')) return false;
-    document.querySelectorAll('.category-content').forEach(content => {
-      const firstReading = content.querySelector('.reading-item[data-cat]');
-      if (!firstReading) return;
-
-      const category = (String(firstReading.dataset.cat || 'GENERAL').trim() || 'GENERAL').toUpperCase();
-
-      // GENERAL already receives its manual entry from Manual Structure V1.
-      if (category === 'GENERAL' && content.querySelector('#luneaManualReadingItem')) return;
-      if (content.querySelector('.lunea-manual-anywhere-item')) return;
-
-      const item = makeManualItem(category);
-      firstReading.insertAdjacentElement('beforebegin', item);
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      open();
     });
     return true;
   }
 
-  function install() {
-    if (!scanCategories()) {
-      setTimeout(install, 40);
-      return;
-    }
-
-    // INTIMACY and future late feature cabinets can be injected after this module's
-    // first DOMContentLoaded pass. Re-scan mutations briefly instead of silently
-    // falling back to the GENERAL manual entry.
-    let queued = false;
-    const observer = new MutationObserver(() => {
-      if (queued) return;
-      queued = true;
-      setTimeout(() => { queued = false; scanCategories(); }, 0);
+  function hydrateCategories() {
+    let found = 0;
+    document.querySelectorAll('.category-content').forEach(content => {
+      const firstReading = content.querySelector('.reading-item[data-cat]');
+      if (!firstReading) return;
+      const category = (String(firstReading.dataset.cat || 'GENERAL').trim() || 'GENERAL').toUpperCase();
+      const item = content.querySelector('[data-manual-spread="1"],.lunea-manual-anywhere-item,#luneaManualReadingItem');
+      if (!item) return;
+      item.dataset.cat = category;
+      bindManualItem(item, category);
+      found += 1;
     });
-    if (document.body) observer.observe(document.body, {childList:true,subtree:true});
-    [80, 250, 800, 2000].forEach(ms => setTimeout(scanCategories, ms));
-    setTimeout(() => observer.disconnect(), 5000);
-
-    console.info('🌙 LUNEA Manual Spread Everywhere V1 loaded');
+    document.documentElement.dataset.luneaManualHydrated = String(found);
+    return found;
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(install, 0), {once:true});
-  } else {
-    setTimeout(install, 0);
+  function boot() {
+    const found = hydrateCategories();
+    if (!found) console.warn('[LUNEA Manual Everywhere] deterministic manual rows were not present at boot');
+    console.info(`🌙 LUNEA Manual Spread Everywhere V1.2 hydrated · ${found} categories`);
   }
+
+  W.LUNEA_MANUAL_EVERYWHERE_V1 = Object.freeze({version:1.2,hydrateCategories,openManualForCategory});
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
 })();

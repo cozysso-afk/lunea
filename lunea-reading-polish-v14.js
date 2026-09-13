@@ -1,17 +1,13 @@
 'use strict';
 
 /*
-  LUNEA READING POLISH V14
-  ========================
+  LUNEA READING POLISH V14.1
+  ==========================
   Screenshot-driven mobile readability + Timing Oracle polish + A/B symmetry repair.
 
-  - Raises the too-small preflight / reading / card-note typography.
-  - Makes Timing Oracle single/A-B/inline presentations consistent with the opal LUNEA theme.
-  - Repairs the preflight 12-line truncation for genuine A/B comparisons by using
-    A 12 + B 12 = 24 primary cards, with up to 3 overall extra cards.
-  - Adds visible A / B group separators in the spread grid.
-  - Does NOT alter tarot RNG, card meanings, AI interpretation, archive, Horary,
-    astrology calculations, or non-A/B spread counts.
+  V14.1 keeps the visual/A-B behavior but no longer wraps startSpread and no
+  longer retries wrapper installation at 250/800/1800ms. A/B state is owned by
+  the A/B flow itself and DOM synchronization is session-safe.
 */
 (() => {
   const W = window;
@@ -23,6 +19,10 @@
   const clean = value => String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
   const stripNum = value => String(value || '').replace(/^\s*\d{1,2}\s*[.)]\s*/, '').trim();
   const getState = () => { try { return state; } catch { return null; } };
+  const life = () => W.LUNEA_READING_LIFECYCLE_V59 || null;
+  const currentSessionId = () => life()?.currentSessionId?.() || 0;
+  const isCurrent = id => !life()?.isCurrent || life().isCurrent(id);
+  const sessionTimeout = (fn, ms, id = currentSessionId()) => life()?.timeout ? life().timeout(fn, ms, id) : setTimeout(fn, ms);
 
   function addStyles() {
     if ($('luneaReadingPolishV14Style')) return;
@@ -117,7 +117,6 @@
       html.lunea-reading-polish-v14 #spreadOverlay .res-badge{font-size:10.5px!important}
       html.lunea-reading-polish-v14 #spreadOverlay .ai-body{font-size:13.5px!important;line-height:1.85!important}
 
-      /* A/B 24 main-card grid group headers */
       #cards.lunea-ab24-grid{align-items:flex-start!important}
       #cards .lunea-ab-group-label{
         flex:0 0 100%;width:100%;margin:5px 0 4px;padding:8px 10px;border-radius:12px;
@@ -138,9 +137,6 @@
         background:linear-gradient(145deg,rgba(116,176,165,.06),rgba(132,112,185,.035));
       }
 
-      /* ======================================================
-         TIMING ORACLE · one visual language across all states
-         ====================================================== */
       html.lunea-reading-polish-v14 #timingOverlay .timing-modal{
         background:
           radial-gradient(circle at 14% 0%,rgba(183,153,239,.14),transparent 27%),
@@ -193,7 +189,6 @@
         min-height:44px!important;font-size:12.5px!important;
       }
 
-      /* A/B Timing: remove the old white-card panel feel. */
       html.lunea-reading-polish-v14 #luneaTimingABPanel .tab-grid{gap:10px!important}
       html.lunea-reading-polish-v14 #luneaTimingABPanel .tab-card{
         position:relative;overflow:hidden;padding:10px 9px 12px!important;border-radius:18px!important;
@@ -238,7 +233,6 @@
         font-size:12.5px!important;line-height:1.75!important;
       }
 
-      /* Inline timing signal stays compact but readable on small phones. */
       html.lunea-reading-polish-v14 #luneaTimingInline.timing-inline{
         grid-template-columns:90px minmax(0,1fr)!important;gap:14px!important;padding:14px 15px!important;text-align:left!important;
       }
@@ -282,13 +276,9 @@
 
     let a = raw.filter(x => /^A\s*(?:·|\.|:|-)/i.test(x));
     let b = raw.filter(x => /^B\s*(?:·|\.|:|-)/i.test(x));
-
     if (a.length < 12 || b.length < 12) {
       const half = Math.floor(raw.length / 2);
-      if (raw.length >= 24 && half >= 12) {
-        a = raw.slice(0, half);
-        b = raw.slice(half);
-      }
+      if (raw.length >= 24 && half >= 12) { a = raw.slice(0, half); b = raw.slice(half); }
     }
     if (a.length < 12 || b.length < 12) return null;
 
@@ -296,24 +286,32 @@
     b = b.slice(0, 12);
     const positions = [...a, ...b].map((x, i) => `${i + 1}. ${x}`);
     const axes = a.map(x => x.replace(/^A\s*(?:·|\.|:|-)\s*/i, '').replace(/^축\s*\d+\s*(?:·|\.|:|-)\s*/i, '').trim());
-
     let title = String(spread?.spreadTitle || 'A/B 대칭 비교');
     title = title.replace(/\d+\s*축\s*대칭\s*비교\s*·\s*\d+\s*카드/i, '12축 대칭 비교 · 24카드');
     if (!/24\s*카드/.test(title)) title = `${title} · 12축 대칭 비교 · 24카드`;
-
     let rationale = String(spread?.designRationale || 'A/B 대칭 비교');
     rationale = rationale.replace(/requested_axes=.*?(?=\s*·\s*comparison\s*!=\s*choice)/i, `requested_axes=${axes.join(' / ')}`);
     rationale += ' · pair_axis_count=12 · main_card_count=24 · A/B=12+12 · overall_extra_max=3';
-
     return {...spread, positions, spreadTitle:title, designRationale:rationale, __luneaAB24:true, __luneaABAxes:axes};
   }
 
   function previewLines() {
-    return String($('luneaSpreadPreviewPositions')?.value || '')
-      .split(/\n+/).map(stripNum).filter(Boolean).slice(0, 24);
+    return String($('luneaSpreadPreviewPositions')?.value || '').split(/\n+/).map(stripNum).filter(Boolean).slice(0, 24);
   }
 
-  function fillPairPreview(pair, question) {
+  function setABState(on) {
+    const s = getState();
+    if (s) s.__luneaAB24 = !!on;
+  }
+
+  function inferABState() {
+    const s = getState();
+    if (!s || !Array.isArray(s.positions)) return false;
+    if (s.positions.length !== 24) return false;
+    return !!s.__luneaAB24 || /A\/B|대칭\s*비교|pair_axis_count=12/i.test(String(s.title || '') + ' ' + String(s.rationale || ''));
+  }
+
+  function fillPairPreview(pair, question, mySession = currentSessionId()) {
     const overlay = $('luneaSpreadPreviewOverlay');
     if (!overlay) return false;
     const titleInput = $('luneaSpreadPreviewTitle');
@@ -343,12 +341,15 @@
     const finish = () => {
       overlay.classList.remove('show');
       overlay.setAttribute('aria-hidden', 'true');
-      document.body.classList.remove('modal-open');
-      if (drawBtn) drawBtn.disabled = false;
-      if (drawLabel) drawLabel.textContent = '질문 분석 & 맞춤 배열 설계';
+      life()?.syncModalLock?.();
+      if (!life()) document.body.classList.remove('modal-open');
+      if (isCurrent(mySession)) {
+        if (drawBtn) drawBtn.disabled = false;
+        if (drawLabel) drawLabel.textContent = '질문 분석 & 맞춤 배열 설계';
+      }
     };
 
-    if (close) close.onclick = () => finish();
+    if (close) close.onclick = finish;
     overlay.onclick = event => { if (event.target === overlay) finish(); };
 
     if (regenerate) {
@@ -356,27 +357,36 @@
         regenerate.disabled = true;
         try {
           const next = pair24FromSpread(await W.designSpread(question));
+          if (!isCurrent(mySession)) return;
           if (!next) throw new Error('A/B 24-card spread unavailable');
-          fillPairPreview(next, question);
+          fillPairPreview(next, question, mySession);
         } catch (err) {
-          console.warn('[LUNEA V14] A/B regenerate failed', err);
-          alert('A/B 대칭 배열을 다시 만드는 중 오류가 났어. 현재 24장 배열은 그대로 유지돼.');
+          if (isCurrent(mySession)) {
+            console.warn('[LUNEA V14] A/B regenerate failed', err);
+            alert('A/B 대칭 배열을 다시 만드는 중 오류가 났어. 현재 24장 배열은 그대로 유지돼.');
+          }
         } finally {
-          regenerate.disabled = false;
+          if (isCurrent(mySession)) regenerate.disabled = false;
         }
       };
     }
 
-    confirm.onclick = () => {
+    confirm.onclick = async () => {
       const lines = previewLines();
-      if (lines.length !== 24) {
-        alert('A/B 대칭 비교는 A 12장 + B 12장, 총 24장을 유지해야 해.');
-        return;
-      }
+      if (lines.length !== 24) return alert('A/B 대칭 비교는 A 12장 + B 12장, 총 24장을 유지해야 해.');
+      if (!isCurrent(mySession)) return;
       const finalTitle = clean(titleInput.value) || pair.spreadTitle;
       const finalPositions = lines.map((x, i) => `${i + 1}. ${x}`);
       finish();
-      W.startSpread(question, finalPositions, finalTitle, pair.designRationale + ' · PRE-DRAW USER CONFIRMED · AB24 FIX');
+      setABState(true);
+      try {
+        const started = W.startSpread(question, finalPositions, finalTitle, pair.designRationale + ' · PRE-DRAW USER CONFIRMED · AB24 FIX');
+        await Promise.resolve(started);
+        if (isCurrent(mySession)) syncABControls();
+      } catch (error) {
+        setABState(false);
+        throw error;
+      }
     };
 
     document.body.classList.add('modal-open');
@@ -395,7 +405,6 @@
     const wrap0 = cards.querySelector('.tarot-card-wrapper[data-index="0"]');
     const wrap12 = cards.querySelector('.tarot-card-wrapper[data-index="12"]');
     const wrap24 = cards.querySelector('.tarot-card-wrapper[data-index="24"]');
-
     if (wrap0) {
       const label = document.createElement('div');
       label.className = 'lunea-ab-group-label a';
@@ -419,12 +428,16 @@
 
   function syncABControls() {
     const s = getState();
-    const extra = $('extraCard');
-    if (!s?.__luneaAB24 || !Array.isArray(s.positions) || s.positions.length !== 24) {
-      $('cards')?.classList.remove('lunea-ab24-grid');
+    const cards = $('cards');
+    const active = inferABState();
+    if (s) s.__luneaAB24 = active;
+    if (!active) {
+      cards?.classList.remove('lunea-ab24-grid');
+      cards?.querySelectorAll('.lunea-ab-group-label').forEach(el => el.remove());
       return;
     }
     const n = Math.max(0, (s.drawn?.length || 0) - 24);
+    const extra = $('extraCard');
     if (extra) {
       extra.textContent = `+ 추가 카드 (${n}/3)`;
       extra.disabled = n >= 3;
@@ -434,21 +447,11 @@
     decorateABGrid();
   }
 
-  function wrapStartSpread() {
-    if (W.startSpread?.__luneaV14Wrapped) return;
-    const baseStart = W.startSpread;
-    if (typeof baseStart !== 'function') return;
-    const wrapped = function(question, positions, title, rationale) {
-      const pair24 = Array.isArray(positions) && positions.length === 24 && /target_count=2|A\/B|대칭\s*비교/i.test(String(rationale || '') + ' ' + String(title || ''));
-      const result = baseStart.apply(this, arguments);
-      const s = getState();
-      if (s) s.__luneaAB24 = !!pair24;
-      [0, 80, 260, 700].forEach(ms => setTimeout(syncABControls, ms));
-      return result;
-    };
-    wrapped.__luneaV14Wrapped = true;
-    W.startSpread = wrapped;
-    try { startSpread = wrapped; } catch {}
+  function installCardObserver() {
+    const cards = $('cards');
+    if (!cards || cards.__luneaV14Observed) return;
+    cards.__luneaV14Observed = true;
+    new MutationObserver(syncABControls).observe(cards, {childList:true,subtree:false});
   }
 
   function installABDrawIntercept() {
@@ -462,24 +465,33 @@
 
       event.preventDefault();
       event.stopImmediatePropagation();
+      const mySession = currentSessionId();
       drawBtn.disabled = true;
       const label = $('drawLabel');
       if (label) label.textContent = 'A/B 24장 대칭 배열 검수 중…';
 
       try {
         const spread = await W.designSpread(q);
+        if (!isCurrent(mySession)) return;
         const pair = pair24FromSpread(spread);
         if (!pair) throw new Error('A/B structural pair spread not found');
-        if (!fillPairPreview(pair, q)) {
-          drawBtn.disabled = false;
-          if (label) label.textContent = '질문 분석 & 맞춤 배열 설계';
-          W.startSpread(q, pair.positions, pair.spreadTitle, pair.designRationale + ' · AB24 FIX');
+        if (!fillPairPreview(pair, q, mySession)) {
+          setABState(true);
+          const started = W.startSpread(q, pair.positions, pair.spreadTitle, pair.designRationale + ' · AB24 FIX');
+          await Promise.resolve(started);
+          if (isCurrent(mySession)) syncABControls();
         }
       } catch (err) {
-        console.error('[LUNEA V14] A/B 24-card preflight failed', err);
-        drawBtn.disabled = false;
-        if (label) label.textContent = '질문 분석 & 맞춤 배열 설계';
-        alert('A/B 대칭 24장 배열을 만드는 중 오류가 났어. 질문은 그대로 유지돼.');
+        if (isCurrent(mySession)) {
+          setABState(false);
+          console.error('[LUNEA V14] A/B 24-card preflight failed', err);
+          alert('A/B 대칭 24장 배열을 만드는 중 오류가 났어. 질문은 그대로 유지돼.');
+        }
+      } finally {
+        if (isCurrent(mySession) && !$('luneaSpreadPreviewOverlay')?.classList.contains('show')) {
+          drawBtn.disabled = false;
+          if (label) label.textContent = '질문 분석 & 맞춤 배열 설계';
+        }
       }
     }, true);
   }
@@ -498,24 +510,28 @@
         btn.disabled = true;
         return;
       }
-      setTimeout(syncABControls, 0);
-      setTimeout(syncABControls, 120);
+      const mySession = currentSessionId();
+      sessionTimeout(syncABControls, 0, mySession);
+      sessionTimeout(syncABControls, 120, mySession);
     }, true);
   }
 
-  function boot() {
+  function installAll() {
     addStyles();
-    wrapStartSpread();
     installABDrawIntercept();
     installExtraCap();
-    [250, 800, 1800].forEach(ms => setTimeout(() => {
-      wrapStartSpread();
-      installABDrawIntercept();
-      installExtraCap();
-      syncABControls();
-    }, ms));
-    window.addEventListener('pageshow', () => setTimeout(syncABControls, 80));
-    console.info('✨ LUNEA Reading Polish V14 loaded');
+    installCardObserver();
+    syncABControls();
+  }
+
+  function boot() {
+    installAll();
+    if (document.readyState !== 'complete') W.addEventListener('load', installAll, {once:true});
+    W.addEventListener('pageshow', () => {
+      const id = currentSessionId();
+      sessionTimeout(syncABControls, 80, id);
+    });
+    console.info('✨ LUNEA Reading Polish V14.1 loaded · no startSpread wrapper');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});

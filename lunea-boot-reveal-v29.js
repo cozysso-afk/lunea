@@ -8,8 +8,14 @@
   const DRAW_GUARD_WAIT_MS=5000;
   let done=false;
 
+  const coreRowsReady=()=>{
+    const ai=document.querySelectorAll('[data-lunea-universal-ai="1"]');
+    const manual=document.querySelectorAll('[data-manual-spread="1"]');
+    return document.documentElement.dataset.luneaCoreSpreadEntries==='ready' && ai.length>=4 && manual.length>=4;
+  };
+
   const reveal=()=>{
-    if(done)return;
+    if(done||!coreRowsReady())return false;
     done=true;
     clearTimeout(W.__LUNEA_BOOT_FAILSAFE__);
     const started=Number(W.__LUNEA_BOOT_STARTED__||performance.now());
@@ -18,6 +24,7 @@
       root.classList.remove('lunea-booting');
       root.classList.add('lunea-ui-ready');
     })),wait);
+    return true;
   };
 
   const titleOf=el=>String(el?.dataset?.title||el?.querySelector?.('h4')?.textContent||'').trim();
@@ -36,10 +43,10 @@
 
   function hasFinalSpreadPatches(){
     return !!(
+      coreRowsReady() &&
       W.LUNEA_FIXED_SPREAD_DEPTH_V30 &&
       W.LUNEA_GENERAL_ORDER &&
-      hasFinalGeneralSpreads() &&
-      document.querySelectorAll('[data-lunea-universal-ai="1"]').length>=4
+      hasFinalGeneralSpreads()
     );
   }
 
@@ -105,13 +112,23 @@
     return true;
   }
 
-  const readyEnough=()=>hasPortal() && hasFinalSpreadPatches() && hasFinalTransitRange() && hasFinalDrawPipeline();
+  const readyEnough=()=>coreRowsReady() && hasPortal() && hasFinalSpreadPatches() && hasFinalTransitRange() && hasFinalDrawPipeline();
 
   const afterDom=()=>{
     installDrawStartupGuard();
     const start=performance.now();
     const probe=()=>{
-      if(readyEnough() || performance.now()-start>2600)return reveal();
+      const elapsed=performance.now()-start;
+      if(readyEnough())return reveal();
+
+      // Auxiliary art/range modules are not allowed to keep the app hidden
+      // forever, but the core reading rows and draw pipeline are non-negotiable.
+      if(elapsed>2600 && coreRowsReady() && hasFinalDrawPipeline())return reveal();
+      if(elapsed>8000 && coreRowsReady()){
+        console.warn('[LUNEA V29] revealing with draw startup guard; auxiliary boot still incomplete');
+        return reveal();
+      }
+
       requestAnimationFrame(probe);
     };
     probe();
@@ -121,6 +138,7 @@
   else afterDom();
 
   reveal.readyEnough=readyEnough;
+  reveal.coreRowsReady=coreRowsReady;
   reveal.drawPipelineReady=hasFinalDrawPipeline;
   W.LUNEA_BOOT_REVEAL_V29=reveal;
 })();
