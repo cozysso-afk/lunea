@@ -1,0 +1,36 @@
+name: Intimacy Oracle supplemental cards branch checks
+
+on:
+  push:
+    branches:
+      - fix/intimacy-oracle-extra-cards
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  intimacy-oracle-supplemental:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check lunea-intimacy-oracle-ui-v36.js
+          node --check lunea-intimacy-ai-bridge-v34.js
+      - name: Oracle data contract
+        run: node tests/intimacy-oracle-v35.test.mjs
+      - name: Supplemental draw and prompt separation contract
+        run: node tests/intimacy-oracle-ui-v36.test.mjs
+      - name: Flip and cache contract
+        run: node --test tests/intimacy-oracle-flip-v46.test.mjs
+      - name: Bridge contract
+        run: node --test tests/intimacy-ai-bridge-v34.test.mjs
+      - name: Manual integration regression
+        run: node --test tests/intimacy-manual-oracle-back-integration.test.mjs
+      - name: Lifecycle invariants still hold
+        run: node tests/reading-lifecycle-v59.test.mjs
