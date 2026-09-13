@@ -4,6 +4,9 @@ import vm from 'node:vm';
 
 const source = fs.readFileSync(new URL('../lunea-reading-boundary-reset-v31.js', import.meta.url), 'utf8');
 const loader = fs.readFileSync(new URL('../lunea-structural-routing-v4.js', import.meta.url), 'utf8');
+const executable = source
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/^\s*\/\/.*$/gm, '');
 
 function classList(initial = []) {
   const set = new Set(initial);
@@ -171,8 +174,8 @@ assert.equal(out, 'started');
 assert.equal(starts, 1, 'canonical startSpread must remain independently callable exactly once');
 assert.equal(supportHandlerCalls, 0, 'canonical start must not be intercepted by V31.2');
 
-assert.doesNotMatch(source, /timingSupportBtn[^\n]*onclick|onclick\.call/, 'V31.2 must not use the Timing button as a closure-reset back door');
-assert.doesNotMatch(source, /W\.startSpread\s*=|setInterval|queueMicrotask|requestAnimationFrame/, 'V31.2 must remain synchronous and non-wrapping');
+assert.doesNotMatch(executable, /timingSupportBtn[^\n]*onclick|onclick\.call/, 'V31.2 executable code must not use the Timing button as a closure-reset back door');
+assert.doesNotMatch(executable, /W\.startSpread\s*=|setInterval|queueMicrotask|requestAnimationFrame/, 'V31.2 executable code must remain synchronous and non-wrapping');
 
 const matches = loader.match(/lunea-reading-boundary-reset-v31\.js\?v=3102/g) || [];
 assert.equal(matches.length, 2, 'V31.2 boundary reset must load in parsing and sequential loader paths');
