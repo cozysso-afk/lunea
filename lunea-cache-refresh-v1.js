@@ -1,13 +1,15 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1 · Pages V58
+  LUNEA Cache Refresh V1 · Pages V59
   - Build-scoped hotfix loader + stale-build refresh.
+  - Loads V59 reading lifecycle synchronously while the page is still parsing.
   - Loads Pages-only Astro origin failover before the user can trigger Thai/Astro.
   - Loads hard reading-question state boundaries so old calculations cannot leak.
   - Loads the iOS Thai period date centering repair.
-  - Loads V57 mobile draw / Transit / Horary / draft auxiliary reliability fixes.
-  - Loads V58 repeated Universal AI draw transition guard.
+  - Loads V57 Transit / Horary / draft auxiliary reliability fixes without allowing
+    its legacy global startSpread yield to become the reading entrypoint.
+  - V58 repeated-AI wrapper is retired; V59 stabilizes the global lifecycle instead.
 */
 (() => {
   if (window.__LUNEA_CACHE_REFRESH_V1__) return;
@@ -38,6 +40,16 @@
     script.async = false;
     script.onerror = () => console.info(`[LUNEA cache refresh] ${label} skipped`);
     (document.head || document.documentElement).appendChild(script);
+  }
+
+  function loadReadingLifecycleV59() {
+    if (document.getElementById('luneaReadingLifecycleV59Loader')) return;
+    const src = `./lunea-reading-lifecycle-v59.js?v=${encodeURIComponent(SELF_BUILD || '59')}`;
+    if (document.readyState === 'loading') {
+      document.write(`<script id="luneaReadingLifecycleV59Loader" src="${src}"><\/script>`);
+      return;
+    }
+    loadBuildScopedScript('luneaReadingLifecycleV59Loader', './lunea-reading-lifecycle-v59.js', 'reading lifecycle V59');
   }
 
   function loadAstroOriginFailover() {
@@ -92,9 +104,6 @@
   function loadMobileRuntimeFixesV57() {
     loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57');
   }
-  function loadAiRepeatFlowV58() {
-    loadBuildScopedScript('luneaAiRepeatFlowV58Loader', './lunea-ai-repeat-flow-v58.js', 'repeated Universal AI draw transition V58');
-  }
 
   function refreshTo(build) {
     try {
@@ -143,9 +152,12 @@
     loadLearningAuthRecovery();
     loadEmergencyRepair();
     loadMobileRuntimeFixesV57();
-    loadAiRepeatFlowV58();
     checkBuild();
   }
+
+  // Core reading entries and lifecycle stabilization are parser-time work. Do not
+  // wait for DOMContentLoaded or a polling loop before the user can see them.
+  loadReadingLifecycleV59();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
