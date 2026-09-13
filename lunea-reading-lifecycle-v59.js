@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA READING LIFECYCLE V59.2
+  LUNEA READING LIFECYCLE V59.3
   =============================
   One non-wrapping session boundary for long-lived iPhone/PWA reading sessions.
 
@@ -21,12 +21,9 @@
   if (W.__LUNEA_READING_LIFECYCLE_V59__) return;
   W.__LUNEA_READING_LIFECYCLE_V59__ = true;
 
-  // A stale cached V58 must be inert even if an old cache-refresh loader tries
-  // to execute it after the current build. This is a module guard, not a
-  // startSpread compatibility marker.
   W.__LUNEA_AI_REPEAT_FLOW_V58__ = true;
 
-  const RELEASE = '59.2';
+  const RELEASE = '59.3';
   const $ = id => document.getElementById(id);
   let pendingManualMeta = null;
   let readingSessionId = 0;
@@ -39,17 +36,9 @@
     {key:'STOCK', aiTitle:'투자 AI 맞춤 배열', aiDesc:'매수·보유·익절·매도 질문의 근거·반증·리스크 축을 자동 설계'}
   ];
 
-  function clean(value) {
-    return String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
-  }
-
-  function getState() {
-    try { return state; } catch { return W.state || null; }
-  }
-
-  function liveQuestion() {
-    return clean($('question')?.value || getState()?.question || $('spreadQuestion')?.textContent || '');
-  }
+  function clean(value) { return String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim(); }
+  function getState() { try { return state; } catch { return W.state || null; } }
+  function liveQuestion() { return clean($('question')?.value || getState()?.question || $('spreadQuestion')?.textContent || ''); }
 
   function categoryContent(key) {
     const anchor = document.querySelector(`.category-content .reading-item[data-cat="${key}"]`);
@@ -58,9 +47,7 @@
 
   function existingAi(content) {
     return [...content.querySelectorAll('.reading-item')].find(item =>
-      item.dataset.luneaUniversalAi === '1' ||
-      item.dataset.count === '0' ||
-      /AI.*(?:맞춤|배열)|맞춤.*AI/i.test(item.textContent || '')
+      item.dataset.luneaUniversalAi === '1' || item.dataset.count === '0' || /AI.*(?:맞춤|배열)|맞춤.*AI/i.test(item.textContent || '')
     ) || null;
   }
 
@@ -155,8 +142,7 @@
     item.dataset.luneaLifecycleBound = '1';
     const open = event => {
       event?.preventDefault?.();
-      if (mode === 'ai') openAi(meta);
-      else openManual(meta);
+      if (mode === 'ai') openAi(meta); else openManual(meta);
     };
     item.addEventListener('click', open);
     item.addEventListener('keydown', event => {
@@ -214,6 +200,7 @@
     document.body?.classList?.remove('modal-open');
     document.body?.style?.removeProperty('pointer-events');
     document.body?.style?.removeProperty('touch-action');
+    document.body?.style?.removeProperty('overflow');
     document.documentElement?.style?.removeProperty('overflow');
   }
 
@@ -229,15 +216,18 @@
   function beginSession(reason = 'reading-start', question = liveQuestion()) {
     readingSessionId += 1;
     const id = readingSessionId;
-    sessionMeta = Object.freeze({id, reason:clean(reason) || 'reading-start', question:clean(question), startedAt:Date.now()});
+    const normalizedReason = clean(reason) || 'reading-start';
+    sessionMeta = Object.freeze({id, reason:normalizedReason, question:clean(question), startedAt:Date.now()});
     document.documentElement.dataset.luneaReadingSession = String(id);
-    document.documentElement.dataset.luneaReadingReason = sessionMeta.reason;
+    document.documentElement.dataset.luneaReadingReason = normalizedReason;
 
     closeAuxOverlays();
-    try { W.LUNEA_READING_BOUNDARY_V31?.resetTimingBoundary?.(`session-${id}:${sessionMeta.reason}`); } catch {}
+    try { W.LUNEA_READING_BOUNDARY_V31?.resetTimingBoundary?.(`session-${id}:${normalizedReason}`); } catch {}
     try { W.LUNEA_V27?.resetTimingDOM?.(); } catch {}
-    try { W.LUNEA_RUNTIME_STATE_V56?.clear?.(`session-${id}:${sessionMeta.reason}`); } catch {}
-    try { W.LUNEA_MOBILE_RUNTIME_FIXES_V57?.clearAux?.(); } catch {}
+    try { W.LUNEA_RUNTIME_STATE_V56?.clear?.(`session-${id}:${normalizedReason}`); } catch {}
+    if (normalizedReason !== 'luneaDraftRestore') {
+      try { W.LUNEA_MOBILE_RUNTIME_FIXES_V57?.clearAux?.(); } catch {}
+    }
     syncModalLock();
 
     const s = getState();
@@ -248,17 +238,9 @@
     return id;
   }
 
-  function currentSessionId() {
-    return readingSessionId;
-  }
-
-  function currentSession() {
-    return sessionMeta;
-  }
-
-  function isCurrent(id) {
-    return Number(id) === readingSessionId;
-  }
+  function currentSessionId() { return readingSessionId; }
+  function currentSession() { return sessionMeta; }
+  function isCurrent(id) { return Number(id) === readingSessionId; }
 
   function guard(id, fn) {
     return function(...args) {
@@ -267,18 +249,12 @@
     };
   }
 
-  function timeout(fn, delay = 0, id = readingSessionId) {
-    return setTimeout(guard(id, fn), delay);
-  }
-
+  function timeout(fn, delay = 0, id = readingSessionId) { return setTimeout(guard(id, fn), delay); }
   function frame(fn, id = readingSessionId) {
     const raf = W.requestAnimationFrame || (cb => setTimeout(cb, 16));
     return raf(guard(id, fn));
   }
-
-  function microtask(fn, id = readingSessionId) {
-    queueMicrotask(guard(id, fn));
-  }
+  function microtask(fn, id = readingSessionId) { queueMicrotask(guard(id, fn)); }
 
   function isReadingBoundaryTarget(target) {
     const button = target?.closest?.('button');
@@ -307,11 +283,8 @@
     flushPendingManual();
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', finalizeDom, {once:true});
-  } else {
-    finalizeDom();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', finalizeDom, {once:true});
+  else finalizeDom();
 
   W.LUNEA_READING_LIFECYCLE_V59 = Object.freeze({
     version:RELEASE,
@@ -328,5 +301,5 @@
     initialReady
   });
 
-  console.info(`✦ LUNEA Reading Lifecycle V59.2 loaded · core entries ${initialReady}/${CORE.length} · session boundary ready`);
+  console.info(`✦ LUNEA Reading Lifecycle V59.3 loaded · core entries ${initialReady}/${CORE.length} · session boundary ready`);
 })();
