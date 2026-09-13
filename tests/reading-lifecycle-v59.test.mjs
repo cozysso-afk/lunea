@@ -5,6 +5,7 @@ const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'ut
 
 const lifecycle = read('lunea-reading-lifecycle-v59.js');
 const cache = read('lunea-cache-refresh-v1.js');
+const learning = read('lunea-learning-success-gate-v1.js');
 const universal = read('lunea-universal-ai-opal-v20.js');
 const manualEverywhere = read('lunea-manual-everywhere-v1.js');
 
@@ -16,6 +17,12 @@ assert.match(lifecycle, /__luneaAiRepeatFlowV58\s*=\s*true/);
 assert.match(lifecycle, /__luneaReadingBoundaryV31\s*=\s*true/);
 assert.match(lifecycle, /__luneaV14Wrapped\s*=\s*true/);
 assert.match(lifecycle, /__luneaV27Wrapped\s*=\s*true/);
+
+// The learning gate may wrap exactly once, but it must preserve the lifecycle
+// markers and must not keep polling/re-wrapping after load.
+assert.ok(!/setInterval\s*\(/.test(learning), 'learning gate must install one-shot');
+assert.match(learning, /START_MARKERS/);
+assert.match(learning, /if\(prior\?\.\[marker\]\)wrapped\[marker\]=true/);
 
 // Core cabinets must receive deterministic AI + Manual rows before late feature hydration.
 for (const key of ['GENERAL','CAREER','LOVE','STOCK']) {
