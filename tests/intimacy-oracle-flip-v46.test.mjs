@@ -17,13 +17,14 @@ test('Oracle cards are true two-sided 3D flips on iOS-safe CSS',()=>{
   assert.match(source,/rotateY\(180deg\)/);
   assert.match(source,/transition:transform \.62s/);
 });
-test('Reveal all staggers Oracle flips at the Tarot 110ms rhythm without rerender',()=>{
+test('Reveal all staggers base and supplemental Oracle flips at the Tarot 110ms rhythm',()=>{
   assert.match(source,/ORACLE_FLIP_GAP=110/);
   assert.match(source,/seq\*ORACLE_FLIP_GAP/);
   const render=source.slice(source.indexOf('function renderOraclePanel'),source.indexOf('function performOracleDraw'));
-  assert.doesNotMatch(render,/renderOraclePanel\(\);saveSidecar/);
-  assert.match(render,/revealOracleButton\(b,i\)/);
+  assert.match(render,/b\.dataset\.oracleKind/);
+  assert.match(render,/revealOracleButton\(b,i,kind\)/);
+  assert.match(render,/host\.querySelectorAll\('\.lio-card:not\(\.revealed\)'\)/);
 });
 test('Oracle runtime cache token advances for PWA refresh',()=>{
-  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3614/);
+  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
 });

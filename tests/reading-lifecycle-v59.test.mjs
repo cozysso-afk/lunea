@@ -78,7 +78,7 @@ assert.ok(!/function\s+patchStart/.test(intimacy), 'Intimacy startSpread wrapper
 assert.match(lagGuard, /LUNEA_LAG_GUARD_V1 = Object\.freeze/);
 assert.match(timingIsolation, /version:27\.1/);
 assert.match(manual20, /Manual Limit V17\.1/);
-assert.match(intimacy, /RELEASE='36\.4'/);
+assert.match(intimacy, /RELEASE='36\.5'/);
 
 // V14 delayed A/B work must use the V59 session-aware scheduler.
 assert.match(polish, /currentSessionId/);
