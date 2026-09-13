@@ -1,57 +1,54 @@
 'use strict';
 
 /*
-  LUNEA READING LIFECYCLE V59
-  ===========================
-  Central, non-wrapping lifecycle stabilizer for long-lived iPhone/PWA sessions.
+  LUNEA READING LIFECYCLE V59.2
+  =============================
+  One non-wrapping session boundary for long-lived iPhone/PWA reading sessions.
 
-  This module intentionally DOES NOT wrap startSpread.
+  This module intentionally DOES NOT wrap or replace startSpread.
 
   Responsibilities:
-  - Make core AI + Manual spread entries deterministic before the category UI is used.
-  - Keep those entries category-scoped and ordered AI -> Manual -> fixed spreads.
-  - Prevent legacy V14/V27/V31/V57/V58 installers from repeatedly wrapping startSpread.
-  - Suppress V57's global async startSpread yield; AI-specific paint yielding belongs
-    in the AI caller, not in the global reading entrypoint.
-  - Keep window.startSpread and the classic global binding aligned after bootstrap.
+  - Create the four core AI + Manual rows synchronously before normal interaction.
+  - Keep those rows category-scoped and ordered AI -> Manual -> fixed spreads.
+  - Own a monotonic readingSessionId used by delayed callbacks in other modules.
+  - Normalize stale auxiliary UI exactly once when a new reading action begins.
+  - Provide guard/schedule helpers so reading N callbacks cannot mutate reading N+1.
 
-  It does not change Tarot RNG, card selection, interpretation prompts, Horary,
-  Transit calculations, or archive data.
+  It does not draw cards, choose RNG, interpret cards, or pre-open spreadOverlay.
 */
 (() => {
   const W = window;
   if (W.__LUNEA_READING_LIFECYCLE_V59__) return;
   W.__LUNEA_READING_LIFECYCLE_V59__ = true;
 
-  const RELEASE = '59.1';
+  // A stale cached V58 must be inert even if an old cache-refresh loader tries
+  // to execute it after the current build. This is a module guard, not a
+  // startSpread compatibility marker.
+  W.__LUNEA_AI_REPEAT_FLOW_V58__ = true;
+
+  const RELEASE = '59.2';
   const $ = id => document.getElementById(id);
   let pendingManualMeta = null;
+  let readingSessionId = 0;
+  let sessionMeta = Object.freeze({id:0, reason:'boot', question:'', startedAt:0});
 
   const CORE = [
-    {
-      key:'GENERAL',
-      aiTitle:'질문 맞춤 AI 배열',
-      aiDesc:'질문 구조를 분석해 필요한 카드 수와 포지션을 자동 설계'
-    },
-    {
-      key:'CAREER',
-      aiTitle:'진로·시험 AI 맞춤 배열',
-      aiDesc:'시험·직장·진로·금전 질문에 맞춰 필요한 축을 자동 설계'
-    },
-    {
-      key:'LOVE',
-      aiTitle:'연애·관계 AI 맞춤 배열',
-      aiDesc:'속마음·연락·재회·관계 질문을 분석해 필요한 축을 자동 설계'
-    },
-    {
-      key:'STOCK',
-      aiTitle:'투자 AI 맞춤 배열',
-      aiDesc:'매수·보유·익절·매도 질문의 근거·반증·리스크 축을 자동 설계'
-    }
+    {key:'GENERAL', aiTitle:'질문 맞춤 AI 배열', aiDesc:'질문 구조를 분석해 필요한 카드 수와 포지션을 자동 설계'},
+    {key:'CAREER', aiTitle:'진로·시험 AI 맞춤 배열', aiDesc:'시험·직장·진로·금전 질문에 맞춰 필요한 축을 자동 설계'},
+    {key:'LOVE', aiTitle:'연애·관계 AI 맞춤 배열', aiDesc:'속마음·연락·재회·관계 질문을 분석해 필요한 축을 자동 설계'},
+    {key:'STOCK', aiTitle:'투자 AI 맞춤 배열', aiDesc:'매수·보유·익절·매도 질문의 근거·반증·리스크 축을 자동 설계'}
   ];
+
+  function clean(value) {
+    return String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  }
 
   function getState() {
     try { return state; } catch { return W.state || null; }
+  }
+
+  function liveQuestion() {
+    return clean($('question')?.value || getState()?.question || $('spreadQuestion')?.textContent || '');
   }
 
   function categoryContent(key) {
@@ -111,19 +108,14 @@
       s.__luneaManualReading = false;
     }
     const opener = W.openSheet || (typeof openSheet === 'function' ? openSheet : null);
-    if (typeof opener !== 'function') return;
-    opener(meta.key, meta.aiTitle, meta.aiDesc, 0);
+    if (typeof opener === 'function') opener(meta.key, meta.aiTitle, meta.aiDesc, 0);
   }
 
   function openManual(meta) {
-    // The entry is visible parser-time. If a user somehow taps before the
-    // Manual module has created its panel, remember the intent and fulfill it
-    // once DOMContentLoaded completes instead of opening a half-ready sheet.
     if (!$('luneaManualPanel')) {
       pendingManualMeta = meta;
       return;
     }
-
     const opener = W.openSheet || (typeof openSheet === 'function' ? openSheet : null);
     if (typeof opener !== 'function') return;
 
@@ -134,12 +126,7 @@
       s.__luneaIntimacyReading = meta.key === 'INTIMACY';
     }
 
-    opener(
-      meta.key,
-      '직접 입력 배열',
-      '이 파트의 질문에 맞춰 카드 포지션을 직접 고정합니다. AI가 배열을 다시 설계하지 않습니다.',
-      1
-    );
+    opener(meta.key, '직접 입력 배열', '이 파트의 질문에 맞춰 카드 포지션을 직접 고정합니다. AI가 배열을 다시 설계하지 않습니다.', 1);
 
     if (s) {
       s.__luneaManualMode = true;
@@ -204,10 +191,10 @@
       manual.classList.add('lunea-manual-anywhere-item');
       if (meta.key === 'GENERAL' && !manual.id) manual.id = 'luneaManualReadingItem';
 
-      // Deterministic visible order. This is synchronous DOM structure, not a
-      // later cosmetic insertion: AI, Manual, then the predefined spreads.
-      content.insertBefore(manual, content.firstElementChild || null);
-      content.insertBefore(ai, manual);
+      if (content.firstElementChild !== ai || ai.nextElementSibling !== manual) {
+        content.insertBefore(manual, content.firstElementChild || null);
+        content.insertBefore(ai, manual);
+      }
 
       bindCreatedEntry(ai, meta, 'ai');
       bindCreatedEntry(manual, meta, 'manual');
@@ -218,73 +205,128 @@
     return ready;
   }
 
-  function markStableStartSpread({includeDeferredWrappers = false} = {}) {
-    const fn = W.startSpread;
-    if (typeof fn !== 'function') return false;
-
-    // V57 must not convert the global reading entrypoint from sync to deferred
-    // Promise semantics. AI callers can yield locally without changing fixed /
-    // manual / Daily reading behavior.
-    fn.__luneaMobileV57Yield = true;
-
-    // V58 is superseded by this global lifecycle fix. Mark the current entry so
-    // a stale cached loader cannot add another repeated-AI wrapper.
-    fn.__luneaAiRepeatFlowV58 = true;
-
-    if (includeDeferredWrappers) {
-      // These modules have already had one legitimate DOMContentLoaded install.
-      // Their legacy retry loops only inspect the OUTERMOST marker, so propagate
-      // the markers to later wrappers rather than allowing wrapper depth to grow.
-      fn.__luneaReadingBoundaryV31 = true;
-      fn.__luneaV14Wrapped = true;
-      fn.__luneaV27Wrapped = true;
+  function syncModalLock() {
+    const anyVisible = document.querySelector('.overlay.show');
+    if (anyVisible) {
+      document.body?.classList?.add('modal-open');
+      return;
     }
-
-    try { startSpread = fn; } catch {}
-    document.documentElement.dataset.luneaStableStartSpread = includeDeferredWrappers ? 'finalized' : 'preflight';
-    return true;
+    document.body?.classList?.remove('modal-open');
+    document.body?.style?.removeProperty('pointer-events');
+    document.body?.style?.removeProperty('touch-action');
+    document.documentElement?.style?.removeProperty('overflow');
   }
 
-  function finalizeAfterDomReady() {
-    ensureCoreEntries();
-    markStableStartSpread({includeDeferredWrappers:true});
-    flushPendingManual();
+  function closeAuxOverlays() {
+    ['timingOverlay','astroTransitOverlay','astroReturnOverlay','thaiTaksaOverlay','astroHoraryOverlay'].forEach(id => {
+      const overlay = $(id);
+      if (!overlay) return;
+      overlay.classList.remove('show');
+      overlay.setAttribute?.('aria-hidden', 'true');
+    });
   }
 
-  function finalizeAfterLoad() {
-    // Learning/Lag Guard load-time installers have now had their one legitimate
-    // installation opportunity. Re-assert compatibility markers on the final
-    // outer function without wrapping or replacing it.
-    markStableStartSpread({includeDeferredWrappers:true});
-    ensureCoreEntries();
-    flushPendingManual();
+  function beginSession(reason = 'reading-start', question = liveQuestion()) {
+    readingSessionId += 1;
+    const id = readingSessionId;
+    sessionMeta = Object.freeze({id, reason:clean(reason) || 'reading-start', question:clean(question), startedAt:Date.now()});
+    document.documentElement.dataset.luneaReadingSession = String(id);
+    document.documentElement.dataset.luneaReadingReason = sessionMeta.reason;
+
+    closeAuxOverlays();
+    try { W.LUNEA_READING_BOUNDARY_V31?.resetTimingBoundary?.(`session-${id}:${sessionMeta.reason}`); } catch {}
+    try { W.LUNEA_V27?.resetTimingDOM?.(); } catch {}
+    try { W.LUNEA_RUNTIME_STATE_V56?.clear?.(`session-${id}:${sessionMeta.reason}`); } catch {}
+    try { W.LUNEA_MOBILE_RUNTIME_FIXES_V57?.clearAux?.(); } catch {}
+    syncModalLock();
+
+    const s = getState();
+    if (s) {
+      s.__luneaReadingSessionId = id;
+      s.__luneaManualReading = false;
+    }
+    return id;
   }
 
-  // Visible core entries are created immediately. In the current page layout
-  // all four cabinet DOMs already exist before lunea-cache-refresh-v1.js loads.
-  // DOMContentLoaded is only a one-shot fallback for future markup relocation.
+  function currentSessionId() {
+    return readingSessionId;
+  }
+
+  function currentSession() {
+    return sessionMeta;
+  }
+
+  function isCurrent(id) {
+    return Number(id) === readingSessionId;
+  }
+
+  function guard(id, fn) {
+    return function(...args) {
+      if (!isCurrent(id)) return undefined;
+      return fn.apply(this, args);
+    };
+  }
+
+  function timeout(fn, delay = 0, id = readingSessionId) {
+    return setTimeout(guard(id, fn), delay);
+  }
+
+  function frame(fn, id = readingSessionId) {
+    const raf = W.requestAnimationFrame || (cb => setTimeout(cb, 16));
+    return raf(guard(id, fn));
+  }
+
+  function microtask(fn, id = readingSessionId) {
+    queueMicrotask(guard(id, fn));
+  }
+
+  function isReadingBoundaryTarget(target) {
+    const button = target?.closest?.('button');
+    if (!button) return null;
+    if (['drawBtn','dailyBtn','retry','luneaDraftRestore'].includes(button.id)) return button.id;
+    const text = clean(button.textContent);
+    if (/다시\s*뽑기|새\s*리딩|새\s*질문/.test(text)) return 'reading-restart';
+    return null;
+  }
+
+  function installBoundaryCapture() {
+    if (document.documentElement.dataset.luneaReadingSessionCapture === '1') return;
+    document.documentElement.dataset.luneaReadingSessionCapture = '1';
+    document.addEventListener('click', event => {
+      const reason = isReadingBoundaryTarget(event.target);
+      if (!reason) return;
+      beginSession(reason, liveQuestion());
+    }, true);
+  }
+
   const initialReady = ensureCoreEntries();
-  markStableStartSpread({includeDeferredWrappers:false});
+  installBoundaryCapture();
+
+  function finalizeDom() {
+    if (document.documentElement.dataset.luneaCoreSpreadEntries !== 'ready') ensureCoreEntries();
+    flushPendingManual();
+  }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(finalizeAfterDomReady, 0);
-    }, {once:true});
-    W.addEventListener('load', () => {
-      setTimeout(finalizeAfterLoad, 0);
-    }, {once:true});
+    document.addEventListener('DOMContentLoaded', finalizeDom, {once:true});
   } else {
-    setTimeout(finalizeAfterDomReady, 0);
-    if (document.readyState === 'complete') setTimeout(finalizeAfterLoad, 0);
-    else W.addEventListener('load', () => setTimeout(finalizeAfterLoad, 0), {once:true});
+    finalizeDom();
   }
 
   W.LUNEA_READING_LIFECYCLE_V59 = Object.freeze({
-    version: RELEASE,
+    version:RELEASE,
     ensureCoreEntries,
-    markStableStartSpread,
+    beginSession,
+    currentSessionId,
+    currentSession,
+    isCurrent,
+    guard,
+    timeout,
+    frame,
+    microtask,
+    syncModalLock,
     initialReady
   });
 
-  console.info(`✦ LUNEA Reading Lifecycle V59 loaded · core entries ${initialReady}/${CORE.length} · no startSpread wrapper`);
+  console.info(`✦ LUNEA Reading Lifecycle V59.2 loaded · core entries ${initialReady}/${CORE.length} · session boundary ready`);
 })();
