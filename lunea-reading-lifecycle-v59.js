@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA READING LIFECYCLE V59.3
+  LUNEA READING LIFECYCLE V59.4
   =============================
   One non-wrapping session boundary for long-lived iPhone/PWA reading sessions.
 
@@ -21,9 +21,11 @@
   if (W.__LUNEA_READING_LIFECYCLE_V59__) return;
   W.__LUNEA_READING_LIFECYCLE_V59__ = true;
 
+  // Stale cached V58 code must be inert. This is a module guard, not a
+  // startSpread function marker.
   W.__LUNEA_AI_REPEAT_FLOW_V58__ = true;
 
-  const RELEASE = '59.3';
+  const RELEASE = '59.4';
   const $ = id => document.getElementById(id);
   let pendingManualMeta = null;
   let readingSessionId = 0;
@@ -224,6 +226,7 @@
     closeAuxOverlays();
     try { W.LUNEA_READING_BOUNDARY_V31?.resetTimingBoundary?.(`session-${id}:${normalizedReason}`); } catch {}
     try { W.LUNEA_V27?.resetTimingDOM?.(); } catch {}
+    try { W.LUNEA_LAG_GUARD_V1?.reset?.(`session-${id}:${normalizedReason}`); } catch {}
     try { W.LUNEA_RUNTIME_STATE_V56?.clear?.(`session-${id}:${normalizedReason}`); } catch {}
     if (normalizedReason !== 'luneaDraftRestore') {
       try { W.LUNEA_MOBILE_RUNTIME_FIXES_V57?.clearAux?.(); } catch {}
@@ -278,6 +281,13 @@
   const initialReady = ensureCoreEntries();
   installBoundaryCapture();
 
+  // Once the parser-time rows exist, the old 3.5s emergency reveal is no longer
+  // allowed to expose a partially initialized menu. V29 becomes the sole revealer.
+  if (initialReady === CORE.length && W.__LUNEA_BOOT_FAILSAFE__) {
+    clearTimeout(W.__LUNEA_BOOT_FAILSAFE__);
+    W.__LUNEA_BOOT_FAILSAFE__ = 0;
+  }
+
   function finalizeDom() {
     if (document.documentElement.dataset.luneaCoreSpreadEntries !== 'ready') ensureCoreEntries();
     flushPendingManual();
@@ -301,5 +311,5 @@
     initialReady
   });
 
-  console.info(`✦ LUNEA Reading Lifecycle V59.3 loaded · core entries ${initialReady}/${CORE.length} · session boundary ready`);
+  console.info(`✦ LUNEA Reading Lifecycle V59.4 loaded · core entries ${initialReady}/${CORE.length} · session boundary ready`);
 })();
