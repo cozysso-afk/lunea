@@ -1,25 +1,21 @@
 'use strict';
 
-/* LUNEA MOBILE RUNTIME FIXES V57
-   =================================
-   iPhone/PWA reliability hotfixes for the live reading flow.
+/* LUNEA MOBILE RUNTIME FIXES V57.1
+   ==================================
+   iPhone/PWA auxiliary reliability without owning startSpread.
 
-   - Give the browser two paint frames between AI spread confirmation and the
-     synchronous card DOM build so the confirmation sheet never appears frozen.
-   - Move post-draw correction-memory writes off the critical paint path.
-   - Make 6/9/12 month Transit choices available on the FIRST modal open and
-     re-apply explicit long ranges after the base 120-day selector initializes.
-   - Make the Horary close button close on the first pointer contact and release
-     the V42 fixed-body lock immediately.
-   - Keep Timing Oracle + Thai support results beside the LAST READING draft in
-     a companion autosave and restore their text into both the UI and AI prompt.
+   - AI confirmation paint yielding is now local to Universal AI V20.
+   - No startSpread wrapper, no sync→Promise contract mutation, no installer poll.
+   - Keeps Transit long ranges, Horary first-touch close, deferred learning I/O,
+     and LAST READING Timing/Thai companion autosave.
+   - Delayed UI callbacks use Reading Lifecycle V59 session guards when present.
 */
 (() => {
   const W = window;
   if (W.__LUNEA_MOBILE_RUNTIME_FIXES_V57__) return;
   W.__LUNEA_MOBILE_RUNTIME_FIXES_V57__ = true;
 
-  const RELEASE = '57.0';
+  const RELEASE = '57.1';
   const AUX_KEY = 'LUNEA_LAST_READING_AUX_V57';
   const $ = id => document.getElementById(id);
   const LONG = [
@@ -28,7 +24,6 @@
     [365, '365일 · 1년', '1년']
   ];
 
-  let lastV20ConfirmAt = 0;
   let deferLearningUntil = 0;
   let restoredAux = null;
   let auxSaveTimer = 0;
@@ -49,8 +44,28 @@
     .trim();
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'
   }[ch]));
+
+  function lifecycle() {
+    return W.LUNEA_READING_LIFECYCLE_V59 || null;
+  }
+
+  function sessionId() {
+    return lifecycle()?.currentSessionId?.() || 0;
+  }
+
+  function sessionTimeout(fn, delay, id = sessionId()) {
+    const life = lifecycle();
+    if (life?.timeout) return life.timeout(fn, delay, id);
+    return setTimeout(fn, delay);
+  }
+
+  function sessionFrame(fn, id = sessionId()) {
+    const life = lifecycle();
+    if (life?.frame) return life.frame(fn, id);
+    return (W.requestAnimationFrame || (cb => setTimeout(cb, 16)))(fn);
+  }
 
   function currentQuestion() {
     let q = '';
@@ -59,65 +74,16 @@
     return q.replace(/^["']+|["']+$/g, '').trim();
   }
 
-  function nextPaint(fn) {
-    const raf = typeof requestAnimationFrame === 'function'
-      ? requestAnimationFrame.bind(W)
-      : cb => setTimeout(cb, 16);
-    raf(() => raf(() => setTimeout(fn, 0)));
-  }
-
   function idle(fn) {
-    if (typeof W.requestIdleCallback === 'function') {
-      W.requestIdleCallback(fn, {timeout: 1400});
-    } else {
-      setTimeout(fn, 220);
-    }
+    if (typeof W.requestIdleCallback === 'function') W.requestIdleCallback(fn, {timeout:1400});
+    else setTimeout(fn, 220);
   }
 
-  // ------------------------------------------------------------------
-  // AI spread confirmation -> draw: never block the close-frame paint.
-  // ------------------------------------------------------------------
   function noteV20Confirm(event) {
     if (!event.target?.closest?.('#luneaV20PreviewConfirm')) return;
-    lastV20ConfirmAt = performance.now();
+    deferLearningUntil = performance.now() + 6500;
   }
 
-  function installStartSpreadYield() {
-    const fn = W.startSpread;
-    if (typeof fn !== 'function') return false;
-    if (fn.__luneaMobileV57Yield) return true;
-
-    function wrappedStartSpread(...args) {
-      const elapsed = performance.now() - lastV20ConfirmAt;
-      const fromV20 = lastV20ConfirmAt > 0 && elapsed >= 0 && elapsed < 3000;
-
-      // A newly drawn reading is a hard boundary for companion auxiliary data.
-      clearAux(false);
-
-      if (!fromV20) return fn.apply(this, args);
-
-      lastV20ConfirmAt = 0;
-      deferLearningUntil = performance.now() + 6500;
-      const thisArg = this;
-      return new Promise((resolve, reject) => {
-        nextPaint(() => {
-          try { resolve(fn.apply(thisArg, args)); }
-          catch (error) { reject(error); }
-        });
-      });
-    }
-
-    wrappedStartSpread.__luneaMobileV57Yield = true;
-    wrappedStartSpread.__luneaMobileV57Prior = fn;
-    W.startSpread = wrappedStartSpread;
-    try { startSpread = wrappedStartSpread; } catch {}
-    return true;
-  }
-
-  // A user correction can contain up to 1000 learned rows. Reading/upgrading/
-  // stringifying that store synchronously immediately after startSpread blocks
-  // WebKit's first card paint. Keep preview staging synchronous, but commit only
-  // after the cards have painted / the main thread becomes idle.
   function installLearningIdleCommit() {
     const api = W.LUNEA_SPREAD_LEARNING_V1;
     if (!api || typeof api.record !== 'function') return false;
@@ -126,9 +92,7 @@
     const prior = api.record.bind(api);
     const wrapped = function(payload) {
       const previewOpen = !!$('luneaV20PreviewOverlay')?.classList?.contains('show');
-      if (previewOpen || performance.now() >= deferLearningUntil) {
-        return prior(payload);
-      }
+      if (previewOpen || performance.now() >= deferLearningUntil) return prior(payload);
 
       idle(() => {
         try { prior(payload); }
@@ -142,9 +106,6 @@
     return true;
   }
 
-  // ------------------------------------------------------------------
-  // Transit: long ranges must exist and select correctly on first open.
-  // ------------------------------------------------------------------
   function inferLongDays(question) {
     const q = clean(question);
     if (/(?:1\s*년|일\s*년|한\s*해|12\s*(?:개월|달))/.test(q)) return 365;
@@ -220,16 +181,13 @@
       overlay.__luneaV57Observed = true;
       new MutationObserver(() => {
         if (!overlay.classList.contains('show')) return;
-        queueMicrotask(() => applyTransitQuestionRange());
-        requestAnimationFrame(() => applyTransitQuestionRange());
+        const id = sessionId();
+        sessionFrame(applyTransitQuestionRange, id);
       }).observe(overlay, {attributes:true, attributeFilter:['class']});
     }
     return !!$('astroTransitDays');
   }
 
-  // ------------------------------------------------------------------
-  // Horary: close on pointer-down; don't wait for a lost iOS click.
-  // ------------------------------------------------------------------
   function forceCloseHorary() {
     const overlay = $('astroHoraryOverlay');
     if (!overlay) return;
@@ -248,9 +206,6 @@
     forceCloseHorary();
   }
 
-  // ------------------------------------------------------------------
-  // LAST READING companion autosave: Timing Oracle + Thai support.
-  // ------------------------------------------------------------------
   function readAux() {
     try {
       const row = JSON.parse(localStorage.getItem(AUX_KEY) || 'null');
@@ -303,7 +258,6 @@
   function captureAuxNow() {
     const question = currentQuestion();
     if (!question) return null;
-
     const previous = readAux();
     const same = previous && clean(previous.question) === question;
     const timing = timingSupportText() || (same ? previous.timing || '' : '');
@@ -311,14 +265,15 @@
     const thaiRange = thaiRangeSupportText() || (same ? previous.thaiRange || '' : '');
     if (!timing && !thai && !thaiRange) return null;
 
-    const row = {version:57, question, timing, thai, thaiRange, savedAt:Date.now()};
+    const row = {version:57.1, question, timing, thai, thaiRange, savedAt:Date.now()};
     writeAux(row);
     return row;
   }
 
   function scheduleAuxSave(delay = 120) {
     clearTimeout(auxSaveTimer);
-    auxSaveTimer = setTimeout(captureAuxNow, delay);
+    const id = sessionId();
+    auxSaveTimer = sessionTimeout(captureAuxNow, delay, id);
   }
 
   function renderRestoredAux(row) {
@@ -385,9 +340,9 @@
 
       const filtered = {
         ...row,
-        timing: needTiming ? row.timing : '',
-        thai: needThai ? row.thai : '',
-        thaiRange: needThai ? row.thaiRange : ''
+        timing:needTiming ? row.timing : '',
+        thai:needThai ? row.thai : '',
+        thaiRange:needThai ? row.thaiRange : ''
       };
       return String(prompt) + restoredPromptBlock(filtered);
     };
@@ -414,22 +369,22 @@
   function onDocumentClick(event) {
     const target = event.target;
     if (!target?.closest) return;
+    const id = sessionId();
 
     if (target.closest('#astroTransitBtn,#luneaAstroTransitInline')) {
-      setTimeout(applyTransitQuestionRange, 0);
-      requestAnimationFrame(() => applyTransitQuestionRange());
+      sessionFrame(applyTransitQuestionRange, id);
     }
 
     if (target.closest('#timingDraw,#timingRefine,#thaiTaksaRun,#luneaThaiTarotBridgeBtn,#luneaThaiTarotRangeRun')) {
       restoredAux = null;
       $('luneaDraftAuxV57')?.remove();
-      [140, 700, 1800, 4000].forEach(ms => setTimeout(captureAuxNow, ms));
+      [140,700,1800,4000].forEach(ms => sessionTimeout(captureAuxNow, ms, id));
     }
 
     if (target.closest('#luneaDraftRestore')) {
       const saved = readAux();
       if (!saved) return;
-      [120, 320, 700].forEach(ms => setTimeout(() => renderRestoredAux(saved), ms));
+      [120,320,700].forEach(ms => sessionTimeout(() => renderRestoredAux(saved), ms, id));
     }
   }
 
@@ -439,9 +394,8 @@
     document.addEventListener('click', noteV20Confirm, true);
     document.addEventListener('click', onDocumentClick, true);
 
-    if (W.PointerEvent) {
-      document.addEventListener('pointerdown', onFastHoraryClose, true);
-    } else {
+    if (W.PointerEvent) document.addEventListener('pointerdown', onFastHoraryClose, true);
+    else {
       document.addEventListener('touchstart', onFastHoraryClose, {capture:true, passive:false});
       document.addEventListener('mousedown', onFastHoraryClose, true);
     }
@@ -455,7 +409,6 @@
   function installPass() {
     installAuxStyles();
     installDocumentGuards();
-    installStartSpreadYield();
     installLearningIdleCommit();
     installTransitFirstOpen();
     installAuxObservers();
@@ -464,12 +417,9 @@
 
   function boot() {
     installPass();
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      installPass();
-      if (tries > 160 && promptWrapped && $('astroTransitDays')) clearInterval(timer);
-    }, 100);
+    // A single load-phase completion pass is enough for nodes created by static
+    // scripts later in the document. Never poll or chase startSpread ownership.
+    if (document.readyState !== 'complete') W.addEventListener('load', installPass, {once:true});
   }
 
   W.LUNEA_MOBILE_RUNTIME_FIXES_V57 = Object.freeze({
@@ -479,11 +429,13 @@
     captureAux:captureAuxNow,
     readAux,
     clearAux:() => clearAux(true),
-    install:installPass
+    deferLearningFor:ms => { deferLearningUntil = Math.max(deferLearningUntil, performance.now() + Math.max(0, Number(ms) || 0)); },
+    install:installPass,
+    promptWrapped:() => promptWrapped
   });
 
-  if (document.readyState === 'complete') setTimeout(boot, 0);
-  else W.addEventListener('load', () => setTimeout(boot, 0), {once:true});
+  if (document.readyState === 'complete') boot();
+  else W.addEventListener('load', boot, {once:true});
 
-  console.info('✦ LUNEA Mobile Runtime Fixes V57 loaded');
+  console.info('✦ LUNEA Mobile Runtime Fixes V57.1 loaded · no startSpread wrapper');
 })();
