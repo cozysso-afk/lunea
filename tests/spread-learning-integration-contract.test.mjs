@@ -23,8 +23,19 @@ const baseStart = preflight.indexOf('const started=start(');
 const baseCommit = preflight.indexOf('await commitCorrectionAfterStart(confirmed)');
 assert.ok(baseStart >= 0 && baseCommit > baseStart, 'base AI learning commit must occur after startSpread');
 
-assert.match(gate, /deferred_until_draw/, 'V20 preview correction must be deferred while preview is open');
-assert.match(gate, /api\.record\(hit\.payload\)/, 'V20 gate must commit through the live learning API after start');
+// Universal AI V20.2 owns staging across its preview. The gate is deliberately
+// a post-success commit helper and must not wrap record() or startSpread again.
+assert.match(gate, /function commit\(payload\)/, 'success gate must expose an explicit post-draw commit helper');
+assert.match(gate, /api\.record\(payload\)/, 'success gate must commit through the live learning API');
+assert.match(gate, /Object\.freeze\(\{version:2, commit\}\)/, 'success gate must use the wrapper-free V2 contract');
+assert.doesNotMatch(gate, /deferred_until_draw/, 'legacy gate-owned preview staging must stay retired');
+assert.doesNotMatch(gate, /W\.startSpread\s*=|startSpread\s*=\s*wrapped/, 'success gate must not re-wrap startSpread');
+assert.match(universal, /__luneaLearningCorrection/, 'V20 must carry the staged correction through preview confirmation');
+assert.match(universal, /gate\?\.commit/, 'V20 must delegate the correction to the success gate after draw success');
+const v20Start = universal.indexOf('const started = start(');
+const v20Await = universal.indexOf('await Promise.resolve(started)');
+const v20Commit = universal.indexOf('if (gate?.commit) gate.commit(confirmed.__luneaLearningCorrection)');
+assert.ok(v20Start >= 0 && v20Await > v20Start && v20Commit > v20Await, 'V20 learning commit must occur only after the canonical start resolves');
 assert.match(loader, /lunea-universal-ai-opal-v20\.js[\s\S]*lunea-learning-success-gate-v1\.js/, 'V20 success gate must load after V20');
 
 assert.match(preflight, /book\.formatForPrompt\(question,4\)/, 'AI preflight must consume the casebook bridge that includes learned corrections');
