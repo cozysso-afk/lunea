@@ -1,12 +1,13 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1 · Pages V57
+  LUNEA Cache Refresh V1 · Pages V58
   - Build-scoped hotfix loader + stale-build refresh.
   - Loads Pages-only Astro origin failover before the user can trigger Thai/Astro.
   - Loads hard reading-question state boundaries so old calculations cannot leak.
   - Loads the iOS Thai period date centering repair.
   - Loads V57 mobile draw / Transit / Horary / draft auxiliary reliability fixes.
+  - Loads V58 repeated Universal AI draw transition guard.
 */
 (() => {
   if (window.__LUNEA_CACHE_REFRESH_V1__) return;
@@ -91,6 +92,9 @@
   function loadMobileRuntimeFixesV57() {
     loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57');
   }
+  function loadAiRepeatFlowV58() {
+    loadBuildScopedScript('luneaAiRepeatFlowV58Loader', './lunea-ai-repeat-flow-v58.js', 'repeated Universal AI draw transition V58');
+  }
 
   function refreshTo(build) {
     try {
@@ -139,6 +143,7 @@
     loadLearningAuthRecovery();
     loadEmergencyRepair();
     loadMobileRuntimeFixesV57();
+    loadAiRepeatFlowV58();
     checkBuild();
   }
 
