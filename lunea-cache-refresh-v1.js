@@ -1,15 +1,12 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1 · Pages V59
-  - Build-scoped hotfix loader + stale-build refresh.
+  LUNEA Cache Refresh V1 · Pages V59.3
   - Loads V59 reading lifecycle synchronously while the page is still parsing.
-  - Loads Pages-only Astro origin failover before the user can trigger Thai/Astro.
-  - Loads hard reading-question state boundaries so old calculations cannot leak.
-  - Loads the iOS Thai period date centering repair.
-  - Loads V57 Transit / Horary / draft auxiliary reliability fixes without allowing
-    its legacy global startSpread yield to become the reading entrypoint.
-  - V58 repeated-AI wrapper is retired; V59 stabilizes the global lifecycle instead.
+  - Loads Pages-only Astro origin failover before user-triggered Thai/Astro work.
+  - Loads question-boundary, iOS and auxiliary reliability modules.
+  - V58 repeated-AI wrapper is retired.
+  - V57.1 no longer owns startSpread, so no compatibility marker suppression exists.
 */
 (() => {
   if (window.__LUNEA_CACHE_REFRESH_V1__) return;
@@ -95,14 +92,11 @@
     loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2');
   }
   function loadEmergencyRepair() {
-    // V56 already retries once against the alternate official Astro origin.
-    // Pre-claim V43's older 3-attempt retry wrapper so one calculation cannot
-    // fan out into up to six serial HTTP attempts on a transient Render error.
     W.__LUNEA_ASTRO_RETRY_V43__ = true;
     loadBuildScopedScript('luneaEmergencyRepairV43Loader', './lunea-emergency-repair-v43.js', 'emergency repair V43');
   }
   function loadMobileRuntimeFixesV57() {
-    loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57');
+    loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57.1');
   }
 
   function refreshTo(build) {
@@ -134,13 +128,10 @@
   }
 
   function boot() {
-    // Order matters: failover wraps fetch first; runtime boundary starts watching
-    // the live reading before any user-triggered auxiliary calculation.
     loadAstroOriginFailover();
     loadRuntimeStateV56();
     loadThaiDateCenterV54();
     loadHorizontalTouchStability();
-
     loadJournalHeaderFix();
     loadSectorCardBacks();
     loadTimingUploadedArt();
@@ -152,20 +143,11 @@
     loadHoraryMobileStability();
     loadLearningAuthRecovery();
     loadEmergencyRepair();
-
-    // V57 still owns unrelated Transit/Horary/draft reliability work. Before it
-    // boots, stamp the CURRENT outer startSpread generation so its legacy
-    // installStartSpreadYield() sees the behavior as already handled and cannot
-    // turn the global reading entrypoint into a Promise-returning wrapper.
-    try {
-      W.LUNEA_READING_LIFECYCLE_V59?.markStableStartSpread?.({includeBoundary:true});
-    } catch {}
     loadMobileRuntimeFixesV57();
     checkBuild();
   }
 
-  // Core reading entries and lifecycle stabilization are parser-time work. Do not
-  // wait for DOMContentLoaded or a polling loop before the user can see them.
+  // Core reading rows + session boundary are parser-time work.
   loadReadingLifecycleV59();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
