@@ -43,7 +43,8 @@ try {
     state.question='E2E · 추가 INTIMACY 오라클 최대 3장 검증';
     state.drawn=[{...TAROT_DECK[0],isReversed:false,position:'현재 친밀감 핵심',subCards:[]}];
     window.__LUNEA_INTIMACY_ACTIVE__=true;
-    document.body.classList.add('lunea-intimacy-reading');
+    document.body.classList.add('lunea-intimacy-reading','modal-open');
+    document.getElementById('spreadOverlay')?.classList.add('show');
     const before=window.LUNEA_READING_LIFECYCLE_V59?.currentSessionId?.()||0;
     window.LUNEA_INTIMACY_ORACLE_UI_V36.performOracleDraw();
     const now=window.LUNEA_INTIMACY_ORACLE_UI_V36.getState();
