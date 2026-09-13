@@ -11,8 +11,8 @@ const legacyCategoryIcon = new URL('../assets/intimacy-oracle/intimacy_sector_v3
 const homeIcon = new URL('../assets/intimacy-oracle/intimacy_sector_final.png', import.meta.url);
 
 test('reading action grid starts with flip-all while preserving the rest of the main controls', () => {
-  assert.match(action, /LUNEA READING ACTION ORDER V33\.4/);
-  assert.match(action, /version:'33\.4'/);
+  assert.match(action, /LUNEA READING ACTION ORDER V33\.5/);
+  assert.match(action, /version:'33\.5'/);
   const order = ['flipAll','aiRead','saveReading','retry','extraCard','timingSupportBtn'];
   for (let i = 0; i < order.length - 1; i += 1) {
     assert.ok(action.indexOf(`'${order[i]}'`) < action.indexOf(`'${order[i+1]}'`), `bad order around ${order[i]}`);
@@ -42,5 +42,6 @@ test('opened INTIMACY list restores the previous emblem while Home keeps the cur
 });
 
 test('structural loader cache-busts the universal action module on both loading paths', () => {
-  assert.equal((loader.match(/lunea-reading-action-order-v33\.js\?v=3404/g) || []).length, 2);
+  const matches = loader.match(/lunea-reading-action-order-v33\.js\?v=(?:3305|[0-9a-f]{12})/g) || [];
+  assert.equal(matches.length, 2);
 });
