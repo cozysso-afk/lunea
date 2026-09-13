@@ -10,7 +10,14 @@ function classList(initial = []) {
   return {
     add(...xs) { xs.forEach(x => set.add(x)); },
     remove(...xs) { xs.forEach(x => set.delete(x)); },
-    contains(x) { return set.has(x); }
+    contains(x) { return set.has(x); },
+    toggle(x, force) {
+      if (force === true) set.add(x);
+      else if (force === false) set.delete(x);
+      else if (set.has(x)) set.delete(x);
+      else set.add(x);
+      return set.has(x);
+    }
   };
 }
 
@@ -44,6 +51,12 @@ ids.get('luneaTimingABAI').textContent = '이전 A/B 시기 해석';
 ids.get('spreadQuestion').textContent = '“이전 질문”';
 ids.get('timingSupportBtn').textContent = '⌛ 오늘 밤';
 
+let supportHandlerCalls = 0;
+ids.get('timingSupportBtn').onclick = () => {
+  supportHandlerCalls += 1;
+  ids.get('timingOverlay').classList.add('show');
+};
+
 let observedQuestionCallback = null;
 let captureClick = null;
 class MutationObserver {
@@ -54,10 +67,17 @@ class MutationObserver {
   disconnect() {}
 }
 
-const body = { classList: classList(['modal-open']) };
+const body = {
+  classList: classList(['modal-open']),
+  style: {removeProperty() {}}
+};
+const documentElement = {
+  dataset: {},
+  style: {removeProperty() {}}
+};
 const document = {
   readyState: 'complete',
-  documentElement: { dataset: {} },
+  documentElement,
   body,
   getElementById(id) { return ids.get(id) || null; },
   querySelector(selector) {
@@ -69,30 +89,19 @@ const document = {
   },
 };
 
-let internalTiming = { primary: 'LT-004', refine: 'LT-010', ai: 'old' };
-ids.get('timingSupportBtn').onclick = () => {
-  internalTiming = { primary: null, refine: null, ai: '' };
-  ids.get('timingOverlay').classList.add('show');
-};
-
 let starts = 0;
+const originalStartSpread = function startSpread() { starts += 1; return 'started'; };
 const window = {
   LUNEA_TIMING_AB_LAST: {A:{id:'LT-001'}, B:{id:'LT-002'}},
-  startSpread() { starts += 1; return 'started'; }
+  startSpread: originalStartSpread
 };
 window.window = window;
-const state = { __luneaManualMode: false };
 
 vm.runInNewContext(source, {
   window,
   document,
-  state,
   MutationObserver,
   console,
-  setInterval() { return 1; },
-  clearInterval() {},
-  requestAnimationFrame(cb) { cb(); return 1; },
-  queueMicrotask(cb) { cb(); },
   String,
   RegExp,
   Set,
@@ -101,101 +110,79 @@ vm.runInNewContext(source, {
   Array,
 });
 
-assert.equal(window.LUNEA_READING_BOUNDARY_V31?.version, 31.1, 'V31.1 reset API missing');
-assert.equal(typeof window.startSpread, 'function');
-assert.equal(window.startSpread.__luneaReadingBoundaryV31, true, 'startSpread boundary wrapper missing');
-
-const out = window.startSpread('새 질문');
-assert.equal(out, 'started');
-assert.equal(starts, 1, 'base startSpread must still run exactly once');
-assert.equal(internalTiming.primary, null, 'single Timing closure state must be cleared on startSpread');
-assert.equal(ids.get('luneaTimingInline').removed, true, 'stale single Timing inline must be removed');
-assert.equal(ids.get('luneaTimingABInline').removed, true, 'stale A/B Timing inline must be removed');
-assert.deepEqual(ids.get('luneaTimingABCards').children, [], 'A/B source cards must be cleared so V16 cannot resurrect them');
-assert.equal(window.LUNEA_TIMING_AB_LAST, null, 'A/B memory source must be cleared');
-assert.equal(ids.get('timingInner').classList.contains('flipped'), false, 'hidden Timing card must be unflipped');
-assert.equal(ids.get('timingResult').classList.contains('show'), false, 'old Timing result must be hidden');
-assert.equal(ids.get('timingActions').classList.contains('show'), false, 'old Timing actions must be hidden');
-assert.equal(ids.get('timingAIText').textContent, '', 'old Timing AI text must be cleared');
-assert.equal(ids.get('luneaTimingABAI').textContent, '', 'old A/B Timing AI text must be cleared');
-assert.equal(ids.get('timingSupportBtn').textContent, '◐ 시기 오라클', 'old Timing card label must not survive on support button');
-assert.equal(ids.get('timingOverlay').classList.contains('show'), false, 'closure-reset bridge must not leave Timing overlay open');
+const api = window.LUNEA_READING_BOUNDARY_V31;
+assert.equal(api?.version, 31.2, 'V31.2 reset API missing');
+assert.equal(window.startSpread, originalStartSpread, 'V31.2 must never wrap or replace startSpread');
+assert.equal(starts, 0, 'loading boundary cleanup must not start a reading');
+assert.equal(supportHandlerCalls, 0, 'V31.2 must never call the Timing support onclick handler');
 
 function seedStaleTiming(label='⌛ 오늘 밤') {
   ids.get('luneaTimingInline').removed = false;
   ids.get('luneaTimingABInline').removed = false;
   ids.get('luneaTimingABCards').children = [1, 2];
+  ids.get('timingInner').classList.add('flipped');
+  ids.get('timingResult').classList.add('show');
+  ids.get('timingActions').classList.add('show');
+  ids.get('timingAIText').textContent = '이전 질문 AI 시기 해석';
+  ids.get('luneaTimingABAI').textContent = '이전 A/B 시기 해석';
   ids.get('timingSupportBtn').textContent = label;
-  internalTiming = { primary: 'LT-004', refine: 'LT-010', ai: 'old' };
+  ids.get('timingOverlay').classList.add('show');
+  body.classList.add('modal-open');
   window.LUNEA_TIMING_AB_LAST = {A:{id:'LT-003'}, B:{id:'LT-005'}};
 }
 
-function click(id) {
-  assert.equal(typeof captureClick, 'function', 'capture click safety net missing');
-  captureClick({target: ids.get(id)});
+function assertVisualReset(reason) {
+  assert.equal(ids.get('luneaTimingInline').removed, true, `${reason}: single Timing inline must be removed`);
+  assert.equal(ids.get('luneaTimingABInline').removed, true, `${reason}: A/B Timing inline must be removed`);
+  assert.deepEqual(ids.get('luneaTimingABCards').children, [], `${reason}: A/B source cards must be cleared`);
+  assert.equal(window.LUNEA_TIMING_AB_LAST, null, `${reason}: A/B memory source must be cleared`);
+  assert.equal(ids.get('timingInner').classList.contains('flipped'), false, `${reason}: hidden Timing card must be unflipped`);
+  assert.equal(ids.get('timingResult').classList.contains('show'), false, `${reason}: old Timing result must be hidden`);
+  assert.equal(ids.get('timingActions').classList.contains('show'), false, `${reason}: old Timing actions must be hidden`);
+  assert.equal(ids.get('timingAIText').textContent, '', `${reason}: old Timing AI text must be cleared`);
+  assert.equal(ids.get('luneaTimingABAI').textContent, '', `${reason}: old A/B Timing AI text must be cleared`);
+  assert.equal(ids.get('timingSupportBtn').textContent, '⏳ 시기 카드', `${reason}: support label must be reset`);
+  assert.equal(ids.get('timingOverlay').classList.contains('show'), false, `${reason}: Timing overlay must be closed`);
+  assert.equal(supportHandlerCalls, 0, `${reason}: cleanup must not invoke Timing draw/open handler`);
 }
 
-// Manual <=12 and Manual 13-20 both own drawBtn and render cards directly.
-// The question can be identical to the previous reading, so text-change fallback
-// alone is insufficient. Manual draw entry must clear both UI + closure state.
-seedStaleTiming();
-state.__luneaManualMode = true;
-click('drawBtn');
-assert.equal(internalTiming.primary, null, 'manual direct draw must clear single Timing closure state');
-assert.equal(ids.get('luneaTimingInline').removed, true, 'manual direct draw must clear single Timing UI');
-assert.equal(window.LUNEA_TIMING_AB_LAST, null, 'manual direct draw must clear A/B Timing memory');
-assert.equal(ids.get('timingSupportBtn').textContent, '◐ 시기 오라클', 'manual direct draw must reset old Timing label');
+api.resetTimingBoundary('unit-test');
+assertVisualReset('direct API');
+assert.equal(documentElement.dataset.luneaTimingBoundary, 'unit-test');
+assert.equal(body.classList.contains('modal-open'), false, 'modal lock must clear when no overlay remains visible');
 
-// Fixed/AI drawBtn flows already go through startSpread. Do not clear merely on
-// drawBtn capture while AI preview is still cancellable.
-seedStaleTiming('⌛ 다음 주');
-state.__luneaManualMode = false;
-click('drawBtn');
-assert.equal(internalTiming.primary, 'LT-004', 'non-manual drawBtn capture must wait for startSpread');
-assert.equal(ids.get('luneaTimingInline').removed, false, 'non-manual preview click must not clear current Timing early');
-window.startSpread('AI 확정 질문');
-assert.equal(internalTiming.primary, null, 'AI/fixed confirmed startSpread must clear Timing state');
-assert.equal(ids.get('luneaTimingInline').removed, true, 'AI/fixed confirmed startSpread must clear Timing UI');
+assert.equal(typeof captureClick, 'function', 'capture click safety net missing');
+for (const id of ['drawBtn','dailyBtn','luneaDraftRestore','retry']) {
+  seedStaleTiming();
+  captureClick({target: ids.get(id)});
+  assertVisualReset(id);
+  assert.equal(documentElement.dataset.luneaTimingBoundary, 'direct-reading-entry');
+}
 
-// DAILY same-day restore renders saved cards directly without startSpread.
-seedStaleTiming();
-click('dailyBtn');
-assert.equal(internalTiming.primary, null, 'Daily restore entry must clear single Timing closure state');
-assert.equal(ids.get('luneaTimingInline').removed, true, 'Daily restore entry must clear stale Timing UI');
-
-// Last-reading recovery also restores DOM directly.
-seedStaleTiming();
-click('luneaDraftRestore');
-assert.equal(internalTiming.primary, null, 'Draft restore entry must clear single Timing closure state');
-assert.equal(ids.get('luneaTimingABInline').removed, true, 'Draft restore entry must clear stale A/B Timing UI');
-
-// Manual Retry bypasses startSpread and redraws with the exact same question.
-seedStaleTiming();
-click('retry');
-assert.equal(internalTiming.primary, null, 'Retry entry must clear single Timing closure state');
-assert.equal(window.LUNEA_TIMING_AB_LAST, null, 'Retry entry must clear A/B Timing memory');
-
-// Regression fallback: even if a legacy path bypasses all known entry buttons,
-// changing the displayed tarot question must clear a stale inline result.
 seedStaleTiming();
 ids.get('spreadQuestion').textContent = '“완전히 다른 새 질문”';
 assert.equal(typeof observedQuestionCallback, 'function', 'spread question observer missing');
 observedQuestionCallback();
-assert.equal(ids.get('luneaTimingInline').removed, true, 'question boundary must remove stale single Timing inline');
-assert.equal(ids.get('luneaTimingABInline').removed, true, 'question boundary must remove stale A/B Timing inline');
-assert.deepEqual(ids.get('luneaTimingABCards').children, [], 'question boundary must clear A/B source cards');
-assert.equal(window.LUNEA_TIMING_AB_LAST, null, 'question boundary must clear A/B memory');
-assert.equal(internalTiming.primary, null, 'question boundary must clear single Timing closure state');
+assertVisualReset('question observer');
+assert.equal(documentElement.dataset.luneaTimingBoundary, 'question-change');
+
+const out = window.startSpread('새 질문');
+assert.equal(out, 'started');
+assert.equal(starts, 1, 'canonical startSpread must remain independently callable exactly once');
+assert.equal(supportHandlerCalls, 0, 'canonical start must not be intercepted by V31.2');
+
+assert.doesNotMatch(source, /timingSupportBtn[^\n]*onclick|onclick\.call/, 'V31.2 must not use the Timing button as a closure-reset back door');
+assert.doesNotMatch(source, /W\.startSpread\s*=|setInterval|queueMicrotask|requestAnimationFrame/, 'V31.2 must remain synchronous and non-wrapping');
 
 const matches = loader.match(/lunea-reading-boundary-reset-v31\.js\?v=3102/g) || [];
-assert.equal(matches.length, 2, 'V31.1 boundary reset must load in parsing and sequential loader paths');
+assert.equal(matches.length, 2, 'V31.2 boundary reset must load in parsing and sequential loader paths');
 assert.doesNotMatch(loader, /lunea-reading-boundary-reset-v31\.js\?v=3101/, 'stale V31 cache key must be inactive');
 assert.match(loader, /lunea-general-order-v30-5\.js\?v=(?:3005|[0-9a-f]{12})/, 'final GENERAL order asset missing');
 assert.match(loader, /lunea-boot-reveal-v29\.js\?v=(?:2902|[0-9a-f]{12})/, 'boot reveal asset missing');
 const lastGeneral = loader.lastIndexOf('lunea-general-order-v30-5.js?v=');
 const lastBoundary = loader.lastIndexOf('lunea-reading-boundary-reset-v31.js?v=3102');
 const lastReveal = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=');
-assert.ok(lastBoundary > lastGeneral, 'V31.1 boundary reset must load after final spread wrappers/order patches');
-assert.ok(lastReveal > lastBoundary, 'V31.1 boundary reset must be installed before boot reveal');
+assert.ok(lastBoundary > lastGeneral, 'V31.2 boundary reset must load after final spread/order patches');
+assert.ok(lastReveal > lastBoundary, 'V31.2 boundary reset must load before boot reveal');
 
-console.log('Timing Oracle reading-boundary V31.1 all-entrypoint regression tests: PASS');
+console.log('Timing Oracle reading-boundary V31.2 synchronous regression tests: PASS');
