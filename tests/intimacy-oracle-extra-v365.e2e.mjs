@@ -23,7 +23,14 @@ await page.route('**/lunea-build.json?*', route => route.fulfill({status:200,con
 await page.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css; charset=utf-8',body:''}));
 await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route => route.fulfill({status:204,body:''}));
 await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));
-await page.addInitScript(()=>{try{localStorage.clear();localStorage.setItem('LUNEA_INTIMACY_ADULT_ACK_V1','1')}catch{}try{sessionStorage.clear()}catch{}});
+await page.addInitScript(()=>{
+  try{
+    localStorage.clear();
+    localStorage.setItem('LUNEA_INTIMACY_ADULT_ACK_V1','1');
+    localStorage.setItem('LUNEA_INTIMACY_ORACLE_MODE_V1','1');
+  }catch{}
+  try{sessionStorage.clear()}catch{}
+});
 
 try {
   await page.goto(BASE_URL,{waitUntil:'domcontentloaded'});
@@ -42,7 +49,7 @@ try {
     const now=window.LUNEA_INTIMACY_ORACLE_UI_V36.getState();
     return {before,base:now.cards.map(c=>c.code),extra:now.extraCards.map(c=>c.code),panelHidden:document.getElementById('luneaIntimacyOraclePanel')?.hidden};
   });
-  assert.equal(initial.base.length,1,'default INTIMACY mode should draw one base Oracle');
+  assert.equal(initial.base.length,1,'configured INTIMACY mode should draw one base Oracle');
   assert.equal(initial.extra.length,0,'new base draw must start without supplemental Oracle');
   assert.equal(initial.panelHidden,false,'Oracle panel should be visible');
 
