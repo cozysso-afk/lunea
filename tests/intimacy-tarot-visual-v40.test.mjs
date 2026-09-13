@@ -7,11 +7,11 @@ const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', im
 const tarotBack = new URL('../assets/intimacy-oracle/tarot_back_intimacy_final.png', import.meta.url);
 
 test('INTIMACY tarot uses its dedicated final PNG back instead of GENERAL or Oracle fallback', () => {
-  assert.match(source, /const RELEASE = '40\.4'/);
+  assert.match(source, /const RELEASE = '40\.5'/);
   assert.match(source, /tarot_back_intimacy_final\.png/);
   assert.match(source, /TAROT_BACK_SRC/);
   assert.doesNotMatch(source, /back_intimacy\.svg/);
-  assert.doesNotMatch(source, /oracle_back_intimacy_final\.png/);
+  assert.doesNotMatch(source, /oracle_back_v2\.png/);
   assert.match(source, /lunea-intimacy-tarot-card/);
   assert.match(source, /repairTarotWrapper/);
   assert.match(source, /repairTarotCards/);

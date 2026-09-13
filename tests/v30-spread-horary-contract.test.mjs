@@ -101,11 +101,12 @@ assert.match(loader, /lunea-horary-balance-v19-5\.js\?v=1905/, 'V19.5 cache URL 
 assert.doesNotMatch(loader, /lunea-horary-balance-v19-4\.js\?v=1904/, 'legacy V19.4 bridge must be inactive');
 assert.doesNotMatch(loader, /lunea-horary-balance-v18\.js\?v=1803/, 'legacy V18 bridge must be inactive');
 assert.doesNotMatch(loader, /lunea-horary-balance-v19\.js\?v=1903/, 'legacy V19.3 bridge must be inactive');
-assert.match(loader, /lunea-fixed-spread-depth-v30\.js\?v=3003/, 'V30.3 cache URL missing');
-assert.match(loader, /lunea-general-order-v30-5\.js\?v=3005/, 'GENERAL V30.5 cache URL missing');
-const spreadIndex = loader.lastIndexOf('lunea-fixed-spread-depth-v30.js?v=3003');
-const generalOrderIndex = loader.lastIndexOf('lunea-general-order-v30-5.js?v=3005');
-const revealIndex = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=2902');
+assert.match(loader, /lunea-fixed-spread-depth-v30\.js\?v=(?:3003|[0-9a-f]{12})/, 'V30.3 cache URL missing');
+assert.match(loader, /lunea-general-order-v30-5\.js\?v=(?:3005|[0-9a-f]{12})/, 'GENERAL V30.5 cache URL missing');
+assert.match(loader, /lunea-boot-reveal-v29\.js\?v=(?:2902|[0-9a-f]{12})/, 'boot reveal cache URL missing');
+const spreadIndex = loader.lastIndexOf('lunea-fixed-spread-depth-v30.js?v=');
+const generalOrderIndex = loader.lastIndexOf('lunea-general-order-v30-5.js?v=');
+const revealIndex = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=');
 assert.ok(spreadIndex >= 0 && generalOrderIndex > spreadIndex, 'GENERAL V30.5 must run after spread-depth V30.3');
 assert.ok(revealIndex > generalOrderIndex, 'boot reveal must run after final GENERAL order patch');
 

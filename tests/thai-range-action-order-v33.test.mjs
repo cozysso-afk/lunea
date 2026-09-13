@@ -61,8 +61,8 @@ assert.match(orderSource, /const desired = \[\.\.\.known\.map\(x => x\.node\), \
 assert.match(orderSource, /if \(already\) return true/);
 
 // Long spreads get small convenience controls immediately after the prompt-copy box.
-assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.4/);
-assert.match(orderSource, /version:'33\.4'/);
+assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.5/);
+assert.match(orderSource, /version:'33\.5'/);
 assert.match(orderSource, /luneaBottomReadingActions/);
 assert.match(orderSource, /luneaBottomAiRead/);
 assert.match(orderSource, /luneaBottomSaveReading/);
@@ -100,4 +100,4 @@ for (const asset of [
   assert.match(workflow, new RegExp(asset.replaceAll('.', '\\.')));
 }
 
-console.log('Thai range V33 + reading action order V33.4 regression tests: PASS');
+console.log('Thai range V33 + reading action order V33.5 regression tests: PASS');
