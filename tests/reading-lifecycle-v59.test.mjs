@@ -7,6 +7,7 @@ const lifecycle = read('lunea-reading-lifecycle-v59.js');
 const cache = read('lunea-cache-refresh-v1.js');
 const learning = read('lunea-learning-success-gate-v1.js');
 const boundary = read('lunea-reading-boundary-reset-v31.js');
+const runtimeState = read('lunea-runtime-state-v56.js');
 const universal = read('lunea-universal-ai-opal-v20.js');
 const manualEverywhere = read('lunea-manual-everywhere-v1.js');
 
@@ -30,6 +31,13 @@ assert.ok(!/requestAnimationFrame\s*\(/.test(boundary), 'V31 cleanup must not ou
 assert.match(boundary, /resetTimingBoundary\('question-change'\)/);
 assert.match(boundary, /resetTimingBoundary\('direct-reading-entry'\)/);
 
+// V56 delayed cleanup is allowed only while the same boundary epoch and question
+// are still current. A timer from reading N cannot clear reading N+1.
+assert.match(runtimeState, /let boundaryEpoch = 0/);
+assert.match(runtimeState, /const epoch = \+\+boundaryEpoch/);
+assert.match(runtimeState, /if \(epoch !== boundaryEpoch\) return/);
+assert.match(runtimeState, /if \(currentQuestion\(\) !== questionAtBoundary\) return/);
+
 // The learning gate may wrap exactly once, but it must preserve the lifecycle
 // markers and must not keep polling/re-wrapping after load.
 assert.ok(!/setInterval\s*\(/.test(learning), 'learning gate must install one-shot');
@@ -45,15 +53,24 @@ assert.match(lifecycle, /content\.insertBefore\(ai, manual\)/);
 assert.match(lifecycle, /dataset\.count\s*=\s*'0'/, 'AI placeholder must be recognized by V20');
 assert.match(lifecycle, /lunea-manual-anywhere-item/, 'Manual placeholder must be recognized by Manual Everywhere');
 
-// Existing feature modules must recognize the parser-time rows instead of duplicating them.
+// Manual Everywhere must hydrate rows that already exist. It may not create late
+// menu rows, poll, or watch the body for a later insertion opportunity.
+assert.ok(!/function\s+makeManualItem/.test(manualEverywhere), 'manual everywhere must not create rows');
+assert.ok(!/insertAdjacentElement/.test(manualEverywhere), 'manual everywhere must not insert rows');
+assert.ok(!/MutationObserver/.test(manualEverywhere), 'manual everywhere must not late-insert via observer');
+assert.ok(!/setInterval\s*\(/.test(manualEverywhere), 'manual everywhere must not poll');
+assert.match(manualEverywhere, /hydrateCategories/);
+assert.match(manualEverywhere, /data-manual-spread/);
+
+// V20 recognizes the parser-time AI rows instead of duplicating them.
 assert.match(universal, /item\.dataset\.count\s*===\s*'0'/);
-assert.match(manualEverywhere, /content\.querySelector\('\.lunea-manual-anywhere-item'\)/);
 
 // Loader contract: V59 is parser-time, V58 wrapper is retired, V57 support remains.
 assert.match(cache, /loadReadingLifecycleV59/);
 assert.match(cache, /document\.write\(`/);
 assert.match(cache, /loadReadingLifecycleV59\(\);[\s\S]*DOMContentLoaded/);
 assert.ok(!/loadAiRepeatFlowV58\s*\(/.test(cache), 'V58 repeated-AI wrapper must not load');
+assert.match(cache, /markStableStartSpread\?\.\(\{includeBoundary:true\}\)/, 'current startSpread must be stamped immediately before V57 boots');
 assert.match(cache, /loadMobileRuntimeFixesV57\(\)/, 'V57 non-startSpread support must remain loaded');
 
 console.log('reading-lifecycle-v59 source invariants: OK');
