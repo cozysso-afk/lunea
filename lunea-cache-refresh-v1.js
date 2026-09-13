@@ -123,6 +123,7 @@
       });
       if (!res.ok) return;
       const data = await res.json();
+      if (data.error) return;
       const remote = String(data?.version || '').trim();
       if (!remote) return;
       const embedded = currentPageBuild();
@@ -151,6 +152,14 @@
     loadHoraryMobileStability();
     loadLearningAuthRecovery();
     loadEmergencyRepair();
+
+    // V57 still owns unrelated Transit/Horary/draft reliability work. Before it
+    // boots, stamp the CURRENT outer startSpread generation so its legacy
+    // installStartSpreadYield() sees the behavior as already handled and cannot
+    // turn the global reading entrypoint into a Promise-returning wrapper.
+    try {
+      W.LUNEA_READING_LIFECYCLE_V59?.markStableStartSpread?.({includeBoundary:true});
+    } catch {}
     loadMobileRuntimeFixesV57();
     checkBuild();
   }
