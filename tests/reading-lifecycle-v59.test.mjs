@@ -6,6 +6,7 @@ const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'ut
 const lifecycle = read('lunea-reading-lifecycle-v59.js');
 const cache = read('lunea-cache-refresh-v1.js');
 const learning = read('lunea-learning-success-gate-v1.js');
+const boundary = read('lunea-reading-boundary-reset-v31.js');
 const universal = read('lunea-universal-ai-opal-v20.js');
 const manualEverywhere = read('lunea-manual-everywhere-v1.js');
 
@@ -17,6 +18,17 @@ assert.match(lifecycle, /__luneaAiRepeatFlowV58\s*=\s*true/);
 assert.match(lifecycle, /__luneaReadingBoundaryV31\s*=\s*true/);
 assert.match(lifecycle, /__luneaV14Wrapped\s*=\s*true/);
 assert.match(lifecycle, /__luneaV27Wrapped\s*=\s*true/);
+
+// V31.2 is a synchronous DOM/source reset only. It must never open Timing just
+// to clear it, never own startSpread, and never poll to become the outer wrapper.
+assert.ok(!/onclick\.call\(/.test(boundary), 'V31 must not open Timing via button handler');
+assert.ok(!/W\.startSpread\s*=/.test(boundary), 'V31 must not replace window.startSpread');
+assert.ok(!/function\s+wrappedStartSpread/.test(boundary), 'V31 must not create a startSpread wrapper');
+assert.ok(!/setInterval\s*\(/.test(boundary), 'V31 must not poll/re-wrap');
+assert.ok(!/queueMicrotask\s*\(/.test(boundary), 'V31 cleanup must not outlive the boundary in a microtask');
+assert.ok(!/requestAnimationFrame\s*\(/.test(boundary), 'V31 cleanup must not outlive the boundary in a frame callback');
+assert.match(boundary, /resetTimingBoundary\('question-change'\)/);
+assert.match(boundary, /resetTimingBoundary\('direct-reading-entry'\)/);
 
 // The learning gate may wrap exactly once, but it must preserve the lifecycle
 // markers and must not keep polling/re-wrapping after load.
