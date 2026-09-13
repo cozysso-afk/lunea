@@ -190,9 +190,11 @@ assert.equal(internalTiming.primary, null, 'question boundary must clear single 
 const matches = loader.match(/lunea-reading-boundary-reset-v31\.js\?v=3102/g) || [];
 assert.equal(matches.length, 2, 'V31.1 boundary reset must load in parsing and sequential loader paths');
 assert.doesNotMatch(loader, /lunea-reading-boundary-reset-v31\.js\?v=3101/, 'stale V31 cache key must be inactive');
-const lastGeneral = loader.lastIndexOf('lunea-general-order-v30-5.js?v=3005');
+assert.match(loader, /lunea-general-order-v30-5\.js\?v=(?:3005|[0-9a-f]{12})/, 'final GENERAL order asset missing');
+assert.match(loader, /lunea-boot-reveal-v29\.js\?v=(?:2902|[0-9a-f]{12})/, 'boot reveal asset missing');
+const lastGeneral = loader.lastIndexOf('lunea-general-order-v30-5.js?v=');
 const lastBoundary = loader.lastIndexOf('lunea-reading-boundary-reset-v31.js?v=3102');
-const lastReveal = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=2902');
+const lastReveal = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=');
 assert.ok(lastBoundary > lastGeneral, 'V31.1 boundary reset must load after final spread wrappers/order patches');
 assert.ok(lastReveal > lastBoundary, 'V31.1 boundary reset must be installed before boot reveal');
 
