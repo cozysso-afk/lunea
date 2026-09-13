@@ -17,8 +17,10 @@ const pageErrors=[];
 page.on('pageerror',e=>pageErrors.push(String(e?.stack||e)));
 page.on('dialog',async d=>d.accept());
 
+let releaseOracleRuntime=()=>{};
+const oracleGate=new Promise(resolve=>{releaseOracleRuntime=resolve;});
 await page.route(/lunea-intimacy-oracle-ui-v36\.js\?/,async route=>{
-  await new Promise(resolve=>setTimeout(resolve,5000));
+  await oracleGate;
   await route.continue();
 });
 await page.route(/https:\/\/fonts\.googleapis\.com\//,route=>route.fulfill({status:200,contentType:'text/css; charset=utf-8',body:''}));
@@ -35,11 +37,16 @@ await page.addInitScript(()=>{
 
 try{
   await page.goto(BASE_URL,{waitUntil:'domcontentloaded'});
+
+  const portal=page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
+  await portal.waitFor({state:'visible'});
+  await portal.click();
+
   const item=page.locator('.reading-item[data-title="신체적 속궁합 · CORE 5"]');
-  await item.waitFor({state:'attached'});
-  await item.click({force:true});
+  await item.waitFor({state:'visible'});
+  await item.click();
   await page.locator('#question').fill('실제 사용자 경로에서 늦게 로드된 오라클 UI가 현재 리딩과 동기화되는가?');
-  await page.locator('#drawBtn').click({force:true});
+  await page.locator('#drawBtn').click();
   await page.waitForFunction(()=>document.getElementById('spreadOverlay')?.classList.contains('show') && Array.isArray(state?.drawn) && state.drawn.length>0);
 
   const beforeRuntime=await page.evaluate(()=>({
@@ -54,6 +61,7 @@ try{
   assert.equal(beforeRuntime.oracleReady,false,'test must reproduce the late-runtime window');
   assert.equal(beforeRuntime.panelButton,false,'supplemental button should not exist before Oracle runtime loads');
 
+  releaseOracleRuntime();
   await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});
   await page.waitForFunction(()=>document.getElementById('luneaOracleAddExtra') && !document.getElementById('luneaIntimacyOraclePanel')?.hidden,{timeout:5000});
 
@@ -75,5 +83,6 @@ try{
   assert.deepEqual(relevant,[],`unexpected page errors:\n${relevant.join('\n')}`);
   console.log('INTIMACY late Oracle runtime sync WebKit regression: PASS');
 }finally{
+  releaseOracleRuntime();
   await browser.close();
 }
