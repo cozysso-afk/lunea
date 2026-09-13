@@ -4,18 +4,21 @@ import { webkit } from 'playwright';
 const BASE_URL = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
 const BUILD = 'fc71ade9bd12';
 
+// This sequence intentionally crosses sectors and modes in one long-lived WebKit
+// page. The bug under test is global reading lifecycle corruption after reading #1,
+// not a LOVE-only or AI-only problem.
 const runs = [
-  {category:'GENERAL', mode:'fixed', title:'YES / NO', question:'E2E 01 · 첫 질문 GENERAL 고정 배열은 정상적으로 펼쳐지는가?', expected:3},
-  {category:'CAREER', mode:'fixed', title:'시험 합격운', question:'E2E 02 · 두 번째 질문을 CAREER로 바꿔도 정상적으로 펼쳐지는가?', expected:4},
-  {category:'CAREER', mode:'fixed', title:'직장 내 대인관계 & 평판', question:'E2E 03 · 같은 CAREER에서 연속 질문을 바꿔도 정상인가?', expected:4},
-  {category:'STOCK', mode:'fixed', title:'매수 판단', question:'E2E 04 · STOCK 고정 배열 전환 후에도 정상인가?', expected:3},
-  {category:'LOVE', mode:'fixed', title:'상대 속마음', question:'E2E 05 · LOVE 고정 배열 전환 후에도 정상인가?', expected:5},
+  {category:'GENERAL', mode:'fixed', title:'YES / NO', question:'E2E 01 · 첫 질문 GENERAL 고정 배열은 정상적으로 펼쳐지는가?', expected:5},
+  {category:'CAREER', mode:'fixed', title:'시험 합격운', question:'E2E 02 · 두 번째 질문을 CAREER로 바꿔도 정상적으로 펼쳐지는가?', expected:6},
+  {category:'CAREER', mode:'fixed', title:'직장 내 대인관계 & 평판', question:'E2E 03 · 같은 CAREER에서 연속 질문을 바꿔도 정상인가?', expected:6},
+  {category:'STOCK', mode:'fixed', title:'매수 판단', question:'E2E 04 · STOCK 고정 배열 전환 후에도 정상인가?', expected:5},
+  {category:'LOVE', mode:'fixed', title:'상대 속마음', question:'E2E 05 · LOVE 고정 배열 전환 후에도 정상인가?', expected:7},
   {category:'GENERAL', mode:'ai', question:'E2E 06 · GENERAL AI 맞춤 배열을 간단한 현재 흐름 질문으로 설계해줘.'},
   {category:'LOVE', mode:'ai', question:'E2E 07 · LOVE AI 배열에서 상대와 나 사이의 현재 감정 차이를 비교해줘.'},
   {category:'STOCK', mode:'ai', question:'E2E 08 · STOCK AI 배열에서 지금 판단의 근거와 리스크를 분리해줘.'},
   {category:'CAREER', mode:'manual', question:'E2E 09 · CAREER 직접 입력 배열이 이전 리딩 뒤에도 정상인가?', expected:3,
     positions:['현재 준비 완성도','가장 큰 방해 변수','지금 바꿀 핵심 행동']},
-  {category:'LOVE', mode:'fixed', title:'연락운 & 시기', question:'E2E 10 · 열 번째 LOVE 고정 배열까지 같은 세션에서 정상인가?', expected:5},
+  {category:'LOVE', mode:'fixed', title:'연락운 & 시기', question:'E2E 10 · 열 번째 LOVE 고정 배열까지 같은 세션에서 정상인가?', expected:7},
 ];
 
 const browser = await webkit.launch({headless:true});
@@ -47,20 +50,27 @@ await page.route('**/lunea-build.json?*', route => route.fulfill({
   contentType:'application/json',
   body:JSON.stringify({version:BUILD})
 }));
-await page.route(/https:\/\/(?:fonts\.googleapis\.com|fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route =>
+await page.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({
+  status:200,
+  contentType:'text/css; charset=utf-8',
+  body:''
+}));
+await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route =>
   route.fulfill({status:204, body:''})
 );
+// Background Astro health warming is unrelated to card lifecycle and otherwise
+// produces local-origin CORS noise in WebKit. Keep the boot probe deterministic.
+await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({
+  status:200,
+  contentType:'application/json',
+  headers:{'access-control-allow-origin':'*'},
+  body:JSON.stringify({ok:true})
+}));
 
 await page.addInitScript(() => {
   try { localStorage.clear(); } catch {}
   try { sessionStorage.clear(); } catch {}
 });
-
-function entryCondition(run) {
-  if (run.mode === 'ai') return `el.dataset.luneaUniversalAi === '1'`;
-  if (run.mode === 'manual') return `el.dataset.manualSpread === '1'`;
-  return `el.dataset.title === ${JSON.stringify(run.title)}`;
-}
 
 async function openEntry(run) {
   const result = await page.evaluate(({category, mode, title}) => {
@@ -78,7 +88,7 @@ async function openEntry(run) {
       };
     }
     item.click();
-    return {ok:true, text:(item.textContent || '').replace(/\s+/g,' ').trim()};
+    return {ok:true, text:(item.textContent || '').replace(/\s+/g,' ').trim(), declaredCount:Number(item.dataset.count || 0)};
   }, run);
   assert.equal(result.ok, true, `entry missing for ${run.category}/${run.mode}/${run.title || ''}\n${JSON.stringify(result.available || [], null, 2)}`);
   await page.waitForSelector('#sheet.open');
@@ -89,6 +99,7 @@ async function openEntry(run) {
     await page.locator('#luneaManualTitle').fill('E2E 직접 입력 3카드');
     await page.locator('#luneaManualPositions').fill(run.positions.join('\n'));
   }
+  return result;
 }
 
 async function snapshot() {
@@ -105,6 +116,7 @@ async function snapshot() {
       category:String(s?.category || ''),
       title:String(s?.title || ''),
       question:String(s?.question || ''),
+      stateCount:Number(s?.count || 0),
       positions:Array.isArray(s?.positions) ? s.positions.length : -1,
       drawn:Array.isArray(s?.drawn) ? s.drawn.length : -1,
       used:s?.used?.size ?? -1,
@@ -138,7 +150,7 @@ try {
       draw?.onclick?.__luneaUniversalV20Wrapped;
   }, null, {timeout:20000});
 
-  // Let all load/DOMContentLoaded one-shot installers settle. A handler change after
+  // Let all one-shot DOMContentLoaded installers settle. A handler change after
   // this point is a regression toward the old wrapper/polling race.
   await page.waitForTimeout(1200);
 
@@ -179,16 +191,20 @@ try {
 
   for (let i = 0; i < runs.length; i += 1) {
     const run = runs[i];
-    await openEntry(run);
+    const entry = await openEntry(run);
     const before = await snapshot();
     assert.equal(before.drawDisabled, false, `run ${i + 1}: draw button disabled before draw`);
+    if (run.mode === 'fixed') {
+      assert.equal(entry.declaredCount, run.expected, `run ${i + 1}: menu depth does not match intended V30 preset`);
+      assert.equal(before.stateCount, run.expected, `run ${i + 1}: openSheet state count does not match intended V30 preset`);
+    }
 
     await page.locator('#drawBtn').click();
 
     if (run.mode === 'ai') {
       await page.waitForSelector('#luneaV20PreviewOverlay.show', {timeout:18000});
-      const previewCount = await page.locator('#luneaV20PreviewPositions').inputValue();
-      assert.ok(previewCount.split(/\n+/).filter(Boolean).length >= 2, `run ${i + 1}: AI preview has <2 positions`);
+      const previewText = await page.locator('#luneaV20PreviewPositions').inputValue();
+      assert.ok(previewText.split(/\n+/).filter(Boolean).length >= 2, `run ${i + 1}: AI preview has <2 positions`);
       await page.locator('#luneaV20PreviewConfirm').click();
     }
 
@@ -210,7 +226,8 @@ try {
     assert.equal(after.manualRows, 4, `run ${i + 1}: Manual row count changed`);
     assert.ok(after.drawn > 0, `run ${i + 1}: no cards drawn`);
     assert.equal(after.used, after.drawn, `run ${i + 1}: used/drawn mismatch`);
-    assert.ok(after.cardDom > 0, `run ${i + 1}: card DOM empty`);
+    assert.equal(after.cardDom, after.drawn, `run ${i + 1}: card DOM/drawn mismatch`);
+    assert.equal(after.positions, after.drawn, `run ${i + 1}: positions/drawn mismatch`);
 
     if (Number.isInteger(run.expected)) {
       assert.equal(after.drawn, run.expected, `run ${i + 1}: expected ${run.expected} cards, got ${after.drawn}`);
@@ -228,11 +245,15 @@ try {
   }
 
   assert.equal(results.length, 10, 'did not complete all 10 readings');
-  assert.equal(pageErrors.length, 0, `page errors:\n${pageErrors.join('\n')}`);
+  const relevantPageErrors = pageErrors.filter(line => !/onrender\.com\/health|access control checks/i.test(line));
+  assert.equal(relevantPageErrors.length, 0, `relevant page errors:\n${relevantPageErrors.join('\n')}`);
   assert.equal(dialogs.length, 0, `unexpected dialogs:\n${dialogs.join('\n')}`);
 
   console.log('\nLUNEA mixed-sector 10-run WebKit regression: PASS');
   console.table(results);
+  if (pageErrors.length !== relevantPageErrors.length) {
+    console.log('Ignored background Astro health probe errors:', pageErrors.length - relevantPageErrors.length);
+  }
   if (consoleErrors.length) {
     console.log('Non-fatal console.error messages observed:');
     consoleErrors.forEach(line => console.log(' -', line));
