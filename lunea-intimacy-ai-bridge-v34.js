@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA INTIMACY AI BRIDGE V34.3
+  LUNEA INTIMACY AI BRIDGE V34.4
   ===============================
   Integration bridge for the existing V34 78-card intimacy layer.
 
@@ -11,14 +11,16 @@
   - keeps the legacy anatomical 9-card reading hidden;
   - clears INTIMACY-only Oracle UI immediately when another sector opens;
   - loads the canonical V35.2 Oracle data + V36 runtime only after the late
-    reading-action wrappers are installed, preserving final wrapper order.
+    reading-action wrappers are installed, preserving final wrapper order;
+  - immediately synchronizes V36 to an already-open INTIMACY reading when the
+    Oracle runtime finishes loading late.
 */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_AI_BRIDGE_V34__) return;
   W.__LUNEA_INTIMACY_AI_BRIDGE_V34__ = true;
 
-  const RELEASE = '34.3';
+  const RELEASE = '34.4';
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
   const ORACLE_SOURCES = Object.freeze([
     './lunea-intimacy-oracle-v35.js?v=352',
@@ -152,14 +154,28 @@
     });
   }
 
+  function syncOracleRuntimeToCurrentReading() {
+    try {
+      W.LUNEA_INTIMACY_ORACLE_UI_V36?.sync?.();
+    } catch (err) {
+      console.warn('[LUNEA INTIMACY] Oracle late-runtime sync failed', err);
+    }
+  }
+
   function ensureOracleRuntime() {
-    if (W.LUNEA_INTIMACY_ORACLE_UI_V36) return Promise.resolve();
+    if (W.LUNEA_INTIMACY_ORACLE_UI_V36) {
+      syncOracleRuntimeToCurrentReading();
+      return Promise.resolve();
+    }
     if (oracleLoadPromise) return oracleLoadPromise;
-    oracleLoadPromise = ORACLE_SOURCES.reduce((promise, src) => promise.then(() => loadScriptOnce(src)), Promise.resolve()).catch(err => {
-      oracleLoadPromise = null;
-      console.error('[LUNEA INTIMACY] Oracle runtime load failed', err);
-      throw err;
-    });
+    oracleLoadPromise = ORACLE_SOURCES
+      .reduce((promise, src) => promise.then(() => loadScriptOnce(src)), Promise.resolve())
+      .then(() => { syncOracleRuntimeToCurrentReading(); })
+      .catch(err => {
+        oracleLoadPromise = null;
+        console.error('[LUNEA INTIMACY] Oracle runtime load failed', err);
+        throw err;
+      });
     return oracleLoadPromise;
   }
 
