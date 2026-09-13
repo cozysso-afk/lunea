@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA UNIVERSAL AI SPREAD + OPAL LIGHT V20.1
+  LUNEA UNIVERSAL AI SPREAD + OPAL LIGHT V20.2
   ============================================
   - Hydrates pre-existing AI custom spread rows in GENERAL / CAREER / LOVE / STOCK.
   - Never creates visible category rows after first render.
@@ -9,7 +9,7 @@
   - AI proposes a concise 2~12-card structure; user can manually extend the
     confirmed preview up to 20 cards before RNG draw.
   - Explicit two-person A/B questions keep the existing 12+12 = 24-card route.
-  - User edits are forwarded to the existing local spread-correction learning memory.
+  - User edits are committed to learning only AFTER the matching draw succeeds.
   - AI-only paint yielding is local here; global startSpread remains synchronous.
 */
 (() => {
@@ -227,12 +227,14 @@
         const numbered = all.map((x, i) => `${i + 1}. ${x}`);
         const rationale = `${String(current?.designRationale || 'LUNEA AI 질문 구조 기반 설계')} · PRE-DRAW USER CONFIRMED · USER_EDIT_MAX_${MAX_USER}`;
         const changed = finalTitle !== baseline.spreadTitle || !samePositions(baseline.positions, all);
-        if (changed && W.LUNEA_SPREAD_LEARNING_V1?.record) {
-          try {
-            W.LUNEA_SPREAD_LEARNING_V1.record({question,category:String(getState()?.category||'GENERAL').trim().toUpperCase()||'GENERAL',originalSpread:{spreadTitle:baseline.spreadTitle,positions:baseline.positions},correctedSpread:{spreadTitle:finalTitle,positions:numbered},meta:current?._luneaPreflight || {}});
-          } catch (error) { console.warn('[LUNEA V20] correction learning failed', error); }
-        }
-        finish({...current,spreadTitle:finalTitle,positions:numbered,designRationale:rationale});
+        const learningCorrection = changed ? {
+          question,
+          category:String(getState()?.category||'GENERAL').trim().toUpperCase()||'GENERAL',
+          originalSpread:{spreadTitle:baseline.spreadTitle,positions:baseline.positions},
+          correctedSpread:{spreadTitle:finalTitle,positions:numbered},
+          meta:current?._luneaPreflight || {}
+        } : null;
+        finish({...current,spreadTitle:finalTitle,positions:numbered,designRationale:rationale,__luneaLearningCorrection:learningCorrection});
       };
     });
   }
@@ -345,6 +347,12 @@
         await Promise.resolve(started);
         if (!sessionCurrent(mySession)) return;
 
+        if (confirmed.__luneaLearningCorrection) {
+          const gate = W.LUNEA_LEARNING_SUCCESS_GATE_V1;
+          if (gate?.commit) gate.commit(confirmed.__luneaLearningCorrection);
+          else W.LUNEA_SPREAD_LEARNING_V1?.record?.(confirmed.__luneaLearningCorrection);
+        }
+
         const now = getState();
         if (now) now.__luneaUniversalAI = false;
       } catch (error) {
@@ -376,7 +384,7 @@
   function boot() {
     installAll();
     if (document.readyState !== 'complete') W.addEventListener('load', installAll, {once:true});
-    console.info(`✨ LUNEA Universal AI + Opal V20.1 loaded · hydrate-only entries · local paint yield · A/B 24 preserved`);
+    console.info(`✨ LUNEA Universal AI + Opal V20.2 loaded · hydrate-only entries · local paint yield · post-success learning · A/B 24 preserved`);
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
