@@ -11,7 +11,7 @@ assert.doesNotMatch(v34, /openSheet\('LOVE', item\.dataset\.title/);
 assert.match(v34, /state\.category = 'INTIMACY'/);
 
 // Oracle front/back assets are explicitly Oracle-only PNGs.
-assert.match(v36, /BACK_ASSET='\.\/assets\/intimacy-oracle\/oracle_back_intimacy_final\.png'/);
+assert.match(v36, /BACK_ASSET='\.\/assets\/intimacy-oracle\/oracle_back_v2\.png'/);
 assert.match(v36, /CARD_ROOT='\.\/assets\/intimacy-oracle\/cards'/);
 assert.doesNotMatch(v36, /BACK_ASSET='\.\/assets\/intimacy-oracle\/back_intimacy_final\.png'/);
 assert.doesNotMatch(v36, /generativelanguage\.googleapis\.com/);
@@ -25,7 +25,7 @@ assert.match(v40, /backImg\.setAttribute\('src', TAROT_BACK_SRC\)/);
 const restoreAt = v40.indexOf('repairVisibleReading?.()');
 const applyAt = v40.indexOf('wrappers.forEach(repairTarotWrapper)', restoreAt);
 assert.ok(restoreAt >= 0 && applyAt > restoreAt, 'shared restore must run before the INTIMACY Tarot back is applied');
-assert.doesNotMatch(v40, /oracle_back_intimacy_final\.png/);
+assert.doesNotMatch(v40, /oracle_back_v2\.png/);
 assert.match(v40, /intimacy_sector_final\.png/);
 
 assert.match(v43, /#luneaManualPanel\[data-lunea-intimacy-theme\]/);
@@ -33,7 +33,7 @@ assert.doesNotMatch(v43, /body:has\(\.lunea-intimacy-category\) #luneaManualPane
 assert.match(v43, /function clearManualContext\(\)/);
 assert.match(v43, /s\.category = 'INTIMACY'/);
 assert.match(v43, /ORACLE_CARD_ROOT = '\.\/assets\/intimacy-oracle\/cards'/);
-assert.match(v43, /FINAL_ORACLE_BACK = '\.\/assets\/intimacy-oracle\/oracle_back_intimacy_final\.png'/);
+assert.match(v43, /FINAL_ORACLE_BACK = '\.\/assets\/intimacy-oracle\/oracle_back_v2\.png'/);
 assert.doesNotMatch(v43, /tarot_back_intimacy_final\.png/);
 
 assert.doesNotMatch(v36,/oracle_atlas_final/);
