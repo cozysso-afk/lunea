@@ -9,68 +9,121 @@ const learning = read('lunea-learning-success-gate-v1.js');
 const boundary = read('lunea-reading-boundary-reset-v31.js');
 const runtimeState = read('lunea-runtime-state-v56.js');
 const universal = read('lunea-universal-ai-opal-v20.js');
+const manual = read('lunea-manual-structure-v1.js');
 const manualEverywhere = read('lunea-manual-everywhere-v1.js');
+const polish = read('lunea-reading-polish-v14.js');
+const timingIsolation = read('lunea-thai-archive-timing-isolation-v27.js');
+const mobile = read('lunea-mobile-runtime-fixes-v57.js');
+const lagGuard = read('lunea-lag-guard-v1.js');
+const bootReveal = read('lunea-boot-reveal-v29.js');
 
-// V59 must stabilize the existing startSpread function, never add another wrapper.
-assert.ok(!/W\.startSpread\s*=/.test(lifecycle), 'V59 must not replace window.startSpread');
-assert.ok(!/setInterval\s*\(/.test(lifecycle), 'V59 must not poll/re-wrap with setInterval');
-assert.match(lifecycle, /__luneaMobileV57Yield\s*=\s*true/);
-assert.match(lifecycle, /__luneaAiRepeatFlowV58\s*=\s*true/);
-assert.match(lifecycle, /__luneaReadingBoundaryV31\s*=\s*true/);
-assert.match(lifecycle, /__luneaV14Wrapped\s*=\s*true/);
-assert.match(lifecycle, /__luneaV27Wrapped\s*=\s*true/);
+const noStartAssignment = (source, label) => {
+  assert.ok(!/W\.startSpread\s*=/.test(source), `${label} must not replace window.startSpread`);
+  assert.ok(!/(?:^|[^.\w])startSpread\s*=\s*function/m.test(source), `${label} must not replace bare startSpread`);
+};
 
-// V31.2 is a synchronous DOM/source reset only. It must never open Timing just
-// to clear it, never own startSpread, and never poll to become the outer wrapper.
+// V59 is now a real session boundary, not a marker-suppression layer.
+noStartAssignment(lifecycle, 'V59');
+assert.ok(!/setInterval\s*\(/.test(lifecycle), 'V59 must not poll');
+assert.ok(!/__luneaMobileV57Yield/.test(lifecycle), 'V59 must not fake V57 installation markers');
+assert.ok(!/__luneaV14Wrapped/.test(lifecycle), 'V59 must not fake V14 installation markers');
+assert.ok(!/__luneaV27Wrapped/.test(lifecycle), 'V59 must not fake V27 installation markers');
+assert.ok(!/markStableStartSpread/.test(lifecycle), 'V59 must not stamp startSpread compatibility markers');
+assert.match(lifecycle, /let readingSessionId = 0/);
+assert.match(lifecycle, /function beginSession\(/);
+assert.match(lifecycle, /readingSessionId \+= 1/);
+assert.match(lifecycle, /function isCurrent\(id\)/);
+assert.match(lifecycle, /function guard\(id, fn\)/);
+assert.match(lifecycle, /LUNEA_LAG_GUARD_V1\?\.reset/);
+assert.match(lifecycle, /luneaDraftRestore/);
+
+// V31 is synchronous DOM/source reset only: no Timing-open reset, no wrapper,
+// no polling, and no delayed cleanup that can cross reading sessions.
 assert.ok(!/onclick\.call\(/.test(boundary), 'V31 must not open Timing via button handler');
-assert.ok(!/W\.startSpread\s*=/.test(boundary), 'V31 must not replace window.startSpread');
-assert.ok(!/function\s+wrappedStartSpread/.test(boundary), 'V31 must not create a startSpread wrapper');
+noStartAssignment(boundary, 'V31');
+assert.ok(!/function\s+wrappedStartSpread/.test(boundary), 'V31 must not create startSpread wrapper');
 assert.ok(!/setInterval\s*\(/.test(boundary), 'V31 must not poll/re-wrap');
-assert.ok(!/queueMicrotask\s*\(/.test(boundary), 'V31 cleanup must not outlive the boundary in a microtask');
-assert.ok(!/requestAnimationFrame\s*\(/.test(boundary), 'V31 cleanup must not outlive the boundary in a frame callback');
+assert.ok(!/queueMicrotask\s*\(/.test(boundary), 'V31 cleanup must not outlive its boundary');
+assert.ok(!/requestAnimationFrame\s*\(/.test(boundary), 'V31 cleanup must not outlive its boundary');
 assert.match(boundary, /resetTimingBoundary\('question-change'\)/);
-assert.match(boundary, /resetTimingBoundary\('direct-reading-entry'\)/);
 
-// V56 delayed cleanup is allowed only while the same boundary epoch and question
-// are still current. A timer from reading N cannot clear reading N+1.
+// V56 delayed aux cleanup is epoch + question guarded.
 assert.match(runtimeState, /let boundaryEpoch = 0/);
 assert.match(runtimeState, /const epoch = \+\+boundaryEpoch/);
 assert.match(runtimeState, /if \(epoch !== boundaryEpoch\) return/);
 assert.match(runtimeState, /if \(currentQuestion\(\) !== questionAtBoundary\) return/);
 
-// The learning gate may wrap exactly once, but it must preserve the lifecycle
-// markers and must not keep polling/re-wrapping after load.
-assert.ok(!/setInterval\s*\(/.test(learning), 'learning gate must install one-shot');
-assert.match(learning, /START_MARKERS/);
-assert.match(learning, /if\(prior\?\.\[marker\]\)wrapped\[marker\]=true/);
-
-// Core cabinets must receive deterministic AI + Manual rows before late feature hydration.
-for (const key of ['GENERAL','CAREER','LOVE','STOCK']) {
-  assert.match(lifecycle, new RegExp(`key:'${key}'`));
+// Legacy wrapper-growth sources must no longer own startSpread or polling.
+for (const [label, source] of [
+  ['V14', polish],
+  ['V27', timingIsolation],
+  ['V57', mobile],
+  ['Manual V1', manual],
+  ['Lag Guard', lagGuard],
+  ['Learning Gate', learning],
+]) {
+  noStartAssignment(source, label);
+  assert.ok(!/setInterval\s*\(/.test(source), `${label} must not poll/re-wrap`);
 }
+assert.ok(!/wrapStartSpread/.test(polish), 'V14 wrapStartSpread must be removed');
+assert.ok(!/installStartSpreadYield/.test(mobile), 'V57 global async yield installer must be removed');
+assert.ok(!/installStartSpreadReset/.test(lagGuard), 'Lag Guard startSpread wrapper must be removed');
+assert.ok(!/installStartGate/.test(learning), 'Learning gate startSpread wrapper must be removed');
+assert.match(lagGuard, /LUNEA_LAG_GUARD_V1 = Object\.freeze/);
+assert.match(timingIsolation, /version:27\.1/);
+
+// V14 delayed A/B work must use the V59 session-aware scheduler.
+assert.match(polish, /currentSessionId/);
+assert.match(polish, /sessionTimeout/);
+assert.match(polish, /isCurrent\(mySession\)/);
+assert.ok(!/\[250,\s*800,\s*1800\]/.test(polish), 'V14 wrapper retry schedule must be gone');
+
+// Universal AI is hydrate-only, owns local paint yielding, calls start once,
+// awaits it, and commits learning only after successful start.
+assert.ok(!/function\s+addAIEntry/.test(universal), 'V20 must not create visible category rows');
+assert.ok(!/setInterval\s*\(/.test(universal), 'V20 must not poll for rows/draw wrapper');
+assert.match(universal, /function hydrateCategoryEntries/);
+assert.match(universal, /async function yieldForAiStart/);
+assert.match(universal, /const started = start\(/);
+assert.match(universal, /await Promise\.resolve\(started\)/);
+assert.match(universal, /__luneaLearningCorrection/);
+assert.match(universal, /gate\?\.commit/);
+
+// Learning gate is a post-success commit helper only.
+assert.ok(!/\.record\s*=/.test(learning), 'learning gate must not replace learning.record');
+assert.match(learning, /function commit\(payload\)/);
+
+// Manual entries are hydrate-only. Manual rendering may keep its own one-shuffle
+// renderer, but it must not discover/create a row through the AI DOM.
+assert.ok(!/ensureManualReadingItem/.test(manual), 'Manual V1 must not dynamically create its menu row');
+assert.ok(!/dataset\?\.title === '질문 맞춤 AI 배열'/.test(manual), 'Manual V1 must not depend on first AI row');
+assert.match(manual, /dataset\.luneaLifecycleBound/);
+assert.match(manual, /function startManualSpread/);
+assert.match(manual, /const shuffled = secureShuffle\(TAROT_DECK\)/);
+
+assert.ok(!/function\s+makeManualItem/.test(manualEverywhere), 'Manual Everywhere must not create rows');
+assert.ok(!/insertAdjacentElement/.test(manualEverywhere), 'Manual Everywhere must not insert rows');
+assert.ok(!/MutationObserver/.test(manualEverywhere), 'Manual Everywhere must not late-insert via observer');
+assert.ok(!/setInterval\s*\(/.test(manualEverywhere), 'Manual Everywhere must not poll');
+assert.match(manualEverywhere, /hydrateCategories/);
+
+// Core rows are parser-time and deterministically ordered. V29 refuses to reveal
+// a menu without them even if auxiliary boot work is late.
+for (const key of ['GENERAL','CAREER','LOVE','STOCK']) assert.match(lifecycle, new RegExp(`key:'${key}'`));
 assert.match(lifecycle, /content\.insertBefore\(manual, content\.firstElementChild/);
 assert.match(lifecycle, /content\.insertBefore\(ai, manual\)/);
-assert.match(lifecycle, /dataset\.count\s*=\s*'0'/, 'AI placeholder must be recognized by V20');
-assert.match(lifecycle, /lunea-manual-anywhere-item/, 'Manual placeholder must be recognized by Manual Everywhere');
+assert.match(lifecycle, /dataset\.count = '0'/);
+assert.match(lifecycle, /dataset\.manualSpread = '1'/);
+assert.match(bootReveal, /const coreRowsReady=/);
+assert.match(bootReveal, /if\(done\|\|!coreRowsReady\(\)\)return false/);
+assert.ok(!/readyEnough\(\) \|\| performance\.now\(\)-start>2600/.test(bootReveal), 'V29 may not time out into a partial menu');
 
-// Manual Everywhere must hydrate rows that already exist. It may not create late
-// menu rows, poll, or watch the body for a later insertion opportunity.
-assert.ok(!/function\s+makeManualItem/.test(manualEverywhere), 'manual everywhere must not create rows');
-assert.ok(!/insertAdjacentElement/.test(manualEverywhere), 'manual everywhere must not insert rows');
-assert.ok(!/MutationObserver/.test(manualEverywhere), 'manual everywhere must not late-insert via observer');
-assert.ok(!/setInterval\s*\(/.test(manualEverywhere), 'manual everywhere must not poll');
-assert.match(manualEverywhere, /hydrateCategories/);
-assert.match(manualEverywhere, /data-manual-spread/);
-
-// V20 recognizes the parser-time AI rows instead of duplicating them.
-assert.match(universal, /item\.dataset\.count\s*===\s*'0'/);
-
-// Loader contract: V59 is parser-time, V58 wrapper is retired, V57 support remains.
+// Loader contract: parser-time lifecycle, V58 retired, V57.1 support retained,
+// and no obsolete startSpread marker stamping.
 assert.match(cache, /loadReadingLifecycleV59/);
 assert.match(cache, /document\.write\(`/);
-assert.match(cache, /loadReadingLifecycleV59\(\);[\s\S]*DOMContentLoaded/);
 assert.ok(!/loadAiRepeatFlowV58\s*\(/.test(cache), 'V58 repeated-AI wrapper must not load');
-assert.match(cache, /markStableStartSpread\?\.\(\{includeBoundary:true\}\)/, 'current startSpread must be stamped immediately before V57 boots');
-assert.match(cache, /loadMobileRuntimeFixesV57\(\)/, 'V57 non-startSpread support must remain loaded');
+assert.ok(!/markStableStartSpread/.test(cache), 'loader must not fake wrapper markers');
+assert.match(cache, /loadMobileRuntimeFixesV57\(\)/);
 
 console.log('reading-lifecycle-v59 source invariants: OK');
