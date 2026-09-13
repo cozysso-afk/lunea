@@ -5,18 +5,22 @@
   ========================
   iPhone/PWA guard for repeated Universal AI custom-spread draws.
 
-  Observed live failure:
-  - First AI custom question opens the reading normally.
-  - From the second question onward, confirming "이 배열로 카드 뽑기" can leave
-    the user on the preview / previous screen while startSpread is deferred by
-    the mobile paint-yield wrapper.
+  Live root cause addressed here:
+  - V31 Reading Boundary and V57 Mobile Runtime both re-check startSpread on a
+    timer and only recognized their own marker on the OUTERMOST wrapper.
+  - When both were active they could alternately wrap each other many times.
+  - The first AI question could still work, while the second question later in
+    the same session traversed a very deep wrapper stack and appeared frozen
+    after "이 배열로 카드 뽑기".
 
   Goals:
+  - Stabilize the wrapper chain by advertising markers that already exist inside
+    the chain on one outer compatibility wrapper.
   - Treat every AI preview confirmation as an independent draw session.
   - Transition to the reading overlay immediately, before heavy card DOM work.
   - Invoke the existing startSpread chain exactly once; never redraw/retry RNG.
-  - Await async/deferred startSpread internally so rejected second-run promises
-    are caught instead of becoming unhandled rejections.
+  - Catch async/deferred startSpread failures instead of leaving unhandled
+    promise rejections on repeat draws.
   - Keep ordinary fixed/manual/Daily/A-B paths untouched.
 */
 (() => {
@@ -24,7 +28,7 @@
   if (W.__LUNEA_AI_REPEAT_FLOW_V58__) return;
   W.__LUNEA_AI_REPEAT_FLOW_V58__ = true;
 
-  const RELEASE = '58.0';
+  const RELEASE = '58.1';
   const $ = id => document.getElementById(id);
   const clean = value => String(value || '')
     .normalize('NFKC')
@@ -36,6 +40,31 @@
   let lastConfirmAt = 0;
   let installed = null;
   let installTimer = 0;
+
+  const PRIOR_KEYS = [
+    '__luneaAiRepeatFlowV58Prior',
+    '__luneaMobileV57Prior',
+    '__luneaReadingBoundaryV31Original',
+    '__luneaPriorStart',
+    '__luneaV14PriorStart',
+    '__luneaManualPriorStart'
+  ];
+
+  function chainHas(fn, marker) {
+    let cur = fn;
+    const seen = new Set();
+    for (let depth = 0; typeof cur === 'function' && depth < 256; depth += 1) {
+      if (cur[marker]) return true;
+      if (seen.has(cur)) return false;
+      seen.add(cur);
+      let next = null;
+      for (const key of PRIOR_KEYS) {
+        if (typeof cur[key] === 'function') { next = cur[key]; break; }
+      }
+      cur = next;
+    }
+    return false;
+  }
 
   function isAiConfirmedStart(args) {
     const rationale = String(args?.[3] || '');
@@ -58,7 +87,6 @@
     const question = currentQuestionFallback(args);
     const title = clean(args?.[2] || '') || '질문 맞춤 배열';
 
-    // Preview/sheet must not remain above the reading on the second run.
     const preview = $('luneaV20PreviewOverlay');
     preview?.classList.remove('show');
     preview?.setAttribute('aria-hidden', 'true');
@@ -99,8 +127,6 @@
     const status = $('luneaAiRepeatStatusV58');
     if (status) status.style.display = 'none';
 
-    // Defensive: old close/preview callbacks must not leave the new reading
-    // visually hidden after startSpread has already created its state.
     requestAnimationFrame(() => {
       if (spread.dataset.luneaAiRepeatEpoch !== String(epoch)) return;
       spread.classList.add('show');
@@ -140,6 +166,10 @@
     }
     if (current === installed) return true;
 
+    const hasV31 = chainHas(current, '__luneaReadingBoundaryV31');
+    const hasV57 = chainHas(current, '__luneaMobileV57Yield');
+    const hasLearningGate = chainHas(current, '__luneaLearningSuccessGate');
+
     function wrappedStartSpread(...args) {
       if (!isAiConfirmedStart(args)) return current.apply(this, args);
 
@@ -148,9 +178,6 @@
       const thisArg = this;
       prepareReadingTransition(args, epoch);
 
-      // Return a Promise even if the prior chain is synchronous. Existing
-      // callers that ignore it still get the immediate overlay transition;
-      // callers that await it receive the real completion/error.
       return Promise.resolve()
         .then(() => current.apply(thisArg, args))
         .then(value => {
@@ -165,6 +192,15 @@
 
     wrappedStartSpread.__luneaAiRepeatFlowV58 = true;
     wrappedStartSpread.__luneaAiRepeatFlowV58Prior = current;
+
+    // Compatibility markers are propagated ONLY when the behavior is already
+    // present below us. This stops V31/V57 timer installers from endlessly
+    // wrapping each other while never suppressing a behavior that is not yet
+    // installed.
+    if (hasV31) wrappedStartSpread.__luneaReadingBoundaryV31 = true;
+    if (hasV57) wrappedStartSpread.__luneaMobileV57Yield = true;
+    if (hasLearningGate) wrappedStartSpread.__luneaLearningSuccessGate = true;
+
     W.startSpread = wrappedStartSpread;
     try { startSpread = wrappedStartSpread; } catch {}
     installed = wrappedStartSpread;
@@ -192,11 +228,12 @@
   W.LUNEA_AI_REPEAT_FLOW_V58 = Object.freeze({
     version: RELEASE,
     install: installGuards,
+    chainHas,
     getState: () => ({confirmEpoch, lastConfirmAt, installed: !!installed})
   });
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
 
-  console.info('✦ LUNEA AI Repeat Flow V58 loaded');
+  console.info('✦ LUNEA AI Repeat Flow V58.1 loaded · wrapper chain stabilized');
 })();
