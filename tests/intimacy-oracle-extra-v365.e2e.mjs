@@ -66,7 +66,7 @@ try {
     session:window.LUNEA_READING_LIFECYCLE_V59?.currentSessionId?.()||0
   }));
   assert.equal(afterOne.state.extraCards.length,1,'first supplemental draw missing');
-  assert.match(afterOne.ai,/다시 눌러줘/,'existing AI interpretation must be invalidated after supplemental draw');
+  assert.match(afterOne.ai,/기존 AI 해석.*비웠어.*다시.*AI 해석.*눌러줘/,'existing AI interpretation must be invalidated after supplemental draw');
   assert.equal(afterOne.sidecar?.extraCards?.length,1,'sidecar must persist supplemental card');
   assert.equal(afterOne.session,initial.before,'supplemental Oracle must not start a new reading session');
 
