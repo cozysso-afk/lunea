@@ -11,7 +11,9 @@ assert.match(reveal, /6 CARD · FULL VIEW/, 'boot reveal must wait for the late 
 assert.match(reveal, /LUNEA_FIXED_SPREAD_DEPTH_V30/, 'boot reveal must wait for fixed-spread patching');
 assert.match(reveal, /LUNEA_GENERAL_ORDER/, 'boot reveal must wait for final GENERAL ordering');
 assert.match(reveal, /data-lunea-universal-ai="1"/, 'boot reveal must wait for universal AI sector entries');
-assert.match(reveal, /performance\.now\(\)-start>2600/, 'boot reveal must retain a bounded fail-open timeout');
+assert.match(reveal, /data-manual-spread="1"/, 'boot reveal must also wait for deterministic manual sector entries');
+assert.match(reveal, /elapsed>2600 && coreRowsReady\(\) && hasFinalDrawPipeline\(\)/, 'boot reveal may fail-open auxiliary modules only after core rows and draw pipeline are ready');
+assert.match(reveal, /elapsed>8000 && coreRowsReady\(\)/, 'long fail-open path must still refuse to expose an incomplete core menu');
 
 assert.match(reveal, /LUNEA_AI_SPREAD_PREFLIGHT\?\.design/, 'startup readiness must include the AI preflight designer');
 assert.match(reveal, /__luneaUniversalV20Wrapped/, 'startup readiness must include the final draw wrapper');
