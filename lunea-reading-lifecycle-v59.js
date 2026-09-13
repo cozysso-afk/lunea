@@ -10,7 +10,7 @@
   Responsibilities:
   - Make core AI + Manual spread entries deterministic before the category UI is used.
   - Keep those entries category-scoped and ordered AI -> Manual -> fixed spreads.
-  - Prevent legacy V31/V57/V58 installers from repeatedly wrapping startSpread.
+  - Prevent legacy V14/V27/V31/V57/V58 installers from repeatedly wrapping startSpread.
   - Suppress V57's global async startSpread yield; AI-specific paint yielding belongs
     in the AI caller, not in the global reading entrypoint.
   - Keep window.startSpread and the classic global binding aligned after bootstrap.
@@ -23,8 +23,9 @@
   if (W.__LUNEA_READING_LIFECYCLE_V59__) return;
   W.__LUNEA_READING_LIFECYCLE_V59__ = true;
 
-  const RELEASE = '59.0';
+  const RELEASE = '59.1';
   const $ = id => document.getElementById(id);
+  let pendingManualMeta = null;
 
   const CORE = [
     {
@@ -115,6 +116,14 @@
   }
 
   function openManual(meta) {
+    // The entry is visible parser-time. If a user somehow taps before the
+    // Manual module has created its panel, remember the intent and fulfill it
+    // once DOMContentLoaded completes instead of opening a half-ready sheet.
+    if (!$('luneaManualPanel')) {
+      pendingManualMeta = meta;
+      return;
+    }
+
     const opener = W.openSheet || (typeof openSheet === 'function' ? openSheet : null);
     if (typeof opener !== 'function') return;
 
@@ -144,6 +153,13 @@
     const label = $('drawLabel');
     if (label) label.textContent = '직접 배열로 카드 펼치기';
     $('luneaManualPositions')?.focus?.({preventScroll:true});
+  }
+
+  function flushPendingManual() {
+    if (!pendingManualMeta || !$('luneaManualPanel')) return;
+    const meta = pendingManualMeta;
+    pendingManualMeta = null;
+    openManual(meta);
   }
 
   function bindCreatedEntry(item, meta, mode) {
@@ -202,7 +218,7 @@
     return ready;
   }
 
-  function markStableStartSpread({includeBoundary = false} = {}) {
+  function markStableStartSpread({includeDeferredWrappers = false} = {}) {
     const fn = W.startSpread;
     if (typeof fn !== 'function') return false;
 
@@ -215,34 +231,40 @@
     // a stale cached loader cannot add another repeated-AI wrapper.
     fn.__luneaAiRepeatFlowV58 = true;
 
-    // By the deferred DOMContentLoaded phase V31 has already installed once.
-    // Propagate its marker onto later wrappers (notably Lag Guard) so V31's old
-    // retry loop sees the behavior as present instead of wrapping again.
-    if (includeBoundary) fn.__luneaReadingBoundaryV31 = true;
+    if (includeDeferredWrappers) {
+      // These modules have already had one legitimate DOMContentLoaded install.
+      // Their legacy retry loops only inspect the OUTERMOST marker, so propagate
+      // the markers to later wrappers rather than allowing wrapper depth to grow.
+      fn.__luneaReadingBoundaryV31 = true;
+      fn.__luneaV14Wrapped = true;
+      fn.__luneaV27Wrapped = true;
+    }
 
     try { startSpread = fn; } catch {}
-    document.documentElement.dataset.luneaStableStartSpread = includeBoundary ? 'finalized' : 'preflight';
+    document.documentElement.dataset.luneaStableStartSpread = includeDeferredWrappers ? 'finalized' : 'preflight';
     return true;
   }
 
   function finalizeAfterDomReady() {
     ensureCoreEntries();
-    markStableStartSpread({includeBoundary:true});
+    markStableStartSpread({includeDeferredWrappers:true});
+    flushPendingManual();
   }
 
   function finalizeAfterLoad() {
     // Learning/Lag Guard load-time installers have now had their one legitimate
     // installation opportunity. Re-assert compatibility markers on the final
     // outer function without wrapping or replacing it.
-    markStableStartSpread({includeBoundary:true});
+    markStableStartSpread({includeDeferredWrappers:true});
     ensureCoreEntries();
+    flushPendingManual();
   }
 
   // Visible core entries are created immediately. In the current page layout
   // all four cabinet DOMs already exist before lunea-cache-refresh-v1.js loads.
   // DOMContentLoaded is only a one-shot fallback for future markup relocation.
   const initialReady = ensureCoreEntries();
-  markStableStartSpread({includeBoundary:false});
+  markStableStartSpread({includeDeferredWrappers:false});
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
