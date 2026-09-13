@@ -1,14 +1,12 @@
 'use strict';
 
 /*
-  LUNEA MANUAL SPREAD EVERYWHERE V1.1
+  LUNEA MANUAL SPREAD EVERYWHERE V1.2
   ===================================
-  Hydration-only layer for category-scoped Manual Spread entries.
+  Hydration-only fallback for category-scoped Manual Spread entries.
 
-  The visible rows are created deterministically by the parser-time reading
-  lifecycle/category factory. This module must NOT insert menu rows later,
-  poll for them, or observe the body to make them appear after the cabinet is
-  already interactive.
+  Parser-time rows created/bound by Reading Lifecycle V59 are left alone.
+  This module never inserts menu rows, polls, or observes the body.
 */
 (() => {
   const W = window;
@@ -26,12 +24,7 @@
       state.__luneaIntimacyReading = cat === 'INTIMACY';
     } catch {}
 
-    opener(
-      cat,
-      '직접 입력 배열',
-      '이 파트의 질문에 맞춰 카드 포지션을 직접 고정합니다. AI가 배열을 다시 설계하지 않습니다.',
-      1
-    );
+    opener(cat, '직접 입력 배열', '이 파트의 질문에 맞춰 카드 포지션을 직접 고정합니다. AI가 배열을 다시 설계하지 않습니다.', 1);
 
     try {
       state.__luneaManualMode = true;
@@ -55,7 +48,10 @@
   }
 
   function bindManualItem(item, category) {
-    if (!item || item.dataset.luneaManualHydrated === '1') return false;
+    if (!item) return false;
+    if (item.dataset.luneaLifecycleBound === '1') return true;
+    if (item.dataset.luneaManualHydrated === '1') return true;
+
     item.dataset.luneaManualHydrated = '1';
     const open = () => openManualForCategory(category);
     item.addEventListener('click', open);
@@ -86,14 +82,10 @@
   function boot() {
     const found = hydrateCategories();
     if (!found) console.warn('[LUNEA Manual Everywhere] deterministic manual rows were not present at boot');
-    console.info(`🌙 LUNEA Manual Spread Everywhere V1.1 hydrated · ${found} categories`);
+    console.info(`🌙 LUNEA Manual Spread Everywhere V1.2 hydrated · ${found} categories`);
   }
 
-  W.LUNEA_MANUAL_EVERYWHERE_V1 = Object.freeze({
-    version: 1.1,
-    hydrateCategories,
-    openManualForCategory
-  });
+  W.LUNEA_MANUAL_EVERYWHERE_V1 = Object.freeze({version:1.2,hydrateCategories,openManualForCategory});
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
