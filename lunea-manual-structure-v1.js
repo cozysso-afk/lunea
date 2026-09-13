@@ -1,16 +1,16 @@
 'use strict';
 
 /*
-  LUNEA MANUAL SPREAD + RECALL COMPARISON V1
-  ==========================================
+  LUNEA MANUAL SPREAD + RECALL COMPARISON V1.1
+  ============================================
   Additive UI/structure layer loaded after Structural Routing V4.
 
+  - Uses the parser-time Manual row supplied by Reading Lifecycle V59.
+  - Never searches for an AI row or creates a late visible menu row.
   - Adds a user-authored spread mode without changing RNG/card draw logic.
   - Keeps every manual position verbatim (except leading list markers).
   - Optional A/B symmetric expansion from shared user-authored axes.
-  - Repairs the common A/B "오늘 나를 생각/의식 + 감정의 결" question
-    into a fixed 3-axis parallel comparison (6 cards).
-  - Does not alter Horary calculations.
+  - Does not wrap startSpread; V59 owns the reading-session boundary.
 */
 (() => {
   const W = window;
@@ -27,10 +27,7 @@
   ];
 
   function qnorm(value) {
-    return String(value || '')
-      .normalize('NFKC')
-      .replace(/\s+/g, ' ')
-      .trim();
+    return String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
   }
 
   function isRecallTonePairQuestion(question) {
@@ -69,11 +66,11 @@
     ].join(' · ');
     result._luneaStructuralV4 = {
       ...(result._luneaStructuralV4 || {}),
-      mode: 'person_comparison',
-      axes: [...recallAxes],
-      axisCount: recallAxes.length,
-      decisionRequested: false,
-      pages: [
+      mode:'person_comparison',
+      axes:[...recallAxes],
+      axisCount:recallAxes.length,
+      decisionRequested:false,
+      pages:[
         {label:'과거 인연 A', indices:[0,1,2]},
         {label:'과거 인연 B', indices:[3,4,5]}
       ]
@@ -82,9 +79,7 @@
   }
 
   function cleanManualLine(line) {
-    return String(line || '')
-      .replace(/^\s*(?:[-*•]+|\d{1,2}\s*[.)]|[A-Za-z]\s*[.)])\s*/, '')
-      .trim();
+    return String(line || '').replace(/^\s*(?:[-*•]+|\d{1,2}\s*[.)]|[A-Za-z]\s*[.)])\s*/, '').trim();
   }
 
   function readDraft() {
@@ -96,23 +91,15 @@
     const title = document.getElementById('luneaManualTitle')?.value || '';
     const positions = document.getElementById('luneaManualPositions')?.value || '';
     const symmetric = !!document.getElementById('luneaManualAB')?.checked;
-    try { localStorage.setItem(MANUAL_KEY, JSON.stringify({title, positions, symmetric})); } catch {}
+    try { localStorage.setItem(MANUAL_KEY, JSON.stringify({title,positions,symmetric})); } catch {}
   }
 
   function parseManualPositions() {
     const area = document.getElementById('luneaManualPositions');
     const symmetric = !!document.getElementById('luneaManualAB')?.checked;
-    const lines = String(area?.value || '')
-      .split(/\n+/)
-      .map(cleanManualLine)
-      .filter(Boolean);
-
+    const lines = String(area?.value || '').split(/\n+/).map(cleanManualLine).filter(Boolean);
     if (!lines.length) return {positions:[], symmetric, axes:[]};
-
-    if (!symmetric) {
-      return {positions:lines, symmetric:false, axes:[]};
-    }
-
+    if (!symmetric) return {positions:lines, symmetric:false, axes:[]};
     return {
       positions:[
         ...lines.map((axis, i) => `A · 축 ${i + 1} · ${axis}`),
@@ -160,7 +147,6 @@
   function ensureManualPanel() {
     let panel = document.getElementById('luneaManualPanel');
     if (panel) return panel;
-
     const question = document.getElementById('question');
     const questionField = question?.closest('.field');
     if (!questionField) return null;
@@ -192,8 +178,7 @@
     if (title) title.value = draft.title || '';
     if (positions) positions.value = draft.positions || '';
     if (ab) ab.checked = !!draft.symmetric;
-
-    [title, positions, ab].forEach(el => {
+    [title,positions,ab].forEach(el => {
       el?.addEventListener('input', () => { saveDraft(); updateManualCount(); });
       el?.addEventListener('change', () => { saveDraft(); updateManualCount(); });
     });
@@ -203,30 +188,6 @@
 
   function setManualPanelVisible(visible) {
     document.getElementById('luneaManualPanel')?.classList.toggle('show', !!visible);
-  }
-
-  function ensureManualReadingItem(openManual) {
-    if (document.getElementById('luneaManualReadingItem')) return;
-    const aiItem = [...document.querySelectorAll('.reading-item')]
-      .find(el => el.dataset?.title === '질문 맞춤 AI 배열');
-    if (!aiItem) return;
-
-    const item = document.createElement('div');
-    item.className = 'reading-item';
-    item.id = 'luneaManualReadingItem';
-    item.setAttribute('role', 'button');
-    item.setAttribute('tabindex', '0');
-    item.innerHTML = `
-      <div><h4>직접 입력 배열</h4><p>포지션을 네가 직접 고정 · 필요하면 A/B 대칭 복제.</p></div>
-      <div class="count">직접</div>`;
-    aiItem.insertAdjacentElement('afterend', item);
-    item.addEventListener('click', openManual);
-    item.addEventListener('keydown', e => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        openManual();
-      }
-    });
   }
 
   function startManualSpread(question, positions, title, rationale, learn=true) {
@@ -293,11 +254,11 @@
     showOverlay('spreadOverlay');
   }
 
-  function installFinalWrappers() {
+  function installFinalFeatures() {
     const structural = W.LUNEA_STRUCTURAL_ROUTING_V4;
     const drawBtn = document.getElementById('drawBtn');
     if (!structural || !drawBtn) {
-      console.warn('[LUNEA Manual V1] structural base or draw button missing');
+      console.warn('[LUNEA Manual V1.1] structural base or draw button missing');
       return;
     }
 
@@ -321,7 +282,6 @@
         let out = String(priorDirective.apply(this, arguments) || '');
         let q = '';
         try { q = qnorm(state?.question || ''); } catch {}
-
         if (state?.__luneaManualReading) {
           out += `\n[MANUAL SPREAD LOCK · 사용자 직접 배열]\n- 카드 포지션은 사용자가 직접 지정했다. 포지션을 합치거나 이름을 바꾸거나 다른 스프레드로 재설계하지 않는다.\n- 각 카드가 맡은 질문 범위를 그대로 지키고, 사용자가 넣지 않은 축을 새 필수축처럼 끼워 넣지 않는다.`;
         }
@@ -341,7 +301,6 @@
         let prompt = String(priorPrompt.apply(this, arguments) || '');
         let q = '';
         try { q = qnorm(state?.question || ''); } catch {}
-
         if (state?.__luneaManualReading) {
           prompt += `\n\n[MANUAL SPREAD LOCK]\n- 이 스프레드는 사용자가 직접 입력했다. 각 포지션의 문구·순서·대상 관계를 그대로 유지한다.\n- AI는 배열을 재설계하거나 포지션을 병합·축소·추가하지 않는다.`;
         }
@@ -368,117 +327,97 @@
       try { openSheet = wrappedOpenSheet; } catch {}
     }
 
-    const openManual = () => {
-      const opener = W.openSheet || openSheet;
-      const manualItem = document.getElementById('luneaManualReadingItem');
-      const containerCategory = String(manualItem?.closest?.('.category-content')?.querySelector?.('.reading-item[data-cat]')?.dataset?.cat || '').trim().toUpperCase();
-      let currentCategory = '';
-      try { currentCategory = String(state?.category || '').trim().toUpperCase(); } catch {}
-      const originCategory = containerCategory || currentCategory || 'GENERAL';
-      try {
-        state.__luneaManualOriginCategory = originCategory;
-        state.category = originCategory;
-        state.__luneaIntimacyReading = originCategory === 'INTIMACY';
-      } catch {}
-      opener(originCategory, '직접 입력 배열', 'AI 자동 배열이 마음에 안 들 때 카드 포지션을 직접 고정합니다.', 1);
-      state.__luneaManualMode = true;
-      state.__luneaManualReading = false;
-      state.isAi = false;
-      state.__luneaManualOriginCategory = originCategory;
-      state.category = originCategory;
-      state.__luneaIntimacyReading = originCategory === 'INTIMACY';
-      if (originCategory === 'INTIMACY') {
-        W.__LUNEA_INTIMACY_ACTIVE__ = true;
-        document.body?.classList?.add('lunea-intimacy-reading');
-        [0,80,250].forEach(ms => setTimeout(() => W.LUNEA_INTIMACY_ORACLE_UI_V36?.prepareSheetTools?.(), ms));
-      }
-      setManualPanelVisible(true);
-      const label = document.getElementById('drawLabel');
-      if (label) label.textContent = '직접 배열로 카드 펼치기';
-      setTimeout(() => document.getElementById('luneaManualPositions')?.focus(), 0);
-    };
-    ensureManualReadingItem(openManual);
+    // Fallback hydration only. Reading Lifecycle V59 normally owns this entry.
+    const manualItem = document.getElementById('luneaManualReadingItem');
+    if (manualItem && manualItem.dataset.luneaLifecycleBound !== '1' && manualItem.dataset.luneaManualV1Bound !== '1') {
+      manualItem.dataset.luneaManualV1Bound = '1';
+      const openManual = () => {
+        const opener = W.openSheet || (typeof openSheet === 'function' ? openSheet : null);
+        if (typeof opener !== 'function') return;
+        const containerCategory = String(manualItem.dataset.cat || 'GENERAL').trim().toUpperCase() || 'GENERAL';
+        state.__luneaManualOriginCategory = containerCategory;
+        state.category = containerCategory;
+        opener(containerCategory, '직접 입력 배열', 'AI 자동 배열이 마음에 안 들 때 카드 포지션을 직접 고정합니다.', 1);
+        state.__luneaManualMode = true;
+        state.__luneaManualReading = false;
+        state.isAi = false;
+        setManualPanelVisible(true);
+        const label = document.getElementById('drawLabel');
+        if (label) label.textContent = '직접 배열로 카드 펼치기';
+        document.getElementById('luneaManualPositions')?.focus?.({preventScroll:true});
+      };
+      manualItem.addEventListener('click', openManual);
+      manualItem.addEventListener('keydown', event => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        event.preventDefault();
+        openManual();
+      });
+    }
 
     const originalDraw = drawBtn.onclick;
-    drawBtn.onclick = async function(event) {
-      if (!state?.__luneaManualMode) {
-        return typeof originalDraw === 'function' ? originalDraw.call(this, event) : undefined;
-      }
+    if (!originalDraw?.__luneaManualDrawV11) {
+      const wrappedDraw = async function(event) {
+        if (!state?.__luneaManualMode) return typeof originalDraw === 'function' ? originalDraw.call(this, event) : undefined;
 
-      const q = String(document.getElementById('question')?.value || '').trim();
-      if (!q) {
-        alert('질문 원문을 먼저 입력해줘.');
-        document.getElementById('question')?.focus();
-        return;
-      }
+        const q = String(document.getElementById('question')?.value || '').trim();
+        if (!q) {
+          alert('질문 원문을 먼저 입력해줘.');
+          document.getElementById('question')?.focus();
+          return;
+        }
+        const parsed = parseManualPositions();
+        if (!parsed.positions.length) {
+          alert('직접 배열의 포지션을 한 줄에 하나씩 입력해줘.');
+          document.getElementById('luneaManualPositions')?.focus();
+          return;
+        }
+        if (parsed.positions.length > MAX_MANUAL_CARDS) {
+          alert(`직접 배열은 한 번에 최대 ${MAX_MANUAL_CARDS}장까지 펼칠 수 있어. 지금 ${parsed.positions.length}장이야.`);
+          return;
+        }
 
-      const parsed = parseManualPositions();
-      if (!parsed.positions.length) {
-        alert('직접 배열의 포지션을 한 줄에 하나씩 입력해줘.');
-        document.getElementById('luneaManualPositions')?.focus();
-        return;
-      }
-      if (parsed.positions.length > MAX_MANUAL_CARDS) {
-        alert(`직접 배열은 한 번에 최대 ${MAX_MANUAL_CARDS}장까지 펼칠 수 있어. 지금 ${parsed.positions.length}장이야.`);
-        return;
-      }
+        const rawTitle = String(document.getElementById('luneaManualTitle')?.value || '').trim();
+        const title = rawTitle || (parsed.symmetric
+          ? `A/B 직접 대칭 배열 · ${parsed.axes.length}축 · ${parsed.positions.length}카드`
+          : `직접 입력 배열 · ${parsed.positions.length}카드`);
+        const rationale = parsed.symmetric
+          ? `[USER MANUAL SPREAD] · 사용자 직접 지정 · A/B same axes, same order · 축 ${parsed.axes.length}개 · AI 재설계 금지`
+          : `[USER MANUAL SPREAD] · 사용자 직접 지정 · 포지션 ${parsed.positions.length}개 · AI 재설계 금지`;
 
-      const rawTitle = String(document.getElementById('luneaManualTitle')?.value || '').trim();
-      const title = rawTitle || (parsed.symmetric
-        ? `A/B 직접 대칭 배열 · ${parsed.axes.length}축 · ${parsed.positions.length}카드`
-        : `직접 입력 배열 · ${parsed.positions.length}카드`);
-      const rationale = parsed.symmetric
-        ? `[USER MANUAL SPREAD] · 사용자 직접 지정 · A/B same axes, same order · 축 ${parsed.axes.length}개 · AI 재설계 금지`
-        : `[USER MANUAL SPREAD] · 사용자 직접 지정 · 포지션 ${parsed.positions.length}개 · AI 재설계 금지`;
-
-      saveDraft();
-      startManualSpread(q, parsed.positions, title, rationale);
-    };
+        saveDraft();
+        startManualSpread(q, parsed.positions, title, rationale);
+      };
+      wrappedDraw.__luneaManualDrawV11 = true;
+      wrappedDraw.__luneaPriorDraw = originalDraw;
+      drawBtn.onclick = wrappedDraw;
+    }
 
     const retry = document.getElementById('retry');
     if (retry && !retry.__luneaManualWrapped) {
       const originalRetry = retry.onclick;
       retry.onclick = function(event) {
-        if (state?.__luneaManualReading) {
-          return startManualSpread(state.question, state.positions, state.title, state.rationale, false);
-        }
+        if (state?.__luneaManualReading) return startManualSpread(state.question, state.positions, state.title, state.rationale, false);
         return typeof originalRetry === 'function' ? originalRetry.call(this, event) : undefined;
       };
       retry.__luneaManualWrapped = true;
     }
 
-    const priorStart = W.startSpread || (typeof startSpread === 'function' ? startSpread : null);
-    if (typeof priorStart === 'function' && !priorStart.__luneaManualWrapped) {
-      const wrappedStart = function() {
-        state.__luneaManualReading = false;
-        return priorStart.apply(this, arguments);
-      };
-      wrappedStart.__luneaManualWrapped = true;
-      W.startSpread = wrappedStart;
-      try { startSpread = wrappedStart; } catch {}
-    }
-
     const badge = document.querySelector('.engine-strip span:last-child');
-    if (badge && !/Manual/.test(badge.textContent || '')) {
-      badge.innerHTML += ' · <b>Manual Spread</b>';
-    }
+    if (badge && !/Manual/.test(badge.textContent || '')) badge.innerHTML += ' · <b>Manual Spread</b>';
 
     W.LUNEA_MANUAL_SPREAD_V1 = {
+      version:1.1,
       parseManualPositions,
+      startManualSpread,
       isRecallTonePairQuestion,
       mutateRecallComparison,
       recallAxes:[...recallAxes]
     };
-    console.info('🌙 LUNEA Manual Spread + Recall Comparison V1 loaded');
+    console.info('🌙 LUNEA Manual Spread + Recall Comparison V1.1 loaded · hydrate-only entry · no startSpread wrapper');
   }
 
-  function boot() {
-    setTimeout(installFinalWrappers, 0);
-  }
+  function boot() { installFinalFeatures(); }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot, {once:true});
-  } else {
-    boot();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
 })();
