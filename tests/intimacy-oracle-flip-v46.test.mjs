@@ -21,7 +21,7 @@ test('Reveal all staggers base and supplemental Oracle flips at the Tarot 110ms 
   assert.match(source,/ORACLE_FLIP_GAP=110/);
   assert.match(source,/seq\*ORACLE_FLIP_GAP/);
   const render=source.slice(source.indexOf('function renderOraclePanel'),source.indexOf('function performOracleDraw'));
-  assert.match(render,/data\.oracleKind/);
+  assert.match(render,/b\.dataset\.oracleKind/);
   assert.match(render,/revealOracleButton\(b,i,kind\)/);
   assert.match(render,/host\.querySelectorAll\('\.lio-card:not\(\.revealed\)'\)/);
 });
