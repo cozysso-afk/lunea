@@ -13,6 +13,13 @@ assert.match(reveal, /LUNEA_GENERAL_ORDER/, 'boot reveal must wait for final GEN
 assert.match(reveal, /data-lunea-universal-ai="1"/, 'boot reveal must wait for universal AI sector entries');
 assert.match(reveal, /performance\.now\(\)-start>2600/, 'boot reveal must retain a bounded fail-open timeout');
 
+assert.match(reveal, /LUNEA_AI_SPREAD_PREFLIGHT\?\.design/, 'startup readiness must include the AI preflight designer');
+assert.match(reveal, /__luneaUniversalV20Wrapped/, 'startup readiness must include the final draw wrapper');
+assert.match(reveal, /addEventListener\('click',guard,true\)/, 'draw startup guard must run in capture phase');
+assert.match(reveal, /event\.stopImmediatePropagation\(\)/, 'early draw clicks must not fall through to a half-installed handler');
+assert.match(reveal, /DRAW_GUARD_WAIT_MS=5000/, 'startup draw guard must have a bounded wait');
+assert.match(reveal, /if\(!btn\.disabled\)btn\.click\(\)/, 'an early draw click must be replayed after readiness or timeout');
+
 for (const asset of [
   'lunea-transit-range-v1.js',
   'lunea-fixed-spread-depth-v30.js',
