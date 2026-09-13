@@ -11,11 +11,14 @@ const document={readyState:'loading',documentElement:{dataset:{}},body:{classLis
 vm.runInNewContext(source,{window,document,console,Object,Array,String,Number,Boolean,RegExp,JSON,Promise,setTimeout});
 
 test('AI bridge detector and runtime loader contract',()=>{
-  assert.match(source,/const RELEASE = '34\.3'/);
+  assert.match(source,/const RELEASE = '34\.4'/);
   assert.match(source,/lunea-intimacy-oracle-v35\.js\?v=352/);
   assert.match(source,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
   assert.match(source,/__LUNEA_READING_ACTION_ORDER_V33__/);
   assert.match(source,/ensureOracleRuntime/);
+  assert.match(source,/function syncOracleRuntimeToCurrentReading\(\)/);
+  assert.match(source,/LUNEA_INTIMACY_ORACLE_UI_V36\?\.sync\?\.\(\)/);
+  assert.match(source,/\.then\(\(\) => \{ syncOracleRuntimeToCurrentReading\(\); \}\)/);
 });
 
 test('intimacy detector avoids exam-grade false positive',()=>{

@@ -38,7 +38,10 @@ class FakeButton {
 const button = new FakeButton();
 const label = {textContent:'질문 분석 & 맞춤 배열 설계'};
 const select = {querySelector(selector){ return selector === 'option[value="365"]' ? {} : null; }};
-const root = {classList:{remove(){}, add(){}}};
+const root = {
+  dataset:{luneaCoreSpreadEntries:'ready'},
+  classList:{remove(){}, add(){}}
+};
 const timers = [];
 let baseCalls = 0;
 let finalCalls = 0;
@@ -60,6 +63,7 @@ const document = {
   },
   querySelectorAll(selector) {
     if (selector === '[data-lunea-universal-ai="1"]') return [{},{},{},{}];
+    if (selector === '[data-manual-spread="1"]') return [{},{},{},{}];
     if (selector === '.reading-item') {
       return [
         {dataset:{title:'5 CARD · CORE FLOW'}},
