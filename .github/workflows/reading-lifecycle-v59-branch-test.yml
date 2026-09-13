@@ -35,5 +35,37 @@ jobs:
           node --check lunea-intimacy-oracle-ui-v36.js
           node --check lunea-boot-reveal-v29.js
           node --check lunea-cache-refresh-v1.js
+          node --check tests/reading-lifecycle-v59.e2e.mjs
       - name: Source invariant regression test
         run: node tests/reading-lifecycle-v59.test.mjs
+
+  mixed-sector-10-run-webkit:
+    needs: lifecycle-source-checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-http.log 2>&1 &
+          echo $! >/tmp/lunea-http.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-http.log
+          exit 1
+      - name: Run same-session 10-reading mixed-sector regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/reading-lifecycle-v59.e2e.mjs
+      - name: Show local server log
+        if: always()
+        run: cat /tmp/lunea-http.log || true
