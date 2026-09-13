@@ -47,6 +47,9 @@
   function loadThaiDateCenterV54() {
     loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'iOS Thai period date centering V54');
   }
+  function loadHorizontalTouchStability() {
+    loadBuildScopedScript('luneaHorizontalTouchStabilityV1Loader', './lunea-horizontal-touch-stability-v1.js', 'horizontal touch stability V1');
+  }
   function loadJournalHeaderFix() {
     loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix');
   }
@@ -114,6 +117,7 @@
     loadAstroOriginFailover();
     loadRuntimeStateV56();
     loadThaiDateCenterV54();
+    loadHorizontalTouchStability();
 
     loadJournalHeaderFix();
     loadSectorCardBacks();
