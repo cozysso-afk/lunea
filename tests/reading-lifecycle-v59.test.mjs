@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
+
+const lifecycle = read('lunea-reading-lifecycle-v59.js');
+const cache = read('lunea-cache-refresh-v1.js');
+const universal = read('lunea-universal-ai-opal-v20.js');
+const manualEverywhere = read('lunea-manual-everywhere-v1.js');
+
+// V59 must stabilize the existing startSpread function, never add another wrapper.
+assert.ok(!/W\.startSpread\s*=/.test(lifecycle), 'V59 must not replace window.startSpread');
+assert.ok(!/setInterval\s*\(/.test(lifecycle), 'V59 must not poll/re-wrap with setInterval');
+assert.match(lifecycle, /__luneaMobileV57Yield\s*=\s*true/);
+assert.match(lifecycle, /__luneaAiRepeatFlowV58\s*=\s*true/);
+assert.match(lifecycle, /__luneaReadingBoundaryV31\s*=\s*true/);
+assert.match(lifecycle, /__luneaV14Wrapped\s*=\s*true/);
+assert.match(lifecycle, /__luneaV27Wrapped\s*=\s*true/);
+
+// Core cabinets must receive deterministic AI + Manual rows before late feature hydration.
+for (const key of ['GENERAL','CAREER','LOVE','STOCK']) {
+  assert.match(lifecycle, new RegExp(`key:'${key}'`));
+}
+assert.match(lifecycle, /content\.insertBefore\(manual, content\.firstElementChild/);
+assert.match(lifecycle, /content\.insertBefore\(ai, manual\)/);
+assert.match(lifecycle, /dataset\.count\s*=\s*'0'/, 'AI placeholder must be recognized by V20');
+assert.match(lifecycle, /lunea-manual-anywhere-item/, 'Manual placeholder must be recognized by Manual Everywhere');
+
+// Existing feature modules must recognize the parser-time rows instead of duplicating them.
+assert.match(universal, /item\.dataset\.count\s*===\s*'0'/);
+assert.match(manualEverywhere, /content\.querySelector\('\.lunea-manual-anywhere-item'\)/);
+
+// Loader contract: V59 is parser-time, V58 wrapper is retired, V57 support remains.
+assert.match(cache, /loadReadingLifecycleV59/);
+assert.match(cache, /document\.write\(`/);
+assert.match(cache, /loadReadingLifecycleV59\(\);[\s\S]*DOMContentLoaded/);
+assert.ok(!/loadAiRepeatFlowV58\s*\(/.test(cache), 'V58 repeated-AI wrapper must not load');
+assert.match(cache, /loadMobileRuntimeFixesV57\(\)/, 'V57 non-startSpread support must remain loaded');
+
+console.log('reading-lifecycle-v59 source invariants: OK');
