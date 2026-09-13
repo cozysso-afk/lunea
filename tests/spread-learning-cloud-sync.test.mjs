@@ -11,7 +11,7 @@ vm.runInNewContext(source,{window,document,localStorage,console:{info(){},warn()
 
 const api=window.LUNEA_LEARNING_CLOUD_SYNC_V1;
 assert.ok(api,'cloud sync API should be exposed');
-assert.equal(api.version,1);
+assert.equal(api.version,2);
 assert.equal(api.max,1000);
 
 const local=[{question:'같은 상대 답장 시점',questionKey:'같은상대답장시점',positions:['지금','내일'],updatedAt:200,source:'manual'}];
