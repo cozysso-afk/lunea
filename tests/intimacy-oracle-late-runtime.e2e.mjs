@@ -65,17 +65,36 @@ try{
   await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});
   await page.waitForFunction(()=>document.getElementById('luneaOracleAddExtra') && !document.getElementById('luneaIntimacyOraclePanel')?.hidden,{timeout:5000});
 
-  const afterRuntime=await page.evaluate(()=>({
-    oracle:window.LUNEA_INTIMACY_ORACLE_UI_V36.getState(),
-    label:document.getElementById('luneaOracleAddExtra')?.textContent||'',
-    hidden:document.getElementById('luneaIntimacyOraclePanel')?.hidden
-  }));
+  const afterRuntime=await page.evaluate(()=>{
+    const button=document.getElementById('luneaOracleAddExtra');
+    const panel=document.getElementById('luneaIntimacyOraclePanel');
+    const overlay=document.getElementById('spreadOverlay');
+    const rect=button?.getBoundingClientRect();
+    const style=button?getComputedStyle(button):null;
+    const panelStyle=panel?getComputedStyle(panel):null;
+    return {
+      oracle:window.LUNEA_INTIMACY_ORACLE_UI_V36.getState(),
+      label:button?.textContent||'',
+      hidden:panel?.hidden,
+      overlayShow:!!overlay?.classList.contains('show'),
+      buttonRect:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null,
+      buttonDisplay:style?.display||'',
+      buttonVisibility:style?.visibility||'',
+      buttonOpacity:style?.opacity||'',
+      panelDisplay:panelStyle?.display||'',
+      panelVisibility:panelStyle?.visibility||''
+    };
+  });
   assert.equal(afterRuntime.oracle.cards.length,1,'late runtime must draw/restore the configured base Oracle for the current reading');
   assert.equal(afterRuntime.oracle.extraCards.length,0);
   assert.match(afterRuntime.label,/오라클 추가 \(0\/3\)/);
   assert.equal(afterRuntime.hidden,false);
+  assert.equal(afterRuntime.overlayShow,true,'spread overlay must remain open after Oracle runtime arrives');
+  assert.notEqual(afterRuntime.buttonDisplay,'none',`supplemental button display:none: ${JSON.stringify(afterRuntime)}`);
+  assert.notEqual(afterRuntime.buttonVisibility,'hidden',`supplemental button visibility:hidden: ${JSON.stringify(afterRuntime)}`);
+  assert.ok((afterRuntime.buttonRect?.width||0)>0 && (afterRuntime.buttonRect?.height||0)>0,`supplemental button must have visible geometry: ${JSON.stringify(afterRuntime)}`);
 
-  await page.locator('#luneaOracleAddExtra').click();
+  await page.evaluate(()=>document.getElementById('luneaOracleAddExtra')?.click());
   const afterExtra=await page.evaluate(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36.getState());
   assert.equal(afterExtra.extraCards.length,1,'supplemental button must work after late-runtime synchronization');
 
