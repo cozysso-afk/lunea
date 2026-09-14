@@ -30,11 +30,13 @@
   const timingState = {
     mode: null,            // standalone | support
     question: '',
+    repeatContext: null,   // DAILY uses a local calendar day, not a rolling 24h template
     primary: null,
     refine: null,
     aiText: '',
     analysis: null
   };
+  let timingRenderToken = 0;
 
   const byId = id => document.getElementById(id);
 
@@ -77,10 +79,38 @@
     try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(0, 80))); } catch {}
   }
 
+  function localDay(at = Date.now()) {
+    const d = new Date(at);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+
+  function repeatContextForModal(mode, q) {
+    // Only the real support reading can establish DAILY context. Standalone
+    // must not inherit the category of a reading left open behind its modal.
+    try {
+      if (mode === 'support' && state?.category === 'DAILY' &&
+          questionSignature(state.question) === questionSignature(q)) {
+        return {dailyDay: localDay()};
+      }
+    } catch {}
+    return null;
+  }
+
   function recentSameQuestion(q) {
     const sig = questionSignature(q);
     const now = Date.now();
-    return getHistory().find(x => x.sig === sig && now - x.at < REPEAT_WINDOW_MS) || null;
+    const dailyDay = timingState.repeatContext?.dailyDay;
+    return getHistory().find(x => {
+      if (x.sig !== sig || now - x.at >= REPEAT_WINDOW_MS) return false;
+      if (dailyDay) {
+        // A legacy row proves text and draw time only, never a category. It
+        // can protect the same local day, but cannot claim another DAILY day.
+        return (x.context?.dailyDay || localDay(x.at)) === dailyDay;
+      }
+      // Explicit DAILY entries describe that day's recurring reading only.
+      // Ordinary questions still match across spread/category/reading IDs.
+      return !x.context?.dailyDay;
+    }) || null;
   }
 
   function daysToEndOfWeek(now = new Date()) {
@@ -307,7 +337,47 @@
   }
 
   function cardImg(c) {
+    const resolver = window.LUNEA_RECOVERY_UI_V65?.artworkForCard;
+    if (typeof resolver === 'function') {
+      try {
+        const authoritative = resolver(c);
+        if (authoritative) return authoritative;
+      } catch {}
+    }
     return `./${encodeURIComponent(c.filename)}`;
+  }
+
+  function waitForTimingImage(img, expectedSrc) {
+    const loaded = () => img.src === expectedSrc && img.complete && img.naturalWidth > 0;
+    const decoded = async () => {
+      if (!loaded()) return false;
+      if (typeof img.decode === 'function') {
+        try { await img.decode(); }
+        catch { return loaded(); }
+      }
+      return loaded();
+    };
+    if (loaded()) return decoded();
+    return new Promise(resolve => {
+      const cleanup = () => {
+        img.removeEventListener('load', onLoad);
+        img.removeEventListener('error', onError);
+      };
+      const onLoad = () => {
+        cleanup();
+        decoded().then(resolve);
+      };
+      const onError = () => {
+        cleanup();
+        resolve(false);
+      };
+      img.addEventListener('load', onLoad, {once:true});
+      img.addEventListener('error', onError, {once:true});
+      if (loaded()) {
+        cleanup();
+        decoded().then(resolve);
+      }
+    });
   }
 
   function addStyles() {
@@ -318,6 +388,23 @@
       .lunea-timing-category{border-color:rgba(255,210,125,.34)!important;background:
         linear-gradient(145deg,rgba(255,245,228,.10),rgba(189,164,248,.10)),var(--panel)!important}
       .lunea-timing-category .cat-icon{background:rgba(255,210,125,.12)!important;border-color:rgba(255,210,125,.28)!important;color:var(--gold)!important}
+      body.modal-open:has(#timingOverlay.show){touch-action:pan-y}
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show{touch-action:pan-y}
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-modal{
+        display:flex!important;flex-direction:column!important;
+        overflow:hidden!important;touch-action:pan-y!important;
+      }
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-modal-header{
+        flex:0 0 auto;min-height:0;
+      }
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-scroll-body{
+        flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;
+        -webkit-overflow-scrolling:touch;touch-action:pan-y;
+        overscroll-behavior-y:contain!important;
+      }
+      body.modal-open:has(#timingOverlay.show) #timingOverlay.show .timing-modal>#timingClose{
+        position:absolute!important;top:11px;right:13px;z-index:4;
+      }
       #timingOverlay{background:rgba(8,6,14,.88);backdrop-filter:blur(16px)}
       #timingOverlay .timing-modal{
         color:#3a3042;border-color:rgba(208,171,103,.45);
@@ -410,31 +497,35 @@
     ov.innerHTML = `
       <div class="modal timing-modal">
         <button class="close" id="timingClose">×</button>
-        <div class="sub">LUNEA · TIME SIGNAL</div>
-        <h3 class="modal-h">Timing Oracle</h3>
-        <div class="field" id="timingQuestionField">
-          <label>시기를 묻는 질문</label>
-          <textarea id="timingQuestion" placeholder="예: 그 사람에게 연락이 온다면 언제쯤일까?"></textarea>
+        <div class="timing-modal-header">
+          <div class="sub">LUNEA · TIME SIGNAL</div>
+          <h3 class="modal-h">Timing Oracle</h3>
         </div>
-        <p class="timing-help" id="timingHelp">질문에 기간을 직접 적으면 그 범위를 우선해 후보를 좁혀. 기본은 한 질문에 한 장이야.</p>
-        <button class="primary full-btn" id="timingDraw">⏳ 시기 카드 한 장 뽑기</button>
-        <div class="timing-stage">
-          <div class="timing-flip" id="timingFlip">
-            <div class="timing-inner" id="timingInner">
-              <div class="timing-face timing-back"></div>
-              <div class="timing-face timing-front">
-                <img id="timingImage" alt="">
-                <div class="timing-card-label"><span id="timingLabelEn"></span><b id="timingLabelKo"></b></div>
+        <div class="timing-scroll-body" id="timingScrollBody">
+          <div class="field" id="timingQuestionField">
+            <label>시기를 묻는 질문</label>
+            <textarea id="timingQuestion" placeholder="예: 그 사람에게 연락이 온다면 언제쯤일까?"></textarea>
+          </div>
+          <p class="timing-help" id="timingHelp">질문에 기간을 직접 적으면 그 범위를 우선해 후보를 좁혀. 기본은 한 질문에 한 장이야.</p>
+          <button class="primary full-btn" id="timingDraw">⏳ 시기 카드 한 장 뽑기</button>
+          <div class="timing-stage">
+            <div class="timing-flip" id="timingFlip">
+              <div class="timing-inner" id="timingInner">
+                <div class="timing-face timing-back"></div>
+                <div class="timing-face timing-front">
+                  <img id="timingImage" alt="">
+                  <div class="timing-card-label"><span id="timingLabelEn"></span><b id="timingLabelKo"></b></div>
+                </div>
               </div>
             </div>
+            <div class="timing-result" id="timingResult"></div>
+            <div class="timing-actions" id="timingActions">
+              <button class="mini" id="timingRefine">✦ 시기 더 좁히기</button>
+              <button class="mini" id="timingAI">🔮 AI 시기 해석</button>
+              <button class="mini" id="timingSave">💾 기록</button>
+            </div>
+            <div class="timing-ai" id="timingAIText"></div>
           </div>
-          <div class="timing-result" id="timingResult"></div>
-          <div class="timing-actions" id="timingActions">
-            <button class="mini" id="timingRefine">✦ 시기 더 좁히기</button>
-            <button class="mini" id="timingAI">🔮 AI 시기 해석</button>
-            <button class="mini" id="timingSave">💾 기록</button>
-          </div>
-          <div class="timing-ai" id="timingAIText"></div>
         </div>
       </div>
     `;
@@ -446,12 +537,16 @@
     byId('timingRefine').onclick = performRefineDraw;
     byId('timingAI').onclick = standaloneAIRead;
     byId('timingSave').onclick = saveStandaloneTiming;
-    byId('timingFlip').onclick = () => byId('timingInner')?.classList.add('flipped');
+    byId('timingFlip').onclick = () => {
+      const flip = byId('timingFlip');
+      if (flip?.dataset.luneaTimingFaceReady === '1') byId('timingInner')?.classList.add('flipped');
+    };
   }
 
   function openTimingModal(mode, question) {
     timingState.mode = mode;
     timingState.question = question || '';
+    timingState.repeatContext = repeatContextForModal(mode, timingState.question);
     timingState.primary = null;
     timingState.refine = null;
     timingState.aiText = '';
@@ -464,6 +559,8 @@
       : `질문에 기간을 직접 적으면 그 범위를 우선해 후보를 좁혀. 기본은 한 질문에 한 장이야.`;
 
     resetTimingUI();
+    const scrollBody = byId('timingScrollBody');
+    if (scrollBody) scrollBody.scrollTop = 0;
 
     const ov = byId('timingOverlay');
     ov.classList.add('show');
@@ -479,6 +576,7 @@
   }
 
   function resetTimingUI() {
+    timingRenderToken += 1;
     byId('timingFlip').classList.remove('show');
     byId('timingInner').classList.remove('flipped');
     byId('timingResult').classList.remove('show');
@@ -514,7 +612,7 @@
     timingState.aiText = '';
     timingState.analysis = analysis;
 
-    saveHistory({sig:questionSignature(q),at:Date.now(),cardId:card.id,label:card.label_ko});
+    saveHistory({sig:questionSignature(q),at:Date.now(),cardId:card.id,label:card.label_ko,context:timingState.repeatContext});
 
     renderTimingCard(card, false);
     if (timingState.mode === 'support') renderSupportInline();
@@ -522,27 +620,47 @@
 
   function renderTimingCard(card, isRefine) {
     const flip = byId('timingFlip');
-    flip.classList.add('show');
-    byId('timingInner').classList.remove('flipped');
+    const inner = byId('timingInner');
+    const image = byId('timingImage');
+    const result = byId('timingResult');
+    const actions = byId('timingActions');
+    const renderToken = ++timingRenderToken;
+    inner.style.transition = 'none';
+    inner.classList.remove('flipped');
+    void inner.offsetWidth;
+    inner.style.removeProperty('transition');
+    flip.dataset.luneaTimingFaceReady = '0';
+    flip.classList.remove('show');
+    result.classList.remove('show');
+    actions.classList.remove('show');
+    byId('timingAIText').classList.remove('show');
 
-    byId('timingImage').src = cardImg(card);
-    byId('timingImage').alt = card.label_ko;
+    const finalSrc = cardImg(card);
+    const expectedSrc = new URL(finalSrc, document.baseURI).href;
+    image.src = finalSrc;
+    image.alt = card.label_ko;
     byId('timingLabelKo').textContent = card.label_ko;
     byId('timingLabelEn').textContent = card.label_en;
 
     const extra = isRefine ? `<br><b style="color:#8a6cab">정밀화 카드</b>` : '';
-    byId('timingResult').innerHTML =
+    result.innerHTML =
       `<div class="group">${groupLabel(card)}</div>` +
       `<h4>${card.label_ko} · ${card.label_en}</h4>` +
       `<p>${card.meaning}${extra}</p>`;
-    byId('timingResult').classList.add('show');
-    byId('timingActions').classList.add('show');
-    byId('timingAIText').classList.remove('show');
 
     const ref = refineCandidates(timingState.primary, timingState.question);
     byId('timingRefine').style.display = (!isRefine && ref.length) ? '' : 'none';
 
-    setTimeout(() => byId('timingInner').classList.add('flipped'), 120);
+    waitForTimingImage(image, expectedSrc).then(ready => {
+      if (!ready || renderToken !== timingRenderToken || image.src !== expectedSrc) return;
+      // Apply the final face before exposing the stage so no card back or empty
+      // front can become a visible intermediate owner.
+      flip.dataset.luneaTimingFaceReady = '1';
+      inner.classList.add('flipped');
+      flip.classList.add('show');
+      result.classList.add('show');
+      actions.classList.add('show');
+    });
   }
 
   function performRefineDraw() {
@@ -583,11 +701,13 @@
       </div>`;
     const btn = byId('timingSupportBtn');
     if (btn) btn.textContent = `⏳ ${timingState.primary.label_ko}`;
+    notifyAttachmentChanged();
   }
 
   function clearSupportTiming() {
     timingState.mode = null;
     timingState.question = '';
+    timingState.repeatContext = null;
     timingState.primary = null;
     timingState.refine = null;
     timingState.aiText = '';
@@ -732,6 +852,24 @@ ${timingState.refine ? `정밀화: ${timingState.refine.label_ko} (${timingState
     };
   }
 
+  function attachmentSnapshot() {
+    let question = '';
+    try { question = String(state?.question || '').trim(); } catch {}
+    if (!timingState.primary || timingState.mode !== 'support' || timingState.question !== question) return null;
+    return {version:1, question, result:timingArchiveObject()};
+  }
+
+  function registerAttachment() {
+    const adapter = {group:'timing', draft:false, capture:attachmentSnapshot, toArchive:snapshot => snapshot?.result || null, clear:clearSupportTiming};
+    const registry = window.LUNEA_READING_ATTACHMENTS_V1;
+    if (registry?.register) registry.register('timing', adapter);
+    else (window.__LUNEA_READING_ATTACHMENT_QUEUE_V1 ||= []).push({name:'timing', adapter});
+  }
+
+  function notifyAttachmentChanged() {
+    window.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('timing');
+  }
+
   function installArchiveIntegration() {
     // Existing saveReading remains the source of truth. After it saves, enrich only the newest item.
     try {
@@ -741,6 +879,7 @@ ${timingState.refine ? `정밀화: ${timingState.refine.label_ko} (${timingState
         const old = saveBtn.onclick;
         saveBtn.onclick = function(e) {
           if (old) old.call(this,e);
+          if (window.LUNEA_READING_ATTACHMENTS_V1) return;
           let q = '';
           try { q = state?.question || ''; } catch {}
           if (!timingState.primary || timingState.mode !== 'support' || timingState.question !== q) return;
@@ -811,6 +950,7 @@ ${item.timing.refine.meaning}`;
     installStartSpreadReset();
     installPromptIntegration();
     installArchiveIntegration();
+    registerAttachment();
     console.info('✦ LUNEA TIMING ORACLE V1 loaded', {cards:TIMING_CARDS.length});
   }
 

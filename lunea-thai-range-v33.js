@@ -28,6 +28,8 @@
   const tarotState = {
     question: '',
     topic: 'general',
+    start: '',
+    end: '',
     result: null,
     running: false,
     renderSignature: '',
@@ -136,9 +138,10 @@
 
       .thai-v33-range-panel{margin-top:13px;padding:12px;border-radius:15px;border:1px solid rgba(213,190,126,.14);background:rgba(255,255,255,.025)}
       .thai-v33-range-kicker{color:#c5ae72;font:700 8px 'Cinzel',serif;letter-spacing:1.2px;margin-bottom:8px}
-      .thai-v33-quick{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
-      .thai-v33-chip{min-height:34px;border-radius:10px;border:1px solid rgba(222,210,178,.12);background:rgba(255,255,255,.035);color:#aaa6b1;font-size:9.4px;font-weight:700}
+      .thai-v33-quick{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;width:100%;box-sizing:border-box;margin-bottom:8px}
+      .thai-v33-chip{width:100%;min-width:0;min-height:40px;box-sizing:border-box;white-space:nowrap;border-radius:10px;border:1px solid rgba(222,210,178,.12);background:rgba(255,255,255,.035);color:#aaa6b1;font-size:9.4px;font-weight:700}
       .thai-v33-chip.active{color:#f1e7c7;border-color:rgba(214,184,108,.34);background:rgba(200,163,80,.10)}
+      .thai-v33-range-help{margin:0 1px 8px;color:#888591;font-size:8.7px;line-height:1.4;text-align:center}
       .thai-v33-dates{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px}
       .thai-v33-field{display:block;color:#8f8d99;font-size:8.3px;line-height:1.35}
       .thai-v33-field input{margin-top:4px;width:100%;box-sizing:border-box;min-height:34px;padding:6px 7px;border-radius:9px;border:1px solid rgba(220,215,199,.12);background:rgba(7,9,17,.7);color:#ded9e4;font-size:10px}
@@ -161,6 +164,12 @@
     document.head.appendChild(style);
   }
 
+  function syncDateDisplay(...inputs) {
+    const display = W.LUNEA_THAI_DATE_DISPLAY_V57;
+    if (typeof display?.sync === 'function') inputs.forEach(input => display.sync(input));
+    else display?.syncAll?.();
+  }
+
   function setQuickRange(startInput, endInput, days, root) {
     const start = startInput.value || koreaDateString();
     startInput.value = start;
@@ -168,6 +177,7 @@
     root?.querySelectorAll('.thai-v33-chip').forEach(btn => {
       btn.classList.toggle('active', Number(btn.dataset.days) === Number(days));
     });
+    syncDateDisplay(startInput, endInput);
   }
 
   function validateRange(startInput, endInput) {
@@ -241,7 +251,10 @@
         <button type="button" class="thai-v33-chip" data-days="7">7일</button>
         <button type="button" class="thai-v33-chip active" data-days="14">14일</button>
         <button type="button" class="thai-v33-chip" data-days="30">30일</button>
+        <button type="button" class="thai-v33-chip" data-days="60">60일</button>
+        <button type="button" class="thai-v33-chip" data-days="90">90일</button>
       </div>
+      <p class="thai-v33-range-help">직접 날짜 선택 가능 · 최대 90일</p>
       <div class="thai-v33-dates">
         <label class="thai-v33-field">시작일<input type="date" id="luneaThaiStandaloneRangeStart"></label>
         <label class="thai-v33-field">종료일<input type="date" id="luneaThaiStandaloneRangeEnd"></label>
@@ -337,7 +350,10 @@
           <button type="button" class="thai-v33-chip" data-days="7">7일</button>
           <button type="button" class="thai-v33-chip active" data-days="14">14일</button>
           <button type="button" class="thai-v33-chip" data-days="30">30일</button>
+          <button type="button" class="thai-v33-chip" data-days="60">60일</button>
+          <button type="button" class="thai-v33-chip" data-days="90">90일</button>
         </div>
+        <p class="thai-v33-range-help">직접 날짜 선택 가능 · 최대 90일</p>
         <div class="thai-v33-dates">
           <label class="thai-v33-field">시작일<input type="date" id="luneaThaiTarotRangeStart"></label>
           <label class="thai-v33-field">종료일<input type="date" id="luneaThaiTarotRangeEnd"></label>
@@ -369,11 +385,17 @@
   function openTarotRange() {
     const question = currentQuestion();
     if (!question) return alert('먼저 타로 질문을 입력하고 카드를 뽑아줘.');
-    if (!safeJSON(NATAL_KEY)) return alert('먼저 Natal(네이탈·출생차트) 자동 계산을 완료해줘.');
-    if (!apiUrl()) return alert('Astro Core API 주소를 확인해줘.');
     ensureTarotQuestionScope();
+    const hasSavedResult = tarotState.question === question && !!tarotState.result;
+    if (!hasSavedResult && !safeJSON(NATAL_KEY)) return alert('먼저 Natal(네이탈·출생차트) 자동 계산을 완료해줘.');
+    if (!hasSavedResult && !apiUrl()) return alert('Astro Core API 주소를 확인해줘.');
     injectTarotOverlay();
     const overlay = $(TAROT_OVERLAY_ID);
+    if (tarotState.start && tarotState.end) {
+      $('luneaThaiTarotRangeStart').value = tarotState.start;
+      $('luneaThaiTarotRangeEnd').value = tarotState.end;
+      syncDateDisplay($('luneaThaiTarotRangeStart'), $('luneaThaiTarotRangeEnd'));
+    }
     overlay.classList.add('show');
     overlay.setAttribute('aria-hidden','false');
     document.body.classList.add('modal-open');
@@ -413,10 +435,13 @@
       }
       tarotState.question = question;
       tarotState.topic = topic;
+      tarotState.start = range.start;
+      tarotState.end = range.end;
       tarotState.result = data;
       tarotState.renderSignature = '';
       renderCalendar(data, $('luneaThaiTarotRangeResult'));
       renderTarotInline(true);
+      notifyAttachmentChanged();
       status.textContent = `${data.start_date}부터 ${data.days}일 · AI 해석에도 이 질문의 기간 Taksa를 보조 근거로 연결해.`;
     } catch (error) {
       status.textContent = '기간 계산 실패: ' + (error?.message || error);
@@ -458,6 +483,8 @@
   function clearTarotResult() {
     tarotState.question = '';
     tarotState.topic = 'general';
+    tarotState.start = '';
+    tarotState.end = '';
     tarotState.result = null;
     tarotState.running = false;
     tarotState.renderSignature = '';
@@ -523,6 +550,90 @@ ${rows.map(row => `  · ${row}`).join('\n')}
 5. 정확한 사건 시기는 실제 Transit/Return/Timing Oracle 근거가 있을 때 그 계산을 우선한다.`;
   }
 
+  function periodRow(row) {
+    if (!row) return null;
+    return {
+      date:row.date,
+      weekday_label:row.weekday_label,
+      daytime:row.daytime ? {
+        ruler:row.daytime.ruler || null,
+        position:row.daytime.position,
+        position_ko:row.daytime.position_ko,
+        tone:row.daytime.tone || null,
+        focus_match:!!row.daytime.focus_match,
+        meaning_ko:row.daytime.meaning_ko
+      } : null,
+      night_variant:row.night_variant ? {
+        ruler:row.night_variant.ruler || null,
+        position:row.night_variant.position,
+        position_ko:row.night_variant.position_ko,
+        tone:row.night_variant.tone || null,
+        focus_match:!!row.night_variant.focus_match,
+        meaning_ko:row.night_variant.meaning_ko
+      } : null
+    };
+  }
+
+  function archiveObject() {
+    const data = tarotState.result;
+    if (!data) return null;
+    const summary = data.summary || {};
+    return {
+      schema:data.schema,
+      start_date:data.start_date,
+      end_date:data.end_date,
+      days:Number(data.days || 0),
+      summary:{
+        supportive_segments:Number(summary.supportive_segments || 0),
+        neutral_segments:Number(summary.neutral_segments || 0),
+        caution_segments:Number(summary.caution_segments || 0),
+        focus_match_segments:Number(summary.focus_match_segments || 0),
+        supportive_dates:(summary.supportive_dates || []).slice(0,90),
+        caution_dates:(summary.caution_dates || []).slice(0,90),
+        focus_match_dates:(summary.focus_match_dates || []).slice(0,90)
+      },
+      calendar:(data.calendar || []).slice(0,90).map(periodRow)
+    };
+  }
+
+  function attachmentSnapshot() {
+    const question = currentQuestion();
+    if (!tarotState.result || tarotState.question !== question) return null;
+    return {version:1,question,topic:tarotState.topic,start:tarotState.start || tarotState.result.start_date || '',end:tarotState.end || tarotState.result.end_date || '',result:archiveObject()};
+  }
+
+  function restoreAttachment(snapshot) {
+    const question = currentQuestion();
+    if (!snapshot || String(snapshot.question || '').trim() !== question || !snapshot.result?.calendar) return false;
+    tarotState.question = question;
+    tarotState.topic = snapshot.topic || 'general';
+    tarotState.start = String(snapshot.start || snapshot.result.start_date || '');
+    tarotState.end = String(snapshot.end || snapshot.result.end_date || '');
+    tarotState.result = snapshot.result;
+    tarotState.running = false;
+    tarotState.renderSignature = '';
+    injectTarotOverlay();
+    const start = $('luneaThaiTarotRangeStart');
+    const end = $('luneaThaiTarotRangeEnd');
+    if (start) start.value = tarotState.start;
+    if (end) end.value = tarotState.end;
+    syncDateDisplay(start, end);
+    renderCalendar(tarotState.result, $('luneaThaiTarotRangeResult'));
+    renderTarotInline(true);
+    return true;
+  }
+
+  function registerAttachment() {
+    const adapter = {group:'finish', capture:attachmentSnapshot, restore:restoreAttachment, toArchive:snapshot => snapshot?.result || null, clear:clearTarotResult};
+    const registry = W.LUNEA_READING_ATTACHMENTS_V1;
+    if (registry?.register) registry.register('thaiTaksaRange', adapter);
+    else (W.__LUNEA_READING_ATTACHMENT_QUEUE_V1 ||= []).push({name:'thaiTaksaRange', adapter});
+  }
+
+  function notifyAttachmentChanged() {
+    W.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('thaiTaksaRange');
+  }
+
   function installPromptBridge() {
     if (W.__LUNEA_THAI_RANGE_PROMPT_WRAPPED_V33__) return true;
     const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
@@ -545,6 +656,7 @@ ${rows.map(row => `  · ${row}`).join('\n')}
     injectTarotOverlay();
     injectStandaloneControls();
     installPromptBridge();
+    registerAttachment();
 
     let tries = 0;
     const timer = setInterval(() => {
@@ -575,6 +687,10 @@ ${rows.map(row => `  · ${row}`).join('\n')}
 
   W.LUNEA_THAI_RANGE_V33 = {
     version:'33.0',
+    maxDays:MAX_DAYS,
+    setQuickRange,
+    validateRange,
+    inclusiveDays,
     openTarot:openTarotRange,
     runTarot:runTarotRange,
     runStandalone:runStandaloneRange,
