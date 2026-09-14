@@ -79,6 +79,47 @@ jobs:
           p.write_text(s,encoding='utf-8')
           print('Aligned lifecycle E2E BUILD to',build)
           PY
+      - name: Instrument draw-button visibility diagnostics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tests/reading-lifecycle-v59.e2e.mjs')
+          s=p.read_text(encoding='utf-8')
+          needle="    await page.locator('#drawBtn').click();"
+          replacement=r'''    try {
+              await page.locator('#drawBtn').click();
+            } catch (clickError) {
+              const diagnostic = await page.evaluate(() => {
+                const draw=document.getElementById('drawBtn');
+                const sheet=document.getElementById('sheet');
+                const panel=document.getElementById('luneaManualPanel');
+                const r=draw?.getBoundingClientRect?.();
+                const sr=sheet?.getBoundingClientRect?.();
+                const pr=panel?.getBoundingClientRect?.();
+                const cs=draw ? getComputedStyle(draw) : null;
+                const scs=sheet ? getComputedStyle(sheet) : null;
+                const cx=r ? r.left+r.width/2 : -1;
+                const cy=r ? r.top+r.height/2 : -1;
+                const top=(cx>=0 && cy>=0 && cx<innerWidth && cy<innerHeight) ? document.elementFromPoint(cx,cy) : null;
+                return {
+                  draw:{rect:r?{x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,bottom:r.bottom}:null,disabled:!!draw?.disabled,display:cs?.display,visibility:cs?.visibility,opacity:cs?.opacity,pointerEvents:cs?.pointerEvents,offsetParent:draw?.offsetParent?.id||draw?.offsetParent?.className||null},
+                  sheet:{rect:sr?{x:sr.x,y:sr.y,width:sr.width,height:sr.height,top:sr.top,bottom:sr.bottom}:null,scrollTop:sheet?.scrollTop,scrollHeight:sheet?.scrollHeight,clientHeight:sheet?.clientHeight,overflowY:scs?.overflowY,className:sheet?.className},
+                  panel:{rect:pr?{x:pr.x,y:pr.y,width:pr.width,height:pr.height,top:pr.top,bottom:pr.bottom}:null,className:panel?.className},
+                  viewport:{innerWidth,innerHeight,visualHeight:visualViewport?.height||null,visualOffsetTop:visualViewport?.offsetTop||null},
+                  topElement:top?{id:top.id,className:top.className,tag:top.tagName}:null,
+                  active:{id:document.activeElement?.id||null,tag:document.activeElement?.tagName||null},
+                  bodyClass:document.body.className,
+                  htmlClass:document.documentElement.className
+                };
+              });
+              console.error('DRAW_CLICK_DIAGNOSTIC', JSON.stringify({run:i+1,mode:run.mode,category:run.category,diagnostic}, null, 2));
+              throw clickError;
+            }'''
+          if needle not in s:
+              raise SystemExit('draw click needle not found')
+          s=s.replace(needle,replacement,1)
+          p.write_text(s,encoding='utf-8')
+          PY
       - name: Start branch-local LUNEA server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-recovery-audit.log 2>&1 &
