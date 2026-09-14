@@ -14,8 +14,9 @@ const context=await browser.newContext({
 const page=await context.newPage();
 page.setDefaultTimeout(20000);
 const pageErrors=[];
+const dialogs=[];
 page.on('pageerror',e=>pageErrors.push(String(e?.stack||e)));
-page.on('dialog',async d=>d.accept());
+page.on('dialog',async d=>{dialogs.push(`${d.type()}: ${d.message()}`);await d.accept()});
 
 let releaseOracleRuntime=()=>{};
 const oracleGate=new Promise(resolve=>{releaseOracleRuntime=resolve;});
@@ -105,7 +106,25 @@ try{
     state.question='E2E stale state before restore';
     window.LUNEA_READING_DRAFT_V1.restoreDraft();
   },draftSeed);
-  await page.waitForFunction(()=>document.getElementById('spreadOverlay')?.classList.contains('show'));
+  await page.waitForTimeout(500);
+  const restoreDiag=await page.evaluate(()=>{
+    const overlay=document.getElementById('spreadOverlay');
+    const d=JSON.parse(localStorage.getItem('LUNEA_LAST_READING_DRAFT_V1')||'null');
+    return {
+      overlayShow:!!overlay?.classList.contains('show'),
+      overlayClass:overlay?.className||'',
+      category:String(state?.category||''),
+      question:String(state?.question||''),
+      drawn:Array.isArray(state?.drawn)?state.drawn.length:-1,
+      savedDrawn:Array.isArray(d?.drawn)?d.drawn.length:-1,
+      savedOracle:d?.intimacyOracle||null,
+      restoringOracle:window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__===true,
+      draftApi:!!window.LUNEA_READING_DRAFT_V1?.restoreDraft,
+      oracleReady:!!window.LUNEA_INTIMACY_ORACLE_UI_V36
+    };
+  });
+  console.log('RESTORE_DIAG',JSON.stringify({restoreDiag,dialogs,pageErrors},null,2));
+  assert.equal(restoreDiag.overlayShow,true,`draft restore must reopen spread overlay: ${JSON.stringify({restoreDiag,dialogs,pageErrors})}`);
   await page.waitForTimeout(300);
 
   const beforeRelease=await page.evaluate(()=>{
