@@ -46,16 +46,27 @@ assert.match(rangeSource, /수요일 밤 Rahu 분리/);
 assert.match(rangeSource, /tarotState\.result && !\$\(TAROT_INLINE_ID\)\) renderTarotInline\(\)/);
 assert.match(rangeSource, /tarotState\.renderSignature === signature/);
 
-// Stable reading action order requested for the 3-column mobile grid.
+// Approved final three-column action order.
 const expectedOrder = [
-  'flipAll','aiRead','saveReading',
-  'retry','extraCard','timingSupportBtn',
-  'astroTransitBtn','luneaThaiTarotBridgeBtn','luneaThaiTarotRangeBtn',
-  'astroReturnBtn','astroHoraryBtn'
+  'flipAll',
+  'extraCard',
+  'saveReading',
+  'retry',
+  'timingSupportBtn',
+  'luneaMessageOracleSupportBtn',
+  'astroTransitBtn',
+  'astroReturnBtn',
+  'astroHoraryBtn',
+  'thaiTaksaBtn',
+  'luneaThaiTarotRangeBtn',
+  'aiRead',
+  'luneaTopCopyPrompt',
 ];
-for (let i = 0; i < expectedOrder.length - 1; i += 1) {
-  assert.ok(orderSource.indexOf(`'${expectedOrder[i]}'`) < orderSource.indexOf(`'${expectedOrder[i+1]}'`), `action order regressed around ${expectedOrder[i]}`);
-}
+const orderBlock = orderSource.match(/const ORDER = \[([\s\S]*?)\];/);
+assert.ok(orderBlock, 'ORDER contract missing');
+const actualOrder = [...orderBlock[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+assert.deepEqual(actualOrder, expectedOrder);
+assert.match(orderSource, /rank\.set\('luneaThaiTarotBridgeBtn',\s*rank\.get\('thaiTaksaBtn'\)\)/);
 assert.match(orderSource, /Unknown\/future buttons are preserved/);
 assert.match(orderSource, /const desired = \[\.\.\.known\.map\(x => x\.node\), \.\.\.unknown\.map\(x => x\.node\)\]/);
 assert.match(orderSource, /if \(already\) return true/);
@@ -100,4 +111,4 @@ for (const asset of [
   assert.match(workflow, new RegExp(asset.replaceAll('.', '\\.')));
 }
 
-console.log('Thai range V33 + reading action order V33.5 regression tests: PASS');
+console.log('Thai range V33 + approved reading action order V33.5 regression tests: PASS');
