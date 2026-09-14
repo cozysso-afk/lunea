@@ -25,6 +25,11 @@ test('INTIMACY becomes a real Home Portal tile with its own artwork', () => {
   assert.match(source, /:not\(\.lunea-thai-home-tile\)/);
 });
 
+test('opened INTIMACY keeps one visible header: Home tile plus source content only', () => {
+  assert.match(source, /lunea-intimacy-category\.lunea-v8-source-category\.lunea-v8-source-active > \.category-header\{\s*display:none!important;/);
+  assert.match(source, /lunea-intimacy-category\.lunea-v8-source-category\.lunea-v8-source-active > \.category-content\{\s*padding-top:5px!important;/);
+});
+
 test('opened INTIMACY uses LOVE-like divider rows instead of boxed cards', () => {
   assert.match(source, /border-top:1px solid rgba\(255,255,255,\.065\)!important/);
   assert.match(source, /border-radius:0!important/);
