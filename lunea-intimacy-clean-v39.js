@@ -102,6 +102,15 @@
       .lunea-intimacy-category .toggle{color:var(--dim)!important;text-shadow:none!important}
       .lunea-intimacy-category.active .toggle{color:var(--moon)!important;transform:rotate(45deg)!important}
 
+      /* Home tile is the only visible INTIMACY header. Keep the source category
+         for its real handlers/content, but never render a second INTIMACY header. */
+      html.lunea-home-portal-v8 .lunea-intimacy-category.lunea-v8-source-category.lunea-v8-source-active > .category-header{
+        display:none!important;
+      }
+      html.lunea-home-portal-v8 .lunea-intimacy-category.lunea-v8-source-category.lunea-v8-source-active > .category-content{
+        padding-top:5px!important;
+      }
+
       /* Same information rhythm as LOVE: divider rows, not cards inside cards. */
       .lunea-intimacy-category .category-content{
         padding:0 17px 9px!important;gap:0!important
@@ -301,7 +310,7 @@
   if (!alreadyBound) {
     W.addEventListener('pageshow', () => setTimeout(apply, 40));
     document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) setTimeout(apply, 40);
+      if (!document.hidden) setTimeout(apply, 40));
     });
   }
 
