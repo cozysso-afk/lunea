@@ -1,28 +1,41 @@
-name: Intimacy Oracle WebKit fresh-boot crash diagnostic
+name: Deploy validated INTIMACY Oracle candidate
 
 on:
   push:
     branches:
       - test/intimacy-oracle-webkit-ad
-  workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  webkit-crash-diag:
+  deploy-main:
     runs-on: ubuntu-latest
-    timeout-minutes: 18
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Apply candidate patch in runner only
-        run: python3 tests/apply-intimacy-oracle-candidate.py
+      - name: Preserve validated candidate helpers
+        run: |
+          cp tests/apply-intimacy-oracle-candidate.py /tmp/apply-intimacy-oracle-candidate.py
+          cp tests/intimacy-oracle-candidate-contract.mjs /tmp/intimacy-oracle-candidate-contract.mjs
 
-      - name: Apply confirmed restore-race guard in runner only
+      - name: Check out exact current main
+        run: |
+          git fetch origin main
+          git checkout --detach origin/main
+          test "$(git rev-parse HEAD)" = "971dec7f457d2642071fe69dfa448572445d00ce"
+
+      - name: Apply validated six-file candidate
+        run: python3 /tmp/apply-intimacy-oracle-candidate.py
+
+      - name: Apply confirmed WebKit restore-race guard
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -36,133 +49,36 @@ jobs:
           rep('lunea-reading-draft-v1.js',"    } catch (err) {\n      restoring = false;","    } catch (err) {\n      W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n      restoring = false;")
           PY
 
-      - name: Syntax and invariant checks
+      - name: Verify candidate before main push
         run: |
           node --check lunea-intimacy-oracle-ui-v36.js
           node --check lunea-intimacy-ai-bridge-v34.js
           node --check lunea-reading-draft-v1.js
           node --check lunea-cache-refresh-v1.js
-          node tests/intimacy-oracle-candidate-contract.mjs
+          node /tmp/intimacy-oracle-candidate-contract.mjs
           node tests/reading-lifecycle-v59.test.mjs
+          git diff --check
+          actual="$(git diff --name-only | sort)"
+          expected="$(printf '%s\n' \
+            .github/workflows/bump-lunea-loader-413.yml \
+            lunea-cache-refresh-v1.js \
+            lunea-intimacy-ai-bridge-v34.js \
+            lunea-intimacy-oracle-ui-v36.js \
+            lunea-reading-draft-v1.js \
+            lunea-structural-routing-v4.js | sort)"
+          printf 'Changed files:\n%s\n' "$actual"
+          test "$actual" = "$expected"
 
-      - name: Install Playwright WebKit
+      - name: Push one commit to main
         run: |
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps webkit
-
-      - name: Start branch-local LUNEA server
-        run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-webkit-crash-diag.log 2>&1 &
-          for i in {1..30}; do
-            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
-            sleep 1
-          done
-          exit 1
-
-      - name: Run one-shot WebKit crash isolation matrix
-        run: |
-          cat >tests/webkit-crash-diag.mjs <<'JS'
-          import { webkit } from 'playwright';
-          const BASE='http://127.0.0.1:4173/index.html';
-          const BUILD='c00880c7b22d';
-          const results=[];
-
-          async function runScenario(name,opt={}){
-            let browser,context,page,crashed=false,crashResolve;
-            const js=[]; const errors=[]; let structuralCount=null;
-            const crashPromise=new Promise(r=>crashResolve=r);
-            const started=Date.now();
-            try{
-              browser=await webkit.launch({headless:true});
-              context=await browser.newContext({
-                viewport:{width:393,height:852},
-                isMobile:true,hasTouch:true,deviceScaleFactor:opt.dpr??3,locale:'ko-KR',
-                userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
-              });
-              page=await context.newPage();
-              page.setDefaultTimeout(15000);
-              page.on('crash',()=>{crashed=true;crashResolve('crash')});
-              page.on('pageerror',e=>errors.push(String(e?.message||e).slice(0,180)));
-              page.on('request',r=>{try{const u=new URL(r.url());if(/\.js$/i.test(u.pathname))js.push(u.pathname.split('/').pop())}catch{}});
-              await page.route(/https:\/\/fonts\.googleapis\.com\//,r=>r.fulfill({status:200,contentType:'text/css; charset=utf-8',body:''}));
-              await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//,r=>r.fulfill({status:204,body:''}));
-              await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i,r=>r.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'}));
-              await page.route(/lunea-build\.json\?t=/,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:BUILD})}));
-
-              if(opt.noImages){
-                await page.route(/\.(?:png|jpe?g|webp|svg)(?:\?|$)/i,r=>r.fulfill({status:204,body:''}));
-              }
-              if(opt.noIntimacy){
-                await page.route(/\/lunea-intimacy[^/]*\.js\?/i,r=>r.fulfill({status:200,contentType:'application/javascript; charset=utf-8',body:'/* diagnostic: intimacy disabled */'}));
-                await page.route(/\/lunea-intimacy-oracle[^/]*\.js\?/i,r=>r.fulfill({status:200,contentType:'application/javascript; charset=utf-8',body:'/* diagnostic: oracle disabled */'}));
-              }
-              if(opt.noIOSPerf){
-                await page.route(/\/lunea-ios-performance-v3\.js\?/i,r=>r.fulfill({status:200,contentType:'application/javascript; charset=utf-8',body:'/* diagnostic: ios perf disabled */'}));
-              }
-              if(opt.noStructural){
-                await page.route(/\/lunea-structural-routing-v4\.js\?/i,r=>r.fulfill({status:200,contentType:'application/javascript; charset=utf-8',body:'/* diagnostic: structural loader disabled */'}));
-              } else if(Number.isInteger(opt.structuralCutoff)) {
-                await page.route(/\/lunea-structural-routing-v4\.js\?/i,async r=>{
-                  const resp=await r.fetch(); let body=await resp.text();
-                  const matches=[...body.matchAll(/\.\/([^'"`]+\.js)\?v=/g)].map(m=>m[1]);
-                  const unique=[...new Set(matches)]; structuralCount=unique.length;
-                  const allow=new Set(unique.slice(0,opt.structuralCutoff));
-                  body=body.split('\n').filter(line=>{
-                    const m=line.match(/\.\/([^'"`]+\.js)\?v=/); return !m||allow.has(m[1]);
-                  }).join('\n');
-                  await r.fulfill({response:resp,body,contentType:'application/javascript; charset=utf-8'});
-                });
-              }
-
-              const nav=async url=>{
-                await page.goto(url,{waitUntil:'commit',timeout:20000});
-                const outcome=await Promise.race([
-                  page.waitForLoadState('domcontentloaded',{timeout:50000}).then(()=> 'domcontentloaded').catch(e=>String(e?.message||e)),
-                  crashPromise
-                ]);
-                if(outcome==='crash'||/crash/i.test(outcome))throw new Error('PAGE_CRASH');
-                if(outcome!=='domcontentloaded')throw new Error('LOAD_'+outcome);
-                await Promise.race([page.waitForTimeout(2500),crashPromise]);
-                if(crashed)throw new Error('PAGE_CRASH_AFTER_DOMCONTENTLOADED');
-              };
-
-              if(opt.doubleBoot){
-                await nav(BASE+'?diag=first-'+encodeURIComponent(name));
-                await page.waitForTimeout(700);
-                js.length=0; errors.length=0;
-                await nav(BASE+'?lunea_v=diag&fresh='+Date.now()+'&scenario='+encodeURIComponent(name));
-              }else{
-                await nav(BASE+'?lunea_v=diag&fresh='+Date.now()+'&scenario='+encodeURIComponent(name));
-              }
-
-              const info=await page.evaluate(()=>({ready:document.readyState,draft:!!window.LUNEA_READING_DRAFT_V1,bridge:!!window.LUNEA_INTIMACY_AI_BRIDGE_V34,body:document.body?.className||''})).catch(()=>({}));
-              results.push({name,status:'PASS',ms:Date.now()-started,jsCount:js.length,lastJS:js.slice(-12),errors:errors.slice(-5),structuralCount,info});
-            }catch(e){
-              const msg=String(e?.message||e);
-              results.push({name,status:/PAGE_CRASH|crash/i.test(msg)?'CRASH':'ERROR',error:msg.slice(0,500),ms:Date.now()-started,jsCount:js.length,lastJS:js.slice(-15),errors:errors.slice(-5),structuralCount});
-            }finally{
-              try{await context?.close()}catch{}
-              try{await browser?.close()}catch{}
-            }
-            console.log('DIAG '+JSON.stringify(results.at(-1)));
-          }
-
-          await runScenario('cold-full-mobile',{doubleBoot:false});
-          await runScenario('double-full-mobile',{doubleBoot:true});
-          await runScenario('double-no-intimacy',{doubleBoot:true,noIntimacy:true});
-          await runScenario('double-no-images',{doubleBoot:true,noImages:true});
-          await runScenario('double-dpr1',{doubleBoot:true,dpr:1});
-          await runScenario('double-no-iosperf',{doubleBoot:true,noIOSPerf:true});
-          await runScenario('double-no-structural',{doubleBoot:true,noStructural:true});
-          await runScenario('double-structural-cut20',{doubleBoot:true,structuralCutoff:20});
-          await runScenario('double-structural-cut40',{doubleBoot:true,structuralCutoff:40});
-
-          console.log('\nWEBKIT FRESH-BOOT CRASH MATRIX');
-          for(const r of results) console.log(JSON.stringify(r));
-          process.exit(0);
-          JS
-          node tests/webkit-crash-diag.mjs
-
-      - name: Show local server tail
-        if: always()
-        run: tail -n 120 /tmp/lunea-webkit-crash-diag.log || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            .github/workflows/bump-lunea-loader-413.yml \
+            lunea-cache-refresh-v1.js \
+            lunea-intimacy-ai-bridge-v34.js \
+            lunea-intimacy-oracle-ui-v36.js \
+            lunea-reading-draft-v1.js \
+            lunea-structural-routing-v4.js
+          git commit -m "Fix INTIMACY Oracle resume and stale PWA runtime"
+          git push origin HEAD:main
