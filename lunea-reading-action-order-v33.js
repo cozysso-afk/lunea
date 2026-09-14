@@ -3,32 +3,15 @@
 /*
   LUNEA READING ACTION ORDER V33.5
   ================================
-  Keeps the reading action grid in a stable, task-oriented order even though
-  several buttons are injected by independent feature modules.
+  Keeps the reading action grid in the approved stable order while preserving
+  the current INTIMACY presentation-runtime loaders.
 
-  Row intent (3-column mobile grid):
-  1) 전체 뒤집기 · AI 해석 · 저장
-  2) 다시 뽑기 · 추가 카드 · 시기 오라클
-  3) Astro Timing · Thai 보조 · Thai 기간
-  4) Returns · Horary · 마스터 리딩 프롬프트 복사
-
-  The master prompt-copy shortcut occupies the final action-grid cell for every
-  sector/spread/question, while keeping the existing bottom copy control.
-
-  Small AI 해석 / 저장 shortcuts remain directly below the bottom prompt-copy
-  control for long spreads. These shortcuts delegate to the existing source
-  buttons; they never duplicate interpretation or persistence logic.
-
-  V33.2 also hardens the Thai period date grid on iOS so native date inputs do
-  not overflow their grid tracks or collide in the middle of the modal.
-
-  V33.4 keeps the control-order behavior stable and applies the
-  screenshot-marked INTIMACY reading presentation corrections without changing
-  RNG, AI interpretation, prompt generation, or storage. INTIMACY runtime
-  layers remain owned by the dedicated deterministic feature group.
-
-  V33.5 makes sure the V36 result-copy bridge is loaded with the current build
-  token, so iOS/PWA caches cannot keep an older Timing-only copy script.
+  Approved action order:
+  - flip all · extra card · save
+  - retry · timing · Message Oracle
+  - Transit · Returns · Horary
+  - Thai support · Thai range · AI
+  - master prompt copy
 
   Unknown/future buttons are preserved after the known controls.
 */
@@ -67,6 +50,9 @@
   const BOTTOM_AI_ID = 'luneaBottomAiRead';
   const BOTTOM_SAVE_ID = 'luneaBottomSaveReading';
   const BOTTOM_STYLE_ID = 'luneaBottomReadingActionsStyle';
+  const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
+  const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
+  const INTIMACY_REPAIR_LOADER_ID = 'luneaIntimacyRepairV43Loader';
   const RESULT_COPY_LOADER_ID = 'luneaResultCopyV36Loader';
 
   function actionBar() {
@@ -101,7 +87,6 @@
     return true;
   }
 
-  // One order for all attached evidence; reuse this owner's existing observer.
   function reorderSupport() {
     W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.sync?.();
     const ids = ['luneaTimingInline','luneaMessageOracleInline','luneaAstroTransitInline',
@@ -123,7 +108,6 @@
     const style = document.createElement('style');
     style.id = BOTTOM_STYLE_ID;
     style.textContent = `
-      /* Final three-column action geometry, including the <=390px surface. */
       #spreadOverlay .actionbar.actionbar{
         display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
         grid-auto-flow:row!important;grid-auto-rows:minmax(48px,auto);gap:7px!important;
@@ -229,9 +213,6 @@
       bar.parentNode.insertBefore(box, bar);
     }
 
-    /* Keep the legacy wrapper in place (hidden) so long-lived pages and the
-       existing sync path remain stable, but put the actual shortcut in the
-       action grid's final open cell. */
     box.hidden = true;
     box.setAttribute('aria-hidden', 'true');
     top.classList.remove('primary', 'full-btn');
@@ -304,6 +285,18 @@
     return true;
   }
 
+  function ensureIntimacyCleanUi() {
+    return ensureScript(INTIMACY_CLEAN_LOADER_ID, './lunea-intimacy-clean-v39.js', 'INTIMACY clean UI V39');
+  }
+
+  function ensureIntimacyBurgundyUi() {
+    return ensureScript(INTIMACY_BURGUNDY_LOADER_ID, './lunea-intimacy-burgundy-v40.js', 'INTIMACY burgundy UI V40');
+  }
+
+  function ensureIntimacyRepairUi() {
+    return ensureScript(INTIMACY_REPAIR_LOADER_ID, './lunea-intimacy-repair-v43.js', 'INTIMACY repair UI V43');
+  }
+
   function ensureResultCopyBridge() {
     const loadedVersion = String(W.LUNEA_TIMING_COPY_V35?.version || '');
     if (loadedVersion === '36.0') return true;
@@ -317,6 +310,9 @@
     ensureTopPromptCopy();
     ensureBottomActions();
     ensureResultCopyBridge();
+    ensureIntimacyCleanUi();
+    ensureIntimacyBurgundyUi();
+    ensureIntimacyRepairUi();
 
     let queued = false;
     const bar = actionBar();
@@ -340,6 +336,15 @@
       if (cards) observer.observe(cards, {childList:true,subtree:true});
     }
 
+    let tries = 0;
+    const timer = setInterval(() => {
+      tries += 1;
+      ensureIntimacyCleanUi();
+      ensureIntimacyBurgundyUi();
+      ensureIntimacyRepairUi();
+      const ready = !!W.LUNEA_INTIMACY_CLEAN_V39 && !!W.LUNEA_INTIMACY_BURGUNDY_V40 && !!W.__LUNEA_INTIMACY_REPAIR_V43__;
+      if (ready || tries > 80) clearInterval(timer);
+    }, 250);
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
@@ -351,6 +356,9 @@
     ensureBottomActions,
     syncBottomButtons,
     ensureResultCopyBridge,
+    ensureIntimacyCleanUi,
+    ensureIntimacyBurgundyUi,
+    ensureIntimacyRepairUi,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot,{once:true});
   else boot();
