@@ -33,6 +33,15 @@ const requiredFiles = [
   'assets/message-oracle/message_oracle_logo.png',
 ];
 
+const attachmentOwners = new Map([
+  ['astro-transit-v1.js','astroTransit'],
+  ['astro-return-v1.js','astroReturns'],
+  ['lunea-thai-tarot-bridge-v32.js','thaiTaksa'],
+  ['lunea-thai-range-v33.js','thaiTaksaRange'],
+  ['astro-horary-v1.js','horary'],
+  ['timing-oracle-v1.js','timing'],
+]);
+
 test('approved support sources and original Message Oracle assets exist', () => {
   const missing = requiredFiles.filter(path => !exists(path));
   assert.deepEqual(missing, [], `missing golden product files: ${missing.join(', ')}`);
@@ -59,6 +68,16 @@ test('exact-reading attachment registry owns support persistence', () => {
   assert.match(source, /notifyChanged/);
 });
 
+test('all approved support owners register exact-reading attachment adapters', () => {
+  for (const [file, name] of attachmentOwners) {
+    const source = read(file);
+    assert.match(source, new RegExp(`register\\('${name}'`), `${file} must register ${name}`);
+    assert.match(source, new RegExp(`notifyChanged\\?\\.\\('${name}'\\)|notifyChanged\\('${name}'\\)`), `${file} must notify ${name}`);
+    assert.match(source, /capture:/, `${file} must expose attachment capture`);
+    if (name !== 'timing') assert.match(source, /restore:/, `${file} must expose attachment restore`);
+  }
+});
+
 test('Message Oracle support is exact-reading scoped and prompt-aware', () => {
   assert.ok(exists('lunea-message-oracle-support-v1.js'), 'Message Oracle support adapter missing');
   const source = read('lunea-message-oracle-support-v1.js');
@@ -77,10 +96,26 @@ test('draft combines current INTIMACY exact restore with reading attachments', (
   assert.match(source, /intimacyOracle:/);
   assert.match(source, /LUNEA_READING_ATTACHMENTS_V1/,
     'current v2 draft must also integrate the exact-reading attachment owner');
-  assert.match(source, /captureDraft/,
+  assert.match(source, /captureDraft\?\.\(s\)/,
     'draft snapshot must capture exact-reading attachments');
-  assert.match(source, /prepareRestore/,
+  assert.match(source, /prepareRestore\?\.\(\)/,
     'draft restore must clear stale attachment state before restoring');
+  assert.match(source, /await W\.LUNEA_READING_ATTACHMENTS_V1\?\.restoreDraft\?\.\(d\)/,
+    'attachment restore must complete inside the restore transaction');
+});
+
+test('draft never arms autosave while an exact restore transaction is active', () => {
+  const source = read('lunea-reading-draft-v1.js');
+  const schedule = source.match(/function scheduleSave\([^)]*\) \{([\s\S]*?)\n  \}/);
+  assert.ok(schedule, 'scheduleSave missing');
+  assert.match(schedule[1], /saveTimer = 0/);
+  assert.match(schedule[1], /if \(restoring\) return/);
+  assert.match(source, /requestAnimationFrame\(async \(\) =>/);
+  const awaitOracle = source.indexOf('await Promise.resolve(bridge.restoreOracleDraftExact');
+  const awaitAttachments = source.indexOf('await W.LUNEA_READING_ATTACHMENTS_V1?.restoreDraft?.(d)');
+  const release = source.indexOf('restoring = false;', awaitAttachments);
+  assert.ok(awaitOracle > 0 && awaitAttachments > awaitOracle && release > awaitAttachments,
+    'restore order must be Oracle exact restore -> attachments -> autosave release');
 });
 
 test('final prompt explicitly handles exact-current Message Oracle evidence', () => {
@@ -108,18 +143,19 @@ test('INTIMACY cabinet uses the approved small source symbol and duplicate-heade
     'opened source header must not be replaced by a large square artwork');
   assert.match(source, /lunea-v8-source-active[^\n]*> \.category-header|lunea-v8-source-active > \.category-header/,
     'visible Home-backed source must suppress the duplicate source header');
-  assert.match(source, /classList\.toggle\('lunea-v8-source-active',\s*wasOpen\)|if \(wasOpen\) category\.classList\.add\('lunea-v8-source-active'\)/,
-    'source active state must be derived from the actual open state');
+  assert.match(source, /classList\.toggle\('lunea-v8-source-active',\s*wasOpen\)/,
+    'source active state must be derived from the actual open state and clear stale state');
 });
 
-test('deterministic loader exposes reading attachments and lazy Message group', () => {
+test('loader exposes reading attachments and lazy Message group without eager Message UI', () => {
   const source = read('lunea-structural-routing-v4.js');
-  assert.match(source, /lunea-reading-attachments-v1\.js/);
-  assert.match(source, /lunea-message-oracle-support-v1\.js/);
+  assert.match(source, /lunea-reading-draft-v1\.js[\s\S]*lunea-reading-attachments-v1\.js[\s\S]*lunea-message-oracle-support-v1\.js/);
   assert.match(source, /message:\s*\[/);
   assert.match(source, /lunea-message-oracle-v1\.js/);
   assert.match(source, /lunea-message-oracle-ui-v1\.js/);
   assert.match(source, /LUNEA_LOAD_FEATURE_GROUP/);
+  const writes = source.match(/document\.write\([^\n]+lunea-message-oracle-(?:v1|ui-v1)\.js/g) || [];
+  assert.equal(writes.length, 0, 'Message engine/UI must remain lazy, not document.write eagerly');
 });
 
 test('same-build refresh and INTIMACY exact-runtime safeguards remain fixed', () => {
