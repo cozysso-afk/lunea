@@ -130,6 +130,11 @@ jobs:
           )
           rep(
               'tests/intimacy-oracle-webkit-ad.e2e.mjs',
+              "    await openIntimacyAndDraw(page,'fresh V36.5 버튼 검증');",
+              "    await restoreLastReading(page);\n    await page.waitForFunction(()=>typeof state!=='undefined'&&String(state.category||'').toUpperCase()==='INTIMACY'&&Array.isArray(state.drawn)&&state.drawn.length>0,{timeout:15000});\n    assert.equal(await page.evaluate(()=>document.querySelector('#question')?.value||''),'stale V36.4 경계 검증');"
+          )
+          rep(
+              'tests/intimacy-oracle-webkit-ad.e2e.mjs',
               "    await page.locator('.lio-base-row .lio-card').first().click();\n    await page.locator('.lio-extra-row .lio-card').first().click();",
               "    await page.evaluate(()=>document.querySelector('.lio-base-row .lio-card')?.click());\n    await page.evaluate(()=>document.querySelector('.lio-extra-row .lio-card')?.click());\n    await page.waitForFunction(()=>{const s=window.LUNEA_INTIMACY_ORACLE_UI_V36?.getState?.();return !!s&&s.revealed?.has?.(0)&&s.extraRevealed?.has?.(0)});"
           )
