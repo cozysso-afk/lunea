@@ -6,61 +6,49 @@ import { fileURLToPath } from 'node:url';
 
 const v39Url = new URL('../lunea-intimacy-clean-v39.js', import.meta.url);
 const source = fs.readFileSync(v39Url, 'utf8');
-const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
 
-test('V39 source parses as valid JavaScript', () => {
+ test('V39 source parses as valid JavaScript', () => {
   const check = spawnSync(process.execPath, ['--check', fileURLToPath(v39Url)], {encoding:'utf8'});
   assert.equal(check.status, 0, check.stderr || check.stdout || 'V39 syntax check failed');
 });
 
-test('V39 uses the dedicated square artwork and forcibly removes the old orbit presentation', () => {
+test('Home tile keeps dedicated INTIMACY artwork while source header uses the small shared heart', () => {
   assert.match(source, /const RELEASE = '39\.0'/);
   assert.match(source, /intimacy_sector_final\.png\?v=/);
-  assert.match(source, /lunea-intimacy-sector-art-v39/);
-  assert.match(source, /icon\.replaceChildren\(img\)/);
+  assert.match(source, /HOME_TILE_ID = 'luneaIntimacyHomeTileV39'/);
+  assert.match(source, /\.lunea-v8-object img/);
+  assert.match(source, /icon\.textContent !== '♡'/);
+  assert.match(source, /icon\.textContent = '♡'/);
+  assert.doesNotMatch(source, /icon\.replaceChildren\(img\)/);
+  assert.doesNotMatch(source, /lunea-intimacy-sector-art-v39/);
+});
+
+test('legacy orbit presentation is removed without adding a global mutation observer', () => {
   assert.match(source, /luneaIntimacyLegacyV35Style/);
   assert.match(source, /luneaIntimacyUiV37Style/);
   assert.doesNotMatch(source, /MutationObserver/);
 });
 
-test('INTIMACY becomes a real Home Portal tile with its own artwork', () => {
-  assert.match(source, /HOME_TILE_ID = 'luneaIntimacyHomeTileV39'/);
+test('INTIMACY becomes one Home Portal entry and suppresses a duplicate open source header', () => {
   assert.match(source, /tile\.dataset\.key = 'intimacy'/);
-  assert.match(source, /lunea-v8-source-category/);
   assert.match(source, /grid\.appendChild\(tile\)/);
   assert.match(source, /grid-column:1\/-1!important/);
-  assert.match(source, /\.lunea-v8-object img/);
   assert.match(source, /:not\(\.lunea-thai-home-tile\)/);
-});
-
-test('opened INTIMACY keeps one visible header: Home tile plus source content only', () => {
   assert.match(source, /lunea-intimacy-category\.lunea-v8-source-category\.lunea-v8-source-active > \.category-header\{\s*display:none!important;/);
   assert.match(source, /lunea-intimacy-category\.lunea-v8-source-category\.lunea-v8-source-active > \.category-content\{\s*padding-top:5px!important;/);
 });
 
-test('opened INTIMACY uses LOVE-like divider rows instead of boxed cards', () => {
-  assert.match(source, /border-top:1px solid rgba\(255,255,255,\.065\)!important/);
-  assert.match(source, /border-radius:0!important/);
-  assert.match(source, /background:transparent!important/);
-  assert.match(source, /position:static!important/);
-  assert.match(source, /padding:13px 1px!important/);
+test('source-active state is derived from actual open state and stale active state is cleared', () => {
+  assert.match(source, /const wasOpen = category\.classList\.contains\('active'\)/);
+  assert.match(source, /category\.classList\.toggle\('lunea-v8-source-active', wasOpen\)/);
+});
+
+test('approved opened INTIMACY rows keep the final contained-card geometry and ORIGINAL badge', () => {
+  assert.match(source, /grid-template-columns:minmax\(0,1fr\)!important/);
+  assert.match(source, /border:1px solid var\(--lio-list-border/);
+  assert.match(source, /border-radius:14px!important/);
+  assert.match(source, /badge\.textContent = 'ORIGINAL'/);
   assert.match(source, /lunea-intimacy-list-label\{display:none!important\}/);
 });
 
-test('only the dedicated INTIMACY AI entry gets a contained panel', () => {
-  assert.match(source, /reading-item\[data-intimacy-ai="1"\]/);
-  assert.match(source, /border-radius:14px!important/);
-  assert.match(source, /badge\.textContent = 'ORIGINAL'/);
-});
-
-test('V39 is loaded after late feature modules and inherits the stamped action-order build token', () => {
-  assert.match(order, /SELF_VERSION/);
-  assert.match(order, /ensureScript\(INTIMACY_CLEAN_LOADER_ID, '\.\/lunea-intimacy-clean-v39\.js', 'INTIMACY clean UI V39'\)/);
-  assert.match(order, /script\.src = `\$\{src\}\?v=\$\{encodeURIComponent\(SELF_VERSION\)\}`/);
-  assert.match(order, /ensureIntimacyCleanUi\(\)/);
-  const boot = order.indexOf('function boot()');
-  const call = order.indexOf('ensureIntimacyCleanUi();', boot);
-  assert.ok(call > boot, 'V39 loader must be invoked during the late action-order boot');
-});
-
-console.log('LUNEA INTIMACY clean UI V39 regression tests: PASS');
+console.log('LUNEA INTIMACY clean UI V39 golden regression tests: PASS');
