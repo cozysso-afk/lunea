@@ -22,6 +22,8 @@
   let restoring = false;
   let saveTimer = 0;
   let observersInstalled = false;
+  let oracleRestoreGeneration = 0;
+  let intimacyOracleFallback = null;
 
   function getState() {
     try { return state; } catch { return null; }
@@ -59,7 +61,20 @@
     return text;
   }
 
-  function currentIntimacyOracle(s){if(String(s?.category||'').toUpperCase()!=='INTIMACY')return null;try{return clone(W.LUNEA_INTIMACY_AI_BRIDGE_V34?.serializeOracleDraft?.()??W.LUNEA_INTIMACY_ORACLE_UI_V36?.serializeOracleDraft?.()??null)}catch{return null}}
+  function intimacyOracleSignature(s){return [String(s?.title||''),String(s?.question||''),(s?.drawn||[]).map(card=>String(card?.code||'')).join(',')].join('|')}
+  function setIntimacyOracleFallback(s,snapshot){const cloned=clone(snapshot);intimacyOracleFallback=cloned?{signature:intimacyOracleSignature(s),snapshot:cloned}:null}
+  function currentIntimacyOracle(s){
+    if(String(s?.category||'').toUpperCase()!=='INTIMACY')return null;
+    try{
+      const live=clone(W.LUNEA_INTIMACY_AI_BRIDGE_V34?.serializeOracleDraft?.()??W.LUNEA_INTIMACY_ORACLE_UI_V36?.serializeOracleDraft?.()??null);
+      if(live){if(intimacyOracleFallback?.signature===intimacyOracleSignature(s))intimacyOracleFallback=null;return live}
+      if(intimacyOracleFallback?.signature===intimacyOracleSignature(s))return clone(intimacyOracleFallback.snapshot);
+      return null;
+    }catch{
+      if(intimacyOracleFallback?.signature===intimacyOracleSignature(s))return clone(intimacyOracleFallback.snapshot);
+      return null;
+    }
+  }
 
   function snapshot() {
     if (restoring) return;
@@ -105,6 +120,8 @@
 
   function clearDraft() {
     const d=readDraft();
+    intimacyOracleFallback=null;
+    oracleRestoreGeneration+=1;
     try { localStorage.removeItem(KEY); if(d?.intimacyOracle)localStorage.removeItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1'); } catch {}
     renderResumeBar();
   }
@@ -258,11 +275,14 @@
     if (!d) return alert('복원할 임시 리딩이 없어.');
     if (!Array.isArray(d.drawn) || !d.drawn.length) return alert('임시 리딩 카드 정보가 비어 있어.');
 
+    const restoreGeneration=++oracleRestoreGeneration;
+    clearTimeout(saveTimer);
     try {
       restoring = true;
       const restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;
       if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=true;
       const s = setStateFromDraft(d);
+      if(restoringIntimacyOracle)setIntimacyOracleFallback(s,d.intimacyOracle);
       $('cards')?.replaceChildren();
       $('results')?.replaceChildren();
       $('aiBox')?.replaceChildren();
@@ -304,14 +324,20 @@
           appendSavedClarifiers(i);
         });
         restoreAI(d.aiText || '');
-        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}
-        if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
+        const releaseOracleGuard=()=>{if(restoreGeneration===oracleRestoreGeneration&&restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false};
+        if(d.intimacyOracle){
+          const oracleSnapshot=clone(d.intimacyOracle);
+          const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;
+          if(bridge?.restoreOracleDraftExact){Promise.resolve(bridge.restoreOracleDraftExact(oracleSnapshot)).catch(()=>false).finally(releaseOracleGuard)}
+          else if(bridge?.restoreOracleDraft){bridge.restoreOracleDraft(oracleSnapshot);releaseOracleGuard()}
+          else{W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=oracleSnapshot;releaseOracleGuard()}
+        }else releaseOracleGuard();
         restoring = false;
         renderResumeBar();
         scheduleSave(120);
       });
     } catch (err) {
-      W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
+      if(restoreGeneration===oracleRestoreGeneration)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
       restoring = false;
       console.error('[LUNEA Draft] restore failed', err);
       alert('마지막 리딩 복원 중 오류가 났어: ' + (err?.message || err));
