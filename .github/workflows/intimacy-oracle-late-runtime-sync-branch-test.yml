@@ -23,8 +23,11 @@ jobs:
           node --check lunea-cache-refresh-v1.js
           node --check lunea-intimacy-ai-bridge-v34.js
           node --check lunea-reading-draft-v1.js
+          node --check tests/golden-product-contract.test.mjs
           node --check tests/intimacy-oracle-late-runtime.e2e.mjs
           node --check tests/reading-lifecycle-v59.e2e.mjs
+      - name: Composite golden product contract
+        run: node --test tests/golden-product-contract.test.mjs
       - name: Recovery source invariants
         run: |
           node --input-type=module <<'NODE'
