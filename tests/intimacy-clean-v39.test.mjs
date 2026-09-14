@@ -1,9 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
-const source = fs.readFileSync(new URL('../lunea-intimacy-clean-v39.js', import.meta.url), 'utf8');
+const v39Url = new URL('../lunea-intimacy-clean-v39.js', import.meta.url);
+const source = fs.readFileSync(v39Url, 'utf8');
 const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
+
+test('V39 source parses as valid JavaScript', () => {
+  const check = spawnSync(process.execPath, ['--check', fileURLToPath(v39Url)], {encoding:'utf8'});
+  assert.equal(check.status, 0, check.stderr || check.stdout || 'V39 syntax check failed');
+});
 
 test('V39 uses the dedicated square artwork and forcibly removes the old orbit presentation', () => {
   assert.match(source, /const RELEASE = '39\.0'/);
