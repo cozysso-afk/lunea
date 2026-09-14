@@ -1,78 +1,53 @@
-name: LUNEA Pages V56 deploy trigger
+name: Deploy LUNEA GitHub Pages
 
 on:
-  issues:
-    types: [opened]
+  workflow_run:
+    workflows: ["Refresh LUNEA build cache"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  deploy-v56:
-    if: github.event.issue.title == 'LUNEA Pages V56 deploy trigger'
+  build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout current main
+        uses: actions/checkout@v4
         with:
           ref: main
 
-      - name: Stamp V56 cache-busting URLs
-        shell: bash
-        run: |
-          python - <<'PY'
-          import json, os, re
-          from pathlib import Path
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
 
-          stamp = 'v56-' + os.environ['GITHUB_RUN_ID']
+      - name: Build with Jekyll
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./
+          destination: ./_site
 
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          for asset in (
-              'lunea-cache-refresh-v1.js',
-              'lunea-structural-routing-v4.js',
-              'lunea-astro-stability-v2.js',
-              'lunea-ios-performance-v3.js',
-          ):
-              pattern = re.escape(asset) + r'\?v=[^"\']+'
-              replacement = f'{asset}?v={stamp}'
-              s, count = re.subn(pattern, replacement, s, count=1)
-              if count != 1:
-                  raise SystemExit(f'Could not stamp index asset {asset}: {count}')
-          p.write_text(s, encoding='utf-8')
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
 
-          p = Path('lunea-structural-routing-v4.js')
-          s = p.read_text(encoding='utf-8')
-          for asset in (
-              'lunea-astro-job-queue-v1.js',
-              'lunea-astro-resume-v23.js',
-              'lunea-transit-long-run-v1.js',
-              'lunea-thai-tarot-bridge-v32.js',
-              'lunea-thai-range-v33.js',
-              'lunea-reading-action-order-v33.js',
-          ):
-              pattern = re.escape(asset) + r'\?v=[^"\']+'
-              replacement = f'{asset}?v={stamp}'
-              s, count = re.subn(pattern, replacement, s)
-              if count != 2:
-                  raise SystemExit(f'Could not stamp both nested URLs for {asset}: {count}')
-          p.write_text(s, encoding='utf-8')
-
-          Path('lunea-build.json').write_text(
-              json.dumps({'version': stamp}, ensure_ascii=False) + '\n',
-              encoding='utf-8'
-          )
-          print('LUNEA Pages V56 stamp:', stamp)
-          PY
-
-      - name: Commit V56 Pages stamp
-        shell: bash
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html lunea-structural-routing-v4.js lunea-build.json
-          if git diff --cached --quiet; then
-            echo 'Nothing to stamp'
-            exit 0
-          fi
-          git commit -m 'deploy: publish LUNEA Pages V56 runtime fixes'
-          git push origin HEAD:main
+  deploy:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
