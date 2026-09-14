@@ -129,14 +129,15 @@ jobs:
           done
           cat /tmp/lunea-recovery-audit.log
           exit 1
-      - name: Run late-runtime exact-draft regression
-        env:
-          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
-        run: node tests/intimacy-oracle-late-runtime.e2e.mjs
       - name: Run same-session 10-reading mixed-sector regression
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
         run: node tests/reading-lifecycle-v59.e2e.mjs
+      - name: Run late-runtime exact-draft regression
+        if: always()
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/intimacy-oracle-late-runtime.e2e.mjs
       - name: Show local server log
         if: always()
         run: cat /tmp/lunea-recovery-audit.log || true
