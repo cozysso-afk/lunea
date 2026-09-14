@@ -256,7 +256,7 @@
 
     const wasOpen = category.classList.contains('active');
     category.classList.add('lunea-v8-source-category');
-    if (wasOpen) category.classList.add('lunea-v8-source-active');
+    category.classList.toggle('lunea-v8-source-active', wasOpen);
 
     let tile = document.getElementById(HOME_TILE_ID) || grid.querySelector('.lunea-v8-tile[data-key="intimacy"]');
     if (!tile) {
