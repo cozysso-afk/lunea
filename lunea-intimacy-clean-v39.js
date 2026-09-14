@@ -36,6 +36,8 @@
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
   function removeLegacyPresentation() {
+    // These layers contain the old circular/orbit branding and the boxed list
+    // treatment. Their behavior lives in JS listeners and is intentionally kept.
     document.getElementById('luneaIntimacyLegacyV35Style')?.remove();
     document.getElementById('luneaIntimacyUiV37Style')?.remove();
   }
@@ -48,6 +50,8 @@
       style.id = STYLE_ID;
       document.head.appendChild(style);
     }
+    // Always refresh the text. This matters for long-lived iOS/PWA documents:
+    // an old style node must never block a newer release from taking effect.
     style.textContent = `
       .lunea-intimacy-category{
         background:var(--panel)!important;
@@ -105,6 +109,7 @@
         padding-top:5px!important;
       }
 
+      /* Same information rhythm as LOVE: divider rows, not cards inside cards. */
       .lunea-intimacy-category .category-content{
         padding:0 17px 9px!important;gap:0!important
       }
@@ -141,6 +146,7 @@
       }
       .lunea-intimacy-category .reading-item .count.lunea-count-label{min-width:0!important;padding:4px 9px!important}
 
+      /* Match LOVE's one contained AI row. Everything else stays a simple row. */
       .lunea-intimacy-category .reading-item[data-intimacy-ai="1"]{
         margin:5px -4px 8px!important;padding:12px 11px!important;
         border:1px solid rgba(210,186,229,.14)!important;border-radius:14px!important;
@@ -165,6 +171,7 @@
       }
       .lunea-intimacy-category .lunea-intimacy-list-label{display:none!important}
 
+      /* Home: INTIMACY is a real portal entry, like the other reading sectors. */
       #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]{
         grid-column:1/-1!important;display:grid!important;
         grid-template-columns:58px minmax(0,1fr) 22px!important;grid-template-rows:auto auto!important;
@@ -279,6 +286,7 @@
       if (art) art.src = ICON_SRC;
     }
 
+    // Thai astrology lives in the same grid but is not one of the oracle count.
     const oracleCount = grid.querySelectorAll('.lunea-v8-tile:not(.lunea-thai-home-tile)').length;
     const note = $('.v8-title-note', portal);
     if (note) note.textContent = `${oracleCount} ORACLES`;
