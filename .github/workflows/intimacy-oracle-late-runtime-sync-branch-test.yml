@@ -29,6 +29,8 @@ jobs:
           node --check lunea-message-oracle-v1.js
           node --check lunea-message-oracle-ui-v1.js
           node --check lunea-message-oracle-support-v1.js
+          node --check lunea-archive-search-v1.js
+          node --check lunea-journal-detail-v51.js
           node --check tests/golden-product-contract.test.mjs
           node --check tests/reading-attachments-v1.test.mjs
           node --check tests/thai-range-action-order-v33.test.mjs
@@ -151,9 +153,28 @@ jobs:
         run: node tests/reading-lifecycle-v59.e2e.mjs
       - name: Run late-runtime exact-draft regression
         if: always()
+        continue-on-error: true
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
-        run: node tests/intimacy-oracle-late-runtime.e2e.mjs
+        run: |
+          set +e
+          node tests/intimacy-oracle-late-runtime.e2e.mjs 2>&1 | tee /tmp/lunea-late-runtime.log
+          status=${PIPESTATUS[0]}
+          echo "$status" > /tmp/lunea-late-runtime.status
+          exit "$status"
+      - name: Upload late-runtime diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: late-runtime-diagnostic
+          path: /tmp/lunea-late-runtime.log
+          if-no-files-found: error
+          retention-days: 1
       - name: Show local server log
         if: always()
         run: cat /tmp/lunea-recovery-audit.log || true
+      - name: Fail if late-runtime regression failed
+        if: always()
+        run: |
+          status=$(cat /tmp/lunea-late-runtime.status 2>/dev/null || echo 1)
+          test "$status" -eq 0
