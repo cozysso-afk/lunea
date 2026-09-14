@@ -2,6 +2,7 @@
 
 /* Loader shim: luminous silver-lavender UI theme + screenshot-refined mobile layout + final opal polish + top spacing polish + shared dynamic Gemini model picker + full reading-flow redesign + one-draw-per-day DAILY ORBIT lock + safe slower tarot flip / Moon Dial timing redesign + celestial-object home portal + final home/timing polish + category artwork thumbnails + mobile reading action/timing-card usability + opal moonlight reading polish + reading readability/A-B symmetry repair + unified Timing Moon Dial visuals + persistent A/B Timing inline results + static PNG Home Screen icon + sequential whole-reading reveal + Structural V4 + Manual Spread + reusable library + last-reading recovery + reading journal/verification + archive advanced search/date filters + question casebook/web patterns/ranker + local user-correction learning + optional private cloud learning sync + AI question preflight/preview + extended Transit range + resumable long Transit runner + Astro calculation queue + iOS sheet scroll fix + all-category manual entry + Horary multi-target guard + A/B Timing Oracle + final Timing prompt repair + optional Thai Taksa tarot bridge V32.1 + Thai Taksa period calendar V33 + final evidence/Saju prompt priority + manual spreads up to 20 cards + single Horary Balance V3.1 bridge V19.5 + category tarot card-back restore V19 + universal category AI spread studio / opal light V20 + INTIMACY 18+ tarot layer / AI bridge V34 + original 9-card intimacy restore / cabinet polish V35.1 + INTIMACY mobile readability / icon repair V36 + post-draw learning success gate + six-axis DAILY ORBIT / weekday trading V21 + cinematic celestial Daily home V22 + persistent Transit/Return auto-resume V23 + standalone Thai Maha Taksa home V24 + generated Thai celestial artwork V25 + small-tile Thai artwork polish V26 + mobile long-question / journal visual repair V27 + subtle sector color identity V28 + flicker-free boot reveal V29 + fixed-spread depth V30.3 + final GENERAL priority order V30.5 + stale Timing Oracle reading-boundary reset V31.1 + stable reading action order V33. */
 (() => {
+  const W = window;
   const loadSequential = (sources) => sources.reduce((p, src) => p.then(() => new Promise((resolve, reject) => {
     const script = document.createElement('script');
     script.src = src;
@@ -9,6 +10,29 @@
     script.onerror = () => reject(new Error('Failed to load ' + src));
     document.head.appendChild(script);
   })), Promise.resolve());
+
+  const featureGroups = Object.freeze({
+    message: [
+      './lunea-message-oracle-v1.js?v=103',
+      './lunea-message-oracle-ui-v1.js?v=20260915-golden-1'
+    ]
+  });
+  const featureGroupPromises = new Map();
+  const previousFeatureLoader = typeof W.LUNEA_LOAD_FEATURE_GROUP === 'function' ? W.LUNEA_LOAD_FEATURE_GROUP : null;
+  W.LUNEA_LOAD_FEATURE_GROUP = function loadFeatureGroup(name) {
+    if (!Object.hasOwn(featureGroups, name)) {
+      return previousFeatureLoader ? previousFeatureLoader(name) : Promise.resolve(false);
+    }
+    if (featureGroupPromises.has(name)) return featureGroupPromises.get(name);
+    const promise = loadSequential(featureGroups[name]).then(() => true).catch(err => {
+      featureGroupPromises.delete(name);
+      console.error('[LUNEA feature group]', name, err);
+      return false;
+    });
+    featureGroupPromises.set(name, promise);
+    return promise;
+  };
+  W.LUNEA_FEATURE_GROUPS = Object.freeze([...new Set([...(W.LUNEA_FEATURE_GROUPS || []), ...Object.keys(featureGroups)])]);
 
   if (document.readyState === 'loading') {
     document.write('<script src="./lunea-luminous-theme-v1.js?v=101"><\/script>');
@@ -21,6 +45,8 @@
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=46f0bfa7c1a9"><\/script>');
+    document.write('<script src="./lunea-reading-attachments-v1.js?v=20260915-golden-1"><\/script>');
+    document.write('<script src="./lunea-message-oracle-support-v1.js?v=20260915-golden-1"><\/script>');
     document.write('<script src="./lunea-reading-journal-v2.js?v=201"><\/script>');
     document.write('<script src="./lunea-archive-search-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-flip-all-fix-v1.js?v=102"><\/script>');
@@ -88,6 +114,8 @@
     './lunea-manual-everywhere-v1.js?v=103',
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=46f0bfa7c1a9',
+    './lunea-reading-attachments-v1.js?v=20260915-golden-1',
+    './lunea-message-oracle-support-v1.js?v=20260915-golden-1',
     './lunea-reading-journal-v2.js?v=201',
     './lunea-archive-search-v1.js?v=101',
     './lunea-flip-all-fix-v1.js?v=102',
