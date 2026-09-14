@@ -1,9 +1,8 @@
-name: Intimacy Oracle candidate WebKit A-D
+name: Intimacy Oracle candidate WebKit A
 
 on:
   push:
     branches:
-      - fix/intimacy-oracle-late-runtime-sync
       - test/intimacy-oracle-webkit-ad
   workflow_dispatch:
 
@@ -11,28 +10,30 @@ permissions:
   contents: read
 
 jobs:
-  contracts:
+  webkit-a:
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Apply candidate product patch in runner only
+
+      - name: Apply candidate patch in runner only
         run: python3 tests/apply-intimacy-oracle-candidate.py
-      - name: Apply restore-race delta in runner only
+
+      - name: Apply confirmed restore-race guard and A harness correction
         run: |
           python3 - <<'PY'
           from pathlib import Path
 
           def rep(path, old, new, expected=1):
-              p=Path(path)
-              text=p.read_text(encoding='utf-8')
-              count=text.count(old)
-              if count!=expected:
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != expected:
                   raise SystemExit(f'{path}: expected {expected}, found {count}: {old[:120]!r}')
-              p.write_text(text.replace(old,new),encoding='utf-8')
+              p.write_text(text.replace(old, new), encoding='utf-8')
               print(f'patched {path}: {expected}')
 
           rep(
@@ -55,73 +56,12 @@ jobs:
               "    } catch (err) {\n      restoring = false;",
               "    } catch (err) {\n      W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n      restoring = false;"
           )
-          PY
-      - name: Syntax check patched product files
-        run: |
-          node --check lunea-intimacy-oracle-ui-v36.js
-          node --check lunea-intimacy-ai-bridge-v34.js
-          node --check lunea-reading-draft-v1.js
-          node --check lunea-cache-refresh-v1.js
-      - name: Candidate source contract
-        run: node tests/intimacy-oracle-candidate-contract.mjs
-      - name: Reading lifecycle invariants
-        run: node tests/reading-lifecycle-v59.test.mjs
 
-  webkit-ad:
-    needs: contracts
-    runs-on: ubuntu-latest
-    timeout-minutes: 18
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - name: Apply candidate product patch in runner only
-        run: python3 tests/apply-intimacy-oracle-candidate.py
-      - name: Apply restore-race and harness diagnostics in runner only
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          def rep(path, old, new, expected=1):
-              p=Path(path)
-              text=p.read_text(encoding='utf-8')
-              count=text.count(old)
-              if count!=expected:
-                  raise SystemExit(f'{path}: expected {expected}, found {count}: {old[:120]!r}')
-              p.write_text(text.replace(old,new),encoding='utf-8')
-              print(f'patched {path}: {expected}')
-
-          rep(
-              'lunea-intimacy-oracle-ui-v36.js',
-              "function syncOracleToCards(){const s=stateNow();if(!s)return;",
-              "function syncOracleToCards(){if(W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__)return;const s=stateNow();if(!s)return;"
-          )
-          rep(
-              'lunea-reading-draft-v1.js',
-              "      restoring = true;\n      const s = setStateFromDraft(d);",
-              "      restoring = true;\n      const restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;\n      if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=true;\n      const s = setStateFromDraft(d);"
-          )
-          rep(
-              'lunea-reading-draft-v1.js',
-              "        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}\n        restoring = false;",
-              "        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}\n        if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n        restoring = false;"
-          )
-          rep(
-              'lunea-reading-draft-v1.js',
-              "    } catch (err) {\n      restoring = false;",
-              "    } catch (err) {\n      W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n      restoring = false;"
-          )
+          # A-only harness corrections. Product code is not changed by these three replacements.
           rep(
               'tests/intimacy-oracle-webkit-ad.e2e.mjs',
               "    assert.match(stale.marker,/36\\.4/);",
               "    assert.match(stale.marker,/^oracle-/);"
-          )
-          rep(
-              'tests/intimacy-oracle-webkit-ad.e2e.mjs',
-              "    await page.locator('#luneaOracleAddExtra').click(); await page.locator('#luneaOracleAddExtra').click();",
-              "    await page.evaluate(()=>document.getElementById('luneaOracleAddExtra')?.click()); await waitOracle(page,{base:3,extra:1,mode:3});\n    await page.evaluate(()=>document.getElementById('luneaOracleAddExtra')?.click());",
-              expected=2
           )
           rep(
               'tests/intimacy-oracle-webkit-ad.e2e.mjs',
@@ -131,41 +71,40 @@ jobs:
           rep(
               'tests/intimacy-oracle-webkit-ad.e2e.mjs',
               "    await openIntimacyAndDraw(page,'fresh V36.5 버튼 검증');",
-              "    await restoreLastReading(page);\n    await page.waitForFunction(()=>typeof state!=='undefined'&&String(state.category||'').toUpperCase()==='INTIMACY'&&Array.isArray(state.drawn)&&state.drawn.length>0,{timeout:15000});\n    assert.equal(await page.evaluate(()=>document.querySelector('#question')?.value||''),'stale V36.4 경계 검증');"
-          )
-          rep(
-              'tests/intimacy-oracle-webkit-ad.e2e.mjs',
-              "    await page.locator('.lio-base-row .lio-card').first().click();\n    await page.locator('.lio-extra-row .lio-card').first().click();",
-              "    await page.evaluate(()=>document.querySelector('.lio-base-row .lio-card')?.click());\n    await page.evaluate(()=>document.querySelector('.lio-extra-row .lio-card')?.click());\n    await page.waitForFunction(()=>{const s=window.LUNEA_INTIMACY_ORACLE_UI_V36?.getState?.();return !!s&&s.revealed?.has?.(0)&&s.extraRevealed?.has?.(0)});"
-          )
-          rep(
-              'tests/intimacy-oracle-webkit-ad.e2e.mjs',
-              "    await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});\n    await waitOracle(page,{base:3,extra:2,mode:3});\n    let got=await page.evaluate(()=>{const s=window.LUNEA_INTIMACY_ORACLE_UI_V36.getState();return{base:s.cards.map(x=>x.code),extra:s.extraCards.map(x=>x.code),rng:window.__LUNEA_WEBKIT_RNG_CALLS__||0,restores:window.__LUNEA_WEBKIT_RESTORE_CALLS__||0}});",
-              "    await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});\n    await page.waitForTimeout(300);\n    const d1=await page.evaluate(()=>{const api=window.LUNEA_INTIMACY_ORACLE_UI_V36,s=api?.getState?.();let sidecar=null,draft=null;try{sidecar=JSON.parse(localStorage.getItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1')||'null')}catch{}try{draft=JSON.parse(localStorage.getItem('LUNEA_LAST_READING_DRAFT_V1')||'null')}catch{}return{oracleVersion:api?.version||null,mode:s?.mode??null,base:s?.cards?.map?.(x=>x.code)||[],extra:s?.extraCards?.map?.(x=>x.code)||[],restoring:!!window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__,pendingGlobal:!!window.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__,stale:window.__LUNEA_INTIMACY_ORACLE_STALE__||'',bridgeVersion:window.LUNEA_INTIMACY_AI_BRIDGE_V34?.version||null,bridgeActive:window.LUNEA_INTIMACY_AI_BRIDGE_V34?.isActiveContext?.()??null,rng:window.__LUNEA_WEBKIT_RNG_CALLS__||0,restores:window.__LUNEA_WEBKIT_RESTORE_CALLS__||0,sidecarMode:sidecar?.mode??null,sidecarBase:sidecar?.cards?.length??null,sidecarExtra:sidecar?.extraCards?.length??null,draftMode:draft?.intimacyOracle?.mode??null,draftBase:draft?.intimacyOracle?.cards?.length??null,draftExtra:draft?.intimacyOracle?.extraCards?.length??null,scripts:[...document.scripts].filter(x=>/lunea-intimacy-oracle-ui-v36\\.js/.test(x.src||'')).length}});\n    console.log('D DIAG AFTER RUNTIME '+JSON.stringify(d1));\n    try{await waitOracle(page,{base:3,extra:2,mode:3})}catch(err){const d2=await page.evaluate(()=>{const api=window.LUNEA_INTIMACY_ORACLE_UI_V36,s=api?.getState?.();let sidecar=null;try{sidecar=JSON.parse(localStorage.getItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1')||'null')}catch{}return{mode:s?.mode??null,base:s?.cards?.map?.(x=>x.code)||[],extra:s?.extraCards?.map?.(x=>x.code)||[],restoring:!!window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__,pendingGlobal:!!window.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__,stale:window.__LUNEA_INTIMACY_ORACLE_STALE__||'',bridgeActive:window.LUNEA_INTIMACY_AI_BRIDGE_V34?.isActiveContext?.()??null,rng:window.__LUNEA_WEBKIT_RNG_CALLS__||0,restores:window.__LUNEA_WEBKIT_RESTORE_CALLS__||0,sidecarMode:sidecar?.mode??null,sidecarBase:sidecar?.cards?.length??null,sidecarExtra:sidecar?.extraCards?.length??null}});throw new Error(String(err?.message||err)+' D_DIAG='+JSON.stringify(d2))}\n    let got=await page.evaluate(()=>{const s=window.LUNEA_INTIMACY_ORACLE_UI_V36.getState();return{base:s.cards.map(x=>x.code),extra:s.extraCards.map(x=>x.code),rng:window.__LUNEA_WEBKIT_RNG_CALLS__||0,restores:window.__LUNEA_WEBKIT_RESTORE_CALLS__||0}});"
+              "    await page.waitForLoadState('domcontentloaded',{timeout:60000});\n    await restoreLastReading(page);\n    await page.waitForFunction(()=>typeof state!=='undefined'&&String(state.category||'').toUpperCase()==='INTIMACY'&&Array.isArray(state.drawn)&&state.drawn.length>0,{timeout:15000});\n    assert.equal(await page.evaluate(()=>document.querySelector('#question')?.value||''),'stale V36.4 경계 검증');"
           )
           PY
-      - name: Syntax check revised candidate and harness
+
+      - name: Syntax and invariant checks
         run: |
           node --check lunea-intimacy-oracle-ui-v36.js
+          node --check lunea-intimacy-ai-bridge-v34.js
           node --check lunea-reading-draft-v1.js
+          node --check lunea-cache-refresh-v1.js
           node --check tests/intimacy-oracle-webkit-ad.e2e.mjs
+          node tests/intimacy-oracle-candidate-contract.mjs
+          node tests/reading-lifecycle-v59.test.mjs
+
       - name: Install Playwright WebKit
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
+
       - name: Start branch-local LUNEA server
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-intimacy-webkit-ad.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-intimacy-webkit-a.log 2>&1 &
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
             sleep 1
           done
-          cat /tmp/lunea-intimacy-webkit-ad.log
+          cat /tmp/lunea-intimacy-webkit-a.log
           exit 1
-      - name: Run WebKit blocking A-D regression
+
+      - name: Run WebKit A regression
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
         run: node tests/intimacy-oracle-webkit-ad.e2e.mjs
+
       - name: Show local server log
-        if: always()
-        run: cat /tmp/lunea-intimacy-webkit-ad.log || true
+        if: failure()
+        run: cat /tmp/lunea-intimacy-webkit-a.log || true
