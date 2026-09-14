@@ -59,6 +59,8 @@
     return text;
   }
 
+  function currentIntimacyOracle(s){if(String(s?.category||'').toUpperCase()!=='INTIMACY')return null;try{return clone(W.LUNEA_INTIMACY_AI_BRIDGE_V34?.serializeOracleDraft?.()??W.LUNEA_INTIMACY_ORACLE_UI_V36?.serializeOracleDraft?.()??null)}catch{return null}}
+
   function snapshot() {
     if (restoring) return;
     const s = getState();
@@ -68,7 +70,7 @@
     if (!drawn?.length) return;
 
     const payload = {
-      version: 1,
+      version: 2,
       savedAt: Date.now(),
       category: String(s.category || 'GENERAL'),
       title: String(s.title || ''),
@@ -84,7 +86,8 @@
       aiText: currentAIText(),
       manualReading: !!s.__luneaManualReading,
       manualMode: !!s.__luneaManualMode,
-      manualPositions: clone(s.__luneaManualPositions || null)
+      manualPositions: clone(s.__luneaManualPositions || null),
+      intimacyOracle: currentIntimacyOracle(s)
     };
 
     try {
@@ -101,7 +104,8 @@
   }
 
   function clearDraft() {
-    try { localStorage.removeItem(KEY); } catch {}
+    const d=readDraft();
+    try { localStorage.removeItem(KEY); if(d?.intimacyOracle)localStorage.removeItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1'); } catch {}
     renderResumeBar();
   }
 
@@ -256,6 +260,8 @@
 
     try {
       restoring = true;
+      const restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;
+      if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=true;
       const s = setStateFromDraft(d);
       $('cards')?.replaceChildren();
       $('results')?.replaceChildren();
@@ -298,11 +304,14 @@
           appendSavedClarifiers(i);
         });
         restoreAI(d.aiText || '');
+        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}
+        if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
         restoring = false;
         renderResumeBar();
         scheduleSave(120);
       });
     } catch (err) {
+      W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
       restoring = false;
       console.error('[LUNEA Draft] restore failed', err);
       alert('마지막 리딩 복원 중 오류가 났어: ' + (err?.message || err));
@@ -330,7 +339,7 @@
     }).observe(overlay, {attributes:true, attributeFilter:['class']});
 
     document.addEventListener('click', event => {
-      if (event.target?.closest?.('#extraCard,#flipAll,[data-clarify],#aiRead,#retry')) scheduleSave(120);
+      if (event.target?.closest?.('#extraCard,#flipAll,[data-clarify],#aiRead,#retry,#luneaOracleAddExtra,#luneaOracleRevealAll,.lio-card,[data-lio-mode]')) scheduleSave(120);
     }, true);
 
     window.addEventListener('pagehide', snapshot);

@@ -64,6 +64,7 @@ jobs:
               'lunea-intimacy-ai-bridge-v34.js',
               'lunea-intimacy-legacy-v35.js',
               'lunea-intimacy-readability-v36.js',
+              'lunea-reading-draft-v1.js',
               'lunea-transit-range-v1.js',
               'lunea-fixed-spread-depth-v30.js',
               'lunea-general-order-v30-5.js',

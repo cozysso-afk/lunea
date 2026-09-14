@@ -14,6 +14,9 @@
 
   const W = window;
   const BUILD_FILE = './lunea-build.json';
+  let pendingRefresh = null;
+  let checkPromise = null;
+  let lastCheckAt = 0;
   const SELF_BUILD = (() => {
     try {
       const src = document.currentScript?.src || '';
@@ -99,33 +102,47 @@
     loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57.1');
   }
 
-  function refreshTo(build) {
+  function readingBusy(){return !!document.hidden||!!document.getElementById('spreadOverlay')?.classList.contains('show')||!!document.getElementById('sheet')?.classList.contains('open')}
+  function refreshTo(build,force=false) {
     try {
       const url = new URL(location.href);
-      if (url.searchParams.get('lunea_v') === build) return;
+      if (!force && url.searchParams.get('lunea_v') === build) return;
       url.searchParams.set('lunea_v', build);
       url.searchParams.set('fresh', String(Date.now()));
       location.replace(url.toString());
     } catch { location.reload(); }
   }
 
-  async function checkBuild() {
-    try {
+  function queueRefresh(build,force=false){if(!build)return false;if(readingBusy()){pendingRefresh={build,force:!!force};return false}pendingRefresh=null;refreshTo(build,force);return true}
+  function flushPending(){if(!pendingRefresh||readingBusy())return false;const next=pendingRefresh;pendingRefresh=null;refreshTo(next.build,next.force);return true}
+
+  function checkBuild(options={}) {
+    const forceRefresh=!!options.forceRefresh,now=Date.now();
+    if(checkPromise)return checkPromise;
+    if(!forceRefresh&&now-lastCheckAt<1500)return Promise.resolve(false);
+    lastCheckAt=now;
+    checkPromise=(async()=>{try {
       const res = await fetch(`${BUILD_FILE}?t=${Date.now()}`, {
         cache:'no-store',
         headers:{'cache-control':'no-cache','accept':'application/json'}
       });
-      if (!res.ok) return;
+      if (!res.ok) return false;
       const data = await res.json();
-      if (data.error) return;
+      if (data.error) return false;
       const remote = String(data?.version || '').trim();
-      if (!remote) return;
+      if (!remote) return false;
       const embedded = currentPageBuild();
-      if (embedded && embedded !== remote) refreshTo(remote);
+      if (embedded && (embedded !== remote || forceRefresh)) queueRefresh(remote,forceRefresh);
+      return true;
     } catch (err) {
       console.info('[LUNEA cache refresh] skipped', err?.message || err);
-    }
+      return false;
+    }finally{checkPromise=null}})();
+    return checkPromise;
   }
+
+  function installResumeBuildChecks(){window.addEventListener('pageshow',()=>{checkBuild();flushPending()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkBuild();flushPending()}});for(const id of ['spreadOverlay','sheet']){const el=document.getElementById(id);if(el)new MutationObserver(flushPending).observe(el,{attributes:true,attributeFilter:['class']})}}
+  function requestFreshDocument(){return checkBuild({forceRefresh:true})}
 
   function boot() {
     loadAstroOriginFailover();
@@ -144,7 +161,9 @@
     loadLearningAuthRecovery();
     loadEmergencyRepair();
     loadMobileRuntimeFixesV57();
+    installResumeBuildChecks();
     checkBuild();
+    W.LUNEA_CACHE_REFRESH_V1=Object.freeze({checkNow:checkBuild,requestFreshDocument,flushPending});
   }
 
   // Core reading rows + session boundary are parser-time work.
