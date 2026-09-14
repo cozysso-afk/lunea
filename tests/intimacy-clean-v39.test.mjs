@@ -6,8 +6,10 @@ import { fileURLToPath } from 'node:url';
 
 const v39Url = new URL('../lunea-intimacy-clean-v39.js', import.meta.url);
 const source = fs.readFileSync(v39Url, 'utf8');
+const v40 = fs.readFileSync(new URL('../lunea-intimacy-burgundy-v40.js', import.meta.url), 'utf8');
+const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
 
- test('V39 source parses as valid JavaScript', () => {
+test('V39 source parses as valid JavaScript', () => {
   const check = spawnSync(process.execPath, ['--check', fileURLToPath(v39Url)], {encoding:'utf8'});
   assert.equal(check.status, 0, check.stderr || check.stdout || 'V39 syntax check failed');
 });
@@ -21,6 +23,11 @@ test('Home tile keeps dedicated INTIMACY artwork while source header uses the sm
   assert.match(source, /icon\.textContent = '♡'/);
   assert.doesNotMatch(source, /icon\.replaceChildren\(img\)/);
   assert.doesNotMatch(source, /lunea-intimacy-sector-art-v39/);
+});
+
+test('burgundy owner preserves the approved source heart instead of reclaiming it with SVG artwork', () => {
+  assert.match(v40, /categoryIcon:'♡'/);
+  assert.doesNotMatch(v40, /forceIcon\(\$\('\.cat-icon', category\), CATEGORY_ICON_SRC\)/);
 });
 
 test('legacy orbit presentation is removed without adding a global mutation observer', () => {
@@ -49,6 +56,19 @@ test('approved opened INTIMACY rows keep the final contained-card geometry and O
   assert.match(source, /border-radius:14px!important/);
   assert.match(source, /badge\.textContent = 'ORIGINAL'/);
   assert.match(source, /lunea-intimacy-list-label\{display:none!important\}/);
+});
+
+test('approved action-order owner restores all current INTIMACY presentation runtimes', () => {
+  assert.match(order, /INTIMACY_CLEAN_LOADER_ID/);
+  assert.match(order, /INTIMACY_BURGUNDY_LOADER_ID/);
+  assert.match(order, /INTIMACY_REPAIR_LOADER_ID/);
+  assert.match(order, /ensureScript\(INTIMACY_CLEAN_LOADER_ID, '\.\/lunea-intimacy-clean-v39\.js'/);
+  assert.match(order, /ensureScript\(INTIMACY_BURGUNDY_LOADER_ID, '\.\/lunea-intimacy-burgundy-v40\.js'/);
+  assert.match(order, /ensureScript\(INTIMACY_REPAIR_LOADER_ID, '\.\/lunea-intimacy-repair-v43\.js'/);
+  const boot = order.indexOf('function boot()');
+  assert.ok(order.indexOf('ensureIntimacyCleanUi();', boot) > boot);
+  assert.ok(order.indexOf('ensureIntimacyBurgundyUi();', boot) > boot);
+  assert.ok(order.indexOf('ensureIntimacyRepairUi();', boot) > boot);
 });
 
 console.log('LUNEA INTIMACY clean UI V39 golden regression tests: PASS');
