@@ -64,8 +64,11 @@ assert.equal(core.cardRoot,'./assets/intimacy-oracle/cards');
 assert.doesNotMatch(source,/tarot_back_intimacy_final\.png/);
 
 assert.match(bridge,/lunea-intimacy-oracle-v35\.js\?v=352/);
-assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
+assert.match(bridge,/const SELF_BUILD/);
+assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=/);
+assert.match(bridge,/encodeURIComponent\(SELF_BUILD \|\| '3615'\)/);
 assert.match(bridge,/__LUNEA_READING_ACTION_ORDER_V33__/);
+assert.match(bridge,/restoreOracleDraftExact/);
 assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 
 const pngSig=[0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a];
