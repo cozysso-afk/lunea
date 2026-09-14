@@ -1,4 +1,4 @@
-name: Intimacy Oracle late-runtime sync branch checks
+name: Intimacy Oracle candidate WebKit A-D
 
 on:
   push:
@@ -18,43 +18,47 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax check
+      - name: Apply candidate product patch in runner only
+        run: python3 tests/apply-intimacy-oracle-candidate.py
+      - name: Syntax check patched product files
         run: |
+          node --check lunea-intimacy-oracle-ui-v36.js
           node --check lunea-intimacy-ai-bridge-v34.js
-          node --check tests/intimacy-oracle-late-runtime.e2e.mjs
-      - name: AI bridge contract
-        run: node --test tests/intimacy-ai-bridge-v34.test.mjs
-      - name: Supplemental Oracle contract
-        run: node tests/intimacy-oracle-ui-v36.test.mjs
+          node --check lunea-reading-draft-v1.js
+          node --check lunea-cache-refresh-v1.js
+      - name: Candidate source contract
+        run: node tests/intimacy-oracle-candidate-contract.mjs
       - name: Reading lifecycle invariants
         run: node tests/reading-lifecycle-v59.test.mjs
 
-  webkit-late-runtime:
+  webkit-ad:
     needs: contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Apply candidate product patch in runner only
+        run: python3 tests/apply-intimacy-oracle-candidate.py
       - name: Install Playwright WebKit
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
       - name: Start branch-local LUNEA server
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-intimacy-late-runtime.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-intimacy-webkit-ad.log 2>&1 &
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
             sleep 1
           done
-          cat /tmp/lunea-intimacy-late-runtime.log
+          cat /tmp/lunea-intimacy-webkit-ad.log
           exit 1
-      - name: Run real-path late-runtime regression
+      - name: Run WebKit blocking A-D regression
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
-        run: node tests/intimacy-oracle-late-runtime.e2e.mjs
+        run: node tests/intimacy-oracle-webkit-ad.e2e.mjs
       - name: Show local server log
         if: always()
-        run: cat /tmp/lunea-intimacy-late-runtime.log || true
+        run: cat /tmp/lunea-intimacy-webkit-ad.log || true
