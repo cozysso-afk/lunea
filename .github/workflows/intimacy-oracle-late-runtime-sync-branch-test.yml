@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - fix/intimacy-oracle-late-runtime-sync
+      - test/intimacy-oracle-webkit-ad
   workflow_dispatch:
 
 permissions:
