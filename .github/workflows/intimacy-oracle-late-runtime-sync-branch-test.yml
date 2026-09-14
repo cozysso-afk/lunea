@@ -21,6 +21,41 @@ jobs:
           node-version: '22'
       - name: Apply candidate product patch in runner only
         run: python3 tests/apply-intimacy-oracle-candidate.py
+      - name: Apply restore-race delta in runner only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def rep(path, old, new, expected=1):
+              p=Path(path)
+              text=p.read_text(encoding='utf-8')
+              count=text.count(old)
+              if count!=expected:
+                  raise SystemExit(f'{path}: expected {expected}, found {count}: {old[:120]!r}')
+              p.write_text(text.replace(old,new),encoding='utf-8')
+              print(f'patched {path}: {expected}')
+
+          rep(
+              'lunea-intimacy-oracle-ui-v36.js',
+              "function syncOracleToCards(){const s=stateNow();if(!s)return;",
+              "function syncOracleToCards(){if(W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__)return;const s=stateNow();if(!s)return;"
+          )
+          rep(
+              'lunea-reading-draft-v1.js',
+              "      restoring = true;\n      const s = setStateFromDraft(d);",
+              "      restoring = true;\n      const restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;\n      if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=true;\n      const s = setStateFromDraft(d);"
+          )
+          rep(
+              'lunea-reading-draft-v1.js',
+              "        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}\n        restoring = false;",
+              "        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}\n        if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n        restoring = false;"
+          )
+          rep(
+              'lunea-reading-draft-v1.js',
+              "    } catch (err) {\n      restoring = false;",
+              "    } catch (err) {\n      W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n      restoring = false;"
+          )
+          PY
       - name: Syntax check patched product files
         run: |
           node --check lunea-intimacy-oracle-ui-v36.js
@@ -43,6 +78,57 @@ jobs:
           node-version: '22'
       - name: Apply candidate product patch in runner only
         run: python3 tests/apply-intimacy-oracle-candidate.py
+      - name: Apply restore-race and harness deltas in runner only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def rep(path, old, new, expected=1):
+              p=Path(path)
+              text=p.read_text(encoding='utf-8')
+              count=text.count(old)
+              if count!=expected:
+                  raise SystemExit(f'{path}: expected {expected}, found {count}: {old[:120]!r}')
+              p.write_text(text.replace(old,new),encoding='utf-8')
+              print(f'patched {path}: {expected}')
+
+          rep(
+              'lunea-intimacy-oracle-ui-v36.js',
+              "function syncOracleToCards(){const s=stateNow();if(!s)return;",
+              "function syncOracleToCards(){if(W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__)return;const s=stateNow();if(!s)return;"
+          )
+          rep(
+              'lunea-reading-draft-v1.js',
+              "      restoring = true;\n      const s = setStateFromDraft(d);",
+              "      restoring = true;\n      const restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;\n      if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=true;\n      const s = setStateFromDraft(d);"
+          )
+          rep(
+              'lunea-reading-draft-v1.js',
+              "        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}\n        restoring = false;",
+              "        if(d.intimacyOracle){const snapshot=clone(d.intimacyOracle);const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;if(bridge?.restoreOracleDraft)bridge.restoreOracleDraft(snapshot);else W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=snapshot;}\n        if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n        restoring = false;"
+          )
+          rep(
+              'lunea-reading-draft-v1.js',
+              "    } catch (err) {\n      restoring = false;",
+              "    } catch (err) {\n      W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;\n      restoring = false;"
+          )
+          rep(
+              'tests/intimacy-oracle-webkit-ad.e2e.mjs',
+              "    assert.match(stale.marker,/36\\.4/);",
+              "    assert.match(stale.marker,/^oracle-/);"
+          )
+          rep(
+              'tests/intimacy-oracle-webkit-ad.e2e.mjs',
+              "    await page.locator('#luneaOracleAddExtra').click(); await page.locator('#luneaOracleAddExtra').click();",
+              "    await page.evaluate(()=>document.getElementById('luneaOracleAddExtra')?.click()); await waitOracle(page,{base:3,extra:1,mode:3});\n    await page.evaluate(()=>document.getElementById('luneaOracleAddExtra')?.click());",
+              expected=2
+          )
+          PY
+      - name: Syntax check revised candidate and harness
+        run: |
+          node --check lunea-intimacy-oracle-ui-v36.js
+          node --check lunea-reading-draft-v1.js
+          node --check tests/intimacy-oracle-webkit-ad.e2e.mjs
       - name: Install Playwright WebKit
         run: |
           npm install --no-save playwright@1.55.0
