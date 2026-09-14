@@ -61,9 +61,72 @@ try{
   assert.equal(beforeRuntime.oracleReady,false,'test must reproduce the late-runtime window');
   assert.equal(beforeRuntime.panelButton,false,'supplemental button should not exist before Oracle runtime loads');
 
+  const draftSeed=await page.evaluate(()=>{
+    const copy=value=>JSON.parse(JSON.stringify(value));
+    return {
+      version:2,
+      savedAt:Date.now(),
+      category:'INTIMACY',
+      title:String(state.title||''),
+      desc:String(state.desc||''),
+      count:Number(state.count||state.positions?.length||state.drawn?.length||1),
+      isAi:!!state.isAi,
+      allowReversed:!!state.allowReversed,
+      positions:copy(state.positions||[]),
+      rationale:String(state.rationale||''),
+      question:'E2E · 늦은 Oracle runtime에서도 O01 exact draft를 보존한다',
+      drawn:copy(state.drawn||[]),
+      flipped:[],
+      aiText:'',
+      manualReading:!!state.__luneaManualReading,
+      manualMode:!!state.__luneaManualMode,
+      manualPositions:copy(state.__luneaManualPositions||null),
+      intimacyOracle:{
+        version:2,
+        runtimeVersion:'36.5',
+        mode:1,
+        cards:[{code:'O01',lens:'전체 리딩 렌즈'}],
+        extraCards:[],
+        revealed:[0],
+        extraRevealed:[],
+        stamp:''
+      }
+    };
+  });
+
+  await page.evaluate(()=>document.querySelector('[data-close="spread"]')?.click());
+  await page.waitForFunction(()=>!document.getElementById('spreadOverlay')?.classList.contains('show'));
+  await page.waitForTimeout(180);
+  await page.waitForFunction(()=>!!window.LUNEA_READING_DRAFT_V1?.restoreDraft);
+
+  await page.evaluate(seed=>{
+    localStorage.setItem('LUNEA_LAST_READING_DRAFT_V1',JSON.stringify(seed));
+    state.category='GENERAL';
+    state.question='E2E stale state before restore';
+    window.LUNEA_READING_DRAFT_V1.restoreDraft();
+  },draftSeed);
+  await page.waitForFunction(()=>document.getElementById('spreadOverlay')?.classList.contains('show'));
+  await page.waitForTimeout(300);
+
+  const beforeRelease=await page.evaluate(()=>{
+    const d=JSON.parse(localStorage.getItem('LUNEA_LAST_READING_DRAFT_V1')||'null');
+    return {
+      question:String(state?.question||''),
+      savedOracle:d?.intimacyOracle||null,
+      restoringOracle:window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__===true,
+      oracleReady:!!window.LUNEA_INTIMACY_ORACLE_UI_V36
+    };
+  });
+  assert.equal(beforeRelease.question,draftSeed.question,'draft question must restore before Oracle runtime arrives');
+  assert.equal(beforeRelease.oracleReady,false,'Oracle runtime must still be held after the old 120ms race window');
+  assert.equal(beforeRelease.restoringOracle,true,'exact Oracle restore guard must remain active while runtime is pending');
+  assert.equal(beforeRelease.savedOracle?.cards?.[0]?.code,'O01','120ms autosave must not overwrite pending exact Oracle draft with null');
+
   releaseOracleRuntime();
   await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});
   await page.waitForFunction(()=>document.getElementById('luneaOracleAddExtra') && !document.getElementById('luneaIntimacyOraclePanel')?.hidden,{timeout:5000});
+  await page.waitForFunction(()=>window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__!==true,{timeout:5000});
+  await page.waitForTimeout(180);
 
   const afterRuntime=await page.evaluate(()=>{
     const button=document.getElementById('luneaOracleAddExtra');
@@ -72,8 +135,13 @@ try{
     const rect=button?.getBoundingClientRect();
     const style=button?getComputedStyle(button):null;
     const panelStyle=panel?getComputedStyle(panel):null;
+    const d=JSON.parse(localStorage.getItem('LUNEA_LAST_READING_DRAFT_V1')||'null');
+    const oracle=window.LUNEA_INTIMACY_ORACLE_UI_V36.getState();
     return {
-      oracle:window.LUNEA_INTIMACY_ORACLE_UI_V36.getState(),
+      oracleCodes:oracle.cards.map(card=>card.code),
+      extraCodes:oracle.extraCards.map(card=>card.code),
+      revealed:[...oracle.revealed],
+      savedOracle:d?.intimacyOracle||null,
       label:button?.textContent||'',
       hidden:panel?.hidden,
       overlayShow:!!overlay?.classList.contains('show'),
@@ -85,8 +153,10 @@ try{
       panelVisibility:panelStyle?.visibility||''
     };
   });
-  assert.equal(afterRuntime.oracle.cards.length,1,'late runtime must draw/restore the configured base Oracle for the current reading');
-  assert.equal(afterRuntime.oracle.extraCards.length,0);
+  assert.deepEqual(afterRuntime.oracleCodes,['O01'],'late runtime must restore the exact saved Oracle instead of re-drawing');
+  assert.deepEqual(afterRuntime.extraCodes,[]);
+  assert.deepEqual(afterRuntime.revealed,[0]);
+  assert.equal(afterRuntime.savedOracle?.cards?.[0]?.code,'O01','post-restore autosave must keep exact Oracle snapshot');
   assert.match(afterRuntime.label,/오라클 추가 \(0\/3\)/);
   assert.equal(afterRuntime.hidden,false);
   assert.equal(afterRuntime.overlayShow,true,'spread overlay must remain open after Oracle runtime arrives');
@@ -100,7 +170,7 @@ try{
 
   const relevant=pageErrors.filter(x=>!/onrender\.com\/health|access control checks/i.test(x));
   assert.deepEqual(relevant,[],`unexpected page errors:\n${relevant.join('\n')}`);
-  console.log('INTIMACY late Oracle runtime sync WebKit regression: PASS');
+  console.log('INTIMACY late Oracle runtime exact-draft regression: PASS');
 }finally{
   releaseOracleRuntime();
   await browser.close();
