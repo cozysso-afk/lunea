@@ -16,9 +16,34 @@ page.on('pageerror',e=>pageErrors.push(String(e?.stack||e)));
 page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
 page.on('dialog',async d=>{dialogs.push(`${d.type()}: ${d.message()}`);await d.accept()});
 
-let releaseOracleRuntime=()=>{};
-const oracleGate=new Promise(resolve=>{releaseOracleRuntime=resolve});
-await page.route(/lunea-intimacy-oracle-ui-v36\.js\?/,async route=>{await oracleGate;await route.continue()});
+// Keep the production bridge's load Promise genuinely pending without leaving a
+// network request open for tens of seconds. The bridge creates the canonical UI
+// <script>; this test temporarily holds that node before DOM insertion. Releasing
+// it later starts the real local script request and resolves the original Promise.
+await page.addInitScript(()=>{
+  const nativeAppendChild=Node.prototype.appendChild;
+  const held=[];
+  let released=false;
+  Node.prototype.appendChild=function(node){
+    const src=String(node?.src||'');
+    if(!released&&node?.tagName==='SCRIPT'&&/lunea-intimacy-oracle-ui-v36\.js(?:\?|$)/.test(src)){
+      held.push({parent:this,node});
+      return node;
+    }
+    return nativeAppendChild.call(this,node);
+  };
+  window.__LUNEA_E2E_HELD_ORACLE_RUNTIME__={
+    count:()=>held.length,
+    release:()=>{
+      if(released)return held.length;
+      released=true;
+      Node.prototype.appendChild=nativeAppendChild;
+      held.splice(0).forEach(({parent,node})=>nativeAppendChild.call(parent,node));
+      return 1;
+    }
+  };
+});
+
 await page.route(/https:\/\/fonts\.googleapis\.com\//,route=>route.fulfill({status:200,contentType:'text/css; charset=utf-8',body:''}));
 await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//,route=>route.fulfill({status:204,body:''}));
 await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i,route=>route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));
@@ -50,6 +75,8 @@ try{
     };
   });
 
+  const heldBefore=await page.evaluate(()=>window.__LUNEA_E2E_HELD_ORACLE_RUNTIME__?.count?.()||0);
+  assert.ok(heldBefore>=1,'test harness must hold the canonical Oracle UI script before restore');
   assert.equal(await page.evaluate(()=>!!window.LUNEA_INTIMACY_ORACLE_UI_V36),false,'test must hold Oracle runtime before restore');
   await page.evaluate(()=>document.querySelector('[data-close="spread"]')?.click());
   await page.waitForFunction(()=>!document.getElementById('spreadOverlay')?.classList.contains('show'));
@@ -70,7 +97,8 @@ try{
       reason:document.documentElement.dataset.luneaReadingReason||'',
       category:String(state?.category||''),question:String(state?.question||''),drawn:Array.isArray(state?.drawn)?state.drawn.length:-1,
       savedOracle:d?.intimacyOracle||null,guard:window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__===true,
-      oracleReady:!!window.LUNEA_INTIMACY_ORACLE_UI_V36
+      oracleReady:!!window.LUNEA_INTIMACY_ORACLE_UI_V36,
+      heldOracleRuntime:window.__LUNEA_E2E_HELD_ORACLE_RUNTIME__?.count?.()||0
     };
   });
   console.log('PRE_RELEASE',JSON.stringify(pre,null,2));
@@ -78,10 +106,14 @@ try{
   assert.equal(pre.reason,'luneaDraftRestore','V59 must establish a fresh restore session');
   assert.equal(pre.question,draftSeed.question);
   assert.equal(pre.oracleReady,false);
+  assert.ok(pre.heldOracleRuntime>=1,'Oracle UI node must remain held before release');
+  assert.equal(pre.guard,true,'exact restore guard must remain active while runtime is late');
   assert.equal(pre.savedOracle?.cards?.[0]?.code,'O01','old 120ms save window must preserve O01 while runtime is late');
 
-  releaseOracleRuntime();
-  await page.waitForTimeout(1500);
+  await page.evaluate(()=>window.__LUNEA_E2E_HELD_ORACLE_RUNTIME__?.release?.());
+  await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});
+  await page.waitForFunction(()=>window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__!==true,{timeout:15000});
+  await page.waitForTimeout(180);
 
   const post=await page.evaluate(()=>{
     const ui=window.LUNEA_INTIMACY_ORACLE_UI_V36;
@@ -119,6 +151,6 @@ try{
   assert.equal(extraCount,1,'supplemental Oracle must still work after late exact restore');
   console.log('INTIMACY late Oracle runtime exact-draft regression: PASS');
 }finally{
-  releaseOracleRuntime();
+  try{await page.evaluate(()=>window.__LUNEA_E2E_HELD_ORACLE_RUNTIME__?.release?.())}catch{}
   await browser.close();
 }
