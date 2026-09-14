@@ -76,7 +76,7 @@ test('termination snapshots are nonblocking and oversized data fails closed',()=
   h.api.register('astroTransit',{capture:()=>({huge:'x'.repeat(230000)})});assert.equal(h.api.notifyChanged('astroTransit'),false);assert.equal(h.api.register('messageOracle',{capture:()=>null}),true);
 });
 
-test('production owners register state adapters and disable legacy archive[0] mutation',()=>{
+test('production owners register state adapters and active journal path preserves exact archive identity',()=>{
   const owners=new Map([['astro-transit-v1.js','astroTransit'],['astro-return-v1.js','astroReturns'],['lunea-thai-tarot-bridge-v32.js','thaiTaksa'],['lunea-thai-range-v33.js','thaiTaksaRange'],['astro-horary-v1.js','horary'],['timing-oracle-v1.js','timing']]);
   for(const [file,name] of owners){const code=read(file);assert.match(code,new RegExp(`register\\('${name}'`));assert.match(code,new RegExp(`notifyChanged\\?\\.\\('${name}'\\)`));assert.match(code,/capture:/);if(name!=='timing')assert.match(code,/restore:/)}
   for(const file of ['astro-transit-v1.js','astro-return-v1.js','astro-horary-v1.js','timing-oracle-v1.js'])assert.match(read(file),/if\s*\(window\.LUNEA_READING_ATTACHMENTS_V1\)\s*return/);
@@ -84,5 +84,7 @@ test('production owners register state adapters and disable legacy archive[0] mu
   const draft=read('lunea-reading-draft-v1.js');assert.match(draft,/captureDraft\?\.\(s\)/);assert.match(draft,/prepareRestore\?\.\(\)/);assert.match(draft,/restoreDraft\?\.\(d\)/);
   const loader=read('lunea-structural-routing-v4.js');assert.match(loader,/lunea-reading-draft-v1\.js[\s\S]*lunea-reading-attachments-v1\.js/);assert.doesNotMatch(source,/Storage\.prototype\./);
   const horary=read('astro-horary-v1.js');assert.match(horary,/judgment_support:enriched\.judgment_support/);for(const n of ['LUNEA_HORARY_TOPIC_V19','LUNEA_HORARY_QUESTION_MODES_V37','LUNEA_HORARY_HARDENING_V38','LUNEA_HORARY_TRADITIONAL_CORE_V40','LUNEA_HORARY_BALANCE_GUARD_V41']){assert.match(horary,new RegExp(`${n}\\?\\.restoreResult`));assert.match(horary,new RegExp(`${n}\\?\\.clearResult`))}
-  assert.match(read('lunea-journal-detail-v51.js'),/dataset\?\.sourceArchiveId/);assert.match(read('lunea-reading-journal-v2.js'),/el\.dataset\.sourceArchiveId/);assert.match(read('index.html'),/el\.dataset\.sourceArchiveId=String\(item\.id\)/);
+  const journal=read('lunea-reading-journal-v2.js');assert.match(journal,/el\.dataset\.sourceArchiveId = entry\.sourceArchiveId/);
+  const detail=read('lunea-journal-detail-v51.js');assert.match(detail,/dataset\?\.sourceArchiveId/);assert.match(detail,/sourceArchiveId[\s\S]*rows\.find\(x => String\(x\?\.sourceArchiveId/);
+  const archiveSearch=read('lunea-archive-search-v1.js');assert.match(archiveSearch,/lunea-journal-detail-v51\.js\?v=/);assert.match(archiveSearch,/__LUNEA_JOURNAL_DETAIL_V51__/);
 });
