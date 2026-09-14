@@ -16,10 +16,6 @@ page.on('pageerror',e=>pageErrors.push(String(e?.stack||e)));
 page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text())});
 page.on('dialog',async d=>{dialogs.push(`${d.type()}: ${d.message()}`);await d.accept()});
 
-// Keep the production bridge's load Promise genuinely pending without leaving a
-// network request open for tens of seconds. The bridge creates the canonical UI
-// <script>; this test temporarily holds that node before DOM insertion. Releasing
-// it later starts the real local script request and resolves the original Promise.
 await page.addInitScript(()=>{
   const nativeAppendChild=Node.prototype.appendChild;
   const held=[];
@@ -54,8 +50,15 @@ await page.addInitScript(()=>{
 
 try{
   await page.goto(BASE_URL,{waitUntil:'domcontentloaded'});
-  await page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]').waitFor({state:'visible'});
-  await page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]').click();
+  const intimacyTile=page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
+  await intimacyTile.waitFor({state:'visible'});
+  await intimacyTile.click();
+  const sourceHeader=page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-header');
+  const sourceContent=page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-content');
+  await sourceContent.waitFor({state:'visible'});
+  assert.equal(await intimacyTile.isVisible(),true,'Home INTIMACY portal tile must remain visible when opened');
+  assert.equal(await sourceHeader.isVisible(),false,'raw INTIMACY source header must stay hidden under the Home tile');
+
   const item=page.locator('.reading-item[data-title="신체적 속궁합 · CORE 5"]');
   await item.waitFor({state:'visible'});
   await item.click();
