@@ -103,23 +103,23 @@
   }
 
   function readingBusy(){return !!document.hidden||!!document.getElementById('spreadOverlay')?.classList.contains('show')||!!document.getElementById('sheet')?.classList.contains('open')}
-  function refreshTo(build,force=false) {
+  function refreshTo(build) {
     try {
       const url = new URL(location.href);
-      if (!force && url.searchParams.get('lunea_v') === build) return;
+      if (url.searchParams.get('lunea_v') === build) return;
       url.searchParams.set('lunea_v', build);
       url.searchParams.set('fresh', String(Date.now()));
       location.replace(url.toString());
     } catch { location.reload(); }
   }
 
-  function queueRefresh(build,force=false){if(!build)return false;if(readingBusy()){pendingRefresh={build,force:!!force};return false}pendingRefresh=null;refreshTo(build,force);return true}
-  function flushPending(){if(!pendingRefresh||readingBusy())return false;const next=pendingRefresh;pendingRefresh=null;refreshTo(next.build,next.force);return true}
+  function queueRefresh(build){if(!build)return false;if(readingBusy()){pendingRefresh={build};return false}pendingRefresh=null;refreshTo(build);return true}
+  function flushPending(){if(!pendingRefresh||readingBusy())return false;const next=pendingRefresh;pendingRefresh=null;refreshTo(next.build);return true}
 
   function checkBuild(options={}) {
-    const forceRefresh=!!options.forceRefresh,now=Date.now();
+    const forceCheck=!!options.forceRefresh,now=Date.now();
     if(checkPromise)return checkPromise;
-    if(!forceRefresh&&now-lastCheckAt<1500)return Promise.resolve(false);
+    if(!forceCheck&&now-lastCheckAt<1500)return Promise.resolve(false);
     lastCheckAt=now;
     checkPromise=(async()=>{try {
       const res = await fetch(`${BUILD_FILE}?t=${Date.now()}`, {
@@ -132,7 +132,7 @@
       const remote = String(data?.version || '').trim();
       if (!remote) return false;
       const embedded = currentPageBuild();
-      if (embedded && (embedded !== remote || forceRefresh)) queueRefresh(remote,forceRefresh);
+      if (embedded && embedded !== remote) queueRefresh(remote);
       return true;
     } catch (err) {
       console.info('[LUNEA cache refresh] skipped', err?.message || err);
