@@ -22,10 +22,10 @@
   V33.2 also hardens the Thai period date grid on iOS so native date inputs do
   not overflow their grid tracks or collide in the middle of the modal.
 
-  V33.3 loads the isolated INTIMACY V43 repair layer after the existing clean
-  and burgundy layers. V33.4 keeps the control-order behavior stable and also
-  applies the screenshot-marked INTIMACY presentation corrections without
-  changing RNG, AI interpretation, prompt generation, or storage.
+  V33.4 keeps the control-order behavior stable and applies the
+  screenshot-marked INTIMACY reading presentation corrections without changing
+  RNG, AI interpretation, prompt generation, or storage. INTIMACY runtime
+  layers remain owned by the dedicated deterministic feature group.
 
   V33.5 makes sure the V36 result-copy bridge is loaded with the current build
   token, so iOS/PWA caches cannot keep an older Timing-only copy script.
@@ -47,16 +47,17 @@
 
   const ORDER = [
     'flipAll',
-    'aiRead',
+    'extraCard',
     'saveReading',
     'retry',
-    'extraCard',
     'timingSupportBtn',
+    'luneaMessageOracleSupportBtn',
     'astroTransitBtn',
-    'luneaThaiTarotBridgeBtn',
-    'luneaThaiTarotRangeBtn',
     'astroReturnBtn',
     'astroHoraryBtn',
+    'thaiTaksaBtn',
+    'luneaThaiTarotRangeBtn',
+    'aiRead',
     'luneaTopCopyPrompt',
   ];
 
@@ -66,9 +67,6 @@
   const BOTTOM_AI_ID = 'luneaBottomAiRead';
   const BOTTOM_SAVE_ID = 'luneaBottomSaveReading';
   const BOTTOM_STYLE_ID = 'luneaBottomReadingActionsStyle';
-  const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
-  const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
-  const INTIMACY_REPAIR_LOADER_ID = 'luneaIntimacyRepairV43Loader';
   const RESULT_COPY_LOADER_ID = 'luneaResultCopyV36Loader';
 
   function actionBar() {
@@ -76,12 +74,14 @@
   }
 
   function reorder() {
+    reorderSupport();
     const bar = actionBar();
     if (!bar) return false;
     const children = [...bar.children];
     if (!children.length) return true;
 
     const rank = new Map(ORDER.map((id, index) => [id, index]));
+    rank.set('luneaThaiTarotBridgeBtn', rank.get('thaiTaksaBtn'));
     const known = [];
     const unknown = [];
     children.forEach((node, index) => {
@@ -95,8 +95,27 @@
     const already = desired.length === children.length && desired.every((node, index) => node === children[index]);
     if (already) return true;
 
-    desired.forEach(node => bar.appendChild(node));
+    desired.forEach((node, index) => {
+      if (bar.children[index] !== node) bar.insertBefore(node, bar.children[index] || null);
+    });
     return true;
+  }
+
+  // One order for all attached evidence; reuse this owner's existing observer.
+  function reorderSupport() {
+    W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.sync?.();
+    const ids = ['luneaTimingInline','luneaMessageOracleInline','luneaAstroTransitInline',
+      'luneaThaiTarotBridgeInline','luneaThaiTaksaInline','luneaThaiRangeInline',
+      'luneaReturnInline','luneaHoraryInline'];
+    const cards = document.getElementById('cards');
+    if (!cards?.parentNode) return;
+    let anchor = cards;
+    for (const id of ids) {
+      const node = document.getElementById(id);
+      if (!node || node.parentNode !== cards.parentNode) continue;
+      if (anchor.nextSibling !== node) anchor.parentNode.insertBefore(node, anchor.nextSibling);
+      anchor = node;
+    }
   }
 
   function ensureBottomStyle() {
@@ -104,12 +123,25 @@
     const style = document.createElement('style');
     style.id = BOTTOM_STYLE_ID;
     style.textContent = `
+      /* Final three-column action geometry, including the <=390px surface. */
+      #spreadOverlay .actionbar.actionbar{
+        display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        grid-auto-flow:row!important;grid-auto-rows:minmax(48px,auto);gap:7px!important;
+      }
+      #spreadOverlay .actionbar.actionbar > button{
+        grid-column:auto!important;grid-row:auto!important;
+        width:100%!important;min-width:0!important;height:100%!important;min-height:48px!important;
+        margin:0!important;box-sizing:border-box;white-space:normal!important;
+      }
+      #spreadOverlay .actionbar.actionbar #${TOP_COPY_ID}{grid-column:1 / -1!important}
+      ${ORDER.map((id,index)=>`#spreadOverlay .actionbar.actionbar #${id}{order:${index}!important}`).join('\n')}
+      #spreadOverlay .actionbar.actionbar #luneaThaiTarotBridgeBtn{order:${ORDER.indexOf('thaiTaksaBtn')}!important}
       #${TOP_COPYBOX_ID}{
         display:none!important;margin:0!important;padding:0!important;
       }
       #spreadOverlay .actionbar #${TOP_COPY_ID}{
         width:100%!important;min-height:43px!important;margin:0!important;padding:10px 9px!important;
-        grid-column:auto!important;border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
+        grid-column:1 / -1!important;border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
         background:linear-gradient(145deg,rgba(167,145,217,.10),rgba(91,125,168,.06))!important;
         color:#e9e3ef!important;font:650 11.5px/1.22 system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif!important;
         white-space:normal!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
@@ -120,17 +152,6 @@
       body.lunea-intimacy-reading #${TOP_COPY_ID}{
         color:#f8edf2!important;border-color:rgba(225,132,168,.22)!important;
         background:linear-gradient(145deg,rgba(112,34,69,.16),rgba(67,22,55,.09))!important;
-      }
-
-      /* Screenshot-marked INTIMACY list correction: keep the expanded cabinet
-         on the same square artwork as the Home tile. V40 may still maintain its
-         legacy img node for compatibility, but the final visual is the square
-         final PNG through this higher-specificity presentation rule. */
-      html body .lunea-intimacy-category .cat-icon{
-        background:#310b20 url('./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}') center/cover no-repeat!important;
-      }
-      html body .lunea-intimacy-category .cat-icon img{
-        display:none!important;visibility:hidden!important;opacity:0!important;
       }
 
       #${BOTTOM_ID}{
@@ -283,18 +304,6 @@
     return true;
   }
 
-  function ensureIntimacyCleanUi() {
-    return ensureScript(INTIMACY_CLEAN_LOADER_ID, './lunea-intimacy-clean-v39.js', 'INTIMACY clean UI V39');
-  }
-
-  function ensureIntimacyBurgundyUi() {
-    return ensureScript(INTIMACY_BURGUNDY_LOADER_ID, './lunea-intimacy-burgundy-v40.js', 'INTIMACY burgundy UI V40');
-  }
-
-  function ensureIntimacyRepairUi() {
-    return ensureScript(INTIMACY_REPAIR_LOADER_ID, './lunea-intimacy-repair-v43.js', 'INTIMACY repair UI V43');
-  }
-
   function ensureResultCopyBridge() {
     const loadedVersion = String(W.LUNEA_TIMING_COPY_V35?.version || '');
     if (loadedVersion === '36.0') return true;
@@ -308,9 +317,6 @@
     ensureTopPromptCopy();
     ensureBottomActions();
     ensureResultCopyBridge();
-    ensureIntimacyCleanUi();
-    ensureIntimacyBurgundyUi();
-    ensureIntimacyRepairUi();
 
     let queued = false;
     const bar = actionBar();
@@ -328,21 +334,12 @@
         else setTimeout(run, 16);
       });
       observer.observe(bar, {childList:true,attributes:true,attributeFilter:['disabled']});
+      const supportParent = document.getElementById('cards')?.parentNode;
+      if (supportParent && supportParent !== bar) observer.observe(supportParent, {childList:true});
+      const cards = document.getElementById('cards');
+      if (cards) observer.observe(cards, {childList:true,subtree:true});
     }
 
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      reorder();
-      ensureTopPromptCopy();
-      ensureBottomActions();
-      ensureResultCopyBridge();
-      ensureIntimacyCleanUi();
-      ensureIntimacyBurgundyUi();
-      ensureIntimacyRepairUi();
-      const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
-      if ((ready && document.getElementById(TOP_COPY_ID) && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
-    }, 250);
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
@@ -354,9 +351,6 @@
     ensureBottomActions,
     syncBottomButtons,
     ensureResultCopyBridge,
-    ensureIntimacyCleanUi,
-    ensureIntimacyBurgundyUi,
-    ensureIntimacyRepairUi,
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot,{once:true});
   else boot();
