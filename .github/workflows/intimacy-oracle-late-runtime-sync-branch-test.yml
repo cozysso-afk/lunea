@@ -61,7 +61,7 @@ jobs:
 
       - name: Run one-shot WebKit crash isolation matrix
         run: |
-          cat >/tmp/webkit-crash-diag.mjs <<'JS'
+          cat >tests/webkit-crash-diag.mjs <<'JS'
           import { webkit } from 'playwright';
           const BASE='http://127.0.0.1:4173/index.html';
           const BUILD='c00880c7b22d';
@@ -161,7 +161,7 @@ jobs:
           for(const r of results) console.log(JSON.stringify(r));
           process.exit(0);
           JS
-          node /tmp/webkit-crash-diag.mjs
+          node tests/webkit-crash-diag.mjs
 
       - name: Show local server tail
         if: always()
