@@ -100,19 +100,35 @@ await record('A stale V36.4 boundary -> fresh V36.5',async()=>{
       page.waitForURL(/lunea_v=webkit-ad-test/,{timeout:15000}),
       page.evaluate(()=>{document.getElementById('spreadOverlay')?.classList.remove('show');document.body.classList.remove('modal-open')})
     ]);
-    await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});
+    const afterFresh=await page.evaluate(()=>{
+      let draft=null;try{draft=JSON.parse(localStorage.getItem('LUNEA_LAST_READING_DRAFT_V1')||'null')}catch{}
+      return {url:location.href,bodyClass:document.body.className,category:window.state?.category||null,question:window.state?.question||'',draftCategory:draft?.category||null,draftQuestion:draft?.question||'',bridgeActive:window.LUNEA_INTIMACY_AI_BRIDGE_V34?.isActiveContext?.()??null,oracleVersion:window.LUNEA_INTIMACY_ORACLE_UI_V36?.version||null,oracleScripts:[...document.scripts].filter(s=>/lunea-intimacy-oracle-ui-v36\.js/.test(s.src||'')).length};
+    });
+    console.log('A DIAG AFTER FRESH '+JSON.stringify(afterFresh));
     await openIntimacyAndDraw(page,'fresh V36.5 버튼 검증');
+    await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});
     await page.waitForFunction(()=>!!document.getElementById('luneaOracleAddExtra'));
     const fresh=await page.evaluate(()=>{
       const b=document.getElementById('luneaOracleAddExtra'),r=b?.getBoundingClientRect();
       return {label:b?.textContent||'',rect:r?{w:r.width,h:r.height}:null,scripts:[...document.scripts].filter(s=>/lunea-intimacy-oracle-ui-v36\.js/.test(s.src||'')).length,cardsFlag:document.getElementById('cards')?.__lio36Observed||0,overlayFlag:document.getElementById('spreadOverlay')?.__lio36Observed||0};
     });
+    console.log('A DIAG AFTER REENTER '+JSON.stringify(fresh));
     assert.match(fresh.label,/오라클 추가 \(0\/3\)/);
     assert.ok((fresh.rect?.w||0)>0&&(fresh.rect?.h||0)>0,JSON.stringify(fresh));
     assert.equal(fresh.scripts,1,'fresh document must have one V36 script');
     assert.equal(fresh.cardsFlag,1); assert.equal(fresh.overlayFlag,1);
   }finally{await context.close()}
 });
+
+await browser.close();
+console.log('\nWEBKIT A-ONLY SUMMARY');
+for(const r of results)console.log(`${r.ok?'PASS':'FAIL'} ${r.name}`);
+if(!results[0]?.ok){
+  console.error('\nBlocking failure:\n'+(results[0]?.error||'unknown A failure'));
+  process.exit(1);
+}
+console.log('ALL WEBKIT A-ONLY: PASS');
+process.exit(0);
 
 await record('B LAST READING exact Oracle 3+2 roundtrip RNG=0',async()=>{
   const {context,page}=await makePage({mode:'3'});
