@@ -101,6 +101,9 @@
   function loadMobileRuntimeFixesV57() {
     loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57.1');
   }
+  function loadMessageOracleHomeV1() {
+    loadBuildScopedScript('luneaMessageOracleHomeV1Loader', './lunea-message-oracle-home-v1.js', 'Message Oracle standalone Home V1');
+  }
 
   function readingBusy(){return !!document.hidden||!!document.getElementById('spreadOverlay')?.classList.contains('show')||!!document.getElementById('sheet')?.classList.contains('open')}
   function refreshTo(build) {
@@ -161,6 +164,7 @@
     loadLearningAuthRecovery();
     loadEmergencyRepair();
     loadMobileRuntimeFixesV57();
+    loadMessageOracleHomeV1();
     installResumeBuildChecks();
     checkBuild();
     W.LUNEA_CACHE_REFRESH_V1=Object.freeze({checkNow:checkBuild,requestFreshDocument,flushPending});
