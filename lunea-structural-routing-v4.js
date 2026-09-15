@@ -36,7 +36,7 @@
 
   if (document.readyState === 'loading') {
     document.write('<script src="./lunea-luminous-theme-v1.js?v=101"><\/script>');
-    document.write('<script src="./lunea-luminous-layout-v2.js?v=201"><\/script>');
+    document.write('<script src="./lunea-luminous-layout-v2.js?v=202"><\/script>');
     document.write('<script src="./lunea-luminous-polish-v3.js?v=301"><\/script>');
     document.write('<script src="./lunea-top-spacing-v4.js?v=401"><\/script>');
     document.write('<script src="./lunea-gemini-model-picker-v1.js?v=101"><\/script>');
@@ -105,7 +105,7 @@
 
   loadSequential([
     './lunea-luminous-theme-v1.js?v=101',
-    './lunea-luminous-layout-v2.js?v=201',
+    './lunea-luminous-layout-v2.js?v=202',
     './lunea-luminous-polish-v3.js?v=301',
     './lunea-top-spacing-v4.js?v=401',
     './lunea-gemini-model-picker-v1.js?v=101',
