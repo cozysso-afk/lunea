@@ -89,13 +89,6 @@
       .lunea-intimacy-category .toggle{color:var(--dim)!important;text-shadow:none!important}
       .lunea-intimacy-category.active .toggle{color:var(--moon)!important;transform:rotate(45deg)!important}
 
-      html.lunea-home-portal-v8 .lunea-intimacy-category.lunea-v8-source-category.lunea-v8-source-active > .category-header{
-        display:none!important;
-      }
-      html.lunea-home-portal-v8 .lunea-intimacy-category.lunea-v8-source-category.lunea-v8-source-active > .category-content{
-        padding-top:5px!important;
-      }
-
       /* V39 owns every list card, including AI, direct input and ORIGINAL.
          Scope beats the older readability rules regardless of load order. */
       html .lunea-intimacy-category .category-content{
