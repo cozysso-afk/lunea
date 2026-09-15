@@ -5,6 +5,8 @@
   if (W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1) return;
   const registry = W.LUNEA_READING_ATTACHMENTS_V1;
   if (!registry) throw new Error('Reading attachments unavailable');
+  const BUTTON_ID = 'luneaMessageOracleSupportBtn';
+  const LOGO_SRC = './assets/message-oracle/message_oracle_logo.png?v=101';
   let saved = null, opening = 0;
   const engine = () => W.LUNEA_MESSAGE_ORACLE_V1;
   function reading() {
@@ -74,7 +76,7 @@
       cards.parentNode.insertBefore(node, cards.nextSibling);
     }
     const logo = document.createElement('img');
-    logo.src = './assets/message-oracle/message_oracle_logo.png?v=101';
+    logo.src = LOGO_SRC;
     logo.alt = '';
     const text = document.createElement('span');
     const heading = document.createElement('small');
@@ -129,15 +131,67 @@
     }});
   const style = document.createElement('style');
   style.id = 'luneaMessageSupportStyle';
-  style.textContent = '#luneaMessageOracleInline{display:flex;align-items:center;gap:10px;width:100%;max-width:400px;min-width:0;box-sizing:border-box;margin:10px auto;padding:12px;text-align:left;white-space:normal;border:1px solid #a68aae55;border-radius:14px;background:#231d31;color:#eee4f1;cursor:pointer}#luneaMessageOracleInline img{width:38px;height:38px;object-fit:contain;flex:0 0 38px;background:transparent}#luneaMessageOracleInline span{min-width:0;overflow-wrap:anywhere}#luneaMessageOracleInline small,#luneaMessageOracleInline b,#luneaMessageOracleInline span span{display:block;line-height:1.45;margin:0}#luneaMessageOracleInline small{font-size:10px;color:#baabc9}#luneaMessageOracleInline b{font-size:12px}#luneaMessageOracleInline span span{font-size:12px;margin:3px 0}';
+  style.textContent = '#luneaMessageOracleInline{display:flex;align-items:center;gap:10px;width:100%;max-width:400px;min-width:0;box-sizing:border-box;margin:10px auto;padding:12px;text-align:left;white-space:normal;border:1px solid #a68aae55;border-radius:14px;background:#231d31;color:#eee4f1;cursor:pointer}#luneaMessageOracleInline img{width:38px;height:38px;object-fit:contain;flex:0 0 38px;background:transparent}#luneaMessageOracleInline span{min-width:0;overflow-wrap:anywhere}#luneaMessageOracleInline small,#luneaMessageOracleInline b,#luneaMessageOracleInline span span{display:block;line-height:1.45;margin:0}#luneaMessageOracleInline small{font-size:10px;color:#baabc9}#luneaMessageOracleInline b{font-size:12px}#luneaMessageOracleInline span span{font-size:12px;margin:3px 0}#luneaMessageOracleSupportBtn{gap:5px!important}#luneaMessageOracleSupportBtn .lunea-message-oracle-mini-logo{width:20px!important;height:20px!important;object-fit:contain!important;flex:0 0 20px!important;background:transparent!important;pointer-events:none!important}#luneaMessageOracleSupportBtn .lunea-message-oracle-label{min-width:0!important;line-height:1.18!important}';
   document.head.appendChild(style);
-  const bar = document.querySelector('#spreadOverlay .actionbar');
-  if (bar && !document.getElementById('luneaMessageOracleSupportBtn')) {
-    const button = document.createElement('button');
-    button.type = 'button'; button.id = 'luneaMessageOracleSupportBtn'; button.className = 'mini';
-    button.textContent = '✉ 메시지 오라클'; button.addEventListener('click', open);
-    bar.appendChild(button);
+
+  function decorateButton(button) {
+    if (!button) return null;
+    let logo = button.querySelector('.lunea-message-oracle-mini-logo');
+    if (!logo) {
+      logo = document.createElement('img');
+      logo.className = 'lunea-message-oracle-mini-logo';
+      logo.alt = '';
+      logo.src = LOGO_SRC;
+    }
+    let label = button.querySelector('.lunea-message-oracle-label');
+    if (!label) {
+      label = document.createElement('span');
+      label.className = 'lunea-message-oracle-label';
+      label.textContent = '메시지 오라클';
+    }
+    if (button.childNodes.length !== 2 || button.firstChild !== logo || button.lastChild !== label) {
+      button.replaceChildren(logo, label);
+    }
+    return button;
   }
+
+  function ensureButton() {
+    const bar = document.querySelector('#spreadOverlay .actionbar');
+    if (!bar) return null;
+    let button = document.getElementById(BUTTON_ID);
+    let created = false;
+    if (!button) {
+      button = document.createElement('button');
+      button.type = 'button';
+      button.id = BUTTON_ID;
+      button.className = 'mini';
+      button.addEventListener('click', open);
+      bar.appendChild(button);
+      created = true;
+    } else if (button.parentElement !== bar) {
+      bar.appendChild(button);
+    }
+    decorateButton(button);
+    if (created) W.LUNEA_READING_ACTION_ORDER_V33?.reorder?.();
+    return button;
+  }
+
+  ensureButton();
+  const spread = document.getElementById('spreadOverlay');
+  const actionbar = document.querySelector('#spreadOverlay .actionbar');
+  if (spread) {
+    new MutationObserver(() => {
+      if (spread.classList.contains('show')) ensureButton();
+    }).observe(spread, {attributes:true, attributeFilter:['class']});
+  }
+  if (actionbar) {
+    new MutationObserver(() => {
+      if (!document.getElementById(BUTTON_ID)) queueMicrotask(ensureButton);
+    }).observe(actionbar, {childList:true});
+  }
+  W.addEventListener('pageshow', ensureButton);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) ensureButton(); });
+
   installPrompt();
-  W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1 = Object.freeze({open, capture, restore, sync, promptBlock});
+  W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1 = Object.freeze({open, capture, restore, sync, promptBlock, ensureButton});
 })();
