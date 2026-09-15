@@ -1,10 +1,10 @@
 'use strict';
 
-/* LUNEA INTIMACY REPAIR V43.5
+/* LUNEA INTIMACY REPAIR V43.6
    Final visual owner for INTIMACY presentation only.
    - Keeps the uploaded iPhone-branch Oracle PNGs uncropped and unfiltered.
    - Restores each approved card aspect ratio.
-   - Removes the legacy blurred text overlay from Oracle artwork.
+   - Migrates any legacy in-card lens overlay into a sibling text row below the artwork.
    - Keeps Oracle controls and the manual INTIMACY editor presentation stable.
    - Does not change RNG, Oracle semantics, prompts, draft restore, or AI logic. */
 (() => {
@@ -12,7 +12,7 @@
   if (W.__LUNEA_INTIMACY_REPAIR_V43__) return;
   W.__LUNEA_INTIMACY_REPAIR_V43__ = true;
 
-  const RELEASE = '43.5';
+  const RELEASE = '43.6';
   const STYLE_ID = 'luneaIntimacyRepairV43Style';
   const ORACLE_CARD_ROOT = './assets/intimacy-oracle/cards';
   const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_v2.png';
@@ -70,29 +70,24 @@
       #luneaIntimacyOracleTools[data-lunea-clean-oracle="1"] .lio-mode{grid-template-columns:repeat(3,minmax(0,1fr))!important}
       #luneaIntimacyOracleTools .lunea-oracle-hint{margin:0 0 7px;color:rgba(232,202,214,.74);font-size:10px;line-height:1.35;text-align:left}
 
-      #luneaIntimacyOraclePanel .lio-card{display:flex!important;flex-direction:column!important;aspect-ratio:auto!important;overflow:hidden!important}
+      #luneaIntimacyOraclePanel .lio-card-item{min-width:0!important;width:100%!important;display:flex!important;flex-direction:column!important;align-self:start!important}
+      #luneaIntimacyOraclePanel .lio-card-item:only-child{grid-column:1/-1!important;width:min(100%,180px)!important;justify-self:center!important}
+      #luneaIntimacyOraclePanel .lio-card{display:block!important;aspect-ratio:auto!important;overflow:hidden!important}
       #luneaIntimacyOraclePanel .lio-card:only-child{grid-column:1/-1!important;width:min(100%,180px)!important;min-width:0!important;justify-self:center!important}
-      #luneaIntimacyOraclePanel .lio-card-art{position:relative!important;width:100%!important;min-width:0!important;overflow:hidden!important;border-radius:9px 9px 0 0!important;background:#14060d!important;perspective:900px!important}
+      #luneaIntimacyOraclePanel .lio-card-art{position:relative!important;width:100%!important;min-width:0!important;overflow:hidden!important;border-radius:9px!important;background:#14060d!important;perspective:900px!important}
       #luneaIntimacyOraclePanel .lio-card-art>.lio-card-flip{position:absolute!important;inset:0!important}
       #luneaIntimacyOraclePanel .lio-card-front{background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;filter:none!important}
       #luneaIntimacyOraclePanel .lio-card-back{background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
-
       #luneaIntimacyOraclePanel .lio-card>span,
-      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta{
-        position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
-        display:block!important;box-sizing:border-box!important;width:100%!important;min-height:0!important;height:auto!important;
-        margin:0!important;padding:9px 5px 10px!important;
-        background:#210a16!important;background-image:none!important;
+      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta{display:none!important}
+      #luneaIntimacyOraclePanel .lio-card-lens{
+        position:static!important;display:block!important;box-sizing:border-box!important;width:100%!important;min-height:0!important;height:auto!important;
+        margin:6px 0 0!important;padding:0 2px!important;
+        background:none!important;background-image:none!important;
         backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
-        filter:none!important;box-shadow:none!important;border-radius:0!important;
-        color:#f3e9ee!important;line-height:1.35!important;overflow:visible!important;
+        filter:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;
+        color:#f3e9ee!important;font-size:9px!important;line-height:1.3!important;text-align:center!important;overflow:visible!important;
       }
-      #luneaIntimacyOraclePanel .lio-card>span em,
-      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta em{display:block!important;margin:0!important;font-style:normal!important;font-size:10px!important;text-align:center!important}
-      #luneaIntimacyOraclePanel .lio-card>span strong,
-      #luneaIntimacyOraclePanel .lio-card>span small,
-      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta strong,
-      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta small{display:none!important;visibility:hidden!important}
 
       body.lunea-intimacy-reading .lio-card:not(.revealed) .lio-card-face{background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;filter:none!important}
     `;
@@ -100,7 +95,7 @@
 
   function oracleIndex(node) {
     const visual = node?.querySelector?.('.lio-card-front,.lio-card-face');
-    const raw = `${visual?.style?.backgroundImage || ''} ${visual?.dataset?.luneaIntimacyOracleIndex || ''} ${node?.dataset?.luneaIntimacyOracleIndex || ''}`;
+    const raw = `${visual?.style?.backgroundImage || ''} ${visual?.dataset?.luneaIntimacyOracleIndex || ''} ${node?.dataset?.luneaIntimacyOracleIndex || ''} ${node?.dataset?.oracleCode || ''}`;
     const direct = raw.match(/oracle_(\d{2})\.png/i) || raw.match(/(?:^|\D)(\d{2})(?:\D|$)/);
     if (direct) {
       const n = Number(direct[1]);
@@ -117,7 +112,36 @@
     return -1;
   }
 
+  function ensureCardItem(node) {
+    let item = node?.closest?.('.lio-card-item');
+    if (item) return item;
+    if (!node?.parentNode) return null;
+    item = document.createElement('div');
+    item.className = 'lio-card-item';
+    node.before(item);
+    item.appendChild(node);
+    return item;
+  }
+
+  function migrateLegacyMeta(node) {
+    const meta = node?.querySelector?.(':scope > span,:scope > .lio-card-meta');
+    if (!meta) return false;
+    const item = ensureCardItem(node);
+    if (!item) return false;
+    let lens = item.querySelector(':scope > .lio-card-lens');
+    if (!lens) {
+      lens = document.createElement('div');
+      lens.className = 'lio-card-lens';
+      item.appendChild(lens);
+    }
+    const label = meta.querySelector('em')?.textContent?.trim() || meta.textContent?.trim() || '';
+    if (label) lens.textContent = label;
+    meta.remove();
+    return true;
+  }
+
   function ensureModernCardStructure(node, cardNo) {
+    const item = ensureCardItem(node);
     let art = node?.querySelector?.(':scope > .lio-card-art');
     const flip = node?.querySelector?.(':scope > .lio-card-flip');
     if (!art && flip) {
@@ -127,14 +151,12 @@
       art.appendChild(flip);
     }
     if (art) art.style.aspectRatio = CARD_ASPECT_RATIOS[`O${cardNo}`] || '2/3';
-
-    const meta = node?.querySelector?.(':scope > span');
-    if (meta) {
-      meta.classList.add('lio-card-meta');
-      const strong = meta.querySelector('strong');
-      const small = meta.querySelector('small');
-      if (strong) strong.hidden = true;
-      if (small) small.hidden = true;
+    migrateLegacyMeta(node);
+    if (item && !item.querySelector(':scope > .lio-card-lens')) {
+      const lens = document.createElement('div');
+      lens.className = 'lio-card-lens';
+      lens.textContent = node.getAttribute('aria-label') || '';
+      item.appendChild(lens);
     }
     return art;
   }
@@ -155,7 +177,7 @@
       front.style.setProperty('background-position', 'center', 'important');
       front.style.setProperty('background-repeat', 'no-repeat', 'important');
       front.style.setProperty('filter', 'none', 'important');
-      front.dataset.luneaIntimacyOracleAsset = 'iphone-final36-contain-v435';
+      front.dataset.luneaIntimacyOracleAsset = 'iphone-final36-contain-v436';
       const back = node.querySelector('.lio-card-back');
       if (back) {
         back.style.setProperty('background-image', `url("${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}")`, 'important');
@@ -271,5 +293,5 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
-  console.info(`🌹 LUNEA INTIMACY repair V${RELEASE} ready · no blur overlay`);
+  console.info(`🌹 LUNEA INTIMACY repair V${RELEASE} ready · legacy overlay structurally removed`);
 })();
