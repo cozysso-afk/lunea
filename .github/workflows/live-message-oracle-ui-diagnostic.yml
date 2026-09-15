@@ -20,37 +20,52 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
-      - name: Inspect live Pages DOM
+      - name: Compare current live Message Oracle WebKit baseline
         run: |
           node --input-type=module <<'NODE'
           import { webkit } from 'playwright';
-          const browser = await webkit.launch({headless:true});
-          const page = await browser.newPage({viewport:{width:393,height:852}});
-          const errors=[];
-          page.on('pageerror', e=>errors.push('pageerror: '+e.message));
-          page.on('console', msg=>{ if(msg.type()==='error') errors.push('console: '+msg.text()); });
-          await page.goto('https://cozysso-afk.github.io/lunea/?ui_diag='+Date.now(), {waitUntil:'networkidle'});
-          await page.waitForTimeout(1500);
-          const diag = await page.evaluate(() => {
-            const bar=document.querySelector('#spreadOverlay .actionbar');
-            const btn=document.getElementById('luneaMessageOracleSupportBtn');
-            const imgs=btn ? [...btn.querySelectorAll('img')].map(img=>({src:img.getAttribute('src'),complete:img.complete,naturalWidth:img.naturalWidth})) : [];
-            return {
-              readyState:document.readyState,
-              actionbar:!!bar,
-              actionbarHtml:bar?.outerHTML?.slice(0,3000)||'',
-              attachments:!!window.LUNEA_READING_ATTACHMENTS_V1,
-              supportApi:!!window.LUNEA_MESSAGE_ORACLE_SUPPORT_V1,
-              button:!!btn,
-              buttonText:btn?.textContent||'',
-              buttonImages:imgs,
-              supportStyle:!!document.getElementById('luneaMessageSupportStyle'),
-              loaderScript:[...document.scripts].map(s=>s.src).find(src=>src.includes('lunea-message-oracle-support-v1.js'))||'',
-              featureLoader:typeof window.LUNEA_LOAD_FEATURE_GROUP,
-              bodyClass:document.body?.className||''
-            };
+          const browser=await webkit.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:3});
+          const page=await context.newPage();
+          page.setDefaultTimeout(20000);
+          const lifecycle=[],errors=[];
+          page.on('close',()=>lifecycle.push('page-close'));
+          page.on('crash',()=>lifecycle.push('page-crash'));
+          page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+          page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text())});
+          page.on('request',req=>{if(req.url().includes('message-oracle'))lifecycle.push('request:'+req.resourceType()+':'+req.url())});
+          await page.addInitScript(()=>{try{localStorage.clear();sessionStorage.clear();}catch{}});
+          await page.goto('https://cozysso-afk.github.io/lunea/?live_message_baseline='+Date.now(),{waitUntil:'domcontentloaded'});
+          await page.waitForFunction(()=>document.readyState==='complete'&&document.documentElement.classList.contains('lunea-ui-ready'));
+          await page.evaluate(()=>{
+            if(!document.getElementById('luneaMessageOracleEntry')){
+              const b=document.createElement('button');b.id='luneaMessageOracleEntry';b.type='button';b.hidden=true;document.body.appendChild(b);
+            }
           });
-          console.log('LIVE_MESSAGE_ORACLE_DIAG='+JSON.stringify(diag,null,2));
-          console.log('LIVE_ERRORS='+JSON.stringify(errors,null,2));
-          await browser.close();
+          console.log('LIVE_BEFORE_LOAD='+page.url());
+          const crash=new Promise(resolve=>page.once('crash',()=>resolve('page-crash')));
+          const loadOutcome=await Promise.race([
+            page.evaluate(async()=>{
+              if(typeof window.LUNEA_LOAD_FEATURE_GROUP!=='function')return 'no-loader';
+              const ok=await window.LUNEA_LOAD_FEATURE_GROUP('message');
+              return 'loaded:'+String(ok)+':ui='+String(!!window.LUNEA_MESSAGE_ORACLE_UI_V1);
+            }).catch(e=>'evaluate-error:'+e.message),
+            crash
+          ]);
+          console.log('LIVE_LOAD_OUTCOME='+loadOutcome);
+          console.log('LIVE_AFTER_LOAD_LIFECYCLE='+JSON.stringify(lifecycle));
+          console.log('LIVE_AFTER_LOAD_ERRORS='+JSON.stringify(errors));
+          if(loadOutcome==='page-crash'){await browser.close().catch(()=>{});process.exit(0)}
+          const readyOutcome=await Promise.race([
+            page.evaluate(async()=>{
+              if(!window.LUNEA_MESSAGE_ORACLE_UI_V1?.ready)return 'no-ui-ready';
+              const ok=await window.LUNEA_MESSAGE_ORACLE_UI_V1.ready();
+              return 'ready:'+String(ok);
+            }).catch(e=>'evaluate-error:'+e.message),
+            new Promise(resolve=>page.once('crash',()=>resolve('page-crash')))
+          ]);
+          console.log('LIVE_READY_OUTCOME='+readyOutcome);
+          console.log('LIVE_FINAL_LIFECYCLE='+JSON.stringify(lifecycle));
+          console.log('LIVE_FINAL_ERRORS='+JSON.stringify(errors));
+          await browser.close().catch(()=>{});
           NODE
