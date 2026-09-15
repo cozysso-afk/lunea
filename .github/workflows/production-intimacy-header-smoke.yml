@@ -1,0 +1,96 @@
+name: Production INTIMACY header smoke
+
+on:
+  push:
+    branches:
+      - release/recovery-390432a-main-transfer
+
+permissions:
+  contents: read
+
+jobs:
+  verify-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Verify live GitHub Pages recovery
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import { webkit } from 'playwright';
+
+          const browser=await webkit.launch({headless:true});
+          const context=await browser.newContext({
+            viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:3,
+            locale:'ko-KR',
+            userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
+          });
+          let lastError=null;
+          try {
+            for(let attempt=1;attempt<=12;attempt++){
+              const page=await context.newPage();
+              try{
+                await page.addInitScript(()=>{
+                  try{
+                    localStorage.setItem('LUNEA_INTIMACY_ADULT_ACK_V1','1');
+                    localStorage.setItem('LUNEA_INTIMACY_ORACLE_MODE_V1','1');
+                  }catch{}
+                });
+                await page.goto('https://cozysso-afk.github.io/lunea/?prod_header_smoke='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
+                await page.waitForFunction(()=>document.readyState==='complete'&&document.documentElement.classList.contains('lunea-ui-ready'),{timeout:30000});
+
+                const sourceContract=await page.evaluate(async()=>{
+                  const r=await fetch('./lunea-intimacy-clean-v39.js?prod_smoke='+Date.now(),{cache:'no-store'});
+                  const text=await r.text();
+                  return {
+                    status:r.status,
+                    hasHeart:text.includes("icon.textContent !== '♡'"),
+                    hidesHeader:/lunea-v8-source-active[^\n]*> \.category-header\{\s*display:none!important;/.test(text)
+                  };
+                });
+                assert.equal(sourceContract.status,200);
+                assert.equal(sourceContract.hasHeart,true,'production V39 must contain the small-heart source contract');
+                assert.equal(sourceContract.hidesHeader,false,'production V39 must not hide the opened source header');
+
+                const tile=page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
+                await tile.waitFor({state:'visible',timeout:20000});
+                await tile.click();
+                const header=page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-header');
+                const content=page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-content');
+                await header.waitFor({state:'visible',timeout:10000});
+                await content.waitFor({state:'visible',timeout:10000});
+                assert.equal((await header.locator('.cat-icon').textContent())?.trim(),'♡');
+
+                const item=page.locator('.reading-item[data-title="신체적 속궁합 · CORE 5"]');
+                await item.waitFor({state:'visible',timeout:10000});
+                await item.click();
+                await page.locator('#question').fill('PRODUCTION smoke · INTIMACY header recovery');
+                await page.locator('#drawBtn').click();
+                await page.locator('#spreadOverlay.show').waitFor({state:'visible',timeout:15000});
+                const messageBtn=page.locator('#luneaMessageOracleSupportBtn');
+                await messageBtn.waitFor({state:'visible',timeout:15000});
+                assert.match((await messageBtn.textContent())||'',/메시지 오라클/);
+
+                console.log('PRODUCTION_INTIMACY_SMOKE_PASS',JSON.stringify({attempt,sourceContract,icon:'♡',messageOracle:true}));
+                await page.close();
+                lastError=null;
+                break;
+              }catch(error){
+                lastError=error;
+                console.log('PRODUCTION_INTIMACY_SMOKE_RETRY',attempt,String(error?.message||error));
+                await page.close().catch(()=>{});
+                if(attempt<12) await new Promise(r=>setTimeout(r,10000));
+              }
+            }
+            if(lastError) throw lastError;
+          } finally {
+            await browser.close();
+          }
+          NODE
