@@ -243,6 +243,6 @@
       else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first?.focus()}
     }
   });
-  document.getElementById('luneaMessageOracleEntry').addEventListener('click',open);
+  document.getElementById('luneaMessageOracleEntry')?.addEventListener('click',open);
   W.LUNEA_MESSAGE_ORACLE_UI_V1=Object.freeze({open,openSupport:open,closeSupport,close,ready});
 })();
