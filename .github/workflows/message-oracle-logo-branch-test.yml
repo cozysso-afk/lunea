@@ -46,7 +46,7 @@ jobs:
           page.on('console',m=>{if(m.type()==='error') errors.push('console: '+m.text())});
           page.on('requestfailed',req=>{ if(req.url().includes('message-oracle')) requestFailures.push({url:req.url(),error:req.failure()?.errorText||''}); });
           page.on('response',res=>{ if(res.url().includes('message-oracle')) messageResponses.push({url:res.url(),status:res.status()}); });
-          await page.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'branch-test'})}));
+          await page.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'c2f26d2477d9'})}));
           await page.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));
           await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route => route.fulfill({status:204,body:''}));
           await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'}));
