@@ -251,6 +251,7 @@
 
     document.querySelectorAll('.category').forEach(category => {
       const title = category.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
+      if (/INTIMACY/.test(title)) return;
       const icon = category.querySelector('.cat-icon');
       if (!icon) return;
       let markup = ICONS.sparkle;
@@ -278,6 +279,7 @@
         if (icon.querySelector('svg')) return;
         const category = icon.closest('.category');
         const title = category?.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
+        if (/INTIMACY/.test(title)) return;
         let markup = ICONS.sparkle;
         if (/CAREER|EXAM/.test(title)) markup = ICONS.career;
         else if (/LOVE|INNER HEART|RELATION/.test(title)) markup = ICONS.love;
