@@ -14,7 +14,7 @@
   const featureGroups = Object.freeze({
     message: [
       './lunea-message-oracle-v1.js?v=103',
-      './lunea-message-oracle-ui-v1.js?v=20260915-golden-1'
+      './lunea-message-oracle-ui-v1.js?v=20260915-golden-2'
     ]
   });
   const featureGroupPromises = new Map();
@@ -46,7 +46,7 @@
     document.write('<script src="./lunea-manual-library-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-draft-v1.js?v=d84c0608ef57"><\/script>');
     document.write('<script src="./lunea-reading-attachments-v1.js?v=20260915-golden-1"><\/script>');
-    document.write('<script src="./lunea-message-oracle-support-v1.js?v=20260915-golden-1"><\/script>');
+    document.write('<script src="./lunea-message-oracle-support-v1.js?v=20260915-golden-2"><\/script>');
     document.write('<script src="./lunea-reading-journal-v2.js?v=201"><\/script>');
     document.write('<script src="./lunea-archive-search-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-flip-all-fix-v1.js?v=102"><\/script>');
@@ -115,7 +115,7 @@
     './lunea-manual-library-v1.js?v=101',
     './lunea-reading-draft-v1.js?v=d84c0608ef57',
     './lunea-reading-attachments-v1.js?v=20260915-golden-1',
-    './lunea-message-oracle-support-v1.js?v=20260915-golden-1',
+    './lunea-message-oracle-support-v1.js?v=20260915-golden-2',
     './lunea-reading-journal-v2.js?v=201',
     './lunea-archive-search-v1.js?v=101',
     './lunea-flip-all-fix-v1.js?v=102',
