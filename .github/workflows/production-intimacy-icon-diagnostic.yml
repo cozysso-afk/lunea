@@ -1,0 +1,65 @@
+name: Production INTIMACY icon diagnostic
+
+on:
+  push:
+    branches:
+      - release/recovery-390432a-main-transfer
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Capture live INTIMACY icon ownership
+        run: |
+          node --input-type=module <<'NODE'
+          import { webkit } from 'playwright';
+          const browser=await webkit.launch({headless:true});
+          const context=await browser.newContext({viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:3,locale:'ko-KR'});
+          const page=await context.newPage();
+          await page.addInitScript(()=>{
+            try{localStorage.setItem('LUNEA_INTIMACY_ADULT_ACK_V1','1');localStorage.setItem('LUNEA_INTIMACY_ORACLE_MODE_V1','1')}catch{}
+          });
+          try{
+            await page.goto('https://cozysso-afk.github.io/lunea/?icon_diag='+Date.now(),{waitUntil:'domcontentloaded',timeout:30000});
+            await page.waitForFunction(()=>document.documentElement.classList.contains('lunea-ui-ready'),{timeout:30000});
+            const tile=page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
+            await tile.waitFor({state:'visible',timeout:20000});
+            await tile.click();
+            await page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-header').waitFor({state:'visible',timeout:10000});
+            for(const ms of [0,50,150,350,700,1200,2200,3600]){
+              if(ms) await page.waitForTimeout(ms);
+              const snap=await page.evaluate(()=>{
+                const category=document.querySelector('.lunea-intimacy-category');
+                const icon=category?.querySelector('.cat-icon');
+                const style=icon?getComputedStyle(icon):null;
+                return {
+                  text:icon?.textContent||'',
+                  html:icon?.outerHTML||'',
+                  childTags:icon?[...icon.children].map(n=>`${n.tagName}.${n.className}`):[],
+                  classes:icon?.className||'',
+                  bg:style?.backgroundImage||'',
+                  width:style?.width||'',height:style?.height||'',
+                  v38:window.__LUNEA_INTIMACY_UI_RELEASE__||'',
+                  v39:window.__LUNEA_INTIMACY_CLEAN_UI_RELEASE__||'',
+                  v40:window.LUNEA_INTIMACY_BURGUNDY_V40?.version||'',
+                  v43:window.LUNEA_INTIMACY_REPAIR_V43?.version||'',
+                  style38:!!document.getElementById('luneaIntimacyUiV37Style'),
+                  style39:!!document.getElementById('luneaIntimacyCleanV39Style'),
+                  scripts:[...document.scripts].map(s=>s.src).filter(src=>/intimacy-(?:readability-v36|clean-v39|burgundy-v40|repair-v43)/.test(src))
+                };
+              });
+              console.log('ICON_SNAPSHOT',ms,JSON.stringify(snap));
+            }
+          }finally{await browser.close()}
+          NODE
