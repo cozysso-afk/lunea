@@ -4,16 +4,31 @@
   LUNEA TIMING UPLOADED ART GUARD V16
   ===================================
   Confirms the uploaded 60-card artwork is the actual Timing Oracle face.
-  This guard intentionally accepts a correct timing_XXX.jpg/PNG pathname even
-  when an older V15 cache query is present, avoiding observer ping-pong.
+  V65 is the final semantic owner and maps all 60 cards to the canonical
+  assets/timing-oracle/cards/LT-###.png set restored from the iPhone verify branch.
 */
 (() => {
   const W = window;
   if (W.__LUNEA_TIMING_UPLOADED_ART_V16__) return;
   W.__LUNEA_TIMING_UPLOADED_ART_V16__ = true;
 
-  const RELEASE = '16.0';
+  const RELEASE = '16.1';
   const ASSET_VERSION = '20260905-2130';
+
+  function loadCanonicalV65() {
+    if (W.LUNEA_RECOVERY_UI_V65 || document.getElementById('luneaRecoveryUiV65Loader')) return;
+    const script = document.createElement('script');
+    script.id = 'luneaRecoveryUiV65Loader';
+    let build = '20260911-v65-lt-final60';
+    try {
+      const src = document.currentScript?.src || '';
+      build = new URL(src, location.href).searchParams.get('v') || build;
+    } catch {}
+    script.src = `./lunea-recovery-ui-v65.js?v=${encodeURIComponent(build)}`;
+    script.async = false;
+    script.onerror = () => console.warn('[Timing V16] canonical V65 loader failed');
+    (document.head || document.documentElement).appendChild(script);
+  }
 
   function assetPath(index) {
     const n = Number(index);
@@ -50,6 +65,8 @@
   }
 
   function upgradeImage(img) {
+    // Once V65 has claimed a face, never send it back to the legacy root asset.
+    if (img?.dataset?.luneaTimingArtworkV65 === '1' || /\/assets\/timing-oracle\/cards\/LT-\d{3}\.png/i.test(img?.getAttribute?.('src') || '')) return true;
     const n = indexFrom(img);
     if (!n) return false;
     img.dataset.luneaTimingAssetV16 = String(n);
@@ -101,6 +118,7 @@
   }
 
   function boot() {
+    loadCanonicalV65();
     addStyle();
     upgradeAll();
     installObserver();
@@ -113,7 +131,7 @@
     }, {passive:true});
     W.addEventListener?.('pageshow', () => setTimeout(upgradeAll, 0), {passive:true});
     W.LUNEA_TIMING_UPLOADED_ART_V16 = Object.freeze({version:RELEASE, assetPath, upgradeAll});
-    console.info('🕰 LUNEA Timing uploaded artwork V16 verified');
+    console.info('🕰 LUNEA Timing uploaded artwork V16 verified · canonical V65 owner requested');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
