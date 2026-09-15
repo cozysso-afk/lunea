@@ -1,22 +1,32 @@
 'use strict';
 
-/* LUNEA INTIMACY REPAIR V43.2
-   Clean repair layer for the 2026-09-04 recovery branch.
+/* LUNEA INTIMACY REPAIR V43.4
+   Clean repair layer for the 2026-09 recovery lineage.
    - Keeps INTIMACY state detection robust for manual spreads.
    - Restyles the shared manual spread editor in burgundy / rose-gold.
-   - Routes visible INTIMACY ORACLE cards to their individual final PNG files.
+   - Routes visible INTIMACY ORACLE cards to the final iPhone-branch PNG files.
+   - Restores the approved per-card aspect ratios and contain rendering.
    - Keeps the ORACLE back separate from the Tarot back asset.
    - Simplifies Oracle controls to Tarot / 1-card / 3-card choices only.
-   This file does not call Gemini and does not change RNG. */
+   This file does not call Gemini and does not change RNG or Oracle semantics. */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_REPAIR_V43__) return;
   W.__LUNEA_INTIMACY_REPAIR_V43__ = true;
 
-  const RELEASE = '43.3';
+  const RELEASE = '43.4';
   const STYLE_ID = 'luneaIntimacyRepairV43Style';
   const ORACLE_CARD_ROOT = './assets/intimacy-oracle/cards';
   const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_v2.png';
+  const ASSET_VERSION = 'iphone-final36-20260916';
+  const CARD_ASPECT_RATIOS = Object.freeze({
+    O01:'1024/1536',O02:'1024/1536',O03:'1024/1536',O04:'1024/1536',O05:'1024/1536',O06:'1024/1536',
+    O07:'1024/1536',O08:'1024/1536',O09:'1024/1536',O10:'1024/1536',O11:'1024/1536',O12:'1024/1536',
+    O13:'1055/1491',O14:'1055/1491',O15:'1055/1491',O16:'1024/1536',O17:'1024/1536',O18:'1055/1491',
+    O19:'1024/1536',O20:'1024/1536',O21:'1086/1448',O22:'1055/1491',O23:'1024/1536',O24:'1024/1536',
+    O25:'1024/1536',O26:'1055/1491',O27:'1055/1491',O28:'1055/1491',O29:'1055/1491',O30:'1055/1491',
+    O31:'1055/1491',O32:'1024/1536',O33:'1024/1536',O34:'1024/1536',O35:'1055/1491',O36:'1024/1536'
+  });
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -84,17 +94,55 @@
         margin:0 0 7px;color:rgba(232,202,214,.74);font-size:10px;line-height:1.35;text-align:left;
       }
 
-      /* Oracle imagery only. Never use this selector for Tarot backs. */
+      /* Final iPhone-branch Oracle presentation. Keep the entire uploaded PNG. */
+      #luneaIntimacyOraclePanel .lio-card{
+        display:flex!important;flex-direction:column!important;
+        aspect-ratio:auto!important;overflow:visible!important;
+      }
+      #luneaIntimacyOraclePanel .lio-card:only-child{
+        grid-column:1/-1!important;width:min(100%,180px)!important;min-width:0!important;justify-self:center!important;
+      }
+      #luneaIntimacyOraclePanel .lio-card-art{
+        position:relative!important;width:100%!important;min-width:0!important;
+        overflow:hidden!important;border-radius:9px!important;background:#14060d!important;perspective:900px!important;
+      }
+      #luneaIntimacyOraclePanel .lio-card-art > .lio-card-flip{position:absolute!important;inset:0!important}
+      #luneaIntimacyOraclePanel .lio-card-front{
+        background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;
+        filter:none!important;
+      }
+      #luneaIntimacyOraclePanel .lio-card-back{
+        background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;
+        background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
+      }
+      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta{
+        position:static!important;left:auto!important;right:auto!important;bottom:auto!important;
+        display:block!important;box-sizing:border-box!important;width:100%!important;min-height:0!important;
+        padding:5px 4px!important;background:transparent!important;backdrop-filter:none!important;
+        border-radius:0!important;color:#e7cbd5!important;line-height:1.4!important;overflow-wrap:anywhere!important;
+      }
+      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta em{display:block!important;font-style:normal!important;font-size:10px!important}
+      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta strong,
+      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta small{display:none!important}
+
+      /* Legacy Oracle imagery only. Never use this selector for Tarot backs. */
       body.lunea-intimacy-reading .lio-card:not(.revealed) .lio-card-face{
-        background-image:url('${FINAL_ORACLE_BACK}')!important;
+        background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;
         background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
       }
     `;
   }
 
   function oracleIndex(node) {
-    const title = node.querySelector('span strong')?.textContent?.trim();
-    const ko = node.querySelector('span small')?.textContent?.trim();
+    const visual = node?.querySelector?.('.lio-card-front,.lio-card-face');
+    const raw = `${visual?.style?.backgroundImage || ''} ${visual?.dataset?.luneaIntimacyOracleIndex || ''}`;
+    const direct = raw.match(/oracle_(\d{2})\.png/i) || raw.match(/\b(\d{2})\b/);
+    if (direct) {
+      const n = Number(direct[1]);
+      if (n >= 1 && n <= 36) return n - 1;
+    }
+    const title = node?.querySelector?.('span strong')?.textContent?.trim();
+    const ko = node?.querySelector?.('span small')?.textContent?.trim();
     const cards = Object.values(W.LUNEA_INTIMACY_ORACLE_V35?.cards || {});
     if (title) {
       const idx = cards.findIndex(card => String(card.enTitle || '').trim() === title);
@@ -104,26 +152,72 @@
     return -1;
   }
 
+  function ensureModernCardStructure(node, cardNo) {
+    const flip = node?.querySelector?.(':scope > .lio-card-flip');
+    const existingArt = node?.querySelector?.(':scope > .lio-card-art');
+    let art = existingArt;
+    if (!art && flip) {
+      art = document.createElement('div');
+      art.className = 'lio-card-art';
+      flip.before(art);
+      art.appendChild(flip);
+    }
+    if (art) art.style.aspectRatio = CARD_ASPECT_RATIOS[`O${cardNo}`] || '2/3';
+    const meta = node?.querySelector?.(':scope > span');
+    if (meta) {
+      meta.classList.add('lio-card-meta');
+      const strong = meta.querySelector('strong');
+      const small = meta.querySelector('small');
+      if (strong) strong.hidden = true;
+      if (small) small.hidden = true;
+    }
+    return art;
+  }
+
   function patchOracleCard(node) {
-    const face = node?.querySelector?.('.lio-card-face');
-    if (!face) return false;
+    if (!node) return false;
     const idx = oracleIndex(node);
     if (idx < 0 || idx > 35) return false;
-    face.dataset.luneaIntimacyOracleIndex = String(idx + 1).padStart(2, '0');
+    const cardNo = String(idx + 1).padStart(2, '0');
+    node.dataset.luneaIntimacyOracleIndex = cardNo;
+
+    const front = node.querySelector('.lio-card-front');
+    if (front) {
+      ensureModernCardStructure(node, cardNo);
+      front.dataset.luneaIntimacyOracleIndex = cardNo;
+      front.style.setProperty('background-image', `url("${ORACLE_CARD_ROOT}/oracle_${cardNo}.png?v=${ASSET_VERSION}")`, 'important');
+      front.style.setProperty('background-size', 'contain', 'important');
+      front.style.setProperty('background-position', 'center', 'important');
+      front.style.setProperty('background-repeat', 'no-repeat', 'important');
+      front.style.setProperty('filter', 'none', 'important');
+      front.dataset.luneaIntimacyOracleAsset = 'iphone-final36-contain-v43';
+      const back = node.querySelector('.lio-card-back');
+      if (back) {
+        back.style.setProperty('background-image', `url("${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}")`, 'important');
+        back.style.setProperty('background-size', 'cover', 'important');
+        back.style.setProperty('background-position', 'center', 'important');
+        back.style.setProperty('background-repeat', 'no-repeat', 'important');
+      }
+      return true;
+    }
+
+    const face = node.querySelector('.lio-card-face');
+    if (!face) return false;
+    face.dataset.luneaIntimacyOracleIndex = cardNo;
     if (!node.classList.contains('revealed')) {
-      face.style.setProperty('background-image', `url("${FINAL_ORACLE_BACK}")`, 'important');
+      face.style.setProperty('background-image', `url("${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}")`, 'important');
       face.style.setProperty('background-size', 'cover', 'important');
       face.style.setProperty('background-position', 'center', 'important');
       face.style.setProperty('background-repeat', 'no-repeat', 'important');
       face.dataset.luneaIntimacyOracleAsset = 'final-png-oracle-back-v43';
       return true;
     }
-    const cardNo = String(idx + 1).padStart(2, '0');
-    face.style.setProperty('background-image', `url("${ORACLE_CARD_ROOT}/oracle_${cardNo}.png")`, 'important');
-    face.style.setProperty('background-size', 'cover', 'important');
+    face.style.setProperty('background-image', `url("${ORACLE_CARD_ROOT}/oracle_${cardNo}.png?v=${ASSET_VERSION}")`, 'important');
+    face.style.setProperty('background-size', 'contain', 'important');
     face.style.setProperty('background-position', 'center', 'important');
     face.style.setProperty('background-repeat', 'no-repeat', 'important');
-    face.dataset.luneaIntimacyOracleAsset = 'individual-png-v43';
+    face.style.setProperty('filter', 'none', 'important');
+    face.dataset.luneaIntimacyOracleAsset = 'iphone-final36-contain-v43';
     return true;
   }
 
@@ -210,6 +304,8 @@
     version: RELEASE,
     oracleCardRoot: ORACLE_CARD_ROOT,
     finalOracleBack: FINAL_ORACLE_BACK,
+    assetVersion: ASSET_VERSION,
+    cardAspectRatios: CARD_ASPECT_RATIOS,
     intimacyActive,
     apply,
     patchOracleCards,
@@ -220,5 +316,5 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
-  console.info(`🌹 LUNEA INTIMACY repair V${RELEASE} ready`);
+  console.info(`🌹 LUNEA INTIMACY repair V${RELEASE} ready · iPhone final Oracle artwork preserved`);
 })();
