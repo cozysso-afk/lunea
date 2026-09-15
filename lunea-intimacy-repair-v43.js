@@ -1,24 +1,22 @@
 'use strict';
 
-/* LUNEA INTIMACY REPAIR V43.4
-   Clean repair layer for the 2026-09 recovery lineage.
-   - Keeps INTIMACY state detection robust for manual spreads.
-   - Restyles the shared manual spread editor in burgundy / rose-gold.
-   - Routes visible INTIMACY ORACLE cards to the final iPhone-branch PNG files.
-   - Restores the approved per-card aspect ratios and contain rendering.
-   - Keeps the ORACLE back separate from the Tarot back asset.
-   - Simplifies Oracle controls to Tarot / 1-card / 3-card choices only.
-   This file does not call Gemini and does not change RNG or Oracle semantics. */
+/* LUNEA INTIMACY REPAIR V43.5
+   Final visual owner for INTIMACY presentation only.
+   - Keeps the uploaded iPhone-branch Oracle PNGs uncropped and unfiltered.
+   - Restores each approved card aspect ratio.
+   - Removes the legacy blurred text overlay from Oracle artwork.
+   - Keeps Oracle controls and the manual INTIMACY editor presentation stable.
+   - Does not change RNG, Oracle semantics, prompts, draft restore, or AI logic. */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_REPAIR_V43__) return;
   W.__LUNEA_INTIMACY_REPAIR_V43__ = true;
 
-  const RELEASE = '43.4';
+  const RELEASE = '43.5';
   const STYLE_ID = 'luneaIntimacyRepairV43Style';
   const ORACLE_CARD_ROOT = './assets/intimacy-oracle/cards';
   const FINAL_ORACLE_BACK = './assets/intimacy-oracle/oracle_back_v2.png';
-  const ASSET_VERSION = 'iphone-final36-20260916';
+  const ASSET_VERSION = 'iphone-final36-20260916b';
   const CARD_ASPECT_RATIOS = Object.freeze({
     O01:'1024/1536',O02:'1024/1536',O03:'1024/1536',O04:'1024/1536',O05:'1024/1536',O06:'1024/1536',
     O07:'1024/1536',O08:'1024/1536',O09:'1024/1536',O10:'1024/1536',O11:'1024/1536',O12:'1024/1536',
@@ -27,6 +25,7 @@
     O25:'1024/1536',O26:'1055/1491',O27:'1055/1491',O28:'1055/1491',O29:'1055/1491',O30:'1055/1491',
     O31:'1055/1491',O32:'1024/1536',O33:'1024/1536',O34:'1024/1536',O35:'1055/1491',O36:'1024/1536'
   });
+
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
@@ -56,87 +55,53 @@
     }
     style.textContent = `
       #luneaManualPanel[data-lunea-intimacy-theme]{
-        background:
-          radial-gradient(circle at 12% 8%,rgba(196,68,113,.16),transparent 32%),
-          linear-gradient(155deg,rgba(78,17,43,.76),rgba(31,10,28,.96) 52%,rgba(14,9,20,.99))!important;
+        background:radial-gradient(circle at 12% 8%,rgba(196,68,113,.16),transparent 32%),linear-gradient(155deg,rgba(78,17,43,.76),rgba(31,10,28,.96) 52%,rgba(14,9,20,.99))!important;
         border:1px solid rgba(231,143,177,.30)!important;
         box-shadow:inset 0 1px 0 rgba(255,255,255,.035),0 12px 28px rgba(51,7,30,.18)!important;
       }
       #luneaManualPanel[data-lunea-intimacy-theme] label{color:#f4e9ee!important}
       #luneaManualPanel[data-lunea-intimacy-theme] input,
-      #luneaManualPanel[data-lunea-intimacy-theme] textarea{
-        background:rgba(19,8,17,.82)!important;
-        border-color:rgba(230,145,179,.24)!important;
-        color:#fff3f7!important;
-        caret-color:#efafc7!important;
-      }
-      #luneaManualPanel[data-lunea-intimacy-theme] input:focus,
-      #luneaManualPanel[data-lunea-intimacy-theme] textarea:focus{
-        border-color:rgba(245,163,195,.56)!important;
-        box-shadow:0 0 0 2px rgba(171,55,103,.13)!important;
-      }
-      #luneaManualPanel[data-lunea-intimacy-theme] .manual-check{
-        background:linear-gradient(145deg,rgba(137,34,75,.22),rgba(83,27,70,.14))!important;
-        border-color:rgba(229,133,171,.25)!important;
-      }
+      #luneaManualPanel[data-lunea-intimacy-theme] textarea{background:rgba(19,8,17,.82)!important;border-color:rgba(230,145,179,.24)!important;color:#fff3f7!important;caret-color:#efafc7!important}
+      #luneaManualPanel[data-lunea-intimacy-theme] .manual-check{background:linear-gradient(145deg,rgba(137,34,75,.22),rgba(83,27,70,.14))!important;border-color:rgba(229,133,171,.25)!important}
       #luneaManualPanel[data-lunea-intimacy-theme] .manual-check input{accent-color:#bf557f!important}
       #luneaManualPanel[data-lunea-intimacy-theme] .manual-check b{color:#ffeef4!important}
       #luneaManualPanel[data-lunea-intimacy-theme] .manual-check span,
       #luneaManualPanel[data-lunea-intimacy-theme] .manual-help{color:rgba(232,202,214,.76)!important}
-      #luneaManualPanel[data-lunea-intimacy-theme] #luneaManualCount{color:#efafc7!important}
-      #luneaManualPanel[data-lunea-intimacy-theme] #luneaManualReadingItem .count{
-        color:#f2b4ca!important;
-        border-color:rgba(234,145,178,.34)!important;
-        background:rgba(133,36,75,.20)!important;
-      }
       #luneaIntimacyOracleTools[data-lunea-clean-oracle="1"] .lio-mode{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-      #luneaIntimacyOracleTools .lunea-oracle-hint{
-        margin:0 0 7px;color:rgba(232,202,214,.74);font-size:10px;line-height:1.35;text-align:left;
-      }
+      #luneaIntimacyOracleTools .lunea-oracle-hint{margin:0 0 7px;color:rgba(232,202,214,.74);font-size:10px;line-height:1.35;text-align:left}
 
-      /* Final iPhone-branch Oracle presentation. Keep the entire uploaded PNG. */
-      #luneaIntimacyOraclePanel .lio-card{
-        display:flex!important;flex-direction:column!important;
-        aspect-ratio:auto!important;overflow:visible!important;
-      }
-      #luneaIntimacyOraclePanel .lio-card:only-child{
-        grid-column:1/-1!important;width:min(100%,180px)!important;min-width:0!important;justify-self:center!important;
-      }
-      #luneaIntimacyOraclePanel .lio-card-art{
-        position:relative!important;width:100%!important;min-width:0!important;
-        overflow:hidden!important;border-radius:9px!important;background:#14060d!important;perspective:900px!important;
-      }
-      #luneaIntimacyOraclePanel .lio-card-art > .lio-card-flip{position:absolute!important;inset:0!important}
-      #luneaIntimacyOraclePanel .lio-card-front{
-        background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;
-        filter:none!important;
-      }
-      #luneaIntimacyOraclePanel .lio-card-back{
-        background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;
-        background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
-      }
-      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta{
-        position:static!important;left:auto!important;right:auto!important;bottom:auto!important;
-        display:block!important;box-sizing:border-box!important;width:100%!important;min-height:0!important;
-        padding:5px 4px!important;background:transparent!important;backdrop-filter:none!important;
-        border-radius:0!important;color:#e7cbd5!important;line-height:1.4!important;overflow-wrap:anywhere!important;
-      }
-      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta em{display:block!important;font-style:normal!important;font-size:10px!important}
-      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta strong,
-      #luneaIntimacyOraclePanel .lio-card > .lio-card-meta small{display:none!important}
+      #luneaIntimacyOraclePanel .lio-card{display:flex!important;flex-direction:column!important;aspect-ratio:auto!important;overflow:hidden!important}
+      #luneaIntimacyOraclePanel .lio-card:only-child{grid-column:1/-1!important;width:min(100%,180px)!important;min-width:0!important;justify-self:center!important}
+      #luneaIntimacyOraclePanel .lio-card-art{position:relative!important;width:100%!important;min-width:0!important;overflow:hidden!important;border-radius:9px 9px 0 0!important;background:#14060d!important;perspective:900px!important}
+      #luneaIntimacyOraclePanel .lio-card-art>.lio-card-flip{position:absolute!important;inset:0!important}
+      #luneaIntimacyOraclePanel .lio-card-front{background-size:contain!important;background-position:center!important;background-repeat:no-repeat!important;filter:none!important}
+      #luneaIntimacyOraclePanel .lio-card-back{background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important}
 
-      /* Legacy Oracle imagery only. Never use this selector for Tarot backs. */
-      body.lunea-intimacy-reading .lio-card:not(.revealed) .lio-card-face{
-        background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;
-        background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
+      #luneaIntimacyOraclePanel .lio-card>span,
+      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta{
+        position:static!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;
+        display:block!important;box-sizing:border-box!important;width:100%!important;min-height:0!important;height:auto!important;
+        margin:0!important;padding:9px 5px 10px!important;
+        background:#210a16!important;background-image:none!important;
+        backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+        filter:none!important;box-shadow:none!important;border-radius:0!important;
+        color:#f3e9ee!important;line-height:1.35!important;overflow:visible!important;
       }
+      #luneaIntimacyOraclePanel .lio-card>span em,
+      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta em{display:block!important;margin:0!important;font-style:normal!important;font-size:10px!important;text-align:center!important}
+      #luneaIntimacyOraclePanel .lio-card>span strong,
+      #luneaIntimacyOraclePanel .lio-card>span small,
+      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta strong,
+      #luneaIntimacyOraclePanel .lio-card>.lio-card-meta small{display:none!important;visibility:hidden!important}
+
+      body.lunea-intimacy-reading .lio-card:not(.revealed) .lio-card-face{background-image:url('${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}')!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;filter:none!important}
     `;
   }
 
   function oracleIndex(node) {
     const visual = node?.querySelector?.('.lio-card-front,.lio-card-face');
-    const raw = `${visual?.style?.backgroundImage || ''} ${visual?.dataset?.luneaIntimacyOracleIndex || ''}`;
-    const direct = raw.match(/oracle_(\d{2})\.png/i) || raw.match(/\b(\d{2})\b/);
+    const raw = `${visual?.style?.backgroundImage || ''} ${visual?.dataset?.luneaIntimacyOracleIndex || ''} ${node?.dataset?.luneaIntimacyOracleIndex || ''}`;
+    const direct = raw.match(/oracle_(\d{2})\.png/i) || raw.match(/(?:^|\D)(\d{2})(?:\D|$)/);
     if (direct) {
       const n = Number(direct[1]);
       if (n >= 1 && n <= 36) return n - 1;
@@ -153,9 +118,8 @@
   }
 
   function ensureModernCardStructure(node, cardNo) {
+    let art = node?.querySelector?.(':scope > .lio-card-art');
     const flip = node?.querySelector?.(':scope > .lio-card-flip');
-    const existingArt = node?.querySelector?.(':scope > .lio-card-art');
-    let art = existingArt;
     if (!art && flip) {
       art = document.createElement('div');
       art.className = 'lio-card-art';
@@ -163,6 +127,7 @@
       art.appendChild(flip);
     }
     if (art) art.style.aspectRatio = CARD_ASPECT_RATIOS[`O${cardNo}`] || '2/3';
+
     const meta = node?.querySelector?.(':scope > span');
     if (meta) {
       meta.classList.add('lio-card-meta');
@@ -190,13 +155,11 @@
       front.style.setProperty('background-position', 'center', 'important');
       front.style.setProperty('background-repeat', 'no-repeat', 'important');
       front.style.setProperty('filter', 'none', 'important');
-      front.dataset.luneaIntimacyOracleAsset = 'iphone-final36-contain-v43';
+      front.dataset.luneaIntimacyOracleAsset = 'iphone-final36-contain-v435';
       const back = node.querySelector('.lio-card-back');
       if (back) {
         back.style.setProperty('background-image', `url("${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}")`, 'important');
         back.style.setProperty('background-size', 'cover', 'important');
-        back.style.setProperty('background-position', 'center', 'important');
-        back.style.setProperty('background-repeat', 'no-repeat', 'important');
       }
       return true;
     }
@@ -204,20 +167,14 @@
     const face = node.querySelector('.lio-card-face');
     if (!face) return false;
     face.dataset.luneaIntimacyOracleIndex = cardNo;
-    if (!node.classList.contains('revealed')) {
-      face.style.setProperty('background-image', `url("${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}")`, 'important');
-      face.style.setProperty('background-size', 'cover', 'important');
-      face.style.setProperty('background-position', 'center', 'important');
-      face.style.setProperty('background-repeat', 'no-repeat', 'important');
-      face.dataset.luneaIntimacyOracleAsset = 'final-png-oracle-back-v43';
-      return true;
-    }
-    face.style.setProperty('background-image', `url("${ORACLE_CARD_ROOT}/oracle_${cardNo}.png?v=${ASSET_VERSION}")`, 'important');
-    face.style.setProperty('background-size', 'contain', 'important');
+    const src = node.classList.contains('revealed')
+      ? `${ORACLE_CARD_ROOT}/oracle_${cardNo}.png?v=${ASSET_VERSION}`
+      : `${FINAL_ORACLE_BACK}?v=${ASSET_VERSION}`;
+    face.style.setProperty('background-image', `url("${src}")`, 'important');
+    face.style.setProperty('background-size', node.classList.contains('revealed') ? 'contain' : 'cover', 'important');
     face.style.setProperty('background-position', 'center', 'important');
     face.style.setProperty('background-repeat', 'no-repeat', 'important');
     face.style.setProperty('filter', 'none', 'important');
-    face.dataset.luneaIntimacyOracleAsset = 'iphone-final36-contain-v43';
     return true;
   }
 
@@ -250,15 +207,12 @@
 
   function clearManualContext() {
     const panel = document.getElementById('luneaManualPanel');
-    if (!panel) return false;
-    delete panel.dataset.luneaIntimacyTheme;
-    return true;
+    if (panel) delete panel.dataset.luneaIntimacyTheme;
   }
 
   function markManualContext() {
     const panel = document.getElementById('luneaManualPanel');
-    if (!panel) return false;
-    if (!intimacyActive()) {
+    if (!panel || !intimacyActive()) {
       clearManualContext();
       return false;
     }
@@ -293,19 +247,20 @@
     const observer = new MutationObserver(() => {
       if (queued) return;
       queued = true;
-      requestAnimationFrame(() => { queued = false; apply(); });
+      requestAnimationFrame(() => {
+        queued = false;
+        apply();
+      });
     });
     observer.observe(document.documentElement, {childList:true,subtree:true,attributes:true,attributeFilter:['class']});
-    [120, 450, 1200, 3000].forEach(ms => setTimeout(apply, ms));
-    W.addEventListener('pageshow', () => setTimeout(apply, 80));
+    [120,450,1200,3000].forEach(ms => setTimeout(apply, ms));
+    W.addEventListener('pageshow', () => setTimeout(apply, 80), {passive:true});
   }
 
   W.LUNEA_INTIMACY_REPAIR_V43 = Object.freeze({
     version: RELEASE,
     oracleCardRoot: ORACLE_CARD_ROOT,
     finalOracleBack: FINAL_ORACLE_BACK,
-    assetVersion: ASSET_VERSION,
-    cardAspectRatios: CARD_ASPECT_RATIOS,
     intimacyActive,
     apply,
     patchOracleCards,
@@ -316,5 +271,5 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
-  console.info(`🌹 LUNEA INTIMACY repair V${RELEASE} ready · iPhone final Oracle artwork preserved`);
+  console.info(`🌹 LUNEA INTIMACY repair V${RELEASE} ready · no blur overlay`);
 })();
