@@ -176,6 +176,19 @@
     return button;
   }
 
+  let ensureQueued = false;
+  function queueEnsureButton() {
+    if (ensureQueued) return;
+    ensureQueued = true;
+    queueMicrotask(() => {
+      ensureQueued = false;
+      const bar = document.querySelector('#spreadOverlay .actionbar');
+      if (!bar) return;
+      const button = document.getElementById(BUTTON_ID);
+      if (!button || button.parentElement !== bar) ensureButton();
+    });
+  }
+
   ensureButton();
   const spread = document.getElementById('spreadOverlay');
   const actionbar = document.querySelector('#spreadOverlay .actionbar');
@@ -186,8 +199,15 @@
   }
   if (actionbar) {
     new MutationObserver(() => {
-      if (!document.getElementById(BUTTON_ID)) queueMicrotask(ensureButton);
+      if (!document.getElementById(BUTTON_ID)) queueEnsureButton();
     }).observe(actionbar, {childList:true});
+  }
+  const root = document.body || document.documentElement;
+  if (root) {
+    new MutationObserver(mutations => {
+      if (!mutations.some(mutation => mutation.type === 'childList' && (mutation.addedNodes.length || mutation.removedNodes.length))) return;
+      queueEnsureButton();
+    }).observe(root, {childList:true, subtree:true});
   }
   W.addEventListener('pageshow', ensureButton);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) ensureButton(); });
