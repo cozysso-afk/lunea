@@ -1,0 +1,78 @@
+name: Live production recovery smoke
+
+on:
+  push:
+    branches:
+      - release/recovery-390432a-final
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Verify deployed build and recovery runtime over public HTTP
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://cozysso-afk.github.io/lunea'
+          BUILD='49cfa7620aae'
+          fetch() {
+            local path="$1"
+            local out="$2"
+            for i in {1..12}; do
+              if curl -fLsS --retry 2 --retry-delay 1 -H 'Cache-Control: no-cache' "${BASE}/${path}?live_verify=${BUILD}-${i}" -o "$out"; then
+                return 0
+              fi
+              sleep 5
+            done
+            return 1
+          }
+
+          fetch 'lunea-build.json' /tmp/build.json
+          grep -F '"version": "49cfa7620aae"' /tmp/build.json
+
+          fetch 'index.html' /tmp/index.html
+          grep -F 'lunea-cache-refresh-v1.js?v=49cfa7620aae' /tmp/index.html
+          grep -F 'lunea-structural-routing-v4.js?v=49cfa7620aae' /tmp/index.html
+
+          fetch 'lunea-cache-refresh-v1.js' /tmp/cache.js
+          grep -F 'embedded && embedded !== remote' /tmp/cache.js
+          if grep -F 'embedded !== remote || forceRefresh' /tmp/cache.js; then
+            echo 'same-build forced refresh regression detected' >&2
+            exit 1
+          fi
+
+          fetch 'lunea-intimacy-ai-bridge-v34.js' /tmp/bridge.js
+          grep -F "const RELEASE = '34.4'" /tmp/bridge.js
+          grep -F 'serializeOracleDraft' /tmp/bridge.js
+          grep -F 'restoreSerializedOracle' /tmp/bridge.js
+          grep -F 'restoreOracleDraftExact' /tmp/bridge.js
+
+          fetch 'lunea-reading-draft-v1.js' /tmp/draft.js
+          grep -F 'intimacyOracleFallback' /tmp/draft.js
+          grep -F 'oracleRestoreGeneration' /tmp/draft.js
+          grep -F 'restoreOracleDraftExact' /tmp/draft.js
+
+          fetch 'lunea-reading-action-order-v33.js' /tmp/order.js
+          grep -F "'luneaMessageOracleSupportBtn'" /tmp/order.js
+          grep -F 'ensureIntimacyCleanUi' /tmp/order.js
+          grep -F 'ensureIntimacyBurgundyUi' /tmp/order.js
+          grep -F 'ensureIntimacyRepairUi' /tmp/order.js
+
+          fetch 'lunea-intimacy-burgundy-v40.js' /tmp/v40.js
+          grep -F "categoryIcon:'♡'" /tmp/v40.js
+
+          fetch 'lunea-message-oracle-v1.js' /tmp/message.js
+          test -s /tmp/message.js
+          fetch 'lunea-reading-attachments-v1.js' /tmp/attachments.js
+          test -s /tmp/attachments.js
+          fetch 'lunea-journal-detail-v51.js' /tmp/journal.js
+          test -s /tmp/journal.js
+
+          curl -fLsS -H 'Cache-Control: no-cache' "${BASE}/assets/message-oracle/message_oracle_logo.png?live_verify=${BUILD}" -o /tmp/message-oracle-logo.png
+          test -s /tmp/message-oracle-logo.png
+
+          echo 'LIVE PAGES RECOVERY SMOKE: PASS'
