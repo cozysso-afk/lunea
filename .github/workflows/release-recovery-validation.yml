@@ -1,0 +1,115 @@
+name: Release recovery validation
+
+on:
+  push:
+    branches:
+      - release/recovery-390432a-final
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check recovery files
+        run: |
+          node --check lunea-cache-refresh-v1.js
+          node --check lunea-intimacy-ai-bridge-v34.js
+          node --check lunea-reading-draft-v1.js
+          node --check lunea-intimacy-clean-v39.js
+          node --check lunea-structural-routing-v4.js
+          node --check lunea-reading-attachments-v1.js
+          node --check lunea-message-oracle-v1.js
+          node --check lunea-message-oracle-ui-v1.js
+          node --check lunea-message-oracle-support-v1.js
+          node --check lunea-archive-search-v1.js
+          node --check lunea-journal-detail-v51.js
+          node --check tests/golden-product-contract.test.mjs
+          node --check tests/reading-attachments-v1.test.mjs
+          node --check tests/thai-range-action-order-v33.test.mjs
+          node --check tests/intimacy-oracle-late-runtime.e2e.mjs
+          node --check tests/reading-lifecycle-v59.e2e.mjs
+      - name: Composite golden product contract
+        run: node --test tests/golden-product-contract.test.mjs
+      - name: Exact-reading attachment regression
+        run: node --test tests/reading-attachments-v1.test.mjs
+      - name: Approved action-order regression
+        run: node tests/thai-range-action-order-v33.test.mjs
+      - name: Recovery source invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const cache=fs.readFileSync('lunea-cache-refresh-v1.js','utf8');
+          const bridge=fs.readFileSync('lunea-intimacy-ai-bridge-v34.js','utf8');
+          const draft=fs.readFileSync('lunea-reading-draft-v1.js','utf8');
+          assert.match(cache,/embedded && embedded !== remote/);
+          assert.doesNotMatch(cache,/embedded !== remote \|\| forceRefresh/);
+          assert.match(bridge,/restoreOracleDraftExact/);
+          assert.match(bridge,/typeof ui\?\.serializeOracleDraft==='function'/);
+          assert.match(bridge,/typeof ui\?\.restoreSerializedOracle==='function'/);
+          assert.match(draft,/intimacyOracleFallback/);
+          assert.match(draft,/oracleRestoreGeneration/);
+          assert.match(draft,/restoreOracleDraftExact/);
+          assert.match(draft,/if \(restoring\) return/);
+          console.log('Recovery source invariants: PASS');
+          NODE
+      - name: AI bridge contract
+        run: node --test tests/intimacy-ai-bridge-v34.test.mjs
+      - name: Supplemental Oracle contract
+        run: node tests/intimacy-oracle-ui-v36.test.mjs
+      - name: Reading lifecycle invariants
+        run: node tests/reading-lifecycle-v59.test.mjs
+      - name: INTIMACY Home state regression
+        run: node --test tests/intimacy-clean-v39.test.mjs
+
+  webkit-recovery:
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Align lifecycle E2E build fixture with checkout
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          build=json.loads(Path('lunea-build.json').read_text(encoding='utf-8'))['version']
+          p=Path('tests/reading-lifecycle-v59.e2e.mjs')
+          s=p.read_text(encoding='utf-8')
+          s,n=re.subn(r"const BUILD = '[^']+';",f"const BUILD = '{build}';",s,count=1)
+          if n != 1:
+              raise SystemExit('Could not align reading lifecycle E2E BUILD fixture')
+          p.write_text(s,encoding='utf-8')
+          print('Aligned lifecycle E2E BUILD to',build)
+          PY
+      - name: Start release-candidate LUNEA server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-release-validation.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-release-validation.log
+          exit 1
+      - name: Run same-session 10-reading mixed-sector regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/reading-lifecycle-v59.e2e.mjs
+      - name: Run late-runtime exact-draft regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/intimacy-oracle-late-runtime.e2e.mjs
