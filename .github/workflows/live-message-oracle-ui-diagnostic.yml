@@ -1,0 +1,56 @@
+name: Live Message Oracle UI diagnostic
+
+on:
+  push:
+    branches:
+      - release/recovery-390432a-final
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Inspect live Pages DOM
+        run: |
+          node --input-type=module <<'NODE'
+          import { webkit } from 'playwright';
+          const browser = await webkit.launch({headless:true});
+          const page = await browser.newPage({viewport:{width:393,height:852}});
+          const errors=[];
+          page.on('pageerror', e=>errors.push('pageerror: '+e.message));
+          page.on('console', msg=>{ if(msg.type()==='error') errors.push('console: '+msg.text()); });
+          await page.goto('https://cozysso-afk.github.io/lunea/?ui_diag='+Date.now(), {waitUntil:'networkidle'});
+          await page.waitForTimeout(1500);
+          const diag = await page.evaluate(() => {
+            const bar=document.querySelector('#spreadOverlay .actionbar');
+            const btn=document.getElementById('luneaMessageOracleSupportBtn');
+            const imgs=btn ? [...btn.querySelectorAll('img')].map(img=>({src:img.getAttribute('src'),complete:img.complete,naturalWidth:img.naturalWidth})) : [];
+            return {
+              readyState:document.readyState,
+              actionbar:!!bar,
+              actionbarHtml:bar?.outerHTML?.slice(0,3000)||'',
+              attachments:!!window.LUNEA_READING_ATTACHMENTS_V1,
+              supportApi:!!window.LUNEA_MESSAGE_ORACLE_SUPPORT_V1,
+              button:!!btn,
+              buttonText:btn?.textContent||'',
+              buttonImages:imgs,
+              supportStyle:!!document.getElementById('luneaMessageSupportStyle'),
+              loaderScript:[...document.scripts].map(s=>s.src).find(src=>src.includes('lunea-message-oracle-support-v1.js'))||'',
+              featureLoader:typeof window.LUNEA_LOAD_FEATURE_GROUP,
+              bodyClass:document.body?.className||''
+            };
+          });
+          console.log('LIVE_MESSAGE_ORACLE_DIAG='+JSON.stringify(diag,null,2));
+          console.log('LIVE_ERRORS='+JSON.stringify(errors,null,2));
+          await browser.close();
+          NODE
