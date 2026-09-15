@@ -1,9 +1,9 @@
-name: Intimacy Oracle late-runtime sync branch checks
+name: Recovery 390432a audit checks
 
 on:
   push:
     branches:
-      - fix/intimacy-oracle-late-runtime-sync
+      - fix/recovery-390432a-audit
   workflow_dispatch:
 
 permissions:
@@ -18,21 +18,62 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Syntax check
+      - name: Syntax check recovery files
         run: |
+          node --check lunea-cache-refresh-v1.js
           node --check lunea-intimacy-ai-bridge-v34.js
+          node --check lunea-reading-draft-v1.js
+          node --check lunea-intimacy-clean-v39.js
+          node --check lunea-structural-routing-v4.js
+          node --check lunea-reading-attachments-v1.js
+          node --check lunea-message-oracle-v1.js
+          node --check lunea-message-oracle-ui-v1.js
+          node --check lunea-message-oracle-support-v1.js
+          node --check lunea-archive-search-v1.js
+          node --check lunea-journal-detail-v51.js
+          node --check tests/golden-product-contract.test.mjs
+          node --check tests/reading-attachments-v1.test.mjs
+          node --check tests/thai-range-action-order-v33.test.mjs
           node --check tests/intimacy-oracle-late-runtime.e2e.mjs
+          node --check tests/reading-lifecycle-v59.e2e.mjs
+      - name: Composite golden product contract
+        run: node --test tests/golden-product-contract.test.mjs
+      - name: Exact-reading attachment regression
+        run: node --test tests/reading-attachments-v1.test.mjs
+      - name: Approved action-order regression
+        run: node tests/thai-range-action-order-v33.test.mjs
+      - name: Recovery source invariants
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const cache=fs.readFileSync('lunea-cache-refresh-v1.js','utf8');
+          const bridge=fs.readFileSync('lunea-intimacy-ai-bridge-v34.js','utf8');
+          const draft=fs.readFileSync('lunea-reading-draft-v1.js','utf8');
+          assert.match(cache,/embedded && embedded !== remote/,'build refresh must require an actual version mismatch');
+          assert.doesNotMatch(cache,/embedded !== remote \|\| forceRefresh/,'same-build force refresh must stay removed');
+          assert.match(bridge,/restoreOracleDraftExact/,'bridge must expose exact async restore');
+          assert.match(bridge,/typeof ui\?\.serializeOracleDraft==='function'/,'runtime readiness must require exact-draft serialization');
+          assert.match(bridge,/typeof ui\?\.restoreSerializedOracle==='function'/,'runtime readiness must require exact-draft restore');
+          assert.match(draft,/intimacyOracleFallback/,'draft must retain the exact Oracle snapshot while runtime is late');
+          assert.match(draft,/oracleRestoreGeneration/,'stale restore completion must not release a newer restore guard');
+          assert.match(draft,/restoreOracleDraftExact/,'draft restore must await bridge exact restore when available');
+          assert.match(draft,/if \(restoring\) return/,'draft autosave must not arm while restoring');
+          console.log('Recovery source invariants: PASS');
+          NODE
       - name: AI bridge contract
         run: node --test tests/intimacy-ai-bridge-v34.test.mjs
       - name: Supplemental Oracle contract
         run: node tests/intimacy-oracle-ui-v36.test.mjs
       - name: Reading lifecycle invariants
         run: node tests/reading-lifecycle-v59.test.mjs
+      - name: INTIMACY Home state regression
+        run: node --test tests/intimacy-clean-v39.test.mjs
 
-  webkit-late-runtime:
+  webkit-recovery:
     needs: contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -42,19 +83,98 @@ jobs:
         run: |
           npm install --no-save playwright@1.55.0
           npx playwright install --with-deps webkit
+      - name: Align legacy lifecycle E2E build fixture with this checkout
+        run: |
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          build=json.loads(Path('lunea-build.json').read_text(encoding='utf-8'))['version']
+          p=Path('tests/reading-lifecycle-v59.e2e.mjs')
+          s=p.read_text(encoding='utf-8')
+          s,n=re.subn(r"const BUILD = '[^']+';",f"const BUILD = '{build}';",s,count=1)
+          if n != 1:
+              raise SystemExit('Could not align reading lifecycle E2E BUILD fixture')
+          p.write_text(s,encoding='utf-8')
+          print('Aligned lifecycle E2E BUILD to',build)
+          PY
+      - name: Instrument draw-button visibility diagnostics
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('tests/reading-lifecycle-v59.e2e.mjs')
+          s=p.read_text(encoding='utf-8')
+          needle="    await page.locator('#drawBtn').click();"
+          replacement=r'''    try {
+              await page.locator('#drawBtn').click();
+            } catch (clickError) {
+              const diagnostic = await page.evaluate(() => {
+                const draw=document.getElementById('drawBtn');
+                const sheet=document.getElementById('sheet');
+                const panel=document.getElementById('luneaManualPanel');
+                const r=draw?.getBoundingClientRect?.();
+                const sr=sheet?.getBoundingClientRect?.();
+                const pr=panel?.getBoundingClientRect?.();
+                const cs=draw ? getComputedStyle(draw) : null;
+                const scs=sheet ? getComputedStyle(sheet) : null;
+                const cx=r ? r.left+r.width/2 : -1;
+                const cy=r ? r.top+r.height/2 : -1;
+                const top=(cx>=0 && cy>=0 && cx<innerWidth && cy<innerHeight) ? document.elementFromPoint(cx,cy) : null;
+                return {
+                  draw:{rect:r?{x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,bottom:r.bottom}:null,disabled:!!draw?.disabled,display:cs?.display,visibility:cs?.visibility,opacity:cs?.opacity,pointerEvents:cs?.pointerEvents,offsetParent:draw?.offsetParent?.id||draw?.offsetParent?.className||null},
+                  sheet:{rect:sr?{x:sr.x,y:sr.y,width:sr.width,height:sr.height,top:sr.top,bottom:sr.bottom}:null,scrollTop:sheet?.scrollTop,scrollHeight:sheet?.scrollHeight,clientHeight:sheet?.clientHeight,overflowY:scs?.overflowY,className:sheet?.className},
+                  panel:{rect:pr?{x:pr.x,y:pr.y,width:pr.width,height:pr.height,top:pr.top,bottom:pr.bottom}:null,className:panel?.className},
+                  viewport:{innerWidth,innerHeight,visualHeight:visualViewport?.height||null,visualOffsetTop:visualViewport?.offsetTop||null},
+                  topElement:top?{id:top.id,className:top.className,tag:top.tagName}:null,
+                  active:{id:document.activeElement?.id||null,tag:document.activeElement?.tagName||null},
+                  bodyClass:document.body.className,
+                  htmlClass:document.documentElement.className
+                };
+              });
+              console.error('DRAW_CLICK_DIAGNOSTIC', JSON.stringify({run:i+1,mode:run.mode,category:run.category,diagnostic}, null, 2));
+              throw clickError;
+            }'''
+          if needle not in s:
+              raise SystemExit('draw click needle not found')
+          s=s.replace(needle,replacement,1)
+          p.write_text(s,encoding='utf-8')
+          PY
       - name: Start branch-local LUNEA server
         run: |
-          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-intimacy-late-runtime.log 2>&1 &
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-recovery-audit.log 2>&1 &
           for i in {1..30}; do
             if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
             sleep 1
           done
-          cat /tmp/lunea-intimacy-late-runtime.log
+          cat /tmp/lunea-recovery-audit.log
           exit 1
-      - name: Run real-path late-runtime regression
+      - name: Run same-session 10-reading mixed-sector regression
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
-        run: node tests/intimacy-oracle-late-runtime.e2e.mjs
+        run: node tests/reading-lifecycle-v59.e2e.mjs
+      - name: Run late-runtime exact-draft regression
+        if: always()
+        continue-on-error: true
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: |
+          set +e
+          node tests/intimacy-oracle-late-runtime.e2e.mjs 2>&1 | tee /tmp/lunea-late-runtime.log
+          status=${PIPESTATUS[0]}
+          echo "$status" > /tmp/lunea-late-runtime.status
+          exit "$status"
+      - name: Upload late-runtime diagnostic
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: late-runtime-diagnostic
+          path: /tmp/lunea-late-runtime.log
+          if-no-files-found: error
+          retention-days: 1
       - name: Show local server log
         if: always()
-        run: cat /tmp/lunea-intimacy-late-runtime.log || true
+        run: cat /tmp/lunea-recovery-audit.log || true
+      - name: Fail if late-runtime regression failed
+        if: always()
+        run: |
+          status=$(cat /tmp/lunea-late-runtime.status 2>/dev/null || echo 1)
+          test "$status" -eq 0

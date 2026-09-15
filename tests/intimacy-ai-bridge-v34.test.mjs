@@ -8,17 +8,23 @@ const loader=fs.readFileSync(new URL('../lunea-structural-routing-v4.js',import.
 const workflow=fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader-413.yml',import.meta.url),'utf8');
 const window={LUNEA_INTIMACY_V34:{}}; window.window=window;
 const document={readyState:'loading',documentElement:{dataset:{}},body:{classList:{toggle(){}}},querySelector(){return null},addEventListener(){},getElementById(){return null},scripts:[]};
-vm.runInNewContext(source,{window,document,console,Object,Array,String,Number,Boolean,RegExp,JSON,Promise,setTimeout});
+vm.runInNewContext(source,{window,document,console,Object,Array,String,Number,Boolean,RegExp,JSON,Promise,setTimeout,URL});
 
 test('AI bridge detector and runtime loader contract',()=>{
   assert.match(source,/const RELEASE = '34\.4'/);
   assert.match(source,/lunea-intimacy-oracle-v35\.js\?v=352/);
-  assert.match(source,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
+  assert.match(source,/const SELF_BUILD/);
+  assert.match(source,/lunea-intimacy-oracle-ui-v36\.js\?v=/);
+  assert.match(source,/encodeURIComponent\(SELF_BUILD \|\| '3615'\)/);
   assert.match(source,/__LUNEA_READING_ACTION_ORDER_V33__/);
   assert.match(source,/ensureOracleRuntime/);
   assert.match(source,/function syncOracleRuntimeToCurrentReading\(\)/);
-  assert.match(source,/LUNEA_INTIMACY_ORACLE_UI_V36\?\.sync\?\.\(\)/);
-  assert.match(source,/\.then\(\(\) => \{ syncOracleRuntimeToCurrentReading\(\); \}\)/);
+  assert.match(source,/restoreOracleDraftExact/);
+  assert.match(source,/serializeOracleDraft/);
+  assert.match(source,/restoreSerializedOracle/);
+  assert.match(source,/typeof ui\?\.sync==='function'/);
+  assert.match(source,/typeof ui\?\.serializeOracleDraft==='function'/);
+  assert.match(source,/typeof ui\?\.restoreSerializedOracle==='function'/);
 });
 
 test('intimacy detector avoids exam-grade false positive',()=>{
