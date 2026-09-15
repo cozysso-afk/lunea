@@ -64,30 +64,42 @@
     });
   }
 
+  async function openFreshStandalone(status) {
+    let ui = W.LUNEA_MESSAGE_ORACLE_UI_V1;
+    if (!ui?.open) {
+      if (status) status.textContent = '메시지 오라클을 불러오는 중…';
+      const ok = await W.LUNEA_LOAD_FEATURE_GROUP?.('message');
+      ui = W.LUNEA_MESSAGE_ORACLE_UI_V1;
+      if (!ok || !ui?.open) {
+        if (status) status.textContent = '메시지 오라클을 불러오지 못했어요. 다시 눌러 주세요.';
+        return false;
+      }
+    }
+    const ready = await ui.ready?.();
+    if (ready === false) {
+      if (status) status.textContent = '승인된 카드 이미지를 불러오지 못했어요. 다시 눌러 주세요.';
+      return false;
+    }
+    if (status) status.textContent = '';
+    await ui.open();
+    // Standalone Home is a new-question entry. Reuse the UI's own reset path so
+    // explicit saved cards stay available while the remembered last draw clears.
+    document.querySelector('#luneaMessageOracleOverlay [data-action="new"]')?.click();
+    return true;
+  }
+
   function bindEntry(section) {
     const entry = section.querySelector('#' + ENTRY_ID);
     if (!entry || entry.dataset.luneaMessageHomeBound === '1') return;
     entry.dataset.luneaMessageHomeBound = '1';
     entry.disabled = false;
     entry.addEventListener('click', async event => {
-      // Once the lazy UI module exists it owns the click; avoid a double open.
-      if (W.LUNEA_MESSAGE_ORACLE_UI_V1?.open) return;
+      // Own the standalone click even after the lazy UI installs its legacy
+      // entry listener; otherwise that listener can restore the previous draw.
       event.preventDefault();
+      event.stopImmediatePropagation();
       const status = document.getElementById(STATUS_ID);
-      if (status) status.textContent = '메시지 오라클을 불러오는 중…';
-      const ok = await W.LUNEA_LOAD_FEATURE_GROUP?.('message');
-      const ui = W.LUNEA_MESSAGE_ORACLE_UI_V1;
-      if (!ok || !ui?.open) {
-        if (status) status.textContent = '메시지 오라클을 불러오지 못했어요. 다시 눌러 주세요.';
-        return;
-      }
-      const ready = await ui.ready?.();
-      if (ready === false) {
-        if (status) status.textContent = '승인된 카드 이미지를 불러오지 못했어요. 다시 눌러 주세요.';
-        return;
-      }
-      if (status) status.textContent = '';
-      ui.open();
+      await openFreshStandalone(status);
     });
   }
 

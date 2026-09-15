@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1 · Pages V59.3
+  LUNEA Cache Refresh V1 · Pages V59.4
   - Loads V59 reading lifecycle synchronously while the page is still parsing.
   - Loads Pages-only Astro origin failover before user-triggered Thai/Astro work.
   - Loads question-boundary, iOS and auxiliary reliability modules.
@@ -52,8 +52,14 @@
     loadBuildScopedScript('luneaReadingLifecycleV59Loader', './lunea-reading-lifecycle-v59.js', 'reading lifecycle V59');
   }
 
+  function loadAstroRequestV1() {
+    loadBuildScopedScript('luneaAstroRequestV1Loader', './lunea-astro-request-v1.js', 'bounded Astro request owner V1');
+  }
   function loadAstroOriginFailover() {
-    loadBuildScopedScript('luneaAstroOriginFailoverV56Loader', './lunea-astro-origin-failover-v56.js', 'Pages Astro v2/legacy failover V56');
+    loadBuildScopedScript('luneaAstroOriginFailoverV57Loader', './lunea-astro-origin-failover-v57.js', 'Pages Astro single-calculation failover V57');
+  }
+  function loadTransitRequestV1() {
+    loadBuildScopedScript('luneaTransitRequestV1Loader', './lunea-transit-request-v1.js', 'bounded Transit request V1');
   }
   function loadRuntimeStateV56() {
     loadBuildScopedScript('luneaRuntimeStateV56Loader', './lunea-runtime-state-v56.js', 'reading/Astro stale-state boundary V56');
@@ -148,7 +154,9 @@
   function requestFreshDocument(){return checkBuild({forceRefresh:true})}
 
   function boot() {
+    loadAstroRequestV1();
     loadAstroOriginFailover();
+    loadTransitRequestV1();
     loadRuntimeStateV56();
     loadThaiDateCenterV54();
     loadHorizontalTouchStability();
