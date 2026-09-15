@@ -41,7 +41,7 @@ test('13-20 card manual path completes draw and learns once', () => {
 
 test('LOVE and INTIMACY memories are isolated and sexual questions classify as intimacy', () => {
   const {learning}=learningContext();
-  assert.equal(learning.version,5);
+  assert.equal(learning.version,6);
   assert.equal(learning.profile('A와 B 중 누구와 속궁합과 성적 리듬이 더 잘 맞는지 비교').domain,'intimacy');
   const q='A와 B 관계를 같은 축으로 비교';
   const love=learning.record({question:q,category:'LOVE',originalSpread:{spreadTitle:'기본',positions:['a','b']},correctedSpread:{spreadTitle:'LOVE 구조',positions:['감정','행동','현실 장벽']}});
