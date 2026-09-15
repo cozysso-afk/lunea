@@ -1,0 +1,89 @@
+name: Live Message Oracle reading diagnostic
+
+on:
+  push:
+    branches:
+      - release/recovery-390432a-final
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-reading:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Open a real live reading and inspect Message Oracle button
+        run: |
+          node --input-type=module <<'NODE'
+          import { webkit } from 'playwright';
+          const browser=await webkit.launch({headless:true});
+          const context=await browser.newContext({
+            viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:3,
+            locale:'ko-KR',userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
+          });
+          const page=await context.newPage();
+          page.setDefaultTimeout(20000);
+          const errors=[];
+          page.on('pageerror',e=>errors.push('pageerror: '+e.message));
+          page.on('console',m=>{if(m.type()==='error') errors.push('console: '+m.text())});
+          await page.addInitScript(()=>{try{localStorage.clear();sessionStorage.clear();}catch{}});
+          await page.goto('https://cozysso-afk.github.io/lunea/?reading_ui_diag='+Date.now(),{waitUntil:'domcontentloaded'});
+          await page.waitForFunction(()=>document.readyState==='complete'&&document.documentElement.classList.contains('lunea-ui-ready'));
+          await page.waitForTimeout(1200);
+          const entry=await page.evaluate(()=>{
+            const item=[...document.querySelectorAll('.reading-item')].find(el=>String(el.dataset.cat||'').toUpperCase()==='GENERAL'&&el.dataset.title==='YES / NO');
+            if(!item)return false; item.click(); return true;
+          });
+          if(!entry)throw new Error('GENERAL YES / NO entry missing');
+          await page.waitForSelector('#sheet.open');
+          await page.locator('#question').fill('LIVE UI 진단 · 메시지 오라클 버튼 노출 확인');
+          await page.locator('#drawBtn').click();
+          await page.waitForSelector('#spreadOverlay.show');
+          await page.waitForTimeout(500);
+          const diag=await page.evaluate(()=>{
+            const b=document.getElementById('luneaMessageOracleSupportBtn');
+            const bar=document.querySelector('#spreadOverlay .actionbar');
+            const modal=document.querySelector('#spreadOverlay .modal');
+            const rect=b?.getBoundingClientRect();
+            const barRect=bar?.getBoundingClientRect();
+            const modalRect=modal?.getBoundingClientRect();
+            const cs=b?getComputedStyle(b):null;
+            const bs=bar?getComputedStyle(bar):null;
+            let hit='';
+            if(rect&&rect.width&&rect.height){
+              const x=Math.max(0,Math.min(innerWidth-1,rect.left+rect.width/2));
+              const y=Math.max(0,Math.min(innerHeight-1,rect.top+rect.height/2));
+              const el=document.elementFromPoint(x,y); hit=el?.id||el?.className||el?.tagName||'';
+            }
+            return {
+              viewport:{w:innerWidth,h:innerHeight,scrollY},
+              spreadVisible:document.getElementById('spreadOverlay')?.classList.contains('show')||false,
+              buttonExists:!!b,
+              buttonText:b?.textContent||'',
+              buttonHtml:b?.outerHTML||'',
+              buttonRect:rect?{x:rect.x,y:rect.y,w:rect.width,h:rect.height,bottom:rect.bottom,right:rect.right}:null,
+              buttonStyle:cs?{display:cs.display,visibility:cs.visibility,opacity:cs.opacity,position:cs.position,zIndex:cs.zIndex}:null,
+              offsetParent:b?.offsetParent?.id||b?.offsetParent?.className||null,
+              hitAtCenter:hit,
+              actionbarRect:barRect?{x:barRect.x,y:barRect.y,w:barRect.width,h:barRect.height,bottom:barRect.bottom}:null,
+              actionbarStyle:bs?{display:bs.display,gridTemplateColumns:bs.gridTemplateColumns,overflowX:bs.overflowX,overflowY:bs.overflowY,gap:bs.gap}:null,
+              actionbarSize:bar?{clientWidth:bar.clientWidth,scrollWidth:bar.scrollWidth,clientHeight:bar.clientHeight,scrollHeight:bar.scrollHeight}:null,
+              modalRect:modalRect?{x:modalRect.x,y:modalRect.y,w:modalRect.width,h:modalRect.height,bottom:modalRect.bottom}:null,
+              modalScroll:modal?{clientHeight:modal.clientHeight,scrollHeight:modal.scrollHeight,scrollTop:modal.scrollTop}:null,
+              imageCount:b?.querySelectorAll('img').length||0,
+              allActionButtons:bar?[...bar.querySelectorAll('button')].map(x=>({id:x.id,text:(x.textContent||'').trim(),display:getComputedStyle(x).display,rect:(()=>{const r=x.getBoundingClientRect();return {y:r.y,h:r.height}})()})):[]
+            };
+          });
+          console.log('LIVE_READING_MESSAGE_ORACLE_DIAG='+JSON.stringify(diag,null,2));
+          console.log('LIVE_READING_ERRORS='+JSON.stringify(errors,null,2));
+          await page.screenshot({path:'live-reading.png',fullPage:true});
+          await browser.close();
+          NODE
