@@ -64,14 +64,19 @@ jobs:
             const b=document.getElementById('luneaMessageOracleSupportBtn');
             const img=b?.querySelector('.lunea-message-oracle-mini-logo');
             const r=b?.getBoundingClientRect();
-            return {exists:!!b,text:b?.textContent||'',img:!!img,src:img?.getAttribute('src')||'',loaded:!!img?.complete&&img.naturalWidth>0,rect:r?{x:r.x,y:r.y,w:r.width,h:r.height}:null,hit:r?document.elementFromPoint(r.left+r.width/2,r.top+r.height/2)?.id||'':''};
+            let hit=false;
+            if(r){
+              const el=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+              hit=!!el?.closest?.('#luneaMessageOracleSupportBtn');
+            }
+            return {exists:!!b,text:b?.textContent||'',img:!!img,src:img?.getAttribute('src')||'',loaded:!!img?.complete&&img.naturalWidth>0,rect:r?{x:r.x,y:r.y,w:r.width,h:r.height}:null,hit};
           });
           console.log('INITIAL='+JSON.stringify(diag));
           assert.equal(diag.exists,true,'Message Oracle button missing');
           assert.equal(diag.img,true,'Message Oracle mini logo missing');
           assert.match(diag.src,/assets\/message-oracle\/message_oracle_logo\.png/,'wrong mini logo asset');
           assert.equal(diag.loaded,true,'mini logo failed to load');
-          assert.equal(diag.hit,'luneaMessageOracleSupportBtn','button is obscured');
+          assert.equal(diag.hit,true,'button is obscured');
 
           await page.evaluate(()=>document.getElementById('luneaMessageOracleSupportBtn')?.remove());
           await page.waitForFunction(()=>!!document.getElementById('luneaMessageOracleSupportBtn'));
