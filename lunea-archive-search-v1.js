@@ -21,6 +21,21 @@
     INTIMACY: ['intimacy', '친밀감', '속궁합']
   };
 
+  function ensureJournalDetail() {
+    if (window.__LUNEA_JOURNAL_DETAIL_V51__) return true;
+    if (document.querySelector('script[data-lunea-journal-detail-v51="1"]')) return true;
+    const script = document.createElement('script');
+    script.src = './lunea-journal-detail-v51.js?v=20260915-golden-1';
+    script.async = false;
+    script.dataset.luneaJournalDetailV51 = '1';
+    script.onerror = () => {
+      script.remove();
+      console.error('[LUNEA Archive Search] Journal Detail V51 failed to load');
+    };
+    (document.head || document.documentElement).appendChild(script);
+    return true;
+  }
+
   function canonicalDate(value) {
     const s = String(value || '');
     let m = s.match(/(20\d{2})[-\/.]\s*(\d{1,2})[-\/.]\s*(\d{1,2})/);
@@ -108,6 +123,7 @@
     const toolbar = overlay?.querySelector('.archive-toolbar');
     const list = $('archiveList');
     if (!overlay || !toolbar || !list) return false;
+    ensureJournalDetail();
     if ($('archiveSearchAdvanced')) return true;
 
     addStyles();
@@ -150,6 +166,7 @@
     return true;
   }
 
+  ensureJournalDetail();
   if (!enhance()) {
     const observer = new MutationObserver(() => {
       if (enhance()) observer.disconnect();

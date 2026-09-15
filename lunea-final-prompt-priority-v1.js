@@ -20,6 +20,7 @@
   W.__LUNEA_FINAL_PROMPT_PRIORITY_V1__ = true;
 
   const MARKER = '[FINAL READING PRIORITY · 최종 근거 우선순위]';
+  const FINAL_LINE = '12. 최종 답변에서는 질문의 결론과 카드 근거가 먼저다. 그다음 유효한 점성/프로필 보조를 짧고 구체적으로 붙인다. 계산값이 있는 보조 체계를 단순히 생략하지 않는다.';
 
   function clean(v){ return String(v || '').replace(/\s+/g,' ').trim(); }
 
@@ -54,6 +55,30 @@
     return String(prompt || '').includes('[THAI ASTROLOGY · MAHA TAKSA 계산 결과]');
   }
 
+  const MESSAGE_MARKER = '[MESSAGE ORACLE · 현재 리딩의 연락·소식 보조]';
+  function hasMessageOracle(prompt){
+    return String(prompt || '').includes(MESSAGE_MARKER);
+  }
+
+  function messagePolicy(prompt){
+    if (!hasMessageOracle(prompt)) {
+      return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 결과가 없으면 참고했다고 말하거나 카드·점수·메시지를 만들어내지 않는다. 독립 화면의 마지막 결과를 가져오지 않는다.';
+    }
+    return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 실제 결과가 있으므로 최종 답변에 짧은 "메시지 오라클 보조"를 최소 1회 반영한다. 실제 카드명과 질문 의도, 연락 방식·전달 경로·제한 중 관련 근거를 짚고 RWS 카드의 지지·반증과 연결한다. 점수는 카드 상징의 신호 강도이며 실제 연락 확률·합격률·긍정 결과 확률이 아니다. 시기 오라클과 구분하고 날짜나 상대의 실제 행동을 이 점수에서 만들어내지 않는다. RWS와 방향이 다르면 차이를 숨기거나 한쪽 결론으로 덮어쓰지 않는다.';
+  }
+
+  function assembleEvidence(prompt){
+    const reference=W.LUNEA_TAROT_REFERENCE_V1;
+    let text = reference ? reference.strip(prompt) : String(prompt || '');
+    const cardEvidence=reference?.build?.() || '';
+    if(cardEvidence)text+=`\n\n${cardEvidence}`;
+    // Read the live, exact-reading adapter at call time. This also restores
+    // evidence if a later feature replaced the earlier Message prompt wrapper.
+    const message = W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.promptBlock?.() || '';
+    if (message && !hasMessageOracle(text)) text += `\n\n${message}`;
+    return W.LUNEA_INTERPRETATION_GLOSS_V2?.refreshEngineLedger?.(text) || text;
+  }
+
   function sajuBlock(prompt){
     const s = String(prompt || '');
     const m = s.match(/\[SAJU \/ FOUR PILLARS · 사주명리\]([\s\S]*?)(?=\n\[THAI ASTROLOGY|\n\[프로필 체계 사용 규칙|\n\n\[뽑힌 카드\]|$)/);
@@ -62,7 +87,8 @@
 
   function hasSaju(prompt){
     const b = sajuBlock(prompt);
-    return /-\s*(?:일간|원국|오행 분포|신강·신약|주요 십성·특징|용신|희신|기신|기타 확인사항):\s*\S/.test(b);
+    const rows = [...b.matchAll(/-\s*(?:일간|원국(?: 年\/月\/日\/時)?|오행 분포|신강·신약|주요 십성·특징|용신|희신|기신|기타 확인사항):([^\n]*)/g)];
+    return rows.some(([,value]) => value.replace(/미입력|미확인|없음|unknown|not provided|n\/a|[\s/—-]/gi,'').length > 0);
   }
 
   function classify(question){
@@ -70,11 +96,11 @@
     if (!q) return 'neutral';
 
     const selfDecision = /(?:내가|나는|나한테|나에게|내\s*(?:마음|경계|선택|결정|행동|반응|답장|연락|소모|후회|부담|페이스|리듬|기준)|자연스러운|덜\s*후회|어떻게\s*(?:할|해야)|할까\s*말까|선택|결정|이직|퇴사|취업|직장|커리어|시험|공부|학업|돈|재정|투자|주식|매수|매도|소비|구매|이사|건강|회복|생활\s*리듬|자기\s*패턴|준비도|경계)/i.test(q);
-    if (selfDecision) return 'self_relevant';
 
     const otherMind = /(?:걔|그\s*사람|상대|전남친|전여친|전애인|a\b|b\b)[^?]{0,80}(?:생각|마음|감정|호감|그리움|후회|연락\s*의도|행동\s*의도|나를\s*어떻게)/i.test(q);
     const selfAxis = /(?:내\s*(?:선택|경계|대응|반응|행동|소모|후회)|내가\s*(?:할|해야|어떻게))/.test(q);
     if (otherMind && !selfAxis) return 'other_focused';
+    if (selfDecision) return 'self_relevant';
 
     return 'neutral';
   }
@@ -132,21 +158,35 @@
     const returns = returnPolicy(prompt);
     const thai = thaiPolicy(prompt);
     const saju = sajuPolicy(prompt);
+    const message = messagePolicy(prompt);
 
-    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n12. 최종 답변에서는 질문의 결론과 카드 근거가 먼저다. 그다음 유효한 점성/프로필 보조를 짧고 구체적으로 붙인다. 계산값이 있는 보조 체계를 단순히 생략하지 않는다.`;
+    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다. 카드명·정역방향·포지션을 근거 문장에 연결한다. 역방향을 무조건 정방향의 반대나 나쁜 결과로 바꾸지 않고, 막힘·내면화·과잉·회복 중 질문과 인접 카드가 지지하는 해석만 선택해 이유를 설명한다. 보조 카드는 연결된 본 카드의 모호함을 좁히며 독립 결론으로 본 카드를 대체하지 않는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n${message}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다. 감정·연락 의도·실제 행동·관계 성립은 서로 다른 축이다. 호감 카드만으로 연락이나 재회를 확정하지 않는다. 근거가 팽팽하면 판단이 갈리는 이유와 확인되지 않은 부분을 말하고, 새로운 사실이나 기한을 덧붙여 결론을 강제로 만들지 않는다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n${FINAL_LINE}`;
+  }
+
+  function withoutFinalBlocks(prompt){
+    let out = String(prompt || '');
+    let start = out.indexOf(MARKER);
+    while (start !== -1) {
+      const end = out.indexOf(FINAL_LINE, start + MARKER.length);
+      if (end === -1) break;
+      const after = end + FINAL_LINE.length;
+      out = `${out.slice(0, start).trimEnd()}\n\n${out.slice(after).trimStart()}`.trim();
+      start = out.indexOf(MARKER);
+    }
+    return out;
   }
 
   function install(){
-    if (W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__) return true;
     const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
     if (typeof prior !== 'function') return false;
+    if (prior.__luneaFinalPromptPriorityV2) return true;
 
     const wrapped = function(){
-      let p = String(prior.apply(this, arguments) || '');
-      if (p.includes(MARKER)) return p;
+      const p = assembleEvidence(withoutFinalBlocks(prior.apply(this, arguments)));
       return `${p}\n\n${finalBlock(p)}`;
     };
     wrapped.__luneaFinalPromptPriorityV2 = true;
+    wrapped.__luneaFinalPromptPriorityBase = prior;
     W.promptString = wrapped;
     try { promptString = wrapped; } catch {}
     W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__ = true;
@@ -156,13 +196,16 @@
 
   W.LUNEA_FINAL_PROMPT_PRIORITY_V1 = {
     version:2,
+    ensure:install,
     classify,
     build:finalBlock,
     hasWesternNatal,
     hasTransit,
     hasReturns,
     hasThaiComputed,
-    hasSaju:() => {
+    hasMessageOracle,
+    hasSaju:(prompt) => {
+      if (typeof prompt === 'string') return hasSaju(prompt);
       const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
       if (typeof prior !== 'function') return false;
       try { return hasSaju(prior()); } catch { return false; }
@@ -178,8 +221,6 @@
     install();
   }
 
-  // Install slightly after the other load-time prompt repair wrappers so this
-  // remains the final compact instruction the model sees.
-  if (document.readyState === 'complete') setTimeout(boot,120);
-  else W.addEventListener('load', () => setTimeout(boot,120), {once:true});
+  W.addEventListener('lunea:feature-group-ready', install);
+  boot();
 })();

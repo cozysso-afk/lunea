@@ -15,7 +15,6 @@
     }
   })();
   const HOME_ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
-  const CATEGORY_ICON_SRC = `./assets/intimacy-oracle/intimacy_sector_v37.svg?v=${encodeURIComponent(SELF_VERSION)}`;
   const TAROT_BACK_SRC = `./assets/intimacy-oracle/tarot_back_intimacy_final.png?v=${encodeURIComponent(SELF_VERSION)}`;
   const STYLE_ID = 'luneaIntimacyBurgundyV40Style';
   const $ = (selector, root = document) => root.querySelector(selector);
@@ -33,37 +32,7 @@
       style.id = STYLE_ID;
       document.head.appendChild(style);
     }
-    style.textContent = `
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]{
-        position:relative!important;overflow:hidden!important;
-        border-color:rgba(235,132,169,.40)!important;
-        background:
-          radial-gradient(circle at 10% 17%,rgba(232,92,145,.23),transparent 31%),
-          radial-gradient(circle at 91% 4%,rgba(158,54,112,.18),transparent 36%),
-          linear-gradient(145deg,rgba(91,19,50,.96),rgba(54,13,40,.97) 48%,rgba(25,10,29,.99))!important;
-        box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 12px 30px rgba(70,8,39,.24)!important;
-      }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]::before{
-        content:''!important;position:absolute!important;inset:0!important;border-radius:inherit!important;
-        pointer-events:none!important;
-        background:linear-gradient(105deg,rgba(255,192,214,.055),transparent 34%,rgba(138,53,108,.045))!important;
-      }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-object{
-        background:#310b20!important;border-color:rgba(250,176,202,.38)!important;overflow:hidden!important;
-        box-shadow:0 7px 20px rgba(80,9,45,.30),inset 0 1px 0 rgba(255,255,255,.10)!important;
-      }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-object img{
-        width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;object-position:center!important;
-        transform:scale(1.20)!important;transform-origin:center!important;
-        border-radius:inherit!important;pointer-events:none!important
-      }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-label{color:#fff4f7!important}
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-sub{color:rgba(229,199,210,.76)!important}
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v8-open{color:#efb3c9!important}
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"] .lunea-v39-adult-badge{
-        border-color:rgba(243,139,178,.46)!important;background:rgba(130,28,70,.27)!important;color:#f5b0c9!important
-      }
-
+    const css = `
       .lunea-intimacy-category{
         border-color:rgba(222,126,164,.30)!important;
         background:linear-gradient(155deg,rgba(69,16,40,.72),rgba(29,12,31,.94) 50%,rgba(13,10,23,.99))!important;
@@ -71,26 +40,21 @@
       }
       .lunea-intimacy-category .category-header{background:radial-gradient(circle at 9% 22%,rgba(187,61,110,.14),transparent 34%)!important}
       .lunea-intimacy-category .cat-icon{
-        background:#310b20!important;overflow:hidden!important;
+        color:#f2b4ca!important;background:rgba(143,63,104,.20)!important;
         border-color:rgba(247,170,199,.34)!important;
-        box-shadow:0 7px 19px rgba(78,8,43,.27),inset 0 1px 0 rgba(255,255,255,.09)!important
-      }
-      .lunea-intimacy-category .cat-icon img{
-        width:100%!important;height:100%!important;display:block!important;object-fit:cover!important;object-position:center!important;
-        transform:none!important;transform-origin:center!important;
-        border-radius:inherit!important;pointer-events:none!important
       }
       .lunea-intimacy-category .cat-text h3{color:#fff2f6!important}
       .lunea-intimacy-category .cat-text p{color:rgba(222,197,207,.73)!important}
       .lunea-intimacy-category .category-content{background:linear-gradient(180deg,rgba(79,17,44,.085),transparent 18%)!important}
-      .lunea-intimacy-category .reading-item{border-top-color:rgba(238,169,196,.095)!important}
-      .lunea-intimacy-category .reading-item h4{color:#f6edf1!important}
-      .lunea-intimacy-category .reading-item p{color:rgba(211,194,202,.73)!important}
-      .lunea-intimacy-category .reading-item .count{
-        border-color:rgba(231,143,178,.28)!important;background:rgba(130,39,77,.19)!important;color:#f0bfd0!important
-      }
-      .lunea-intimacy-category .reading-item[data-intimacy-ai="1"]{
-        border-color:rgba(237,148,184,.18)!important;background:linear-gradient(145deg,rgba(128,31,73,.17),rgba(77,37,77,.08))!important
+      /* List structure belongs to V39; all roles share these color tokens. */
+      .lunea-intimacy-category .category-content{
+        --lio-list-border:rgba(224,139,171,.20);
+        --lio-list-bg:linear-gradient(145deg,rgba(69,22,43,.50),rgba(27,13,25,.76));
+        --lio-list-title:#f6edf1;
+        --lio-list-description:rgba(224,206,216,.84);
+        --lio-list-pill-border:rgba(231,143,178,.28);
+        --lio-list-pill-bg:rgba(130,39,77,.19);
+        --lio-list-pill-text:#f0bfd0;
       }
 
       body.lunea-intimacy-reading #sheet[data-lunea-sector="intimacy"]{
@@ -141,19 +105,7 @@
         background:#f3eee5!important;opacity:1!important;border-radius:8px!important;
       }
     `;
-  }
-
-  function forceIcon(root, src) {
-    if (!root) return false;
-    let img = root.querySelector('img');
-    if (!img) {
-      img = document.createElement('img');
-      img.alt = '';
-      img.setAttribute('aria-hidden', 'true');
-      root.replaceChildren(img);
-    }
-    if (img.getAttribute('src') !== src) img.setAttribute('src', src);
-    return true;
+    if (style.textContent !== css) style.textContent = css;
   }
 
   function repairTarotWrapper(wrapper) {
@@ -231,17 +183,10 @@
     const category = $('.lunea-intimacy-category');
     if (category) {
       category.dataset.luneaIntimacyBurgundyRelease = RELEASE;
-      forceIcon($('.cat-icon', category), CATEGORY_ICON_SRC);
-    }
-
-    const tile = $('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
-    if (tile) {
-      tile.dataset.luneaIntimacyBurgundyRelease = RELEASE;
-      forceIcon($('.lunea-v8-object', tile), HOME_ICON_SRC);
     }
 
     repairTarotCards();
-    return !!(category || tile || document.querySelector('#cards .tarot-card-wrapper'));
+    return !!(category || document.querySelector('#cards .tarot-card-wrapper'));
   }
 
   function observeUi() {
@@ -280,7 +225,7 @@
   W.LUNEA_INTIMACY_BURGUNDY_V40 = {
     version:RELEASE,
     icon:HOME_ICON_SRC,
-    categoryIcon:CATEGORY_ICON_SRC,
+    categoryIcon:'♡',
     cardBack:TAROT_BACK_SRC,
     apply,
     repairTarotCards,

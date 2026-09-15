@@ -105,6 +105,13 @@
       intimacyOracle: currentIntimacyOracle(s)
     };
 
+    const attachmentOwner = W.LUNEA_READING_ATTACHMENTS_V1;
+    const attachments = attachmentOwner?.captureDraft?.(s);
+    if (attachments) {
+      payload.attachments = attachments;
+      payload.readingSignature = attachments.readingSignature;
+    }
+
     try {
       localStorage.setItem(KEY, JSON.stringify(payload));
       renderResumeBar();
@@ -115,7 +122,12 @@
 
   function scheduleSave(delay = 60) {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(snapshot, delay);
+    saveTimer = 0;
+    if (restoring) return;
+    saveTimer = setTimeout(() => {
+      saveTimer = 0;
+      snapshot();
+    }, delay);
   }
 
   function clearDraft() {
@@ -277,9 +289,13 @@
 
     const restoreGeneration=++oracleRestoreGeneration;
     clearTimeout(saveTimer);
+    saveTimer=0;
+    let restoringIntimacyOracle=false;
     try {
       restoring = true;
-      const restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;
+      W.LUNEA_RUNTIME_STATE_V56?.beginDraftRestore?.();
+      W.LUNEA_READING_ATTACHMENTS_V1?.prepareRestore?.();
+      restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;
       if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=true;
       const s = setStateFromDraft(d);
       if(restoringIntimacyOracle)setIntimacyOracleFallback(s,d.intimacyOracle);
@@ -311,33 +327,51 @@
         document.body.classList.add('modal-open');
       }
 
-      requestAnimationFrame(() => {
-        const flipped = new Set((d.flipped || []).map(Number));
-        s.drawn.forEach((_, i) => {
-          if (!flipped.has(i)) return;
-          try {
-            const fn = W.flipAt || flipAt;
-            fn(i);
-          } catch {
-            $('card-' + i)?.classList.add('flipped');
+      requestAnimationFrame(async () => {
+        try {
+          const flipped = new Set((d.flipped || []).map(Number));
+          s.drawn.forEach((_, i) => {
+            if (!flipped.has(i)) return;
+            try {
+              const fn = W.flipAt || flipAt;
+              fn(i);
+            } catch {
+              $('card-' + i)?.classList.add('flipped');
+            }
+            appendSavedClarifiers(i);
+          });
+          restoreAI(d.aiText || '');
+
+          if(d.intimacyOracle){
+            const oracleSnapshot=clone(d.intimacyOracle);
+            const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;
+            if(bridge?.restoreOracleDraftExact){
+              await Promise.resolve(bridge.restoreOracleDraftExact(oracleSnapshot)).catch(()=>false);
+            }else if(bridge?.restoreOracleDraft){
+              bridge.restoreOracleDraft(oracleSnapshot);
+            }else{
+              W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=oracleSnapshot;
+            }
           }
-          appendSavedClarifiers(i);
-        });
-        restoreAI(d.aiText || '');
-        const releaseOracleGuard=()=>{if(restoreGeneration===oracleRestoreGeneration&&restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false};
-        if(d.intimacyOracle){
-          const oracleSnapshot=clone(d.intimacyOracle);
-          const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;
-          if(bridge?.restoreOracleDraftExact){Promise.resolve(bridge.restoreOracleDraftExact(oracleSnapshot)).catch(()=>false).finally(releaseOracleGuard)}
-          else if(bridge?.restoreOracleDraft){bridge.restoreOracleDraft(oracleSnapshot);releaseOracleGuard()}
-          else{W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=oracleSnapshot;releaseOracleGuard()}
-        }else releaseOracleGuard();
-        restoring = false;
-        renderResumeBar();
-        scheduleSave(120);
+
+          await W.LUNEA_READING_ATTACHMENTS_V1?.restoreDraft?.(d);
+        } catch (err) {
+          console.error('[LUNEA Draft] async restore failed', err);
+        } finally {
+          if(restoreGeneration===oracleRestoreGeneration&&restoringIntimacyOracle){
+            W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
+          }
+          W.LUNEA_RUNTIME_STATE_V56?.endDraftRestore?.();
+          restoring = false;
+          renderResumeBar();
+          scheduleSave(120);
+        }
       });
     } catch (err) {
-      if(restoreGeneration===oracleRestoreGeneration)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
+      if(restoreGeneration===oracleRestoreGeneration&&restoringIntimacyOracle){
+        W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
+      }
+      W.LUNEA_RUNTIME_STATE_V56?.endDraftRestore?.();
       restoring = false;
       console.error('[LUNEA Draft] restore failed', err);
       alert('마지막 리딩 복원 중 오류가 났어: ' + (err?.message || err));

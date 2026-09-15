@@ -36,6 +36,8 @@
     mode: null,
     question: '',
     topic: 'general',
+    moment: '',
+    place: '',
     result: null,
     aiText: ''
   };
@@ -87,6 +89,19 @@
       return acc;
     }, {});
     return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
+  }
+
+  function syncMomentDisplay() {
+    window.LUNEA_HORARY_MOBILE_STABILITY_V42?.enhanceMoment?.();
+    window.LUNEA_HORARY_MOBILE_STABILITY_V42?.syncMoment?.();
+  }
+
+  function setMomentValue(value) {
+    const input = $('astroHoraryMoment');
+    if (!input) return;
+    input.value = String(value || '');
+    stateHorary.moment = input.value;
+    syncMomentDisplay();
   }
 
   function defaultPlace() {
@@ -294,7 +309,7 @@
     $('astroHoraryClose').onclick = closeModal;
     overlay.addEventListener('pointerup', e => { if (e.target === overlay) closeModal(); });
     $('astroHoraryNow').onclick = () => {
-      $('astroHoraryMoment').value = seoulNowInput();
+      setMomentValue(seoulNowInput());
       $('astroHoraryStatus').textContent = '질문을 처음 명확하게 이해한 순간이 지금이 맞는지 확인해줘.';
     };
     $('astroHoraryRun').onclick = runHorary;
@@ -303,7 +318,12 @@
     $('astroHorarySave').onclick = saveStandalone;
   }
 
+  let calculationSequence=0;
   function openModal(mode, question) {
+    calculationSequence++;
+    window.LUNEA_ASTRO_REQUEST_V1?.cancelScope('horary');
+    window.LUNEA_ASTRO_REQUEST_V1?.cancelScope('horary-support');
+    if($('astroHoraryRun')){$('astroHoraryRun').disabled=false;$('astroHoraryRun').textContent='☿ 호라리 차트 계산';}
     stateHorary.mode = mode;
     const q = String(question || '').trim();
     const changed = q && q !== stateHorary.question;
@@ -317,9 +337,11 @@
     $('astroHoraryQuestion').readOnly = mode === 'support';
     $('astroHoraryQuestion').value = q;
     if (!$('astroHoraryMoment').value || changed || mode === 'standalone') {
-      $('astroHoraryMoment').value = seoulNowInput();
+      setMomentValue(seoulNowInput());
+    } else {
+      syncMomentDisplay();
     }
-    $('astroHoraryPlace').value = defaultPlace();
+    $('astroHoraryPlace').value = stateHorary.place || defaultPlace();
     $('astroHoraryTopic').value = stateHorary.topic;
     $('astroHoraryStatus').textContent = mode === 'support'
       ? '현재 RWS 질문을 그대로 사용해 별도의 호라리 차트를 계산해.'
@@ -346,18 +368,6 @@
     if (!document.querySelector('.overlay.show')) document.body.classList.remove('modal-open');
   }
 
-  async function fetchWithTimeout(url, options, timeoutMs=120000) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => {
-      try { controller.abort('horary-timeout'); } catch { controller.abort(); }
-    }, timeoutMs);
-    try {
-      return await fetch(url, {...options, signal:controller.signal});
-    } finally {
-      clearTimeout(timer);
-    }
-  }
-
   async function runHorary() {
     const question = $('astroHoraryQuestion').value.trim();
     const moment = $('astroHoraryMoment').value;
@@ -381,18 +391,18 @@
       return;
     }
 
+    const scope=stateHorary.mode==='support'?'horary-support':'horary';
+    const sequence=++calculationSequence;
+    const requestEpoch=window.LUNEA_ASTRO_REQUEST_V1.generation(scope);
+    const current=()=>sequence===calculationSequence&&requestEpoch===window.LUNEA_ASTRO_REQUEST_V1.generation(scope)&&question===$('astroHoraryQuestion').value.trim()&&moment===$('astroHoraryMoment').value&&place===$('astroHoraryPlace').value.trim()&&topic===$('astroHoraryTopic').value;
     const button = $('astroHoraryRun');
     button.disabled = true;
     button.textContent = '☿ 계산 중…';
     $('astroHoraryStatus').className = 'horary-status';
     $('astroHoraryStatus').textContent = '질문 시각의 행성·레지오몬타누스 하우스·적용각을 계산하고 있어…';
-    localStorage.setItem(PLACE_KEY, place);
-
     try {
-      if (window.LUNEA_ASTRO_STABILITY?.ensureReady) {
-        try { await window.LUNEA_ASTRO_STABILITY.ensureReady(false); } catch {}
-      }
-      const response = await fetchWithTimeout(`${apiUrl()}/v1/horary`, {
+      try { localStorage.setItem(PLACE_KEY, place); } catch {}
+      const {data} = await window.LUNEA_ASTRO_REQUEST_V1.json(`${apiUrl()}/v1/horary`, {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body:JSON.stringify({
@@ -402,28 +412,33 @@
           timezone:'Asia/Seoul',
           place
         })
-      });
-      let data = null;
-      try { data = await response.json(); } catch {}
-      if (!response.ok) throw new Error(data?.detail || `${response.status} ${response.statusText}`);
+      }, {scope,prepare:async()=>{try{await window.LUNEA_ASTRO_STABILITY?.ensureReady?.(false);}catch{}}});
+      if(!current())return;
       if (data?.schema !== 'LUNEA_HORARY_V1') throw new Error('Horary 응답 형식이 예상과 달라.');
 
       stateHorary.question = question;
       stateHorary.topic = topic;
+      stateHorary.moment = moment;
+      stateHorary.place = place;
       stateHorary.result = data;
       stateHorary.aiText = '';
       renderResult();
-      if (stateHorary.mode === 'support') renderInline();
+      if (stateHorary.mode === 'support') {
+        renderInline();
+        notifyAttachmentChanged();
+      }
       $('astroHoraryStatus').className = 'horary-status ok';
       $('astroHoraryStatus').textContent = `계산 완료 · ${data.moment?.place_resolved || place} · Regiomontanus(레지오몬타누스)`;
     } catch (error) {
+      if(!current())return;
       $('astroHoraryStatus').className = 'horary-status err';
       $('astroHoraryStatus').textContent = '계산 실패: ' + (error?.message || error);
       $('astroHoraryResult').classList.remove('show');
       $('astroHoraryActions').classList.remove('show');
     } finally {
-      button.disabled = false;
+      if(sequence===calculationSequence){button.disabled = false;
       button.textContent = '☿ 호라리 차트 계산';
+      if(!current()){$('astroHoraryStatus').className='horary-status';$('astroHoraryStatus').textContent='입력이 바뀌어 이전 계산을 사용하지 않았어. 다시 계산해줘.';}}
     }
   }
 
@@ -593,6 +608,7 @@ ${horaryPromptBlock(stateHorary.result)}
       if (data.error) throw new Error(data.error.message);
       stateHorary.aiText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '응답이 비어 있어.';
       $('astroHoraryAIText').textContent = stateHorary.aiText;
+      if (stateHorary.mode === 'support') notifyAttachmentChanged();
     } catch (error) {
       stateHorary.aiText = '';
       $('astroHoraryAIText').textContent = '[API 오류] ' + (error?.message || error);
@@ -668,7 +684,9 @@ ${horaryPromptBlock(stateHorary.result)}
       inline.id = 'luneaHoraryInline';
       inline.className = 'horary-inline';
       const anchor =
+        $('luneaThaiRangeInline') ||
         $('luneaThaiTaksaInline') ||
+        $('luneaThaiTarotBridgeInline') ||
         $('luneaReturnInline') ||
         $('luneaAstroTransitInline') ||
         $('luneaTimingInline');
@@ -687,8 +705,15 @@ ${horaryPromptBlock(stateHorary.result)}
     stateHorary.mode = null;
     stateHorary.question = '';
     stateHorary.topic = 'general';
+    stateHorary.moment = '';
+    stateHorary.place = '';
     stateHorary.result = null;
     stateHorary.aiText = '';
+    window.LUNEA_HORARY_TOPIC_V19?.clearResult?.();
+    window.LUNEA_HORARY_QUESTION_MODES_V37?.clearResult?.();
+    window.LUNEA_HORARY_HARDENING_V38?.clearResult?.();
+    window.LUNEA_HORARY_TRADITIONAL_CORE_V40?.clearResult?.();
+    window.LUNEA_HORARY_BALANCE_GUARD_V41?.clearResult?.();
     $('luneaHoraryInline')?.remove();
     const button = $('astroHoraryBtn');
     if (button) button.textContent = '☿ Horary';
@@ -715,22 +740,74 @@ ${horaryPromptBlock(stateHorary.result)}
   function archiveObject() {
     const data = stateHorary.result;
     if (!data) return null;
+    const enriched = window.LUNEA_HORARY_HARDENING_V38?.enrichedArchiveObject?.(data) || data;
     return {
-      schema:data.schema,
-      question:data.question,
-      moment:data.moment,
-      house_system:data.house_system,
-      angles:data.angles,
-      significators:data.significators,
-      judgment_support:{
-        primary_connection:data.judgment_support?.primary_connection,
-        perfection:data.judgment_support?.perfection,
-        reception:data.judgment_support?.reception,
-        moon_course:data.judgment_support?.moon_course,
-        potential_prohibition:data.judgment_support?.potential_prohibition,
-        warnings:data.judgment_support?.warnings
-      }
+      schema:enriched.schema,
+      question:enriched.question,
+      moment:enriched.moment,
+      zodiac:enriched.zodiac,
+      house_system:enriched.house_system,
+      angles:enriched.angles,
+      cusps:(enriched.cusps || []).slice(0,12),
+      planets:enriched.planets || null,
+      points:enriched.points || {},
+      significators:enriched.significators,
+      judgment_support:enriched.judgment_support,
+      mode_v38:enriched.mode_v38,
+      meta:enriched.meta,
+      ai_text:String(stateHorary.aiText || '').slice(0,30000)
     };
+  }
+
+  function attachmentSnapshot() {
+    const question = currentQuestion();
+    if (!stateHorary.result || stateHorary.mode !== 'support' || stateHorary.question !== question) return null;
+    return {
+      version:1,
+      mode:'support',
+      question:stateHorary.question,
+      topic:stateHorary.topic,
+      moment:stateHorary.moment || $('astroHoraryMoment')?.value || '',
+      place:stateHorary.place || $('astroHoraryPlace')?.value || '',
+      aiText:String(stateHorary.aiText || '').slice(0,30000),
+      result:archiveObject()
+    };
+  }
+
+  function restoreAttachment(snapshot) {
+    if (!snapshot || snapshot.mode !== 'support' || snapshot.result?.schema !== 'LUNEA_HORARY_V1') return false;
+    const question = currentQuestion();
+    if (!question || String(snapshot.question || '').trim() !== question) return false;
+    stateHorary.mode = 'support';
+    stateHorary.question = question;
+    stateHorary.topic = snapshot.topic || 'general';
+    stateHorary.moment = String(snapshot.moment || snapshot.result?.moment?.local_iso || '').slice(0,32);
+    stateHorary.place = String(snapshot.place || snapshot.result?.moment?.place_resolved || '').slice(0,240);
+    stateHorary.result = snapshot.result;
+    stateHorary.aiText = String(snapshot.aiText || snapshot.result?.ai_text || '').slice(0,30000);
+    if ($('astroHoraryQuestion')) $('astroHoraryQuestion').value = question;
+    if ($('astroHoraryTopic')) $('astroHoraryTopic').value = stateHorary.topic;
+    if ($('astroHoraryPlace')) $('astroHoraryPlace').value = stateHorary.place;
+    setMomentValue(stateHorary.moment);
+    renderResult();
+    window.LUNEA_HORARY_TOPIC_V19?.restoreResult?.(stateHorary.result);
+    window.LUNEA_HORARY_QUESTION_MODES_V37?.restoreResult?.(stateHorary.result);
+    window.LUNEA_HORARY_HARDENING_V38?.restoreResult?.(stateHorary.result);
+    window.LUNEA_HORARY_TRADITIONAL_CORE_V40?.restoreResult?.(stateHorary.result);
+    window.LUNEA_HORARY_BALANCE_GUARD_V41?.restoreResult?.(stateHorary.result);
+    renderInline();
+    return true;
+  }
+
+  function registerAttachment() {
+    const adapter = {group:'astro', capture:attachmentSnapshot, restore:restoreAttachment, toArchive:snapshot => snapshot?.result || null, clear:clearSupport};
+    const registry = window.LUNEA_READING_ATTACHMENTS_V1;
+    if (registry?.register) registry.register('horary', adapter);
+    else (window.__LUNEA_READING_ATTACHMENT_QUEUE_V1 ||= []).push({name:'horary', adapter});
+  }
+
+  function notifyAttachmentChanged() {
+    window.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('horary');
   }
 
   function saveStandalone() {
@@ -801,6 +878,7 @@ ${horaryPromptBlock(stateHorary.result)}
         const old = save.onclick;
         save.onclick = function(event) {
           if (old) old.call(this, event);
+          if (window.LUNEA_READING_ATTACHMENTS_V1) return;
           const q = currentQuestion();
           if (!stateHorary.result || stateHorary.mode !== 'support' || stateHorary.question !== q) return;
           try {
@@ -839,6 +917,7 @@ ${summaryText(data)}`;
     injectCategory();
     injectModal();
     injectSupportButton();
+    registerAttachment();
     installStartReset();
     installPromptIntegration();
     installArchiveIntegration();
