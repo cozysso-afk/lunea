@@ -107,6 +107,9 @@
   function loadMobileRuntimeFixesV57() {
     loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57.1');
   }
+  function loadUiRegressionFinalV2() {
+    loadBuildScopedScript('luneaUiRegressionFinalV2Loader', './lunea-ui-regression-final-v2.js', 'final mobile UI regression owner V2');
+  }
   function loadMessageOracleHomeV1() {
     loadBuildScopedScript('luneaMessageOracleHomeV1Loader', './lunea-message-oracle-home-v1.js', 'Message Oracle standalone Home V1');
   }
@@ -172,6 +175,7 @@
     loadLearningAuthRecovery();
     loadEmergencyRepair();
     loadMobileRuntimeFixesV57();
+    loadUiRegressionFinalV2();
     loadMessageOracleHomeV1();
     installResumeBuildChecks();
     checkBuild();
