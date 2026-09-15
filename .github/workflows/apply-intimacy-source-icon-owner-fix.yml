@@ -1,0 +1,67 @@
+name: Apply INTIMACY source icon owner fix
+
+on:
+  push:
+    branches:
+      - fix/intimacy-source-icon-owner
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/intimacy-source-icon-owner
+      - name: Patch luminous layout owner boundary
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('lunea-luminous-layout-v2.js')
+          s=p.read_text(encoding='utf-8')
+          old1="""      const title = category.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
+      const icon = category.querySelector('.cat-icon');
+      if (!icon) return;
+"""
+          new1="""      const title = category.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
+      if (/INTIMACY/.test(title) || category.classList.contains('lunea-intimacy-category')) return;
+      const icon = category.querySelector('.cat-icon');
+      if (!icon) return;
+"""
+          old2="""        const category = icon.closest('.category');
+        const title = category?.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
+        let markup = ICONS.sparkle;
+"""
+          new2="""        const category = icon.closest('.category');
+        const title = category?.querySelector('.cat-text h3')?.textContent?.toUpperCase() || '';
+        if (/INTIMACY/.test(title) || category?.classList.contains('lunea-intimacy-category')) return;
+        let markup = ICONS.sparkle;
+"""
+          if new1 in s and new2 in s:
+              print('Owner boundary already patched')
+              raise SystemExit(0)
+          if s.count(old1) != 1 or s.count(old2) != 1:
+              raise SystemExit(f'Patch anchors changed: initial={s.count(old1)} observer={s.count(old2)}')
+          s=s.replace(old1,new1,1).replace(old2,new2,1)
+          p.write_text(s,encoding='utf-8')
+          print('Patched luminous layout to leave INTIMACY source icon to V39')
+          PY
+      - name: Verify exact patch scope
+        run: |
+          node --check lunea-luminous-layout-v2.js
+          git diff --check
+          git diff -- lunea-luminous-layout-v2.js
+      - name: Commit isolated app fix
+        run: |
+          if git diff --quiet -- lunea-luminous-layout-v2.js; then
+            echo 'No app change required'
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lunea-luminous-layout-v2.js
+          git commit -m 'Stop luminous layout from overriding INTIMACY source icon'
+          git push origin HEAD:fix/intimacy-source-icon-owner
