@@ -42,8 +42,16 @@ jobs:
           const errors=[];
           const requestFailures=[];
           const messageResponses=[];
+          const lifecycle=[];
+          browser.on('disconnected',()=>lifecycle.push('browser-disconnected'));
+          page.on('close',()=>lifecycle.push('page-close'));
+          page.on('crash',()=>lifecycle.push('page-crash'));
+          page.on('framenavigated',frame=>{if(frame===page.mainFrame()) lifecycle.push('navigate:'+frame.url())});
           page.on('pageerror',e=>errors.push('pageerror: '+e.message));
           page.on('console',m=>{if(m.type()==='error') errors.push('console: '+m.text())});
+          page.on('request',req=>{
+            if(req.isNavigationRequest() || req.url().includes('lunea-build.json') || req.url().includes('message-oracle')) lifecycle.push('request:'+req.method()+':'+req.resourceType()+':'+req.url());
+          });
           page.on('requestfailed',req=>{ if(req.url().includes('message-oracle')) requestFailures.push({url:req.url(),error:req.failure()?.errorText||''}); });
           page.on('response',res=>{ if(res.url().includes('message-oracle')) messageResponses.push({url:res.url(),status:res.status()}); });
           await page.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'c2f26d2477d9'})}));
@@ -88,33 +96,29 @@ jobs:
           console.log('RECOVERED='+JSON.stringify(diag));
           assert.deepEqual(diag,{exists:true,img:true},'button did not recover after removal');
 
+          console.log('BEFORE_CLICK_URL='+page.url());
+          const closed=new Promise(resolve=>page.once('close',()=>resolve('page-close')));
           await page.locator('#luneaMessageOracleSupportBtn').click();
-          await page.waitForTimeout(3000);
-          const clickDiag=await page.evaluate(async()=>{
-            let loaderProbe='unavailable';
-            if(typeof window.LUNEA_LOAD_FEATURE_GROUP==='function'){
-              try{
-                loaderProbe=await Promise.race([
-                  window.LUNEA_LOAD_FEATURE_GROUP('message').then(v=>'resolved:'+String(v)),
-                  new Promise(r=>setTimeout(()=>r('timeout'),3000))
-                ]);
-              }catch(e){ loaderProbe='rejected:'+String(e?.message||e); }
-            }
-            return {
-              engine:!!window.LUNEA_MESSAGE_ORACLE_V1,
-              ui:!!window.LUNEA_MESSAGE_ORACLE_UI_V1,
-              button:!!document.getElementById('luneaMessageOracleSupportBtn'),
-              loaderType:typeof window.LUNEA_LOAD_FEATURE_GROUP,
-              featureGroups:window.LUNEA_FEATURE_GROUPS||null,
-              loaderProbe,
-              scripts:[...document.scripts].map(s=>s.src).filter(src=>src.includes('message-oracle')),
-              overlay:!!document.getElementById('luneaMessageOracleOverlay')
-            };
-          });
-          console.log('CLICK_DIAG='+JSON.stringify(clickDiag));
+          const clickOutcome=await Promise.race([
+            page.waitForFunction(()=>!!window.LUNEA_MESSAGE_ORACLE_UI_V1&&!!document.getElementById('luneaMessageOracleOverlay'),{},{timeout:15000}).then(()=> 'ui-ready').catch(e=>'wait-error:'+e.message),
+            closed
+          ]);
+          console.log('CLICK_OUTCOME='+clickOutcome);
+          console.log('LIFECYCLE='+JSON.stringify(lifecycle));
           console.log('MESSAGE_RESPONSES='+JSON.stringify(messageResponses));
           console.log('MESSAGE_REQUEST_FAILURES='+JSON.stringify(requestFailures));
           console.log('BROWSER_ERRORS='+JSON.stringify(errors));
+          assert.notEqual(clickOutcome,'page-close','page closed after Message Oracle click: '+JSON.stringify(lifecycle));
+          assert.equal(clickOutcome,'ui-ready','Message Oracle UI did not become ready: '+clickOutcome);
+          const clickDiag=await page.evaluate(()=>({
+            engine:!!window.LUNEA_MESSAGE_ORACLE_V1,
+            ui:!!window.LUNEA_MESSAGE_ORACLE_UI_V1,
+            button:!!document.getElementById('luneaMessageOracleSupportBtn'),
+            scripts:[...document.scripts].map(s=>s.src).filter(src=>src.includes('message-oracle')),
+            overlay:!!document.getElementById('luneaMessageOracleOverlay'),
+            overlayOpen:document.getElementById('luneaMessageOracleOverlay')?.dataset.open||''
+          }));
+          console.log('CLICK_DIAG='+JSON.stringify(clickDiag));
           assert.deepEqual({engine:clickDiag.engine,ui:clickDiag.ui,button:clickDiag.button},{engine:true,ui:true,button:true},'Message Oracle click did not load engine/UI');
           assert.deepEqual(errors,[],`browser errors: ${errors.join('\n')}`);
           await browser.close();
