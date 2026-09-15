@@ -135,14 +135,16 @@ test('INTIMACY Oracle keeps base 0\/1\/3, supplemental max 3 and exact restore',
   assert.match(source, /serializeOracleDraft/);
 });
 
-test('INTIMACY cabinet uses the approved small source symbol and duplicate-header guard', () => {
+test('INTIMACY cabinet uses the approved small visible source symbol without duplicate artwork', () => {
   const source = read('lunea-intimacy-clean-v39.js');
   assert.match(source, /icon\.textContent !== '♡'/,
     'opened INTIMACY source header must keep the small shared symbol');
   assert.doesNotMatch(source, /icon\.replaceChildren\(img\)/,
     'opened source header must not be replaced by a large square artwork');
-  assert.match(source, /lunea-v8-source-active[^\n]*> \.category-header|lunea-v8-source-active > \.category-header/,
-    'visible Home-backed source must suppress the duplicate source header');
+  assert.doesNotMatch(source, /lunea-v8-source-active[^\n]*> \.category-header\{\s*display:none!important;/,
+    'opened INTIMACY source header must remain visible');
+  assert.match(source, /\.lunea-intimacy-category \.category-header\{[\s\S]*padding:15px 16px!important;/,
+    'visible source header presentation must remain owned by V39');
   assert.match(source, /classList\.toggle\('lunea-v8-source-active',\s*wasOpen\)/,
     'source active state must be derived from the actual open state and clear stale state');
 });
