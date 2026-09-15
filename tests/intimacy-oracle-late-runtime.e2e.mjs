@@ -55,9 +55,12 @@ try{
   await intimacyTile.click();
   const sourceHeader=page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-header');
   const sourceContent=page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-content');
+  await sourceHeader.waitFor({state:'visible'});
   await sourceContent.waitFor({state:'visible'});
   assert.equal(await intimacyTile.isVisible(),true,'Home INTIMACY portal tile must remain visible when opened');
-  assert.equal(await sourceHeader.isVisible(),false,'raw INTIMACY source header must stay hidden under the Home tile');
+  assert.equal(await sourceHeader.isVisible(),true,'INTIMACY source header must remain visible under the Home tile');
+  const sourceIcon=sourceHeader.locator('.cat-icon');
+  assert.equal((await sourceIcon.textContent())?.trim(),'♡','opened INTIMACY source header must use the approved small heart');
 
   const item=page.locator('.reading-item[data-title="신체적 속궁합 · CORE 5"]');
   await item.waitFor({state:'visible'});
