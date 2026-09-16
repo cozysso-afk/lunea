@@ -1,6 +1,8 @@
 name: Deploy LUNEA GitHub Pages
 
 on:
+  push:
+    branches: [main]
   workflow_run:
     workflows: ["Refresh LUNEA build cache"]
     types: [completed]
@@ -14,11 +16,11 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current main
@@ -41,7 +43,7 @@ jobs:
           path: ./_site
 
   deploy:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
