@@ -118,22 +118,18 @@
 })();
 
 // Reading PNG share has one owner now: lunea-cache-refresh-v1.js loads
-// lunea-reading-share-v1.js. Do not bootstrap the retired legacy share module here.
-
-// V2 is presentation-only: it reuses the V1 payload/oracle pages, resolves the
-// external RWS artwork through Wikimedia's CORS-enabled API, and replaces the
-// share button renderer with the polished 4:5 layout.
+// lunea-reading-share-v1.js. V3 owns only the presentation/export layout.
 (() => {
-  if (window.__LUNEA_READING_SHARE_POLISH_V2__) return;
-  if (document.getElementById('luneaReadingSharePolishV2Loader')) return;
+  if (window.__LUNEA_READING_SHARE_POLISH_V3__) return;
+  if (document.getElementById('luneaReadingSharePolishV3Loader')) return;
   const script = document.createElement('script');
-  script.id = 'luneaReadingSharePolishV2Loader';
+  script.id = 'luneaReadingSharePolishV3Loader';
   let build = '';
   try {
     build = new URL(document.currentScript?.src || '', location.href).searchParams.get('v') || '';
   } catch {}
-  script.src = `./lunea-reading-share-polish-v2.js?v=${encodeURIComponent(build || Date.now())}`;
+  script.src = `./lunea-reading-share-polish-v3.js?v=${encodeURIComponent(build || Date.now())}`;
   script.async = false;
-  script.onerror = () => console.info('[LUNEA share polish V2] loader skipped');
+  script.onerror = () => console.info('[LUNEA share polish V3] loader skipped');
   (document.head || document.documentElement).appendChild(script);
 })();
