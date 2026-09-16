@@ -133,3 +133,20 @@
   script.onerror = () => console.info('[LUNEA share polish V3] loader skipped');
   (document.head || document.documentElement).appendChild(script);
 })();
+
+// V4 owns the user-facing share preview UI. It deliberately removes the redundant
+// direct-download action and keeps one native share action after a large swipeable preview.
+(() => {
+  if (window.__LUNEA_READING_SHARE_UI_V4__) return;
+  if (document.getElementById('luneaReadingShareUiV4Loader')) return;
+  const script = document.createElement('script');
+  script.id = 'luneaReadingShareUiV4Loader';
+  let build = '';
+  try {
+    build = new URL(document.currentScript?.src || '', location.href).searchParams.get('v') || '';
+  } catch {}
+  script.src = `./lunea-reading-share-ui-v4.js?v=${encodeURIComponent(build || Date.now())}`;
+  script.async = false;
+  script.onerror = () => console.info('[LUNEA share UI V4] loader skipped');
+  (document.head || document.documentElement).appendChild(script);
+})();
