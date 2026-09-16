@@ -4,6 +4,7 @@ import fs from 'node:fs';
 const share = fs.readFileSync(new URL('../lunea-reading-share-v1.js', import.meta.url), 'utf8');
 const cache = fs.readFileSync(new URL('../lunea-cache-refresh-v1.js', import.meta.url), 'utf8');
 const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
+const touch = fs.readFileSync(new URL('../lunea-horizontal-touch-stability-v1.js', import.meta.url), 'utf8');
 
 assert.match(share, /BW=1080,BH=1350/, 'share pages must stay 4:5 at 1080x1350');
 assert.match(share, /LUNEA_READING_ATTACHMENTS_V1\?\.captureArchive/, 'exact-reading support attachments must be captured');
@@ -17,6 +18,7 @@ assert.match(share, /navigator\.share\(\{files:fs/, 'native file share sheet mus
 assert.match(share, /공유창 열기/, 'share must be a second explicit user tap');
 assert.match(share, /PNG 만드는 중/, 'PNG rendering must happen before the share-sheet tap');
 assert.match(cache, /lunea-reading-share-v1\.js/, 'cache owner must load the PNG share module');
+assert.doesNotMatch(touch, /lunea-reading-share-png-v1\.js/, 'horizontal touch helper must not load the retired duplicate PNG share owner');
 assert.ok(order.indexOf("'saveReading'") < order.indexOf("'luneaShareReadingPng'"), 'PNG share must follow save');
 assert.ok(order.indexOf("'luneaShareReadingPng'") < order.indexOf("'retry'"), 'PNG share must precede retry');
 
