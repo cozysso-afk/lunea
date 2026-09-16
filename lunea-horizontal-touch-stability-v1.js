@@ -93,3 +93,20 @@
     });
   }, {passive:true});
 })();
+
+// Archive card artwork support is isolated in its own module; this already-loaded
+// runtime helper only bootstraps it so no archive code needs to live in index.html.
+(() => {
+  if (window.__LUNEA_ARCHIVE_CARD_IMAGES_V1__) return;
+  if (document.getElementById('luneaArchiveCardImagesV1Loader')) return;
+  const script = document.createElement('script');
+  script.id = 'luneaArchiveCardImagesV1Loader';
+  let build = '';
+  try {
+    build = new URL(document.currentScript?.src || '', location.href).searchParams.get('v') || '';
+  } catch {}
+  script.src = `./lunea-archive-card-images-v1.js?v=${encodeURIComponent(build || Date.now())}`;
+  script.async = false;
+  script.onerror = () => console.info('[LUNEA archive card images] loader skipped');
+  (document.head || document.documentElement).appendChild(script);
+})();
