@@ -110,3 +110,20 @@
   script.onerror = () => console.info('[LUNEA archive card images] loader skipped');
   (document.head || document.documentElement).appendChild(script);
 })();
+
+// Reading share/export is also isolated. Loading it here keeps the feature on the
+// same GitHub Pages build path without touching reading RNG or the core index.
+(() => {
+  if (window.__LUNEA_READING_SHARE_PNG_V1__) return;
+  if (document.getElementById('luneaReadingSharePngV1Loader')) return;
+  const script = document.createElement('script');
+  script.id = 'luneaReadingSharePngV1Loader';
+  let build = '';
+  try {
+    build = new URL(document.currentScript?.src || '', location.href).searchParams.get('v') || '';
+  } catch {}
+  script.src = `./lunea-reading-share-png-v1.js?v=${encodeURIComponent(build || Date.now())}`;
+  script.async = false;
+  script.onerror = () => console.info('[LUNEA reading PNG share] loader skipped');
+  (document.head || document.documentElement).appendChild(script);
+})();
