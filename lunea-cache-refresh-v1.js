@@ -113,6 +113,9 @@
   function loadMessageOracleHomeV1() {
     loadBuildScopedScript('luneaMessageOracleHomeV1Loader', './lunea-message-oracle-home-v1.js', 'Message Oracle standalone Home V1');
   }
+  function loadReadingShareV1() {
+    loadBuildScopedScript('luneaReadingShareV1Loader', './lunea-reading-share-v1.js', 'reading 4:5 PNG share V1');
+  }
 
   function readingBusy(){return !!document.hidden||!!document.getElementById('spreadOverlay')?.classList.contains('show')||!!document.getElementById('sheet')?.classList.contains('open')}
   function refreshTo(build) {
@@ -177,6 +180,7 @@
     loadMobileRuntimeFixesV57();
     loadUiRegressionFinalV2();
     loadMessageOracleHomeV1();
+    loadReadingShareV1();
     installResumeBuildChecks();
     checkBuild();
     W.LUNEA_CACHE_REFRESH_V1=Object.freeze({checkNow:checkBuild,requestFreshDocument,flushPending});
