@@ -35,10 +35,26 @@
       overscroll-behavior-x:none;
     }
 
-    /* PNG sharing is a final/export action, so it always stays after every
-       reading/support control, including the full-width master prompt copy. */
-    #spreadOverlay .actionbar.actionbar #luneaShareReadingPng{
+    /* CSS-only reading tail. Existing controls remain 3-up (2/6 tracks each),
+       while the final two actions share one row exactly 50:50. No DOM moving,
+       observer, timer, or reading-state mutation is involved. */
+    body #spreadOverlay .actionbar.actionbar{
+      grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    }
+    body #spreadOverlay .actionbar.actionbar > button{
+      grid-column:span 2!important;
+    }
+    body #spreadOverlay .actionbar.actionbar #luneaTopCopyPrompt{
+      grid-column:span 3!important;
+      order:9998!important;
+      width:100%!important;
+      min-width:0!important;
+    }
+    body #spreadOverlay .actionbar.actionbar #luneaShareReadingPng{
+      grid-column:span 3!important;
       order:9999!important;
+      width:100%!important;
+      min-width:0!important;
     }
   `;
   (document.head || document.documentElement).appendChild(style);
@@ -134,10 +150,10 @@
   (document.head || document.documentElement).appendChild(script);
 })();
 
-// V4 owns the user-facing share preview UI. It deliberately removes the redundant
-// direct-download action and keeps one native share action after a large swipeable preview.
+// V4 is the stable loader entry. It now routes to the user-facing V6 share UI,
+// which validates and flattens every page before opening the native share sheet.
 (() => {
-  if (window.__LUNEA_READING_SHARE_UI_V4__) return;
+  if (window.__LUNEA_READING_SHARE_UI_V6__) return;
   if (document.getElementById('luneaReadingShareUiV4Loader')) return;
   const script = document.createElement('script');
   script.id = 'luneaReadingShareUiV4Loader';
@@ -147,6 +163,6 @@
   } catch {}
   script.src = `./lunea-reading-share-ui-v4.js?v=${encodeURIComponent(build || Date.now())}`;
   script.async = false;
-  script.onerror = () => console.info('[LUNEA share UI V4] loader skipped');
+  script.onerror = () => console.info('[LUNEA share UI loader] skipped');
   (document.head || document.documentElement).appendChild(script);
 })();
