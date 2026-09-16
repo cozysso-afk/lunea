@@ -13,6 +13,12 @@ assert.match(share, /message_oracle_front_frame\.jpeg/, 'Message Oracle approved
 assert.match(share, /LUNEA_MESSAGE_ORACLE_V1\?\.identity/, 'Message Oracle RWS identity artwork must be resolved');
 assert.match(share, /LUNEA_RECOVERY_UI_V65\?\.artworkForCard/, 'Timing Oracle authoritative artwork resolver must be used');
 assert.match(share, /filename/, 'generic image-bearing support data must accept filenames');
+assert.match(share, /commons\.wikimedia\.org\/w\/api\.php/, 'RWS export must resolve Commons Special:FilePath through the CORS-capable MediaWiki API');
+assert.match(share, /searchParams\.set\('origin','\*'\)/, 'Commons image lookup must opt into cross-origin API access');
+assert.match(share, /searchParams\.set\('prop','imageinfo'\)/, 'Commons image lookup must request direct image URLs');
+assert.match(share, /async function assertTarotArtwork/, 'PNG export must preflight tarot artwork rather than silently saving blank card frames');
+assert.match(share, /if\(count<=6\)return\{cols:3/, 'up to six tarot cards must use the roomier 3-column share layout');
+assert.match(share, /p\.tarot\.slice\(0,3\)/, 'share cover must use three larger representative cards');
 assert.match(share, /navigator\.share\(\{files:fs/, 'native file share sheet must be used');
 assert.match(share, /공유창 열기/, 'share must be a second explicit user tap');
 assert.match(share, /PNG 만드는 중/, 'PNG rendering must happen before the share-sheet tap');
