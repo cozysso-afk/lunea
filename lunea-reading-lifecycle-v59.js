@@ -229,6 +229,7 @@
     try { W.LUNEA_LAG_GUARD_V1?.reset?.(`session-${id}:${normalizedReason}`); } catch {}
     try { W.LUNEA_RUNTIME_STATE_V56?.clear?.(`session-${id}:${normalizedReason}`); } catch {}
     if (normalizedReason !== 'luneaDraftRestore') {
+      try { W.LUNEA_READING_ATTACHMENTS_V1?.clearForNewReading?.(); } catch {}
       try { W.LUNEA_MOBILE_RUNTIME_FIXES_V57?.clearAux?.(); } catch {}
     }
     syncModalLock();

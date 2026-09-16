@@ -324,9 +324,10 @@
     window.LUNEA_ASTRO_REQUEST_V1?.cancelScope('horary');
     window.LUNEA_ASTRO_REQUEST_V1?.cancelScope('horary-support');
     if($('astroHoraryRun')){$('astroHoraryRun').disabled=false;$('astroHoraryRun').textContent='☿ 호라리 차트 계산';}
+    const previousMode = stateHorary.mode;
     stateHorary.mode = mode;
     const q = String(question || '').trim();
-    const changed = q && q !== stateHorary.question;
+    const changed = q !== stateHorary.question || mode !== previousMode;
     if (changed) {
       stateHorary.result = null;
       stateHorary.aiText = '';

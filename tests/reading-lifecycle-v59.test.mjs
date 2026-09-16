@@ -38,6 +38,7 @@ assert.match(lifecycle, /function isCurrent\(id\)/);
 assert.match(lifecycle, /function guard\(id, fn\)/);
 assert.match(lifecycle, /LUNEA_LAG_GUARD_V1\?\.reset/);
 assert.match(lifecycle, /luneaDraftRestore/);
+assert.match(lifecycle, /LUNEA_READING_ATTACHMENTS_V1\?\.clearForNewReading\?\.\(\)/);
 assert.match(lifecycle, /__LUNEA_AI_REPEAT_FLOW_V58__ = true/);
 
 // V31 is synchronous DOM/source reset only: no Timing-open reset, no wrapper,
@@ -78,7 +79,7 @@ assert.ok(!/function\s+patchStart/.test(intimacy), 'Intimacy startSpread wrapper
 assert.match(lagGuard, /LUNEA_LAG_GUARD_V1 = Object\.freeze/);
 assert.match(timingIsolation, /version:27\.1/);
 assert.match(manual20, /Manual Limit V17\.1/);
-assert.match(intimacy, /RELEASE='36\.5'/);
+assert.match(intimacy, /RELEASE='36\.6'/);
 
 // V14 delayed A/B work must use the V59 session-aware scheduler.
 assert.match(polish, /currentSessionId/);
