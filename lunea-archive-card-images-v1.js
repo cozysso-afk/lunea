@@ -108,12 +108,12 @@
 
   function installSaveHook() {
     const button = $('saveReading');
-    if (!button || button.__luneaArchiveCardImagesV1) return !!button;
+    if (!button) return false;
     const prior = button.onclick;
     if (typeof prior !== 'function') return false;
+    if (prior.__luneaArchiveCardImagesV1) return true;
 
-    button.__luneaArchiveCardImagesV1 = true;
-    button.onclick = function(event) {
+    const wrapped = function(event) {
       const beforeIds = new Set(readArchive().map(row => String(row?.id || '')));
       let result;
       try {
@@ -125,6 +125,9 @@
       }
       return result;
     };
+    wrapped.__luneaArchiveCardImagesV1 = true;
+    wrapped.__luneaPriorSave = prior;
+    button.onclick = wrapped;
     return true;
   }
 
