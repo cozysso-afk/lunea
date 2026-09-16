@@ -18,14 +18,3 @@ function luneaShareUiBuildToken() {
   script.onerror = () => console.info('[LUNEA share UI V5] loader skipped');
   (document.head || document.documentElement).appendChild(script);
 })();
-
-(() => {
-  if (window.__LUNEA_READING_ACTION_TAIL_V1__) return;
-  if (document.getElementById('luneaReadingActionTailV1Loader')) return;
-  const script = document.createElement('script');
-  script.id = 'luneaReadingActionTailV1Loader';
-  script.src = `./lunea-reading-action-tail-v1.js?v=${encodeURIComponent(luneaShareUiBuildToken() || Date.now())}`;
-  script.async = false;
-  script.onerror = () => console.info('[LUNEA reading action tail] loader skipped');
-  (document.head || document.documentElement).appendChild(script);
-})();
