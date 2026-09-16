@@ -1,13 +1,13 @@
 'use strict';
 
 /*
-  LUNEA READING ACTION ORDER V33.5
+  LUNEA READING ACTION ORDER V33.6
   ================================
   Keeps the reading action grid in the approved stable order while preserving
   the current INTIMACY presentation-runtime loaders.
 
   Approved action order:
-  - flip all · extra card · save
+  - flip all · extra card · save · share PNG
   - retry · timing · Message Oracle
   - Transit · Returns · Horary
   - Thai support · Thai range · AI
@@ -22,9 +22,9 @@
 
   const SELF_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3305';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3306';
     } catch {
-      return '3305';
+      return '3306';
     }
   })();
 
@@ -32,6 +32,7 @@
     'flipAll',
     'extraCard',
     'saveReading',
+    'luneaShareReadingPng',
     'retry',
     'timingSupportBtn',
     'luneaMessageOracleSupportBtn',
@@ -348,7 +349,7 @@
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
-    version:'33.5',
+    version:'33.6',
     order:[...ORDER],
     reorder,
     ensureTopPromptCopy,
