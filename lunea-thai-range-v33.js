@@ -158,8 +158,24 @@
       .thai-v33-tone{font-style:normal;font-size:8px;padding:3px 5px;border-radius:999px;color:#aaa7b1;border:1px solid rgba(255,255,255,.07)}
       .thai-v33-night{grid-column:2/-1;margin-top:2px;padding-top:5px;border-top:1px dashed rgba(255,255,255,.07);color:#9d94ac;font-size:8.3px;line-height:1.35}
       #${TAROT_OVERLAY_ID}{z-index:100020!important;background:rgba(4,5,12,.94)!important;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
-      #${TAROT_OVERLAY_ID} .modal{max-height:86vh;overflow:auto;-webkit-overflow-scrolling:touch}
-      @media(max-width:380px){.thai-v33-dates{grid-template-columns:1fr}.thai-v33-day{grid-template-columns:58px minmax(0,1fr) auto}}
+      #${TAROT_OVERLAY_ID} .modal{width:min(90vw,420px);max-width:420px;max-height:82vh;box-sizing:border-box;padding:18px 16px 20px;overflow:auto;-webkit-overflow-scrolling:touch}
+      #${TAROT_OVERLAY_ID} .modal-h{margin:4px 0 10px}
+      #${TAROT_OVERLAY_ID} .astro-transit-help{margin-bottom:10px}
+      #${TAROT_OVERLAY_ID} .thai-v33-range-panel{margin-top:10px;padding:11px 12px 12px}
+      #${TAROT_OVERLAY_ID} .thai-v33-quick{gap:5px;margin-bottom:7px}
+      #${TAROT_OVERLAY_ID} .thai-v33-chip{min-height:38px;border-radius:11px}
+      #${TAROT_OVERLAY_ID} .thai-v33-range-help{margin-bottom:8px}
+      #${TAROT_OVERLAY_ID} .thai-v33-dates{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 4px 10px}
+      #${TAROT_OVERLAY_ID} .thai-v33-field{text-align:center}
+      #${TAROT_OVERLAY_ID} .thai-v33-field input{min-height:42px;margin-top:5px;padding:8px 9px;border-radius:11px;font-size:10.4px;text-align:center}
+      #${TAROT_OVERLAY_ID} .thai-v33-run{min-height:42px;border-radius:12px}
+      #${TAROT_OVERLAY_ID} .thai-v33-status{min-height:0;margin:7px 2px 0}
+      @media(max-width:380px){
+        #${TAROT_OVERLAY_ID} .modal{width:calc(100vw - 22px);padding:16px 13px 18px}
+        #${TAROT_OVERLAY_ID} .thai-v33-dates{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-left:0;margin-right:0}
+        #${TAROT_OVERLAY_ID} .thai-v33-field input{font-size:9.8px;padding-left:6px;padding-right:6px}
+        .thai-v33-day{grid-template-columns:58px minmax(0,1fr) auto}
+      }
     `;
     document.head.appendChild(style);
   }
@@ -540,7 +556,8 @@
 - 주의 날짜(요약): ${(summary.caution_dates || []).join(', ') || '없음'}
 - 질문 초점 날짜(요약): ${(summary.focus_match_dates || []).join(', ') || '없음'}
 - 핵심 기간 행:
-${rows.map(row => `  · ${row}`).join('\n')}
+${rows.map(row => `  · ${row}`).join('\
+')}
 
 [Thai Taksa 기간 해석 규칙]
 1. 이것은 천체의 이동각을 계산하는 Western Transit이 아니라 요일 지배행성의 Taksa 위치를 기간별로 정리한 달력이다.
@@ -641,7 +658,9 @@ ${rows.map(row => `  · ${row}`).join('\n')}
     const wrapped = function() {
       const base = String(prior.apply(this, arguments) || '');
       const block = tarotPromptBlock();
-      return block ? `${base}\n\n${block}` : base;
+      return block ? `${base}\
+\
+${block}` : base;
     };
     wrapped.__luneaThaiRangeV33 = true;
     W.promptString = wrapped;
