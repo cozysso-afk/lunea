@@ -556,8 +556,7 @@
 - 주의 날짜(요약): ${(summary.caution_dates || []).join(', ') || '없음'}
 - 질문 초점 날짜(요약): ${(summary.focus_match_dates || []).join(', ') || '없음'}
 - 핵심 기간 행:
-${rows.map(row => `  · ${row}`).join('\
-')}
+${rows.map(row => `  · ${row}`).join('\n')}
 
 [Thai Taksa 기간 해석 규칙]
 1. 이것은 천체의 이동각을 계산하는 Western Transit이 아니라 요일 지배행성의 Taksa 위치를 기간별로 정리한 달력이다.
@@ -658,9 +657,7 @@ ${rows.map(row => `  · ${row}`).join('\
     const wrapped = function() {
       const base = String(prior.apply(this, arguments) || '');
       const block = tarotPromptBlock();
-      return block ? `${base}\
-\
-${block}` : base;
+      return block ? `${base}\n\n${block}` : base;
     };
     wrapped.__luneaThaiRangeV33 = true;
     W.promptString = wrapped;
