@@ -1,17 +1,19 @@
 'use strict';
 
 /*
-  LUNEA READING LIFECYCLE V59.4
+  LUNEA READING LIFECYCLE V59.5
   =============================
   One non-wrapping session boundary for long-lived iPhone/PWA reading sessions.
 
   This module intentionally DOES NOT wrap or replace startSpread.
 
   Responsibilities:
-  - Create the four core AI + Manual rows synchronously before normal interaction.
+  - Create or adopt the four core AI + Manual rows synchronously before normal interaction.
+  - Own those core row interactions even when the rows already existed in index.html.
   - Keep those rows category-scoped and ordered AI -> Manual -> fixed spreads.
   - Own a monotonic readingSessionId used by delayed callbacks in other modules.
   - Normalize stale auxiliary UI exactly once when a new reading action begins.
+  - Keep AI/manual sheet modes mutually exclusive across repeated questions.
   - Provide guard/schedule helpers so reading N callbacks cannot mutate reading N+1.
 
   It does not draw cards, choose RNG, interpret cards, or pre-open spreadOverlay.
@@ -21,11 +23,9 @@
   if (W.__LUNEA_READING_LIFECYCLE_V59__) return;
   W.__LUNEA_READING_LIFECYCLE_V59__ = true;
 
-  // Stale cached V58 code must be inert. This is a module guard, not a
-  // startSpread function marker.
   W.__LUNEA_AI_REPEAT_FLOW_V58__ = true;
 
-  const RELEASE = '59.4';
+  const RELEASE = '59.5';
   const $ = id => document.getElementById(id);
   let pendingManualMeta = null;
   let readingSessionId = 0;
@@ -89,15 +89,46 @@
     return item;
   }
 
+  function resetSheetViewport() {
+    const sheet = $('sheet');
+    if (!sheet) return;
+    const reset = () => {
+      if (!sheet.classList.contains('open')) return;
+      sheet.scrollTop = 0;
+    };
+    sheet.scrollTop = 0;
+    (W.requestAnimationFrame || (cb => setTimeout(cb, 16)))(reset);
+    setTimeout(reset, 0);
+  }
+
+  function clearManualSheetState() {
+    pendingManualMeta = null;
+    $('luneaManualPanel')?.classList.remove('show');
+    const s = getState();
+    if (!s) return;
+    s.__luneaManualMode = false;
+    s.__luneaManualReading = false;
+  }
+
   function openAi(meta) {
+    clearManualSheetState();
     const s = getState();
     if (s) {
       s.__luneaUniversalAI = true;
-      s.__luneaManualMode = false;
-      s.__luneaManualReading = false;
+      s.isAi = true;
+      s.__luneaManualOriginCategory = '';
     }
     const opener = W.openSheet || (typeof openSheet === 'function' ? openSheet : null);
     if (typeof opener === 'function') opener(meta.key, meta.aiTitle, meta.aiDesc, 0);
+
+    // Some legacy sheet wrappers run after openSheet. Reassert the mode at the
+    // end of the same task so an old manual panel cannot reappear over AI mode.
+    clearManualSheetState();
+    if (s) {
+      s.__luneaUniversalAI = true;
+      s.isAi = true;
+    }
+    resetSheetViewport();
   }
 
   function openManual(meta) {
@@ -105,6 +136,7 @@
       pendingManualMeta = meta;
       return;
     }
+    pendingManualMeta = null;
     const opener = W.openSheet || (typeof openSheet === 'function' ? openSheet : null);
     if (typeof opener !== 'function') return;
 
@@ -118,6 +150,7 @@
     opener(meta.key, '직접 입력 배열', '이 파트의 질문에 맞춰 카드 포지션을 직접 고정합니다. AI가 배열을 다시 설계하지 않습니다.', 1);
 
     if (s) {
+      s.__luneaUniversalAI = false;
       s.__luneaManualMode = true;
       s.__luneaManualReading = false;
       s.isAi = false;
@@ -128,7 +161,13 @@
     $('luneaManualPanel')?.classList.add('show');
     const label = $('drawLabel');
     if (label) label.textContent = '직접 배열로 카드 펼치기';
-    $('luneaManualPositions')?.focus?.({preventScroll:true});
+    resetSheetViewport();
+
+    // iOS focusing the textarea can jump the sheet to the middle and hide the
+    // close control. Keep autofocus only for precise-pointer desktop use.
+    let coarse = false;
+    try { coarse = !!W.matchMedia?.('(pointer: coarse)')?.matches; } catch {}
+    if (!coarse) $('luneaManualPositions')?.focus?.({preventScroll:true});
   }
 
   function flushPendingManual() {
@@ -138,20 +177,26 @@
     openManual(meta);
   }
 
-  function bindCreatedEntry(item, meta, mode) {
+  function bindCoreEntry(item, meta, mode) {
     if (!item || item.dataset.luneaLifecycleBound === '1') return;
-    if (item.dataset.luneaLifecycleCreated !== mode) return;
     item.dataset.luneaLifecycleBound = '1';
+    item.dataset.luneaLifecycleMode = mode;
+
     const open = event => {
       event?.preventDefault?.();
+      event?.stopImmediatePropagation?.();
       if (mode === 'ai') openAi(meta); else openManual(meta);
     };
-    item.addEventListener('click', open);
+
+    // Capture phase deliberately wins over the original index.html reading-item
+    // listener. V59 is the single owner of these core AI/manual rows.
+    item.addEventListener('click', open, true);
     item.addEventListener('keydown', event => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
       event.preventDefault();
-      open(event);
-    });
+      event.stopImmediatePropagation?.();
+      if (mode === 'ai') openAi(meta); else openManual(meta);
+    }, true);
   }
 
   function ensureCoreEntries() {
@@ -167,6 +212,9 @@
       }
       ai.dataset.luneaUniversalAi = '1';
       ai.dataset.cat = meta.key;
+      ai.dataset.title = meta.aiTitle;
+      ai.dataset.desc = meta.aiDesc;
+      ai.dataset.count = '0';
       ai.classList.add('lunea-v20-ai-entry');
 
       let manual = existingManual(content, meta.key);
@@ -184,8 +232,8 @@
         content.insertBefore(ai, manual);
       }
 
-      bindCreatedEntry(ai, meta, 'ai');
-      bindCreatedEntry(manual, meta, 'manual');
+      bindCoreEntry(ai, meta, 'ai');
+      bindCoreEntry(manual, meta, 'manual');
       ready += 1;
     });
 
@@ -282,8 +330,6 @@
   const initialReady = ensureCoreEntries();
   installBoundaryCapture();
 
-  // Once the parser-time rows exist, the old 3.5s emergency reveal is no longer
-  // allowed to expose a partially initialized menu. V29 becomes the sole revealer.
   if (initialReady === CORE.length && W.__LUNEA_BOOT_FAILSAFE__) {
     clearTimeout(W.__LUNEA_BOOT_FAILSAFE__);
     W.__LUNEA_BOOT_FAILSAFE__ = 0;
@@ -309,8 +355,10 @@
     frame,
     microtask,
     syncModalLock,
+    resetSheetViewport,
+    clearManualSheetState,
     initialReady
   });
 
-  console.info(`✦ LUNEA Reading Lifecycle V59.4 loaded · core entries ${initialReady}/${CORE.length} · session boundary ready`);
+  console.info(`✦ LUNEA Reading Lifecycle V59.5 loaded · core entries ${initialReady}/${CORE.length} · session boundary ready`);
 })();
