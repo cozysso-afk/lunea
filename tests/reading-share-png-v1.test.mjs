@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+
+const share = fs.readFileSync(new URL('../lunea-reading-share-v1.js', import.meta.url), 'utf8');
+const cache = fs.readFileSync(new URL('../lunea-cache-refresh-v1.js', import.meta.url), 'utf8');
+const order = fs.readFileSync(new URL('../lunea-reading-action-order-v33.js', import.meta.url), 'utf8');
+
+assert.match(share, /BW=1080,BH=1350/, 'share pages must stay 4:5 at 1080x1350');
+assert.match(share, /LUNEA_READING_ATTACHMENTS_V1\?\.captureArchive/, 'exact-reading support attachments must be captured');
+assert.match(share, /LUNEA_INTIMACY_ORACLE_UI_V36\?\.serializeOracle/, 'INTIMACY Oracle must be captured');
+assert.match(share, /assets\/intimacy-oracle\/cards/, 'INTIMACY artwork root must be used');
+assert.match(share, /message_oracle_front_frame\.jpeg/, 'Message Oracle approved frame must be rendered');
+assert.match(share, /LUNEA_MESSAGE_ORACLE_V1\?\.identity/, 'Message Oracle RWS identity artwork must be resolved');
+assert.match(share, /LUNEA_RECOVERY_UI_V65\?\.artworkForCard/, 'Timing Oracle authoritative artwork resolver must be used');
+assert.match(share, /filename/, 'generic image-bearing support data must accept filenames');
+assert.match(share, /navigator\.share\(\{files:fs/, 'native file share sheet must be used');
+assert.match(share, /공유창 열기/, 'share must be a second explicit user tap');
+assert.match(share, /PNG 만드는 중/, 'PNG rendering must happen before the share-sheet tap');
+assert.match(cache, /lunea-reading-share-v1\.js/, 'cache owner must load the PNG share module');
+assert.ok(order.indexOf("'saveReading'") < order.indexOf("'luneaShareReadingPng'"), 'PNG share must follow save');
+assert.ok(order.indexOf("'luneaShareReadingPng'") < order.indexOf("'retry'"), 'PNG share must precede retry');
+
+console.log('reading-share-png-v1 contract OK');
