@@ -34,6 +34,12 @@
       min-width:0;
       overscroll-behavior-x:none;
     }
+
+    /* PNG sharing is a final/export action, so it always stays after every
+       reading/support control, including the full-width master prompt copy. */
+    #spreadOverlay .actionbar.actionbar #luneaShareReadingPng{
+      order:9999!important;
+    }
   `;
   (document.head || document.documentElement).appendChild(style);
 
