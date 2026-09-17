@@ -11,7 +11,7 @@
   W.__LUNEA_TRANSIT_REQUEST_V1__ = true;
 
   const previousFetch = W.fetch.bind(W);
-  const TIMEOUT_MS = 120000;
+  const TIMEOUT_MS = 240000;
 
   W.fetch = function luneaTransitRequestV1(input, init = {}) {
     let url = '';
@@ -51,7 +51,7 @@
         error ? reject(error) : resolve(value);
       };
       const timer = setTimeout(() => {
-        const error = new Error('트랜짓 계산 서버 응답이 120초 안에 오지 않아 대기를 중단했어. 잠시 후 다시 시도해줘.');
+        const error = new Error('트랜짓 계산 서버 응답이 240초 안에 오지 않아 대기를 중단했어. 잠시 후 다시 시도해줘.');
         error.name = 'TimeoutError';
         finish(error);
         try { controller.abort('lunea-transit-timeout'); } catch { controller.abort(); }
