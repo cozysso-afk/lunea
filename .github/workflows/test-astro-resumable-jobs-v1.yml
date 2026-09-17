@@ -1,0 +1,26 @@
+name: Test resumable Astro jobs V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lunea-astro-request-v1.js'
+      - 'tests/astro-resumable-jobs-v1.test.mjs'
+      - '.github/workflows/test-astro-resumable-jobs-v1.yml'
+  pull_request:
+    paths:
+      - 'lunea-astro-request-v1.js'
+      - 'tests/astro-resumable-jobs-v1.test.mjs'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: node --check lunea-astro-request-v1.js
+      - name: Resumable Astro job contract
+        run: node --test tests/astro-resumable-jobs-v1.test.mjs
