@@ -11,7 +11,7 @@
     for (const job of [...active]) if (job.scope === scope) job.cancel();
   }
   function json(url, options={}, config={}) {
-    const {timeoutMs=120000,scope='reading',prepare,fetcher=(...args)=>W.fetch(...args)}=config;
+    const {timeoutMs=240000,scope='reading',prepare,fetcher=(...args)=>W.fetch(...args)}=config;
     const controller=new AbortController();
     const upstream=options.signal;
     return new Promise((resolve,reject)=>{
