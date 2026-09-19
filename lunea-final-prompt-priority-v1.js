@@ -177,9 +177,18 @@
   }
 
   function install(){
-    const prior = W.promptString || (typeof promptString === 'function' ? promptString : null);
+    // The real AI/copy handlers in index.html call the bare `promptString`
+    // binding. Several late profile/gloss modules also wrap that binding after
+    // this file first loads, while `window.promptString` can still point at an
+    // older wrapper. Always follow the binding the handlers actually call.
+    let lexical = null;
+    try { lexical = typeof promptString === 'function' ? promptString : null; } catch {}
+    const prior = lexical || W.promptString;
     if (typeof prior !== 'function') return false;
-    if (prior.__luneaFinalPromptPriorityV2) return true;
+    if (prior.__luneaFinalPromptPriorityV2) {
+      if (W.promptString !== prior) W.promptString = prior;
+      return true;
+    }
 
     const wrapped = function(){
       const p = assembleEvidence(withoutFinalBlocks(prior.apply(this, arguments)));
@@ -222,5 +231,10 @@
   }
 
   W.addEventListener('lunea:feature-group-ready', install);
+  // Re-attach after all synchronous + DOMContentLoaded profile/gloss wrappers
+  // have finished. This is essential for DAILY ORBIT too: its AI/copy actions
+  // otherwise bypass exact-reading Message Oracle evidence.
+  W.addEventListener('load', () => setTimeout(install, 0));
+  W.addEventListener('pageshow', install);
   boot();
 })();

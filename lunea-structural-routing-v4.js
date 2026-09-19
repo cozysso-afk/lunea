@@ -87,7 +87,7 @@
     document.write('<script src="./lunea-intimacy-legacy-v35.js?v=d29ba4d57663"><\/script>');
     document.write('<script src="./lunea-intimacy-readability-v36.js?v=d29ba4d57663"><\/script>');
     document.write('<script src="./lunea-learning-success-gate-v1.js?v=101"><\/script>');
-    document.write('<script src="./lunea-daily-orbit6-v21.js?v=2101"><\/script>');
+    document.write('<script src="./lunea-daily-orbit6-v21.js?v=2102"><\/script>');
     document.write('<script src="./lunea-daily-celestial-v22.js?v=2201"><\/script>');
     document.write('<script src="./lunea-astro-resume-v23.js?v=d29ba4d57663"><\/script>');
     document.write('<script src="./lunea-thai-standalone-v24.js?v=2401"><\/script>');
@@ -156,7 +156,7 @@
     './lunea-intimacy-legacy-v35.js?v=d29ba4d57663',
     './lunea-intimacy-readability-v36.js?v=d29ba4d57663',
     './lunea-learning-success-gate-v1.js?v=101',
-    './lunea-daily-orbit6-v21.js?v=2101',
+    './lunea-daily-orbit6-v21.js?v=2102',
     './lunea-daily-celestial-v22.js?v=2201',
     './lunea-astro-resume-v23.js?v=d29ba4d57663',
     './lunea-thai-standalone-v24.js?v=2401',
