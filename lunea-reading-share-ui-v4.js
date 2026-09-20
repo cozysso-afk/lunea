@@ -9,6 +9,17 @@ function luneaShareUiBuildToken() {
 }
 
 (() => {
+  if (window.__LUNEA_READING_SHARE_SINGLE_SUPPORT_V1__) return;
+  if (document.getElementById('luneaReadingShareSingleSupportV1Loader')) return;
+  const script = document.createElement('script');
+  script.id = 'luneaReadingShareSingleSupportV1Loader';
+  script.src = `./lunea-reading-share-single-support-v1.js?v=${encodeURIComponent(luneaShareUiBuildToken() || Date.now())}`;
+  script.async = false;
+  script.onerror = () => console.info('[LUNEA share single-support V1] loader skipped');
+  (document.head || document.documentElement).appendChild(script);
+})();
+
+(() => {
   if (window.__LUNEA_READING_SHARE_UI_V6__) return;
   if (document.getElementById('luneaReadingShareUiV6Loader')) return;
   const script = document.createElement('script');
