@@ -9,24 +9,13 @@ function luneaShareUiBuildToken() {
 }
 
 (() => {
-  if (window.__LUNEA_READING_SHARE_MESSAGE_CONTENT_V1__) return;
-  if (document.getElementById('luneaReadingShareMessageContentV1Loader')) return;
+  if (window.__LUNEA_READING_SHARE_ORACLE_PAGES_V1__) return;
+  if (document.getElementById('luneaReadingShareOraclePagesV1Loader')) return;
   const script = document.createElement('script');
-  script.id = 'luneaReadingShareMessageContentV1Loader';
-  script.src = `./lunea-reading-share-message-content-v1.js?v=${encodeURIComponent(luneaShareUiBuildToken() || Date.now())}`;
+  script.id = 'luneaReadingShareOraclePagesV1Loader';
+  script.src = `./lunea-reading-share-oracle-pages-v1.js?v=${encodeURIComponent(luneaShareUiBuildToken() || Date.now())}`;
   script.async = false;
-  script.onerror = () => console.info('[LUNEA share message-content V1] loader skipped');
-  (document.head || document.documentElement).appendChild(script);
-})();
-
-(() => {
-  if (window.__LUNEA_READING_SHARE_SINGLE_SUPPORT_V1__) return;
-  if (document.getElementById('luneaReadingShareSingleSupportV1Loader')) return;
-  const script = document.createElement('script');
-  script.id = 'luneaReadingShareSingleSupportV1Loader';
-  script.src = `./lunea-reading-share-single-support-v1.js?v=${encodeURIComponent(luneaShareUiBuildToken() || Date.now())}`;
-  script.async = false;
-  script.onerror = () => console.info('[LUNEA share single-support V1] loader skipped');
+  script.onerror = () => console.info('[LUNEA standalone Oracle share pages V1] loader skipped');
   (document.head || document.documentElement).appendChild(script);
 })();
 
