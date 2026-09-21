@@ -42,6 +42,10 @@ html.lunea-ui-ready .app{animation:luneaBootRevealV29 .28s cubic-bezier(.2,.8,.2
 <title>LUNEA — Celestial Tarot Sanctuary</title>
 <link rel="apple-touch-icon" sizes="180x180" href="./lunea-icon-opal-card-v11.png">
 <meta name="apple-mobile-web-app-title" content="LUNEA">
+<link rel="manifest" href="./manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;800&family=Noto+Serif+KR:wght@300;400;600;700&family=Pretendard:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0e0b16;--bg2:#06040a;--moon:#bda4f8;--gold:#ffd27d;--panel:rgba(26,21,38,.78);--border:rgba(197,178,250,.22);--text:#f9f7fd;--dim:#a69cb8;--danger:#ff8da1;--ok:#9de4c1;--r:22px}
@@ -560,9 +564,9 @@ $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{c
 // Initial memory + iOS resume robustness
 window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.setAttribute('aria-hidden','true'));syncProfile()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
-</script><script src="./lunea-cache-refresh-v1.js?v=82577127e633"></script>
+</script><script src="./lunea-cache-refresh-v1.js?v=3a759852e120"></script>
   <script src="./spread-engine-v7.4.js?v=75"></script>
-  <script src="./lunea-structural-routing-v4.js?v=82577127e633"></script>
+  <script src="./lunea-structural-routing-v4.js?v=3a759852e120"></script>
   <script src="./timing-oracle-v1.js?v=101"></script>
   <script src="./general-5-6-v1.js?v=101"></script>
   <script src="./profile-advanced-v2.js?v=201"></script>
@@ -574,8 +578,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.
 <script src="./thai-taksa-v1.js?v=101"></script>
   <script src="./astro-horary-v1.js?v=103"></script>
   <script src="./lunea-lag-guard-v1.js?v=101"></script>
-  <script src="./lunea-astro-stability-v2.js?v=82577127e633"></script>
-   <script src="./lunea-ios-performance-v3.js?v=82577127e633"></script>
+  <script src="./lunea-astro-stability-v2.js?v=3a759852e120"></script>
+   <script src="./lunea-ios-performance-v3.js?v=3a759852e120"></script>
   <script src="./interpretation-gloss-v1.js?v=101"></script>
   
 </body>
