@@ -90,6 +90,30 @@ jobs:
           else:
               s = s.replace(icon_tag, icon_tag + '\n' + app_title, 1)
 
+          manifest_tag = '<link rel="manifest" href="./manifest.webmanifest">'
+          if re.search(r'<link[^>]+rel=["\']manifest["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<link[^>]+rel=["\']manifest["\'][^>]*>', manifest_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(app_title, app_title + '\n' + manifest_tag, 1)
+
+          capable_tag = '<meta name="apple-mobile-web-app-capable" content="yes">'
+          if re.search(r'<meta[^>]+name=["\']apple-mobile-web-app-capable["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<meta[^>]+name=["\']apple-mobile-web-app-capable["\'][^>]*>', capable_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(manifest_tag, manifest_tag + '\n' + capable_tag, 1)
+
+          status_tag = '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
+          if re.search(r'<meta[^>]+name=["\']apple-mobile-web-app-status-bar-style["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<meta[^>]+name=["\']apple-mobile-web-app-status-bar-style["\'][^>]*>', status_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(capable_tag, capable_tag + '\n' + status_tag, 1)
+
+          mobile_tag = '<meta name="mobile-web-app-capable" content="yes">'
+          if re.search(r'<meta[^>]+name=["\']mobile-web-app-capable["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<meta[^>]+name=["\']mobile-web-app-capable["\'][^>]*>', mobile_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(status_tag, status_tag + '\n' + mobile_tag, 1)
+
           refresh_tag = f'<script src="./lunea-cache-refresh-v1.js?v={build}"></script>'
           if 'lunea-cache-refresh-v1.js' in s:
               s = re.sub(r'<script src="\./lunea-cache-refresh-v1\.js\?v=[^"]+"></script>', refresh_tag, s, count=1)
