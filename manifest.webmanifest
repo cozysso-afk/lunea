@@ -1,0 +1,18 @@
+{
+  "name": "LUNEA — Celestial Tarot Sanctuary",
+  "short_name": "LUNEA",
+  "id": "./",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#060713",
+  "theme_color": "#0e0b16",
+  "icons": [
+    {
+      "src": "./lunea-icon-opal-card-v11.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
