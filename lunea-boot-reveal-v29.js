@@ -112,10 +112,22 @@
     return true;
   }
 
+  function ensureReadingContext(){
+    if(W.LUNEA_READING_CONTEXT_V1||document.getElementById('luneaReadingContextV1Loader'))return true;
+    const script=document.createElement('script');
+    script.id='luneaReadingContextV1Loader';
+    script.src='./lunea-reading-context-v1.js?v=20260922-1';
+    script.async=false;
+    script.onerror=()=>console.error('[LUNEA V29] reading context module failed to load');
+    document.head.appendChild(script);
+    return true;
+  }
+
   const readyEnough=()=>coreRowsReady() && hasPortal() && hasFinalSpreadPatches() && hasFinalTransitRange() && hasFinalDrawPipeline();
 
   const afterDom=()=>{
     installDrawStartupGuard();
+    ensureReadingContext();
     const start=performance.now();
     const probe=()=>{
       const elapsed=performance.now()-start;
