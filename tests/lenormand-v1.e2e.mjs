@@ -33,21 +33,30 @@ try {
   await page.waitForFunction(() => [...document.querySelectorAll('#lnCards .ln-card')].every(node => node.classList.contains('ln-reveal-v1')),{timeout:5000});
 
   const five = await page.evaluate(() => {
-    const cards = [...document.querySelectorAll('#lnCards .ln-card')];
+    const root = document.querySelector('#lnCards');
+    const cards = [...root.querySelectorAll('.ln-card')];
+    const rootRect = root.getBoundingClientRect();
+    const rects = cards.map(node=>node.getBoundingClientRect());
     return {
       count:cards.length,
       srcs:cards.map(node=>node.querySelector('img')?.getAttribute('src')),
       widths:cards.map(node=>node.querySelector('img')?.naturalWidth || 0),
-      layout:getComputedStyle(document.querySelector('#lnCards')).display,
-      overflow:getComputedStyle(document.querySelector('#lnCards')).overflowX,
+      layout:getComputedStyle(root).display,
+      overflow:getComputedStyle(root).overflowX,
+      cols:getComputedStyle(root).gridTemplateColumns.split(' ').length,
+      objectFits:cards.map(node=>getComputedStyle(node.querySelector('img')).objectFit),
+      allInside:rects.every(rect => rect.left >= rootRect.left - 1 && rect.right <= rootRect.right + 1),
       reveal:cards.every(node=>node.classList.contains('ln-reveal-v1')),
     };
   });
   assert.equal(five.count,5);
   assert.equal(new Set(five.srcs).size,5,'5-card draw must be unique');
   assert.ok(five.widths.every(Boolean),'all card images should load');
-  assert.equal(five.layout,'flex','5-card mobile layout should be horizontal flex');
-  assert.ok(['auto','scroll'].includes(five.overflow));
+  assert.equal(five.layout,'grid','5-card mobile layout should keep all cards in one grid row');
+  assert.equal(five.cols,5,'5-card mobile layout should show five columns at once');
+  assert.equal(five.overflow,'visible','5-card row should not rely on hidden horizontal scrolling');
+  assert.ok(five.objectFits.every(value=>value === 'contain'),'card artwork should never be cropped');
+  assert.ok(five.allInside,'all five cards should fit inside the visible card row');
   assert.ok(five.reveal,'drawn cards should receive reveal motion class');
 
   const png = await page.evaluate(async () => {
