@@ -11,6 +11,7 @@ on:
       - 'lenormand_*.jpg'
       - 'tests/lenormand-v1.test.mjs'
       - '.github/workflows/lenormand-v1-branch-test.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
