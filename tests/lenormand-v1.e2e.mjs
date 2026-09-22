@@ -22,11 +22,13 @@ try {
 
   await page.click('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]');
   await page.waitForSelector('#luneaLenormandOverlay.show');
-  await page.waitForSelector('#lnPng',{state:'visible',timeout:5000});
+  await page.waitForSelector('#lnPng',{state:'attached',timeout:5000});
+  assert.equal(await page.isVisible('#lnPng'),false,'PNG action should stay hidden until a result exists');
 
   await page.fill('#lnQuestion','그에게서 세 달 안으로 연락이 올까요?');
   await page.click('#lnDraw');
   await page.waitForFunction(() => document.querySelectorAll('#lnCards .ln-card').length === 5);
+  await page.waitForSelector('#lnPng',{state:'visible',timeout:5000});
   await page.waitForFunction(() => [...document.querySelectorAll('#lnCards .ln-card img')].every(img => img.complete && img.naturalWidth > 0),{timeout:10000});
   await page.waitForFunction(() => [...document.querySelectorAll('#lnCards .ln-card')].every(node => node.classList.contains('ln-reveal-v1')),{timeout:5000});
 
