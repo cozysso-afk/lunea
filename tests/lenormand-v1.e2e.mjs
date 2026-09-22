@@ -22,11 +22,13 @@ try {
 
   await page.click('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]');
   await page.waitForSelector('#luneaLenormandOverlay.show');
-  assert.ok(await page.isVisible('#lnPng'),'PNG button should be installed');
+  await page.waitForSelector('#lnPng',{state:'visible',timeout:5000});
 
   await page.fill('#lnQuestion','그에게서 세 달 안으로 연락이 올까요?');
   await page.click('#lnDraw');
   await page.waitForFunction(() => document.querySelectorAll('#lnCards .ln-card').length === 5);
+  await page.waitForFunction(() => [...document.querySelectorAll('#lnCards .ln-card img')].every(img => img.complete && img.naturalWidth > 0),{timeout:10000});
+  await page.waitForFunction(() => [...document.querySelectorAll('#lnCards .ln-card')].every(node => node.classList.contains('ln-reveal-v1')),{timeout:5000});
 
   const five = await page.evaluate(() => {
     const cards = [...document.querySelectorAll('#lnCards .ln-card')];
@@ -67,12 +69,14 @@ try {
   await page.click('#lnSpreads [data-count="3"]');
   await page.click('#lnDraw');
   await page.waitForFunction(() => document.querySelectorAll('#lnCards .ln-card').length === 3);
+  await page.waitForFunction(() => [...document.querySelectorAll('#lnCards img')].every(img => img.complete && img.naturalWidth > 0),{timeout:10000});
   assert.equal((await page.evaluate(() => window.LUNEA_LENORMAND_V1.snapshot().cards.length)),3);
 
   await page.click('#lnSpreads [data-count="9"]');
   await page.fill('#lnQuestion','9장 박스 테스트');
   await page.click('#lnDraw');
   await page.waitForFunction(() => document.querySelectorAll('#lnCards .ln-card').length === 9);
+  await page.waitForFunction(() => [...document.querySelectorAll('#lnCards img')].every(img => img.complete && img.naturalWidth > 0),{timeout:10000});
   const nine = await page.evaluate(() => {
     const snap=window.LUNEA_LENORMAND_V1.snapshot();
     return {
