@@ -1,17 +1,14 @@
 'use strict';
 
 /*
-  LUNEA HORARY LOCATION BUTTON V39.2
+  LUNEA HORARY LOCATION BUTTON V39.3
   ==================================
-  Visible one-tap current-location control for the Horary modal.
-
-  - Adds a main-screen "현재 위치 인식" button beside the place field.
-  - Uses browser Geolocation only after an explicit tap.
-  - Fills latitude/longitude and timezone controls used by Horary Hardening V38.
-  - Injects those coordinates into resumable /v1/jobs/astro Horary payloads.
-  - Displays Asia/Seoul to users as "한국시간 (UTC+9)" so timezone is not mistaken for location.
-  - Keeps the existing manual place input as a fallback and never requests
-    location permission automatically on modal open.
+  - Explicit one-tap browser geolocation for Horary.
+  - Keeps the actual IANA timezone internally, but shows Asia/Seoul as
+    "한국시간 (UTC+9)" in user-facing status text.
+  - Injects GPS coordinates into BOTH direct /v1/horary requests and legacy
+    resumable Horary job requests, so a label like "현재 위치 (lat, lon)" is
+    never mistaken for a city name by the API.
 */
 (() => {
   const W = window;
@@ -79,35 +76,61 @@
     return {lat, lon, timezone};
   }
 
+  function enrichPayload(payload) {
+    const next = {...(payload || {})};
+    const geo = readCurrentGeo();
+    if (geo.timezone) next.timezone = geo.timezone;
+    if (Number.isFinite(geo.lat) && Number.isFinite(geo.lon)) {
+      next.lat = geo.lat;
+      next.lon = geo.lon;
+    }
+    return next;
+  }
+
   function rewriteHoraryJob(init) {
     if (!init?.body || typeof init.body !== 'string') return init;
     try {
       const envelope = JSON.parse(init.body);
       if (String(envelope?.kind || '').toLowerCase() !== 'horary' || !envelope?.payload) return init;
-      const payload = {...envelope.payload};
-      const geo = readCurrentGeo();
-      if (geo.timezone) payload.timezone = geo.timezone;
-      if (Number.isFinite(geo.lat) && Number.isFinite(geo.lon)) {
-        payload.lat = geo.lat;
-        payload.lon = geo.lon;
-      }
-      return {...init, body:JSON.stringify({...envelope, payload})};
+      return {
+        ...init,
+        body: JSON.stringify({...envelope, payload: enrichPayload(envelope.payload)})
+      };
     } catch {
       return init;
     }
   }
 
-  function installHoraryJobBridge() {
+  function rewriteHoraryDirect(init) {
+    if (!init?.body || typeof init.body !== 'string') return init;
+    try {
+      const payload = JSON.parse(init.body);
+      return {...init, body: JSON.stringify(enrichPayload(payload))};
+    } catch {
+      return init;
+    }
+  }
+
+  function installHoraryGeoBridge() {
     if (W.__LUNEA_HORARY_GEO_JOB_BRIDGE_V39__ || typeof W.fetch !== 'function') return;
     W.__LUNEA_HORARY_GEO_JOB_BRIDGE_V39__ = true;
     const priorFetch = W.fetch.bind(W);
+
     W.fetch = function(input, init = {}) {
       let url = '';
-      let method = String(init?.method || input?.method || 'GET').toUpperCase();
-      try { url = typeof input === 'string' ? input : (input instanceof URL ? input.href : String(input?.url || '')); } catch {}
-      const nextInit = method === 'POST' && /\/v1\/jobs\/astro(?:\?|$)/i.test(url)
-        ? rewriteHoraryJob(init)
-        : init;
+      const method = String(init?.method || input?.method || 'GET').toUpperCase();
+      try {
+        url = typeof input === 'string'
+          ? input
+          : (input instanceof URL ? input.href : String(input?.url || ''));
+      } catch {}
+
+      let nextInit = init;
+      if (method === 'POST' && /\/v1\/horary(?:\?|$)/i.test(url)) {
+        nextInit = rewriteHoraryDirect(init);
+      } else if (method === 'POST' && /\/v1\/jobs\/astro(?:\?|$)/i.test(url)) {
+        nextInit = rewriteHoraryJob(init);
+      }
       return priorFetch(input, nextInit);
     };
   }
@@ -166,37 +189,34 @@
 
     ensureStyle();
     const parent = field.parentElement;
-    if (parent?.classList?.contains('horary-grid')) {
-      const row = document.createElement('div');
-      row.className = 'lunea-horary-place-row-v39';
-      parent.insertBefore(row, field);
-      row.appendChild(field);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'mini';
-      btn.id = BUTTON_ID;
-      btn.textContent = '⌖ 현재 위치 인식';
-      row.appendChild(btn);
-      btn.addEventListener('click', resolveCurrentLocation);
-      return true;
-    }
-
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'mini';
     btn.id = BUTTON_ID;
     btn.textContent = '⌖ 현재 위치 인식';
-    field.insertAdjacentElement('afterend', btn);
     btn.addEventListener('click', resolveCurrentLocation);
+
+    if (parent?.classList?.contains('horary-grid')) {
+      const row = document.createElement('div');
+      row.className = 'lunea-horary-place-row-v39';
+      parent.insertBefore(row, field);
+      row.appendChild(field);
+      row.appendChild(btn);
+      return true;
+    }
+
+    field.insertAdjacentElement('afterend', btn);
     return true;
   }
 
   function boot() {
-    installHoraryJobBridge();
+    installHoraryGeoBridge();
     ensureButton();
     const observer = new MutationObserver(() => ensureButton());
     observer.observe(document.documentElement, {childList:true, subtree:true});
-    W.LUNEA_HORARY_LOCATION_BUTTON_V39 = Object.freeze({version:'39.2', readCurrentGeo, rewriteHoraryJob, displayTimezone});
+    W.LUNEA_HORARY_LOCATION_BUTTON_V39 = Object.freeze({
+      version:'39.3', readCurrentGeo, rewriteHoraryJob, rewriteHoraryDirect, displayTimezone
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
