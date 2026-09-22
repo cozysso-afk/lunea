@@ -6,10 +6,12 @@ on:
   pull_request:
     paths:
       - 'lunea-lenormand-v1.js'
+      - 'lunea-lenormand-polish-v1.js'
       - 'lunea-cache-refresh-v1.js'
       - 'lunea-mobile-interaction-hotfix-v1.js'
       - 'lenormand_*.jpg'
       - 'tests/lenormand-v1.test.mjs'
+      - 'tests/lenormand-v1.e2e.mjs'
       - '.github/workflows/lenormand-v1-branch-test.yml'
   workflow_dispatch:
 
@@ -19,6 +21,7 @@ permissions:
 jobs:
   lenormand-contract:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,3 +29,38 @@ jobs:
           node-version: '22'
       - name: Verify Lenormand engine, deck, images and loader contracts
         run: node tests/lenormand-v1.test.mjs
+      - name: Syntax check polish and E2E layers
+        run: |
+          node --check lunea-lenormand-polish-v1.js
+          node --check tests/lenormand-v1.e2e.mjs
+
+  lenormand-mobile-webkit:
+    needs: lenormand-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-lenormand-http.log 2>&1 &
+          echo $! >/tmp/lunea-lenormand-http.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-lenormand-http.log
+          exit 1
+      - name: Run Lenormand mobile WebKit E2E
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/lenormand-v1.e2e.mjs
+      - name: Show local server log
+        if: always()
+        run: cat /tmp/lunea-lenormand-http.log || true
