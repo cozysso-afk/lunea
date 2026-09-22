@@ -26,8 +26,6 @@
     const spread = $('spreadOverlay');
     spreadScrollTop = spread?.querySelector('.modal')?.scrollTop || 0;
 
-    // The Horary overlay may be injected a moment later; mark it again from
-    // the class observer when it becomes visible.
     const horary = $('astroHoraryOverlay');
     if (horary) horary.dataset.luneaReturnToSpread = '1';
     requestAnimationFrame(installOverlayObserver);
@@ -106,12 +104,11 @@
   else boot();
 })();
 
-/* LUNEA ASTRO STALE RESUME GUARD V1
+/* LUNEA ASTRO STALE RESUME GUARD V1.1
    Retires the old V23 behavior that could automatically relaunch a Transit or
-   Return calculation after a reload / foreground event. A calculation already
-   active in the current page is left alone; only dormant persisted jobs are
-   cleared. Question changes also invalidate resumable job pointers from the
-   previous reading so an old Transit can never attach itself to a new one.
+   Return calculation after a reload / foreground event. Dormant persisted jobs
+   are cleared, and a queue that stayed active beyond the request owner's
+   30-minute lifetime is treated as stale after an iOS/PWA suspension.
 */
 (() => {
   const W = window;
@@ -124,9 +121,12 @@
   const PENDING_RETURN_JOB = 'LUNEA_ASTRO_PENDING_JOB_V1:return';
   const LONG_TRANSIT = 'LUNEA_TRANSIT_LONG_RUN_V2_CHECKPOINT';
   const MIGRATION_KEY = 'LUNEA_ASTRO_STALE_RESUME_GUARD_V1_MIGRATED';
+  const ACTIVE_STALE_MS = 31 * 60 * 1000;
   const busyText = /계산.*중|대기.*중|서버.*준비|자동\s*재개|복귀\s*시|연결\s*복구|구간.*계산|재시도|계속\s*진행/;
   let lastQuestion = '';
   let questionObserver = null;
+  let activeKind = '';
+  let activeSince = 0;
 
   function queueState() {
     try { return W.LUNEA_ASTRO_JOB_QUEUE?.getState?.() || {}; }
@@ -148,6 +148,63 @@
     try { localStorage.removeItem(PENDING_TRANSIT_JOB); } catch {}
     try { localStorage.removeItem(PENDING_RETURN_JOB); } catch {}
     try { localStorage.removeItem(LONG_TRANSIT); } catch {}
+  }
+
+  function pendingCreatedAt(kind) {
+    const key = kind === 'returns' ? PENDING_RETURN_JOB : PENDING_TRANSIT_JOB;
+    try {
+      const row = JSON.parse(localStorage.getItem(key) || 'null');
+      const value = Number(row?.createdAt || 0);
+      return Number.isFinite(value) ? value : 0;
+    } catch { return 0; }
+  }
+
+  function trackQueueAge() {
+    const q = queueState();
+    const kind = String(q.active || q.queued || '');
+    if (!kind) {
+      activeKind = '';
+      activeSince = 0;
+      return;
+    }
+    if (kind !== activeKind) {
+      activeKind = kind;
+      activeSince = Date.now();
+    }
+  }
+
+  function clearStaleJobPointer(kind) {
+    clearV23();
+    try {
+      localStorage.removeItem(kind === 'returns' ? PENDING_RETURN_JOB : PENDING_TRANSIT_JOB);
+    } catch {}
+  }
+
+  function recoverStaleActive() {
+    const q = queueState();
+    const kind = String(q.active || q.queued || '');
+    if (!kind) {
+      trackQueueAge();
+      return false;
+    }
+
+    if (kind !== activeKind || !activeSince) {
+      activeKind = kind;
+      activeSince = Date.now();
+    }
+    const persistedAt = pendingCreatedAt(kind);
+    const startedAt = persistedAt || activeSince;
+    if (!startedAt || Date.now() - startedAt < ACTIVE_STALE_MS) return false;
+
+    try { W.LUNEA_ASTRO_REQUEST_V1?.cancelScope?.('reading'); } catch {}
+    try { W.LUNEA_ASTRO_JOB_QUEUE?.resetForQuestionBoundary?.(); } catch {}
+    try { W.LUNEA_LAG_GUARD_V1?.abort?.(); } catch {}
+    clearStaleJobPointer(kind);
+
+    activeKind = '';
+    activeSince = 0;
+    resetDormantUi();
+    return true;
   }
 
   function resetDormantUi() {
@@ -190,9 +247,6 @@
     try { done = localStorage.getItem(MIGRATION_KEY) === '1'; } catch {}
     if (done) return;
 
-    // One-time hard purge for users who already have the old V23 zombie Transit
-    // state saved on-device. This is intentionally Transit-only for request-job
-    // pointers; Return/Horary server work is not discarded here.
     clearTransitResumePointers();
     resetDormantUi();
     try { localStorage.setItem(MIGRATION_KEY, '1'); } catch {}
@@ -207,6 +261,9 @@
     try { W.LUNEA_ASTRO_REQUEST_V1?.cancelScope?.('reading'); } catch {}
     try { W.LUNEA_ASTRO_REQUEST_V1?.cancelScope?.('horary-support'); } catch {}
     try { W.LUNEA_LAG_GUARD_V1?.abort?.(); } catch {}
+    try { W.LUNEA_ASTRO_JOB_QUEUE?.resetForQuestionBoundary?.(); } catch {}
+    activeKind = '';
+    activeSince = 0;
     resetDormantUi();
   }
 
@@ -229,7 +286,9 @@
 
   function scheduleDormantPurge(delay = 40) {
     setTimeout(() => {
+      recoverStaleActive();
       purgeDormantResume();
+      trackQueueAge();
       installQuestionBoundary();
     }, delay);
   }
@@ -237,8 +296,8 @@
   function boot() {
     migrateOnce();
     installQuestionBoundary();
+    trackQueueAge();
 
-    // Catch V23 even if its installer finishes a little later than this module.
     [0,120,350,900,1800,4000,8000,12000].forEach(scheduleDormantPurge);
 
     W.addEventListener('pageshow', () => scheduleDormantPurge(40), {passive:true});
@@ -246,15 +305,19 @@
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden) scheduleDormantPurge(40);
     });
-    W.addEventListener('lunea:astro-job-state', () => scheduleDormantPurge(80));
+    W.addEventListener('lunea:astro-job-state', () => {
+      trackQueueAge();
+      scheduleDormantPurge(80);
+    });
 
     W.LUNEA_ASTRO_STALE_RESUME_GUARD_V1 = Object.freeze({
-      version:'1.0',
+      version:'1.1',
       purge:purgeDormantResume,
+      recoverStale:recoverStaleActive,
       clearTransit:clearTransitResumePointers,
       clearReading:clearReadingResumePointers
     });
-    console.info('🌌 LUNEA Astro stale resume guard V1 loaded · auto-relaunch OFF');
+    console.info('🌌 LUNEA Astro stale resume guard V1.1 loaded · stale active recovery ON');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
