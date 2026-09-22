@@ -3,6 +3,7 @@
 /* LUNEA UI REGRESSION FINAL V2
    Final mobile visual owner loaded after V43/V57.
    - Timing: ivory inline result, uploaded card art only, readable text.
+   - Timing: iOS/PWA nested-scroll repair for the full-screen Timing modal.
    - Horary: iOS datetime-local intrinsic-width normalization.
 */
 (() => {
@@ -41,6 +42,28 @@
       html.lunea-ui-regression-final-v2 #timingOverlay .modal-h{color:#3c3344!important}
       html.lunea-ui-regression-final-v2 #timingOverlay .timing-help{color:#7d7182!important}
       html.lunea-ui-regression-final-v2 #timingDraw{pointer-events:auto!important;touch-action:manipulation!important;color:#4a3b51!important}
+
+      /* iOS/PWA: body.modal-open uses touch-action:none. That blocks the nested
+         Timing scroller even when the child itself says pan-y. While Timing is
+         visible, explicitly unlock vertical panning on the body and give the
+         inner flex scroller a definite height. */
+      body.lunea-timing-overlay-open{overflow:hidden!important;touch-action:pan-y!important}
+      html.lunea-ui-regression-final-v2 #timingOverlay.show{overflow:hidden!important;touch-action:pan-y!important}
+      html.lunea-ui-regression-final-v2 #timingOverlay.show .timing-modal{
+        display:flex!important;flex-direction:column!important;box-sizing:border-box!important;
+        height:calc(100dvh - 24px)!important;max-height:calc(100dvh - 24px)!important;
+        overflow:hidden!important;touch-action:pan-y!important;
+      }
+      html.lunea-ui-regression-final-v2 #timingOverlay.show .timing-modal-header{flex:0 0 auto!important;min-height:0!important}
+      html.lunea-ui-regression-final-v2 #timingOverlay.show .timing-scroll-body{
+        flex:1 1 0!important;height:0!important;min-height:0!important;max-height:none!important;
+        overflow-x:hidden!important;overflow-y:scroll!important;-webkit-overflow-scrolling:touch!important;
+        touch-action:pan-y!important;overscroll-behavior-y:contain!important;
+        padding-bottom:calc(24px + env(safe-area-inset-bottom))!important;
+      }
+      @supports not (height:100dvh){
+        html.lunea-ui-regression-final-v2 #timingOverlay.show .timing-modal{height:calc(100vh - 24px)!important;max-height:calc(100vh - 24px)!important}
+      }
 
       html.lunea-ui-regression-final-v2 #astroHoraryOverlay .horary-modal,
       html.lunea-ui-regression-final-v2 #astroHoraryOverlay .horary-grid,
@@ -83,6 +106,20 @@
     return true;
   }
 
+  function stabilizeTimingScroll() {
+    const overlay = $('timingOverlay');
+    if (!overlay) return false;
+    const open = overlay.classList.contains('show');
+    document.body?.classList.toggle('lunea-timing-overlay-open', open);
+    const scroller = $('timingScrollBody');
+    if (open && scroller) {
+      scroller.style.setProperty('overflow-y', 'scroll', 'important');
+      scroller.style.setProperty('-webkit-overflow-scrolling', 'touch', 'important');
+      scroller.style.setProperty('touch-action', 'pan-y', 'important');
+    }
+    return true;
+  }
+
   function revealTimingResult() {
     const overlay = $('timingOverlay');
     const flip = $('timingFlip');
@@ -104,7 +141,13 @@
     setTimeout(() => {
       if (!overlay.classList.contains('show')) return;
       inner.classList.add('flipped');
-      try { flip.scrollIntoView({block:'center', behavior:'smooth'}); } catch { try { flip.scrollIntoView(); } catch {} }
+      const scroller = $('timingScrollBody');
+      if (scroller && flip.offsetParent) {
+        const target = Math.max(0, flip.offsetTop - 18);
+        try { scroller.scrollTo({top:target, behavior:'smooth'}); } catch { scroller.scrollTop = target; }
+      } else {
+        try { flip.scrollIntoView({block:'center', behavior:'smooth'}); } catch { try { flip.scrollIntoView(); } catch {} }
+      }
     }, 120);
     return true;
   }
@@ -137,6 +180,7 @@
   function apply() {
     addStyle();
     stabilizeTimingTap();
+    stabilizeTimingScroll();
     stabilizeTimingResult();
     normalizeHoraryMoment();
   }
@@ -155,7 +199,7 @@
     [80,260,800,1800].forEach(ms => setTimeout(apply, ms));
     W.addEventListener?.('pageshow', () => setTimeout(apply, 40), {passive:true});
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(apply, 40); });
-    W.LUNEA_UI_REGRESSION_FINAL_V2 = Object.freeze({version:'2.1', apply, revealTimingResult});
+    W.LUNEA_UI_REGRESSION_FINAL_V2 = Object.freeze({version:'2.2', apply, revealTimingResult, stabilizeTimingScroll});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
