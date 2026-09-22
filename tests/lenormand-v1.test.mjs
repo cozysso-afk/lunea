@@ -64,4 +64,25 @@ const five = api.analyze(first5);
 assert.equal(five.center.id,'LN-003');
 assert.equal(five.adjacent.length,4);
 assert.equal(five.mirrors.length,2);
-assert.deepEqual(Array.from(five.mirrors[0], x=>x), [] , 'placeholder');
+assert.equal(five.mirrors[0].left.id,'LN-001');
+assert.equal(five.mirrors[0].right.id,'LN-005');
+assert.equal(five.mirrors[1].left.id,'LN-002');
+assert.equal(five.mirrors[1].right.id,'LN-004');
+
+const first9 = api.cards.slice(0,9);
+const nine = api.analyze(first9);
+assert.equal(nine.center.id,'LN-005');
+assert.equal(nine.rows.length,3);
+assert.equal(nine.columns.length,3);
+assert.equal(nine.diagonals.length,2);
+assert.deepEqual(Array.from(nine.rows[1], c=>c.id), ['LN-004','LN-005','LN-006']);
+assert.deepEqual(Array.from(nine.columns[1], c=>c.id), ['LN-002','LN-005','LN-008']);
+assert.deepEqual(Array.from(nine.diagonals[0], c=>c.id), ['LN-001','LN-005','LN-009']);
+
+assert.match(source, /카드 뜻을 따로따로 나열하지 말고/);
+assert.match(source, /인접 카드 조합이 단일 카드 사전 의미보다 우선/);
+assert.match(loader, /luneaLenormandV1Loader/);
+assert.match(loader, /\.\/lunea-lenormand-v1\.js/);
+assert.match(hotfix, /lenormand:\s*6/);
+
+console.log('Lenormand V1 contract tests passed');
