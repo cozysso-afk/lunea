@@ -139,6 +139,9 @@
   function loadMessageOracleHomeV1() {
     loadBuildScopedScript('luneaMessageOracleHomeV1Loader', './lunea-message-oracle-home-v1.js', 'Message Oracle standalone Home V1');
   }
+  function loadLenormandV1() {
+    loadBuildScopedScript('luneaLenormandV1Loader', './lunea-lenormand-v1.js', 'Lenormand standalone V1');
+  }
   function loadReadingShareV1() {
     loadBuildScopedScript('luneaReadingShareV1Loader', './lunea-reading-share-v1.js', 'reading 4:5 PNG share V1');
   }
@@ -207,6 +210,7 @@
     loadMobileRuntimeFixesV57();
     loadUiRegressionFinalV2();
     loadMessageOracleHomeV1();
+    loadLenormandV1();
     loadReadingShareV1();
     installResumeBuildChecks();
     checkBuild();
