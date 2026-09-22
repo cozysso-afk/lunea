@@ -1,7 +1,8 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1 · Pages V59.4
+  LUNEA Cache Refresh V1 · Pages V59.5
+  - Loads the mobile interaction hotfix synchronously before Structural Routing.
   - Loads V59 reading lifecycle synchronously while the page is still parsing.
   - Loads Timing WEEKDAY preload synchronously before the legacy Timing core.
   - Loads Pages-only Astro origin failover before user-triggered Thai/Astro work.
@@ -41,6 +42,16 @@
     script.async = false;
     script.onerror = () => console.info(`[LUNEA cache refresh] ${label} skipped`);
     (document.head || document.documentElement).appendChild(script);
+  }
+
+  function loadMobileInteractionHotfixV1() {
+    if (document.getElementById('luneaMobileInteractionHotfixV1Loader')) return;
+    const src = `./lunea-mobile-interaction-hotfix-v1.js?v=${encodeURIComponent(SELF_BUILD || 'mih-v1')}`;
+    if (document.readyState === 'loading') {
+      document.write(`<script id="luneaMobileInteractionHotfixV1Loader" src="${src}"><\/script>`);
+      return;
+    }
+    loadBuildScopedScript('luneaMobileInteractionHotfixV1Loader', './lunea-mobile-interaction-hotfix-v1.js', 'mobile interaction hotfix V1');
   }
 
   function loadReadingLifecycleV59() {
@@ -197,8 +208,9 @@
     W.LUNEA_CACHE_REFRESH_V1=Object.freeze({checkNow:checkBuild,requestFreshDocument,flushPending});
   }
 
-  // Parser-time owners: reading lifecycle + Timing WEEKDAY preload must be in
-  // place before the static spread/timing scripts that follow this loader.
+  // Parser-time owners must be in place before the structural/timing scripts
+  // that follow this loader in index.html.
+  loadMobileInteractionHotfixV1();
   loadReadingLifecycleV59();
   loadTimingWeekdayPreloadV1();
 
