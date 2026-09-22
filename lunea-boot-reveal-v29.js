@@ -123,11 +123,206 @@
     return true;
   }
 
+  function installJournalRuntimeFix(){
+    if(W.__LUNEA_JOURNAL_RUNTIME_FIX_V2__)return true;
+    W.__LUNEA_JOURNAL_RUNTIME_FIX_V2__=true;
+
+    const $=id=>document.getElementById(id);
+    const LEGACY_KEYS=new Set(['LUNEA_READING_JOURNAL_V1','LUNEA_ARCHIVE_V3']);
+    let searchTimer=0;
+    let filterFrame=0;
+    let listObserver=null;
+
+    const style=document.createElement('style');
+    style.id='luneaJournalRuntimeFixV2Style';
+    style.textContent=`
+      #archiveOverlay #archiveSearchAdvanced{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important;margin:7px 0 6px!important}
+      #archiveOverlay #archiveSearchAdvanced>#archiveCategoryFilter,
+      #archiveOverlay #archiveSearchAdvanced>#archiveStatusFilter{display:none!important}
+      #archiveOverlay .lunea-date-filter-v2{min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:5px;padding:0 7px;border:1px solid rgba(130,234,220,.18);border-radius:12px;background:rgba(7,13,21,.62);min-height:39px}
+      #archiveOverlay .lunea-date-filter-v2>span{color:#9fc8c4;font-size:9px;white-space:nowrap}
+      #archiveOverlay .lunea-date-filter-v2>input{min-width:0!important;width:100%!important;border:0!important;background:transparent!important;box-shadow:none!important;padding:7px 0!important;min-height:37px!important;color:#eefafa!important;font-size:10px!important}
+      #archiveOverlay .archive-search-foot{position:static!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;margin:0 0 9px!important}
+      #archiveOverlay #archiveSearchReset{flex:0 0 auto!important}
+      @media(max-width:430px){#archiveOverlay #archiveSearchAdvanced{grid-template-columns:repeat(2,minmax(0,1fr))!important}}
+    `;
+    document.head.appendChild(style);
+
+    function wrapDate(id,label){
+      const input=$(id);
+      if(!input||input.closest('.lunea-date-filter-v2'))return false;
+      const oldWrap=input.closest('.lunea-date-filter-v1');
+      if(oldWrap){
+        const oldLabel=oldWrap.querySelector('span');
+        oldWrap.classList.remove('lunea-date-filter-v1');
+        oldWrap.classList.add('lunea-date-filter-v2');
+        if(oldLabel)oldLabel.textContent=label;
+        return true;
+      }
+      const wrap=document.createElement('label');
+      wrap.className='lunea-date-filter-v2';
+      const text=document.createElement('span');
+      text.textContent=label;
+      input.replaceWith(wrap);
+      wrap.append(text,input);
+      return true;
+    }
+
+    function polishControls(){
+      wrapDate('archiveDateFrom','시작');
+      wrapDate('archiveDateTo','종료');
+    }
+
+    function canonicalDate(value){
+      const s=String(value||'');
+      let m=s.match(/(20\d{2})[-\/.]\s*(\d{1,2})[-\/.]\s*(\d{1,2})/);
+      if(!m)m=s.match(/(20\d{2})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/);
+      if(!m)return'';
+      return `${m[1]}-${String(m[2]).padStart(2,'0')}-${String(m[3]).padStart(2,'0')}`;
+    }
+
+    function applyDateFilter(){
+      filterFrame=0;
+      const list=$('archiveList');
+      if(!list)return;
+      const from=$('archiveDateFrom')?.value||'';
+      const to=$('archiveDateTo')?.value||'';
+      const items=[...list.querySelectorAll('.archive-item')];
+      let visible=0;
+      items.forEach(item=>{
+        const date=canonicalDate(item.querySelector('.archive-meta')?.textContent||item.textContent||'');
+        const show=(!from||(date&&date>=from))&&(!to||(date&&date<=to));
+        item.hidden=!show;
+        item.style.display=show?'':'none';
+        if(show)visible+=1;
+      });
+      const summary=$('archiveSearchSummary');
+      if(summary)summary.textContent=items.length?`${visible}건 표시`:'검색 결과 없음';
+    }
+
+    function scheduleDateFilter(){
+      if(filterFrame)cancelAnimationFrame(filterFrame);
+      filterFrame=requestAnimationFrame(applyDateFilter);
+    }
+
+    function detachHeavyObserver(){
+      const list=$('archiveList');
+      if(!list)return null;
+      if(list.dataset.luneaJournalRuntimeV2==='1')return list;
+      const fresh=list.cloneNode(false);
+      fresh.dataset.luneaJournalRuntimeV2='1';
+      list.replaceWith(fresh);
+      if(listObserver)listObserver.disconnect();
+      listObserver=new MutationObserver(scheduleDateFilter);
+      listObserver.observe(fresh,{childList:true});
+      return fresh;
+    }
+
+    function withoutLegacyMigration(fn){
+      const proto=W.Storage?.prototype;
+      if(!proto||typeof proto.getItem!=='function')return Promise.resolve().then(fn);
+      const original=proto.getItem;
+      let remaining=2;
+      let restored=false;
+      const restore=()=>{
+        if(restored)return;
+        restored=true;
+        if(proto.getItem===patched)proto.getItem=original;
+      };
+      function patched(key){
+        if(this===W.localStorage&&LEGACY_KEYS.has(String(key))){
+          remaining-=1;
+          if(remaining<=0)restore();
+          return'[]';
+        }
+        return original.call(this,key);
+      }
+      proto.getItem=patched;
+      try{return Promise.resolve(fn()).finally(restore)}catch(error){restore();return Promise.reject(error)}
+    }
+
+    async function fastRender(){
+      polishControls();
+      detachHeavyObserver();
+      const journal=W.LUNEA_READING_JOURNAL;
+      if(!journal?.render)return;
+      await withoutLegacyMigration(()=>journal.render());
+      scheduleDateFilter();
+    }
+
+    async function openFast(){
+      polishControls();
+      detachHeavyObserver();
+      const overlay=$('archiveOverlay');
+      if(!overlay)return;
+      overlay.classList.add('show');
+      overlay.setAttribute('aria-hidden','false');
+      document.body.classList.add('modal-open');
+      const modal=overlay.querySelector('.modal');
+      if(modal)modal.scrollTop=0;
+      await new Promise(resolve=>requestAnimationFrame(resolve));
+      await fastRender();
+    }
+
+    function resetFilters(){
+      const search=$('archiveSearch');
+      if(search)search.value='';
+      ['archiveDateFrom','archiveDateTo','ljStatus','ljCat','archiveCategoryFilter','archiveStatusFilter'].forEach(id=>{const el=$(id);if(el)el.value=''});
+      fastRender();
+    }
+
+    W.addEventListener('click',event=>{
+      if(event.target?.closest?.('#archiveBtn')){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        openFast();
+        return;
+      }
+      if(event.target?.closest?.('#archiveSearchReset')){
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        resetFilters();
+      }
+    },true);
+
+    W.addEventListener('input',event=>{
+      if(event.target?.id!=='archiveSearch')return;
+      event.stopImmediatePropagation();
+      clearTimeout(searchTimer);
+      searchTimer=setTimeout(fastRender,180);
+    },true);
+
+    W.addEventListener('change',event=>{
+      const id=event.target?.id||'';
+      if(id==='archiveDateFrom'||id==='archiveDateTo'){
+        event.stopImmediatePropagation();
+        scheduleDateFilter();
+        return;
+      }
+      if(id==='ljStatus'||id==='ljCat'){
+        event.stopImmediatePropagation();
+        fastRender();
+      }
+    },true);
+
+    let tries=0;
+    const settle=()=>{
+      tries+=1;
+      polishControls();
+      if($('archiveSearchAdvanced')&&$('archiveList'))detachHeavyObserver();
+      if(tries<20&&(!$('archiveSearchAdvanced')||!W.LUNEA_READING_JOURNAL))setTimeout(settle,100);
+    };
+    settle();
+    console.info('✦ LUNEA Journal Runtime Fix V2 loaded');
+    return true;
+  }
+
   const readyEnough=()=>coreRowsReady() && hasPortal() && hasFinalSpreadPatches() && hasFinalTransitRange() && hasFinalDrawPipeline();
 
   const afterDom=()=>{
     installDrawStartupGuard();
     ensureReadingContext();
+    installJournalRuntimeFix();
     const start=performance.now();
     const probe=()=>{
       const elapsed=performance.now()-start;
