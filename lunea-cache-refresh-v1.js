@@ -3,6 +3,7 @@
 /*
   LUNEA Cache Refresh V1 · Pages V59.4
   - Loads V59 reading lifecycle synchronously while the page is still parsing.
+  - Loads Timing WEEKDAY preload synchronously before the legacy Timing core.
   - Loads Pages-only Astro origin failover before user-triggered Thai/Astro work.
   - Loads question-boundary, iOS and auxiliary reliability modules.
   - V58 repeated-AI wrapper is retired.
@@ -50,6 +51,16 @@
       return;
     }
     loadBuildScopedScript('luneaReadingLifecycleV59Loader', './lunea-reading-lifecycle-v59.js', 'reading lifecycle V59');
+  }
+
+  function loadTimingWeekdayPreloadV1() {
+    if (document.getElementById('luneaTimingWeekdayPreloadV1Loader')) return;
+    const src = `./lunea-timing-weekday-preload-v1.js?v=${encodeURIComponent(SELF_BUILD || 'weekday-v1')}`;
+    if (document.readyState === 'loading') {
+      document.write(`<script id="luneaTimingWeekdayPreloadV1Loader" src="${src}"><\/script>`);
+      return;
+    }
+    loadBuildScopedScript('luneaTimingWeekdayPreloadV1Loader', './lunea-timing-weekday-preload-v1.js', 'Timing WEEKDAY preload V1');
   }
 
   function loadAstroRequestV1() {
@@ -186,8 +197,10 @@
     W.LUNEA_CACHE_REFRESH_V1=Object.freeze({checkNow:checkBuild,requestFreshDocument,flushPending});
   }
 
-  // Core reading rows + session boundary are parser-time work.
+  // Parser-time owners: reading lifecycle + Timing WEEKDAY preload must be in
+  // place before the static spread/timing scripts that follow this loader.
   loadReadingLifecycleV59();
+  loadTimingWeekdayPreloadV1();
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
