@@ -1,7 +1,7 @@
 'use strict';
 
 /* LUNEA LENORMAND POLISH V1
-   - mobile-first 3/5/9 layouts + reveal motion
+   - mobile-first all-visible 3/5/9 layouts + reveal motion
    - question-boundary reset so a new question cannot reuse old cards
    - 4:5 PNG export with full AI interpretation pages
    - archive restore overlay for saved Lenormand readings
@@ -44,16 +44,16 @@
         animation-delay:calc(var(--ln-i,0) * 70ms);
       }
       #luneaLenormandOverlay .ln-cards[data-count="5"]{
-        display:flex;overflow-x:auto;gap:9px;padding:3px 2px 10px;
-        scroll-snap-type:x proximity;overscroll-behavior-x:contain;
-        -webkit-overflow-scrolling:touch;
+        display:grid;
+        grid-template-columns:repeat(5,minmax(0,1fr));
+        gap:7px;
+        padding:3px 0 10px;
+        overflow:visible;
       }
-      #luneaLenormandOverlay .ln-cards[data-count="5"] .ln-card{
-        flex:0 0 clamp(104px,29vw,132px);scroll-snap-align:center;
-      }
+      #luneaLenormandOverlay .ln-cards[data-count="5"] .ln-card{min-width:0}
       #luneaLenormandOverlay .ln-cards[data-count="3"] .ln-card,
       #luneaLenormandOverlay .ln-cards[data-count="9"] .ln-card{min-width:0}
-      #luneaLenormandOverlay .ln-card img{background:#0b0c16}
+      #luneaLenormandOverlay .ln-card img{background:#0b0c16;object-fit:contain}
       #luneaLenormandOverlay #lnPng{border-color:rgba(231,200,121,.34)}
       .ln-archive-restore{margin-left:6px}
       #luneaLenormandArchiveOverlay{z-index:10045}
@@ -61,7 +61,7 @@
       #luneaLenormandArchiveOverlay .ln-archive-q{font:600 14px/1.62 'Noto Serif KR',serif;margin:8px 0 14px;color:var(--text)}
       #luneaLenormandArchiveOverlay .ln-archive-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
       #luneaLenormandArchiveOverlay .ln-archive-card{text-align:center;min-width:0}
-      #luneaLenormandArchiveOverlay .ln-archive-card img{display:block;width:100%;aspect-ratio:2/3;object-fit:cover;border-radius:9px;border:1px solid rgba(231,200,121,.24)}
+      #luneaLenormandArchiveOverlay .ln-archive-card img{display:block;width:100%;aspect-ratio:2/3;object-fit:contain;background:#0b0c16;border-radius:9px;border:1px solid rgba(231,200,121,.24)}
       #luneaLenormandArchiveOverlay .ln-archive-card b{display:block;margin-top:4px;font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       #luneaLenormandArchiveOverlay .ln-archive-ai{margin-top:14px;padding:13px;border-radius:13px;background:rgba(189,164,248,.07);white-space:pre-wrap;font:400 12px/1.75 'Noto Serif KR',serif}
       #luneaLenormandArchiveOverlay .ln-archive-actions{display:flex;gap:8px;margin-top:12px}
@@ -69,6 +69,8 @@
       @media(max-width:520px){
         #luneaLenormandOverlay .ln-cards[data-count="3"]{gap:5px}
         #luneaLenormandOverlay .ln-cards[data-count="3"] .ln-card b{font-size:8.4px}
+        #luneaLenormandOverlay .ln-cards[data-count="5"]{gap:4px}
+        #luneaLenormandOverlay .ln-cards[data-count="5"] .ln-card b{font-size:7.1px;line-height:1.15;white-space:normal;overflow:visible;text-overflow:clip}
         #luneaLenormandOverlay .ln-cards[data-count="9"]{gap:5px}
         #luneaLenormandOverlay .ln-cards[data-count="9"] .ln-card b{font-size:7.8px}
         #luneaLenormandArchiveOverlay .ln-archive-cards{gap:5px}
