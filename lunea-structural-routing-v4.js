@@ -47,6 +47,7 @@
     document.write('<script src="./lunea-reading-draft-v1.js?v=8ec682ae7ef5"><\/script>');
     document.write('<script src="./lunea-reading-attachments-v1.js?v=20260915-golden-1"><\/script>');
     document.write('<script src="./lunea-message-oracle-support-v1.js?v=20260915-golden-3"><\/script>');
+    document.write('<script src="./lunea-journal-performance-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-reading-journal-v2.js?v=201"><\/script>');
     document.write('<script src="./lunea-archive-search-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-flip-all-fix-v1.js?v=102"><\/script>');
@@ -116,6 +117,7 @@
     './lunea-reading-draft-v1.js?v=8ec682ae7ef5',
     './lunea-reading-attachments-v1.js?v=20260915-golden-1',
     './lunea-message-oracle-support-v1.js?v=20260915-golden-3',
+    './lunea-journal-performance-v1.js?v=101',
     './lunea-reading-journal-v2.js?v=201',
     './lunea-archive-search-v1.js?v=101',
     './lunea-flip-all-fix-v1.js?v=102',
