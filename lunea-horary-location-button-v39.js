@@ -1,13 +1,14 @@
 'use strict';
 
 /*
-  LUNEA HORARY LOCATION BUTTON V39
-  ================================
+  LUNEA HORARY LOCATION BUTTON V39.1
+  ==================================
   Visible one-tap current-location control for the Horary modal.
 
   - Adds a main-screen "현재 위치 인식" button beside the place field.
   - Uses browser Geolocation only after an explicit tap.
   - Fills latitude/longitude and timezone controls used by Horary Hardening V38.
+  - Injects those coordinates into resumable /v1/jobs/astro Horary payloads.
   - Keeps the existing manual place input as a fallback and never requests
     location permission automatically on modal open.
 */
@@ -46,6 +47,62 @@
     if (!status) return;
     status.textContent = text;
     status.className = `horary-status ${ok ? 'ok' : 'err'}`;
+  }
+
+  function readCurrentGeo() {
+    const latRaw = String($('luneaHoraryLatV38')?.value || '').trim();
+    const lonRaw = String($('luneaHoraryLonV38')?.value || '').trim();
+    let lat = latRaw === '' ? NaN : Number(latRaw);
+    let lon = lonRaw === '' ? NaN : Number(lonRaw);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      const place = String($('astroHoraryPlace')?.value || '').trim();
+      const match = place.match(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/);
+      if (match) {
+        lat = Number(match[1]);
+        lon = Number(match[2]);
+      }
+    }
+
+    let timezone = String($('luneaHoraryTimezoneV38')?.value || '').trim();
+    if (!timezone) {
+      try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Seoul'; }
+      catch { timezone = 'Asia/Seoul'; }
+    }
+    return {lat, lon, timezone};
+  }
+
+  function rewriteHoraryJob(init) {
+    if (!init?.body || typeof init.body !== 'string') return init;
+    try {
+      const envelope = JSON.parse(init.body);
+      if (String(envelope?.kind || '').toLowerCase() !== 'horary' || !envelope?.payload) return init;
+      const payload = {...envelope.payload};
+      const geo = readCurrentGeo();
+      if (geo.timezone) payload.timezone = geo.timezone;
+      if (Number.isFinite(geo.lat) && Number.isFinite(geo.lon)) {
+        payload.lat = geo.lat;
+        payload.lon = geo.lon;
+      }
+      return {...init, body:JSON.stringify({...envelope, payload})};
+    } catch {
+      return init;
+    }
+  }
+
+  function installHoraryJobBridge() {
+    if (W.__LUNEA_HORARY_GEO_JOB_BRIDGE_V39__ || typeof W.fetch !== 'function') return;
+    W.__LUNEA_HORARY_GEO_JOB_BRIDGE_V39__ = true;
+    const priorFetch = W.fetch.bind(W);
+    W.fetch = function(input, init = {}) {
+      let url = '';
+      let method = String(init?.method || input?.method || 'GET').toUpperCase();
+      try { url = typeof input === 'string' ? input : (input instanceof URL ? input.href : String(input?.url || '')); } catch {}
+      const nextInit = method === 'POST' && /\/v1\/jobs\/astro(?:\?|$)/i.test(url)
+        ? rewriteHoraryJob(init)
+        : init;
+      return priorFetch(input, nextInit);
+    };
   }
 
   function resolveCurrentLocation() {
@@ -128,9 +185,11 @@
   }
 
   function boot() {
+    installHoraryJobBridge();
     ensureButton();
     const observer = new MutationObserver(() => ensureButton());
     observer.observe(document.documentElement, {childList:true, subtree:true});
+    W.LUNEA_HORARY_LOCATION_BUTTON_V39 = Object.freeze({version:'39.1', readCurrentGeo, rewriteHoraryJob});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
