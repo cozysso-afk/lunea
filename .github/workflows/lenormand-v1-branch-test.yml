@@ -1,0 +1,27 @@
+name: Lenormand V1 Branch Test
+
+on:
+  push:
+    branches: [feat/lenormand-v1]
+  pull_request:
+    paths:
+      - 'lunea-lenormand-v1.js'
+      - 'lunea-cache-refresh-v1.js'
+      - 'lunea-mobile-interaction-hotfix-v1.js'
+      - 'lenormand_*.jpg'
+      - 'tests/lenormand-v1.test.mjs'
+      - '.github/workflows/lenormand-v1-branch-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  lenormand-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Lenormand engine, deck, images and loader contracts
+        run: node tests/lenormand-v1.test.mjs
