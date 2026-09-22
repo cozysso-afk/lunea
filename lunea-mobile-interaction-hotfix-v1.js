@@ -76,8 +76,9 @@
     stock: 3,
     timing: 4,
     horary: 5,
-    thai: 6,
-    intimacy: 7,
+    lenormand: 6,
+    thai: 7,
+    intimacy: 8,
   });
 
   function portalKey(node) {
