@@ -1,11 +1,13 @@
 'use strict';
 
-/* LUNEA ASTRO ORIGIN FAILOVER V57.1
+/* LUNEA ASTRO ORIGIN FAILOVER V57.3
    Stable-host adapter for the two official Astro Core origins.
    - V2 preferred; legacy fallback.
-   - health checks tolerate free-tier cold starts instead of failing on the first 502.
-   - calculation requests are sent once; only health probes may fail over.
-   - custom API URLs remain untouched.
+   - Health checks tolerate free-tier cold starts.
+   - Calculation requests fail over once on network timeout / transient server failure.
+   - POST compatibility 404/405 can fail over when one origin is behind the other.
+   - Successful calculation responses pin subsequent job polling to the same origin.
+   - Custom API URLs remain untouched.
    - no localStorage / IndexedDB writes. */
 (() => {
   const W=window;
@@ -14,16 +16,34 @@
 
   const ORIGINS=Object.freeze(['https://lunea-astro-api-v2.onrender.com','https://lunea-astro-api.onrender.com']);
   const TRANSIENT=new Set([408,425,429,500,502,503,504]);
-  const ORIGIN_TIMEOUT_MS=Object.freeze({
-    health:[7000,15000],
-    calculation:[12000,25000]
-  });
+  const HEALTH_TIMEOUTS=[7000,15000];
   const nativeFetch=W.fetch.bind(W);
   let lastHealthyOrigin=null;
+
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const rawUrl=input=>{try{return typeof input==='string'?input:(input instanceof URL?input.href:String(input?.url||''))}catch{return''}};
   const official=url=>ORIGINS.find(o=>url===o||url.startsWith(o+'/'))||'';
   const targetUrl=(original,target)=>{const u=new URL(original);return `${target}${u.pathname}${u.search}`};
+  const requestMethod=(input,init)=>String(init?.method||input?.method||'GET').toUpperCase();
+
+  function orderedOrigins(originalUrl,isHealth){
+    if(isHealth)return ORIGINS.slice();
+    const first=lastHealthyOrigin||ORIGINS[0]||official(originalUrl);
+    return [first,...ORIGINS.filter(origin=>origin!==first)];
+  }
+
+  function calculationTimeouts(path){
+    if(/^\/v1\/jobs\/astro\/?$/i.test(path))return [30000,45000];
+    if(/^\/v1\/horary\/?$/i.test(path))return [45000,60000];
+    if(/^\/v1\/returns\/context\/?$/i.test(path))return [60000,90000];
+    if(/^\/v1\/transits\/scan\/?$/i.test(path))return [90000,120000];
+    return [45000,60000];
+  }
+
+  function compatibilityMiss(response,path,method){
+    if(method!=='POST'||![404,405].includes(Number(response?.status)))return false;
+    return /^\/v1\/(?:jobs\/astro|horary|returns\/context|transits\/scan)\/?$/i.test(path);
+  }
 
   async function runFetch(input,init,url,timeoutMs){
     const controller=new AbortController();
@@ -31,7 +51,7 @@
     let timedOut=false,relay=null;
     if(upstream?.aborted)controller.abort(upstream.reason);
     else if(upstream?.addEventListener){
-      relay=()=>controller.abort(upstream.reason);
+      relay=()=>{try{controller.abort(upstream.reason)}catch{controller.abort()}};
       upstream.addEventListener('abort',relay,{once:true});
     }
     const timer=setTimeout(()=>{
@@ -55,15 +75,21 @@
     }
   }
 
-  async function oneRound(input,init,originalUrl,isHealth){
+  async function tryOrigins(input,init,originalUrl,{isHealth=false,path='',method='GET'}={}){
+    const origins=orderedOrigins(originalUrl,isHealth);
+    const timeouts=isHealth?HEALTH_TIMEOUTS:calculationTimeouts(path);
     let lastResponse=null,lastError=null;
-    for(let index=0;index<ORIGINS.length;index+=1){
-      const origin=ORIGINS[index];
+
+    for(let index=0;index<origins.length;index+=1){
+      const origin=origins[index];
       try{
-        const timeoutMs=(isHealth?ORIGIN_TIMEOUT_MS.health:ORIGIN_TIMEOUT_MS.calculation)[index];
-        const response=await runFetch(input,init,targetUrl(originalUrl,origin),timeoutMs);
+        const response=await runFetch(input,init,targetUrl(originalUrl,origin),timeouts[index]||timeouts[timeouts.length-1]);
         lastResponse=response;
-        if(!TRANSIENT.has(response.status)){if(isHealth&&response.ok)lastHealthyOrigin=origin;return {done:true,response};}
+        const retryable=TRANSIENT.has(Number(response.status))||compatibilityMiss(response,path,method);
+        if(!retryable){
+          if(response.ok)lastHealthyOrigin=origin;
+          return {done:true,response,origin};
+        }
       }catch(error){
         lastError=error;
         const upstream=init?.signal||input?.signal||null;
@@ -77,22 +103,24 @@
     const originalUrl=rawUrl(input);
     if(!official(originalUrl))return nativeFetch(input,init);
 
-    const path=(()=>{try{return new URL(originalUrl).pathname}catch{return''}})();
+    const parsed=(()=>{try{return new URL(originalUrl)}catch{return null}})();
+    const path=parsed?.pathname||'';
     const isHealth=/\/health\/?$/i.test(path);
-    // A timed-out computation may still consume server CPU. Never duplicate a
-    // calculation across origins; its owner controls the full request deadline.
-    if(!isHealth){
-      const target=targetUrl(originalUrl,lastHealthyOrigin||official(originalUrl));
-      if(typeof input==='string'||input instanceof URL)return nativeFetch(target,init);
-      return nativeFetch(new Request(target,input.clone()),init);
-    }
-    /* Health is the wake gate. Free services can need tens of seconds after sleep. */
-    const waits=isHealth?[0,4200,5200,6200,7200,8200]:[0,1100,2800];
-    let lastResponse=null,lastError=null;
+    const method=requestMethod(input,init);
 
+    if(!isHealth){
+      const result=await tryOrigins(input,init,originalUrl,{isHealth:false,path,method});
+      if(result.done)return result.response;
+      if(result.response)return result.response;
+      throw result.error||new TypeError('Astro Core calculation request failed');
+    }
+
+    /* Health is only a wake/readiness probe, so retry both origins across a cold start. */
+    const waits=[0,4200,5200,6200,7200,8200];
+    let lastResponse=null,lastError=null;
     for(let i=0;i<waits.length;i++){
       if(waits[i])await sleep(waits[i]);
-      const result=await oneRound(input,init,originalUrl,isHealth);
+      const result=await tryOrigins(input,init,originalUrl,{isHealth:true,path,method});
       if(result.done)return result.response;
       if(result.response)lastResponse=result.response;
       if(result.error)lastError=result.error;
@@ -107,11 +135,11 @@
     throw lastError||new TypeError('Astro Core network request failed');
   };
 
-  /* Start waking both servers as soon as LUNEA boots. */
+  /* Wake both services early; user actions are never blocked on these probes. */
   setTimeout(()=>{
     for(const origin of ORIGINS)nativeFetch(`${origin}/health?t=${Date.now()}`,{method:'GET',cache:'no-store'}).catch(()=>{});
   },150);
 
-  W.LUNEA_ASTRO_ORIGIN_FAILOVER_V57=Object.freeze({version:'57.2',origins:ORIGINS.slice()});
-  console.info('✦ LUNEA Astro Origin Failover V57.1 active · cold-start tolerant');
+  W.LUNEA_ASTRO_ORIGIN_FAILOVER_V57=Object.freeze({version:'57.3',origins:ORIGINS.slice()});
+  console.info('✦ LUNEA Astro Origin Failover V57.3 active · calculation failover ON');
 })();
