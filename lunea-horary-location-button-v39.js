@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA HORARY LOCATION BUTTON V39.1
+  LUNEA HORARY LOCATION BUTTON V39.2
   ==================================
   Visible one-tap current-location control for the Horary modal.
 
@@ -9,6 +9,7 @@
   - Uses browser Geolocation only after an explicit tap.
   - Fills latitude/longitude and timezone controls used by Horary Hardening V38.
   - Injects those coordinates into resumable /v1/jobs/astro Horary payloads.
+  - Displays Asia/Seoul to users as "한국시간 (UTC+9)" so timezone is not mistaken for location.
   - Keeps the existing manual place input as a fallback and never requests
     location permission automatically on modal open.
 */
@@ -47,6 +48,12 @@
     if (!status) return;
     status.textContent = text;
     status.className = `horary-status ${ok ? 'ok' : 'err'}`;
+  }
+
+  function displayTimezone(timezone) {
+    const tz = String(timezone || '').trim();
+    if (tz === 'Asia/Seoul') return '한국시간 (UTC+9)';
+    return tz || '시간대 미확인';
   }
 
   function readCurrentGeo() {
@@ -138,7 +145,7 @@
 
       btn.disabled = false;
       btn.textContent = '✓ 현재 위치 인식됨';
-      updateStatus(`현재 위치 반영 완료 · ${lat.toFixed(4)}, ${lon.toFixed(4)} · ${tz}`);
+      updateStatus(`현재 위치 반영 완료 · ${lat.toFixed(4)}, ${lon.toFixed(4)} · ${displayTimezone(tz)}`);
       setTimeout(() => { if (btn) btn.textContent = old; }, 1800);
     }, err => {
       btn.disabled = false;
@@ -189,7 +196,7 @@
     ensureButton();
     const observer = new MutationObserver(() => ensureButton());
     observer.observe(document.documentElement, {childList:true, subtree:true});
-    W.LUNEA_HORARY_LOCATION_BUTTON_V39 = Object.freeze({version:'39.1', readCurrentGeo, rewriteHoraryJob});
+    W.LUNEA_HORARY_LOCATION_BUTTON_V39 = Object.freeze({version:'39.2', readCurrentGeo, rewriteHoraryJob, displayTimezone});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
