@@ -6,6 +6,7 @@ import {execFileSync} from 'node:child_process';
 const sourcePath = new URL('../lunea-lenormand-v1.js', import.meta.url);
 const loaderPath = new URL('../lunea-cache-refresh-v1.js', import.meta.url);
 const hotfixPath = new URL('../lunea-mobile-interaction-hotfix-v1.js', import.meta.url);
+const homeIconPath = new URL('../assets/lenormand/lunea_lenormand_home_icon_v1.svg', import.meta.url);
 const source = fs.readFileSync(sourcePath, 'utf8');
 const loader = fs.readFileSync(loaderPath, 'utf8');
 const hotfix = fs.readFileSync(hotfixPath, 'utf8');
@@ -13,6 +14,7 @@ const hotfix = fs.readFileSync(hotfixPath, 'utf8');
 execFileSync(process.execPath, ['--check', sourcePath.pathname], {stdio:'pipe'});
 execFileSync(process.execPath, ['--check', loaderPath.pathname], {stdio:'pipe'});
 execFileSync(process.execPath, ['--check', hotfixPath.pathname], {stdio:'pipe'});
+assert.ok(fs.existsSync(homeIconPath), 'Lenormand Home icon must exist');
 
 let seed = 0x12345678;
 const crypto = {
@@ -84,5 +86,10 @@ assert.match(source, /인접 카드 조합이 단일 카드 사전 의미보다 
 assert.match(loader, /luneaLenormandV1Loader/);
 assert.match(loader, /\.\/lunea-lenormand-v1\.js/);
 assert.match(hotfix, /lenormand:\s*6/);
+assert.match(hotfix, /thai:\s*7/);
+assert.match(hotfix, /lunea_lenormand_home_icon_v1\.svg/);
+assert.match(hotfix, /\.lunea-thai-home-tile\{[\s\S]*grid-column:auto!important/);
+assert.match(hotfix, /THAI ASTROLOGY/);
+assert.match(hotfix, /출생운 · 8영역 · 보조 흐름/);
 
 console.log('Lenormand V1 contract tests passed');
