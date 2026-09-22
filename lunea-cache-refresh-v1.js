@@ -1,12 +1,13 @@
 'use strict';
 
 /*
-  LUNEA Cache Refresh V1 · Pages V59.5
+  LUNEA Cache Refresh V1 · Pages V59.6
   - Loads the mobile interaction hotfix synchronously before Structural Routing.
   - Loads V59 reading lifecycle synchronously while the page is still parsing.
   - Loads Timing WEEKDAY preload synchronously before the legacy Timing core.
   - Loads Pages-only Astro origin failover before user-triggered Thai/Astro work.
   - Loads question-boundary, iOS and auxiliary reliability modules.
+  - Restores the active tarot reading after closing Horary support.
   - V58 repeated-AI wrapper is retired.
   - V57.1 no longer owns startSpread, so no compatibility marker suppression exists.
 */
@@ -119,6 +120,9 @@
   function loadHoraryMobileStability() {
     loadBuildScopedScript('luneaHoraryMobileStabilityV42Loader', './lunea-horary-mobile-stability-v42.js', 'Horary mobile stability V42');
   }
+  function loadHoraryReturnStack() {
+    loadBuildScopedScript('luneaHoraryReturnStackV1Loader', './lunea-horary-return-stack-v1.js', 'Horary return stack V1');
+  }
   function loadLearningAuthRecovery() {
     loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2');
   }
@@ -197,6 +201,7 @@
     loadHoraryTraditionalCore();
     loadHoraryBalanceGuard();
     loadHoraryMobileStability();
+    loadHoraryReturnStack();
     loadLearningAuthRecovery();
     loadEmergencyRepair();
     loadMobileRuntimeFixesV57();
