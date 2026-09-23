@@ -5,6 +5,7 @@
    - Timing: ivory inline result, uploaded card art only, readable text.
    - Timing: iOS/PWA nested-scroll repair for the full-screen Timing modal.
    - Horary: iOS datetime-local intrinsic-width normalization.
+   - Journal: mobile verification controls and date fields fit modern iPhone widths.
 */
 (() => {
   const W = window;
@@ -82,7 +83,24 @@
       html.lunea-ui-regression-final-v2 #astroHoraryTopic,
       html.lunea-ui-regression-final-v2 #luneaHoraryManualModeV38{display:block!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important}
 
-      @media(max-width:390px){
+      /* Journal verification: the old 390px breakpoint misses 393/402/430px
+         iPhones, leaving the two native date controls cramped/overlapping. */
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review,
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-grid,
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-grid > *,
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-field{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-field input[type="date"]{box-sizing:border-box!important;display:block!important;width:100%!important;min-width:0!important;max-width:100%!important}
+
+      @media(max-width:430px){
+        html.lunea-ui-regression-final-v2 #archiveOverlay .lj-statuses{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+        html.lunea-ui-regression-final-v2 #archiveOverlay .lj-statuses button{min-width:0!important;min-height:36px!important;padding:7px 4px!important;font-size:8.6px!important;white-space:nowrap!important}
+        html.lunea-ui-regression-final-v2 #archiveOverlay .lj-grid{grid-template-columns:minmax(0,1fr)!important;gap:0!important}
+        html.lunea-ui-regression-final-v2 #archiveOverlay .lj-grid .lj-field{width:100%!important;overflow:hidden!important}
+        html.lunea-ui-regression-final-v2 #archiveOverlay .lj-grid .lj-field input[type="date"]{
+          height:40px!important;min-height:40px!important;padding:7px 10px!important;font-size:11px!important;line-height:1.2!important;
+        }
+        html.lunea-ui-regression-final-v2 #archiveOverlay .lj-grid .lj-field input[type="date"]::-webkit-date-and-time-value{display:block!important;box-sizing:border-box!important;width:100%!important;min-width:0!important;max-width:100%!important;text-align:left!important}
+
         html.lunea-ui-regression-final-v2 #luneaTimingInline.timing-inline{grid-template-columns:78px minmax(0,1fr)!important;gap:12px!important;min-height:0!important;padding:13px!important;text-align:left!important}
         html.lunea-ui-regression-final-v2 #luneaTimingInline.timing-inline > img{width:78px!important;max-width:78px!important}
         html.lunea-ui-regression-final-v2 #luneaTimingInline .txt b{font-size:16px!important}
@@ -199,7 +217,7 @@
     [80,260,800,1800].forEach(ms => setTimeout(apply, ms));
     W.addEventListener?.('pageshow', () => setTimeout(apply, 40), {passive:true});
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(apply, 40); });
-    W.LUNEA_UI_REGRESSION_FINAL_V2 = Object.freeze({version:'2.2', apply, revealTimingResult, stabilizeTimingScroll});
+    W.LUNEA_UI_REGRESSION_FINAL_V2 = Object.freeze({version:'2.3', apply, revealTimingResult, stabilizeTimingScroll});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
