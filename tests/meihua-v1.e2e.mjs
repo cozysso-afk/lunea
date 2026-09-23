@@ -11,8 +11,27 @@ try {
   await page.goto(baseURL,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(() => !!window.LUNEA_MEIHUA_ENGINE_V1 && !!window.LUNEA_MEIHUA_V1,{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]',{timeout:20000});
+  await page.waitForTimeout(500);
 
-  const tile = await page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]');
+  const home = await page.evaluate(() => {
+    const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
+    const nodes = [...(grid?.children || [])];
+    const meihua = grid?.querySelector('.lunea-v8-tile[data-key="meihua"]');
+    const intimacy = grid?.querySelector('.lunea-v8-tile[data-key="intimacy"]');
+    const style = meihua ? getComputedStyle(meihua) : null;
+    return {
+      meihuaIndex:nodes.indexOf(meihua),
+      intimacyIndex:nodes.indexOf(intimacy),
+      gridColumn:style?.gridColumn || '',
+      label:meihua?.querySelector('.lunea-v8-label')?.textContent || ''
+    };
+  });
+  assert.ok(home.meihuaIndex >= 0 && home.intimacyIndex >= 0,'Meihua와 Intimacy 홈 타일이 모두 있어야 함');
+  assert.ok(home.meihuaIndex < home.intimacyIndex,'Meihua는 Intimacy 바로 앞 계층에 배치되어야 함');
+  assert.match(home.gridColumn,/1\s*\/\s*-1|1\s*\/\s*span\s*2/i,'Meihua V1은 현재 전체폭 타일이어야 함');
+  assert.equal(home.label.trim(),'MEIHUA');
+
+  const tile = page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]');
   assert.equal(await tile.getAttribute('aria-pressed'),'false');
   await tile.click();
   await page.waitForSelector('#luneaMeihuaOverlay.show',{timeout:5000});
