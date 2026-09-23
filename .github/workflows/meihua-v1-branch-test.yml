@@ -1,0 +1,90 @@
+name: Meihua V1 Branch Test
+
+on:
+  push:
+    branches: [feat/meihua-v1]
+    paths:
+      - 'lunea-meihua-engine-v1.js'
+      - 'lunea-meihua-v1.js'
+      - 'lunea-meihua-polish-v1.js'
+      - 'lunea-cache-refresh-v1.js'
+      - 'lunea-mobile-interaction-hotfix-v1.js'
+      - 'tests/meihua-engine-v1.test.mjs'
+      - 'tests/meihua-v1.e2e.mjs'
+      - '.github/workflows/meihua-v1-branch-test.yml'
+  pull_request:
+    paths:
+      - 'lunea-meihua-engine-v1.js'
+      - 'lunea-meihua-v1.js'
+      - 'lunea-meihua-polish-v1.js'
+      - 'lunea-cache-refresh-v1.js'
+      - 'lunea-mobile-interaction-hotfix-v1.js'
+      - 'tests/meihua-engine-v1.test.mjs'
+      - 'tests/meihua-v1.e2e.mjs'
+      - '.github/workflows/meihua-v1-branch-test.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Meihua engine contract
+        run: node tests/meihua-engine-v1.test.mjs
+      - name: Syntax check Meihua UI and E2E
+        run: |
+          node --check lunea-meihua-v1.js
+          node --check lunea-meihua-polish-v1.js
+          node --check lunea-cache-refresh-v1.js
+          node --check lunea-mobile-interaction-hotfix-v1.js
+          node --check tests/meihua-v1.e2e.mjs
+      - name: Verify loader and portal contracts
+        run: |
+          grep -q "lunea-meihua-engine-v1.js" lunea-cache-refresh-v1.js
+          grep -q "lunea-meihua-v1.js" lunea-cache-refresh-v1.js
+          grep -q "lunea-meihua-polish-v1.js" lunea-cache-refresh-v1.js
+          grep -q "LUNEA_MEIHUA_ENGINE_V1" lunea-meihua-v1.js
+          grep -q "data-key=\"meihua\"" lunea-meihua-v1.js
+          grep -q "LUNEA_MEIHUA_POLISH_V1" lunea-meihua-polish-v1.js
+          grep -q "1080" lunea-meihua-polish-v1.js
+          grep -q "1350" lunea-meihua-polish-v1.js
+          grep -Eq "meihua:[[:space:]]*8" lunea-mobile-interaction-hotfix-v1.js
+          grep -Eq "intimacy:[[:space:]]*9" lunea-mobile-interaction-hotfix-v1.js
+
+  mobile-webkit:
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-meihua-http.log 2>&1 &
+          echo $! >/tmp/lunea-meihua-http.pid
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-meihua-http.log
+          exit 1
+      - name: Run Meihua mobile WebKit E2E
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/meihua-v1.e2e.mjs
+      - name: Show local server log
+        if: always()
+        run: cat /tmp/lunea-meihua-http.log || true

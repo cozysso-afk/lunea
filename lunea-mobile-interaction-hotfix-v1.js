@@ -138,7 +138,8 @@
     horary: 5,
     lenormand: 6,
     thai: 7,
-    intimacy: 8,
+    meihua: 8,
+    intimacy: 9,
   });
 
   function portalKey(node) {
@@ -254,8 +255,9 @@
       const hasHorary = !!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="horary"]');
       const hasLenormand = !!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]');
       const hasThai = !!document.querySelector('#luneaHomePortalV8 .lunea-thai-home-tile');
+      const hasMeihua = !!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]');
       const hasIntimacy = !!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
-      if ((ready && hasHorary && hasLenormand && hasThai && hasIntimacy) || tries >= 100) clearInterval(timer);
+      if ((ready && hasHorary && hasLenormand && hasThai && hasMeihua && hasIntimacy) || tries >= 100) clearInterval(timer);
     }, 120);
   }
 
