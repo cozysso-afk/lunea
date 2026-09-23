@@ -10,6 +10,7 @@ page.on('pageerror', error => errors.push(String(error?.message || error)));
 try {
   await page.goto(baseURL,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(() => !!window.LUNEA_MEIHUA_ENGINE_V1 && !!window.LUNEA_MEIHUA_V1 && !!window.LUNEA_MEIHUA_POLISH_V1,{timeout:20000});
+  assert.equal(await page.evaluate(() => document.documentElement.classList.contains('lunea-ui-regression-final-v2')),true,'latest main UI regression owner가 활성화되어야 함');
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]',{timeout:20000});
   await page.waitForTimeout(500);
 
