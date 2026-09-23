@@ -14,7 +14,7 @@ const cards = Object.fromEntries(Array.from({length:36},(_,i)=>{
 const window={LUNEA_INTIMACY_ORACLE_V35:{cards}}; window.window=window;
 vm.runInNewContext(source,{window,console,crypto:webcrypto,Uint32Array,Object,Array,Set,String,Number,RegExp,Math,JSON});
 const core=window.LUNEA_INTIMACY_ORACLE_UI_V36_CORE;
-assert.ok(core); assert.equal(core.version,'36.5'); assert.equal(core.flipGap,110); assert.equal(core.maxExtra,3);
+assert.ok(core); assert.equal(core.version,'36.6'); assert.equal(core.flipGap,110); assert.equal(core.maxExtra,3);
 assert.doesNotMatch(source,/Math\.random\s*\(/);
 assert.match(source,/crypto\.getRandomValues/);
 
@@ -63,8 +63,9 @@ assert.equal(core.backAsset,'./assets/intimacy-oracle/oracle_back_v2.png');
 assert.equal(core.cardRoot,'./assets/intimacy-oracle/cards');
 assert.doesNotMatch(source,/tarot_back_intimacy_final\.png/);
 
+assert.match(bridge,/EXPECTED_ORACLE_VERSION = '36\.6'/);
 assert.match(bridge,/lunea-intimacy-oracle-v35\.js\?v=352/);
-assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
+assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=\$\{encodeURIComponent\(SELF_BUILD \|\| '3615'\)\}/);
 assert.match(bridge,/__LUNEA_READING_ACTION_ORDER_V33__/);
 assert.match(workflow,/'lunea-intimacy-ai-bridge-v34\.js'/);
 

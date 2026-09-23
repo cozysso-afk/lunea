@@ -4,6 +4,7 @@
    - blocks the journal observers that repeatedly rescan/rewrite the archive
    - restores reliable iOS hit-testing for journal action buttons
    - keeps the Home portal in a deterministic order when late tiles arrive
+   - normalizes Lenormand / Thai Astrology visual weight in the Home grid
    Loaded parser-time before Structural Routing so the observer guard is active
    before Journal Detail / Archive Search attach their observers.
 */
@@ -66,6 +67,65 @@
       -webkit-overflow-scrolling:touch;
       overscroll-behavior:contain;
     }
+
+    /* Home portal: Lenormand gets its own teal / silver / lavender identity. */
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-v8-tile[data-key="lenormand"]{
+      border-color:rgba(140,213,218,.23)!important;
+      background:
+        radial-gradient(circle at 16% 5%,rgba(132,220,221,.13),transparent 28%),
+        radial-gradient(circle at 92% 93%,rgba(199,178,255,.08),transparent 34%),
+        linear-gradient(148deg,rgba(14,37,48,.91),rgba(8,11,25,.985))!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 10px 26px rgba(0,0,0,.16),0 0 22px rgba(98,197,202,.045)!important;
+    }
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-v8-tile[data-key="lenormand"] .lunea-v8-object{
+      width:49px!important;height:49px!important;padding:0!important;overflow:hidden!important;border-radius:16px!important;
+      border:1px solid rgba(193,235,237,.36)!important;
+      background:linear-gradient(145deg,rgba(65,152,160,.30),rgba(116,99,164,.22))!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 0 19px rgba(94,203,206,.10)!important;
+    }
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-v8-tile[data-key="lenormand"] .lunea-v8-object img{
+      display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;border-radius:inherit!important;
+    }
+
+    /* Thai Astrology becomes a normal half-width portal tile beside Lenormand. */
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile{
+      grid-column:auto!important;min-height:116px!important;padding:12px 11px!important;display:block!important;
+      position:relative!important;overflow:hidden!important;text-align:left!important;
+      border-color:rgba(219,195,132,.20)!important;
+      background:
+        radial-gradient(circle at 16% 5%,rgba(224,190,108,.11),transparent 28%),
+        radial-gradient(circle at 92% 92%,rgba(148,116,206,.075),transparent 34%),
+        linear-gradient(148deg,rgba(31,26,47,.91),rgba(8,10,23,.985))!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 10px 26px rgba(0,0,0,.15),0 0 22px rgba(203,171,92,.04)!important;
+    }
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-orb{
+      width:47px!important;height:47px!important;border-radius:16px!important;margin:0 0 10px 0!important;
+      display:grid!important;place-items:center!important;color:#ead9a2!important;
+      border:1px solid rgba(234,214,158,.28)!important;
+      background:radial-gradient(circle at 32% 24%,rgba(255,255,255,.22),transparent 18%),linear-gradient(145deg,rgba(205,172,92,.20),rgba(115,88,165,.12))!important;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 0 18px rgba(214,181,100,.07)!important;
+    }
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-orb svg{width:31px!important;height:31px!important}
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-copy{display:block!important;text-align:left!important;min-width:0!important}
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-copy small{display:none!important}
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-copy b{
+      display:block!important;color:#f3f1f7!important;font:650 13px/1.2 'Cinzel','Noto Serif KR',serif!important;letter-spacing:.2px!important;
+      white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+    }
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-copy span{
+      display:block!important;color:#9293a4!important;font-size:9.4px!important;line-height:1.35!important;margin-top:5px!important;
+      white-space:normal!important;overflow-wrap:anywhere!important;
+    }
+    #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-arrow{
+      position:absolute!important;right:11px!important;top:10px!important;color:#ccb776!important;font-size:18px!important;line-height:1!important;opacity:.78!important;
+    }
+    @media(max-width:390px){
+      #luneaHomePortalV8 .lunea-v8-grid .lunea-v8-tile[data-key="lenormand"] .lunea-v8-object,
+      #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-orb{width:45px!important;height:45px!important}
+      #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile{min-height:110px!important;padding:11px 10px!important}
+      #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-copy b{font-size:12px!important}
+      #luneaHomePortalV8 .lunea-v8-grid .lunea-thai-home-tile .thai-v24-copy span{font-size:9px!important}
+    }
   `;
   (document.head || document.documentElement).appendChild(style);
 
@@ -76,8 +136,9 @@
     stock: 3,
     timing: 4,
     horary: 5,
-    thai: 6,
-    intimacy: 7,
+    lenormand: 6,
+    thai: 7,
+    intimacy: 8,
   });
 
   function portalKey(node) {
@@ -124,10 +185,39 @@
     return true;
   }
 
+  function normalizePortalVisuals(grid) {
+    if (!grid) return false;
+
+    const lenormand = grid.querySelector('.lunea-v8-tile[data-key="lenormand"]');
+    const lenormandImg = lenormand?.querySelector('.lunea-v8-object img');
+    if (lenormandImg) {
+      const icon = './assets/lenormand/lunea_lenormand_home_icon_v1.svg';
+      if (lenormandImg.getAttribute('src') !== icon) lenormandImg.setAttribute('src', icon);
+      lenormandImg.setAttribute('width', '512');
+      lenormandImg.setAttribute('height', '512');
+    }
+
+    const thai = grid.querySelector('.lunea-thai-home-tile');
+    if (thai) {
+      thai.dataset.key = 'thai';
+      thai.setAttribute('aria-pressed', 'false');
+      const kicker = thai.querySelector('.thai-v24-copy small');
+      const title = thai.querySelector('.thai-v24-copy b');
+      const sub = thai.querySelector('.thai-v24-copy span');
+      const arrow = thai.querySelector('.thai-v24-arrow');
+      if (kicker) kicker.textContent = 'THAI ASTROLOGY';
+      if (title) title.textContent = 'THAI ASTROLOGY';
+      if (sub) sub.textContent = '출생운 · 8영역 · 보조 흐름';
+      if (arrow) arrow.textContent = '＋';
+    }
+    return !!(lenormand || thai);
+  }
+
   function normalizePortalOrder() {
     const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
     if (!grid) return false;
     ensureHoraryTile();
+    normalizePortalVisuals(grid);
 
     const current = [...grid.children];
     const desired = current
@@ -162,9 +252,10 @@
       tries += 1;
       const ready = normalizePortalOrder();
       const hasHorary = !!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="horary"]');
+      const hasLenormand = !!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]');
       const hasThai = !!document.querySelector('#luneaHomePortalV8 .lunea-thai-home-tile');
       const hasIntimacy = !!document.querySelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
-      if ((ready && hasHorary && hasThai && hasIntimacy) || tries >= 100) clearInterval(timer);
+      if ((ready && hasHorary && hasLenormand && hasThai && hasIntimacy) || tries >= 100) clearInterval(timer);
     }, 120);
   }
 
@@ -188,6 +279,7 @@
 
   W.LUNEA_MOBILE_INTERACTION_HOTFIX_V1 = Object.freeze({
     normalizePortalOrder,
+    normalizePortalVisuals,
     relabelJournalRows,
   });
   console.info('✦ LUNEA Mobile Interaction Hotfix V1 active');

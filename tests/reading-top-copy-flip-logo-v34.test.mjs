@@ -7,13 +7,12 @@ const action = read('lunea-reading-action-order-v33.js');
 const burgundy = read('lunea-intimacy-burgundy-v40.js');
 const loader = read('lunea-structural-routing-v4.js');
 
-const legacyCategoryIcon = new URL('../assets/intimacy-oracle/intimacy_sector_v37.svg', import.meta.url);
 const homeIcon = new URL('../assets/intimacy-oracle/intimacy_sector_final.png', import.meta.url);
 
-test('reading action grid starts with flip-all while preserving the rest of the main controls', () => {
-  assert.match(action, /LUNEA READING ACTION ORDER V33\.5/);
-  assert.match(action, /version:'33\.5'/);
-  const order = ['flipAll','aiRead','saveReading','retry','extraCard','timingSupportBtn'];
+test('reading action grid starts with flip-all while preserving the approved main controls', () => {
+  assert.match(action, /LUNEA READING ACTION ORDER V33\.6/);
+  assert.match(action, /version:'33\.6'/);
+  const order = ['flipAll','extraCard','saveReading','luneaShareReadingPng','retry','timingSupportBtn','luneaMessageOracleSupportBtn','astroTransitBtn','astroReturnBtn','astroHoraryBtn','thaiTaksaBtn','luneaThaiTarotRangeBtn','aiRead','luneaTopCopyPrompt'];
   for (let i = 0; i < order.length - 1; i += 1) {
     assert.ok(action.indexOf(`'${order[i]}'`) < action.indexOf(`'${order[i+1]}'`), `bad order around ${order[i]}`);
   }
@@ -30,18 +29,16 @@ test('every reading gets a top prompt-copy control that delegates to the existin
   assert.ok(!action.includes("document.getElementById('copyPrompt').onclick"), 'canonical prompt-copy behavior must not be replaced');
 });
 
-test('opened INTIMACY list restores the previous emblem while Home keeps the current final art', () => {
-  assert.equal(fs.existsSync(legacyCategoryIcon), true);
+test('opened INTIMACY list keeps the small shared heart while Home keeps the final artwork', () => {
   assert.equal(fs.existsSync(homeIcon), true);
   assert.match(burgundy, /RELEASE = '40\.5'/);
   assert.match(burgundy, /HOME_ICON_SRC = `\.\/assets\/intimacy-oracle\/intimacy_sector_final\.png/);
-  assert.match(burgundy, /CATEGORY_ICON_SRC = `\.\/assets\/intimacy-oracle\/intimacy_sector_v37\.svg/);
-  assert.match(burgundy, /forceIcon\(\$\('\.cat-icon', category\), CATEGORY_ICON_SRC\)/);
-  assert.match(burgundy, /forceIcon\(\$\('\.lunea-v8-object', tile\), HOME_ICON_SRC\)/);
-  assert.match(burgundy, /\.lunea-intimacy-category \.cat-icon img\{[\s\S]*?transform:none!important/);
+  assert.match(burgundy, /categoryIcon:'♡'/);
+  assert.doesNotMatch(burgundy, /intimacy_sector_v37\.svg/);
+  assert.doesNotMatch(burgundy, /CATEGORY_ICON_SRC/);
 });
 
 test('structural loader cache-busts the universal action module on both loading paths', () => {
-  const matches = loader.match(/lunea-reading-action-order-v33\.js\?v=(?:3305|[0-9a-f]{12})/g) || [];
+  const matches = loader.match(/lunea-reading-action-order-v33\.js\?v=(?:3306|[0-9a-f]{12})/g) || [];
   assert.equal(matches.length, 2);
 });
