@@ -150,6 +150,12 @@
   function loadLenormandPolishV1() {
     loadBuildScopedScript('luneaLenormandPolishV1Loader', './lunea-lenormand-polish-v1.js', 'Lenormand mobile/share polish V1');
   }
+  function loadMeihuaEngineV1() {
+    loadBuildScopedScript('luneaMeihuaEngineV1Loader', './lunea-meihua-engine-v1.js', 'Meihua deterministic engine V1');
+  }
+  function loadMeihuaV1() {
+    loadBuildScopedScript('luneaMeihuaV1Loader', './lunea-meihua-v1.js', 'Meihua standalone UI V1');
+  }
   function loadReadingShareV1() {
     loadBuildScopedScript('luneaReadingShareV1Loader', './lunea-reading-share-v1.js', 'reading 4:5 PNG share V1');
   }
@@ -221,6 +227,8 @@
     loadMessageOracleHomeV1();
     loadLenormandV1();
     loadLenormandPolishV1();
+    loadMeihuaEngineV1();
+    loadMeihuaV1();
     loadReadingShareV1();
     installResumeBuildChecks();
     checkBuild();
