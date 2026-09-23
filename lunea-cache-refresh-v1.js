@@ -77,94 +77,36 @@
     loadBuildScopedScript('luneaTimingWeekdayPreloadV1Loader', './lunea-timing-weekday-preload-v1.js', 'Timing WEEKDAY preload V1');
   }
 
-  function loadAstroRequestV1() {
-    loadBuildScopedScript('luneaAstroRequestV1Loader', './lunea-astro-request-v1.js', 'bounded Astro request owner V1');
-  }
-  function loadAstroOriginFailover() {
-    loadBuildScopedScript('luneaAstroOriginFailoverV57Loader', './lunea-astro-origin-failover-v57.js', 'Pages Astro single-calculation failover V57');
-  }
-  function loadTransitRequestV1() {
-    loadBuildScopedScript('luneaTransitRequestV1Loader', './lunea-transit-request-v1.js', 'bounded Transit request V1');
-  }
-  function loadRuntimeStateV56() {
-    loadBuildScopedScript('luneaRuntimeStateV56Loader', './lunea-runtime-state-v56.js', 'reading/Astro stale-state boundary V56');
-  }
-  function loadThaiDateCenterV54() {
-    loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'iOS Thai period date centering V54');
-  }
-  function loadHorizontalTouchStability() {
-    loadBuildScopedScript('luneaHorizontalTouchStabilityV1Loader', './lunea-horizontal-touch-stability-v1.js', 'horizontal touch stability V1');
-  }
-  function loadJournalHeaderFix() {
-    loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix');
-  }
-  function loadSectorCardBacks() {
-    loadBuildScopedScript('luneaSectorCardBacksV20Loader', './lunea-cardback-sector-v20.js', 'uploaded sector card backs V20');
-  }
-  function loadTimingUploadedArt() {
-    loadBuildScopedScript('luneaTimingUploadedArtV16Loader', './lunea-timing-image-assets-v16.js', 'Timing uploaded artwork V16');
-  }
-  function loadHoraryQuestionModes() {
-    loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37');
-  }
-  function loadHoraryHardening() {
-    loadBuildScopedScript('luneaHoraryHardeningV38Loader', './lunea-horary-hardening-v38.js', 'Horary hardening V38');
-  }
-  function loadHoraryLocationButton() {
-    loadBuildScopedScript('luneaHoraryLocationButtonV39Loader', './lunea-horary-location-button-v39.js', 'Horary location button V39');
-  }
-  function loadHoraryTraditionalCore() {
-    loadBuildScopedScript('luneaHoraryTraditionalCoreV40Loader', './lunea-horary-traditional-core-v40.js', 'Horary Traditional Core V40');
-  }
-  function loadHoraryBalanceGuard() {
-    loadBuildScopedScript('luneaHoraryBalanceGuardV41Loader', './lunea-horary-balance-guard-v41.js', 'Horary Balance Guard V41');
-  }
-  function loadHoraryMobileStability() {
-    loadBuildScopedScript('luneaHoraryMobileStabilityV42Loader', './lunea-horary-mobile-stability-v42.js', 'Horary mobile stability V42');
-  }
-  function loadHoraryReturnStack() {
-    loadBuildScopedScript('luneaHoraryReturnStackV1Loader', './lunea-horary-return-stack-v1.js', 'Horary return stack V1');
-  }
-  function loadLearningAuthRecovery() {
-    loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2');
-  }
-  function loadEmergencyRepair() {
-    W.__LUNEA_ASTRO_RETRY_V43__ = true;
-    loadBuildScopedScript('luneaEmergencyRepairV43Loader', './lunea-emergency-repair-v43.js', 'emergency repair V43');
-  }
-  function loadMobileRuntimeFixesV57() {
-    loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57.1');
-  }
-  function loadRuntimeRegressionV60() {
-    loadBuildScopedScript('luneaRuntimeRegressionV60Loader', './lunea-runtime-regression-v60.js', 'AI/Horary runtime regression V60');
-  }
-  function loadUiRegressionFinalV2() {
-    loadBuildScopedScript('luneaUiRegressionFinalV2Loader', './lunea-ui-regression-final-v2.js', 'final mobile UI regression owner V2');
-  }
-  function loadMessageOracleHomeV1() {
-    loadBuildScopedScript('luneaMessageOracleHomeV1Loader', './lunea-message-oracle-home-v1.js', 'Message Oracle standalone Home V1');
-  }
-  function loadLenormandV1() {
-    loadBuildScopedScript('luneaLenormandV1Loader', './lunea-lenormand-v1.js', 'Lenormand standalone V1');
-  }
-  function loadLenormandPolishV1() {
-    loadBuildScopedScript('luneaLenormandPolishV1Loader', './lunea-lenormand-polish-v1.js', 'Lenormand mobile/share polish V1');
-  }
-  function loadMeihuaEngineV1() {
-    loadBuildScopedScript('luneaMeihuaEngineV1Loader', './lunea-meihua-engine-v1.js', 'Meihua deterministic engine V1');
-  }
-  function loadMeihuaV1() {
-    loadBuildScopedScript('luneaMeihuaV1Loader', './lunea-meihua-v1.js', 'Meihua standalone UI V1');
-  }
-  function loadMeihuaPolishV1() {
-    loadBuildScopedScript('luneaMeihuaPolishV1Loader', './lunea-meihua-polish-v1.js', 'Meihua archive and PNG polish V1');
-  }
-  function loadReadingShareV1() {
-    loadBuildScopedScript('luneaReadingShareV1Loader', './lunea-reading-share-v1.js', 'reading 4:5 PNG share V1');
-  }
-  function loadHomeReadabilityV31() {
-    loadBuildScopedScript('luneaHomeReadabilityV31Loader', './lunea-home-readability-v31.js', 'Home readability and color V31');
-  }
+  function loadAstroRequestV1() { loadBuildScopedScript('luneaAstroRequestV1Loader', './lunea-astro-request-v1.js', 'bounded Astro request owner V1'); }
+  function loadAstroOriginFailover() { loadBuildScopedScript('luneaAstroOriginFailoverV57Loader', './lunea-astro-origin-failover-v57.js', 'Pages Astro single-calculation failover V57'); }
+  function loadTransitRequestV1() { loadBuildScopedScript('luneaTransitRequestV1Loader', './lunea-transit-request-v1.js', 'bounded Transit request V1'); }
+  function loadRuntimeStateV56() { loadBuildScopedScript('luneaRuntimeStateV56Loader', './lunea-runtime-state-v56.js', 'reading/Astro stale-state boundary V56'); }
+  function loadThaiDateCenterV54() { loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'iOS Thai period date centering V54'); }
+  function loadHorizontalTouchStability() { loadBuildScopedScript('luneaHorizontalTouchStabilityV1Loader', './lunea-horizontal-touch-stability-v1.js', 'horizontal touch stability V1'); }
+  function loadJournalHeaderFix() { loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix'); }
+  function loadSectorCardBacks() { loadBuildScopedScript('luneaSectorCardBacksV20Loader', './lunea-cardback-sector-v20.js', 'uploaded sector card backs V20'); }
+  function loadTimingUploadedArt() { loadBuildScopedScript('luneaTimingUploadedArtV16Loader', './lunea-timing-image-assets-v16.js', 'Timing uploaded artwork V16'); }
+  function loadHoraryQuestionModes() { loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37'); }
+  function loadHoraryHardening() { loadBuildScopedScript('luneaHoraryHardeningV38Loader', './lunea-horary-hardening-v38.js', 'Horary hardening V38'); }
+  function loadHoraryLocationButton() { loadBuildScopedScript('luneaHoraryLocationButtonV39Loader', './lunea-horary-location-button-v39.js', 'Horary location button V39'); }
+  function loadHoraryTraditionalCore() { loadBuildScopedScript('luneaHoraryTraditionalCoreV40Loader', './lunea-horary-traditional-core-v40.js', 'Horary Traditional Core V40'); }
+  function loadHoraryBalanceGuard() { loadBuildScopedScript('luneaHoraryBalanceGuardV41Loader', './lunea-horary-balance-guard-v41.js', 'Horary Balance Guard V41'); }
+  function loadHoraryMobileStability() { loadBuildScopedScript('luneaHoraryMobileStabilityV42Loader', './lunea-horary-mobile-stability-v42.js', 'Horary mobile stability V42'); }
+  function loadHoraryReturnStack() { loadBuildScopedScript('luneaHoraryReturnStackV1Loader', './lunea-horary-return-stack-v1.js', 'Horary return stack V1'); }
+  function loadLearningAuthRecovery() { loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2'); }
+  function loadEmergencyRepair() { W.__LUNEA_ASTRO_RETRY_V43__ = true; loadBuildScopedScript('luneaEmergencyRepairV43Loader', './lunea-emergency-repair-v43.js', 'emergency repair V43'); }
+  function loadMobileRuntimeFixesV57() { loadBuildScopedScript('luneaMobileRuntimeFixesV57Loader', './lunea-mobile-runtime-fixes-v57.js', 'mobile runtime fixes V57.1'); }
+  function loadRuntimeRegressionV60() { loadBuildScopedScript('luneaRuntimeRegressionV60Loader', './lunea-runtime-regression-v60.js', 'AI/Horary runtime regression V60'); }
+  function loadUiRegressionFinalV2() { loadBuildScopedScript('luneaUiRegressionFinalV2Loader', './lunea-ui-regression-final-v2.js', 'final mobile UI regression owner V2'); }
+  function loadMessageOracleHomeV1() { loadBuildScopedScript('luneaMessageOracleHomeV1Loader', './lunea-message-oracle-home-v1.js', 'Message Oracle standalone Home V1'); }
+  function loadLenormandV1() { loadBuildScopedScript('luneaLenormandV1Loader', './lunea-lenormand-v1.js', 'Lenormand standalone V1'); }
+  function loadLenormandPolishV1() { loadBuildScopedScript('luneaLenormandPolishV1Loader', './lunea-lenormand-polish-v1.js', 'Lenormand mobile/share polish V1'); }
+  function loadMeihuaEngineV1() { loadBuildScopedScript('luneaMeihuaEngineV1Loader', './lunea-meihua-engine-v1.js', 'Meihua deterministic engine V1'); }
+  function loadMeihuaV1() { loadBuildScopedScript('luneaMeihuaV1Loader', './lunea-meihua-v1.js', 'Meihua standalone UI V1'); }
+  function loadMeihuaPolishV1() { loadBuildScopedScript('luneaMeihuaPolishV1Loader', './lunea-meihua-polish-v1.js', 'Meihua archive and PNG polish V1'); }
+  function loadReadingShareV1() { loadBuildScopedScript('luneaReadingShareV1Loader', './lunea-reading-share-v1.js', 'reading 4:5 PNG share V1'); }
+  function loadHomeReadabilityV31() { loadBuildScopedScript('luneaHomeReadabilityV31Loader', './lunea-home-readability-v31.js', 'Home readability and color V31'); }
+  function loadHomeFinalTuneV32() { loadBuildScopedScript('luneaHomeFinalTuneV32Loader', './lunea-home-final-tune-v32.js', 'Home final screenshot tune V32'); }
 
   function readingBusy(){return !!document.hidden||!!document.getElementById('spreadOverlay')?.classList.contains('show')||!!document.getElementById('sheet')?.classList.contains('open')}
   function refreshTo(build) {
@@ -186,10 +128,7 @@
     if(!forceCheck&&now-lastCheckAt<1500)return Promise.resolve(false);
     lastCheckAt=now;
     checkPromise=(async()=>{try {
-      const res = await fetch(`${BUILD_FILE}?t=${Date.now()}`, {
-        cache:'no-store',
-        headers:{'cache-control':'no-cache','accept':'application/json'}
-      });
+      const res = await fetch(`${BUILD_FILE}?t=${Date.now()}`, {cache:'no-store',headers:{'cache-control':'no-cache','accept':'application/json'}});
       if (!res.ok) return false;
       const data = await res.json();
       if (data.error) return false;
@@ -238,13 +177,12 @@
     loadMeihuaPolishV1();
     loadReadingShareV1();
     loadHomeReadabilityV31();
+    loadHomeFinalTuneV32();
     installResumeBuildChecks();
     checkBuild();
     W.LUNEA_CACHE_REFRESH_V1=Object.freeze({checkNow:checkBuild,requestFreshDocument,flushPending});
   }
 
-  // Parser-time owners must be in place before the structural/timing scripts
-  // that follow this loader in index.html.
   loadMobileInteractionHotfixV1();
   loadReadingLifecycleV59();
   loadTimingWeekdayPreloadV1();
