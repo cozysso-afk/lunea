@@ -156,6 +156,9 @@
   function loadMeihuaV1() {
     loadBuildScopedScript('luneaMeihuaV1Loader', './lunea-meihua-v1.js', 'Meihua standalone UI V1');
   }
+  function loadMeihuaPolishV1() {
+    loadBuildScopedScript('luneaMeihuaPolishV1Loader', './lunea-meihua-polish-v1.js', 'Meihua archive and PNG polish V1');
+  }
   function loadReadingShareV1() {
     loadBuildScopedScript('luneaReadingShareV1Loader', './lunea-reading-share-v1.js', 'reading 4:5 PNG share V1');
   }
@@ -229,6 +232,7 @@
     loadLenormandPolishV1();
     loadMeihuaEngineV1();
     loadMeihuaV1();
+    loadMeihuaPolishV1();
     loadReadingShareV1();
     installResumeBuildChecks();
     checkBuild();
