@@ -1,13 +1,15 @@
 'use strict';
 
 /*
-  LUNEA ARCHIVE CARD IMAGES V1
-  ============================
-  - Stores only tarot card asset references (code + img URL), never base64 blobs.
-  - Backfills older LUNEA_ARCHIVE_V3 entries by matching saved card names/codes
-    against the live 78-card RWS deck.
-  - Adds a compact horizontal card gallery to each archive entry.
-  - Keeps the existing archive text/copy/delete/search flow untouched.
+  LUNEA ARCHIVE CARD IMAGES V1.1
+  ==============================
+  - Stores only card asset references (code + img URL), never base64 blobs.
+  - Backfills legacy Tarot archive entries against the live 78-card RWS deck.
+  - Keeps Lenormand archive rows isolated from Tarot backfill.
+  - Decorates Journal V2 rows by sourceArchiveId (never by visual row index).
+  - Replaces stale strips when journal sorting/filtering changes.
+  - Bridges Lenormand #lnSave into Journal V2 migration/render so the saved
+    Lenormand question appears immediately in the records view.
 */
 (() => {
   const W = window;
@@ -15,7 +17,7 @@
   W.__LUNEA_ARCHIVE_CARD_IMAGES_V1__ = true;
 
   const ARCHIVE_KEY = 'LUNEA_ARCHIVE_V3';
-  const VERSION = 1;
+  const VERSION = 2;
   const $ = id => document.getElementById(id);
 
   function readArchive() {
@@ -43,6 +45,10 @@
     } catch {
       return [];
     }
+  }
+
+  function isLenormandItem(item) {
+    return !!(item?.lenormand?.cards?.length || String(item?.category || '').toUpperCase() === 'LENORMAND' || /^LENORMAND\b/i.test(String(item?.title || '')));
   }
 
   function deckMatch(card) {
@@ -78,7 +84,9 @@
     let changed = false;
     rows.forEach(item => {
       if (!Array.isArray(item?.cards)) return;
-      const upgraded = item.cards.map(card => enrichCard(card, null));
+      const upgraded = isLenormandItem(item)
+        ? item.cards.map(card => ({...(card || {})}))
+        : item.cards.map(card => enrichCard(card, null));
       const before = JSON.stringify(item.cards);
       const after = JSON.stringify(upgraded);
       if (before !== after || item.cardImagesVersion !== VERSION) {
@@ -99,7 +107,7 @@
     if (!rows.length) return false;
     let item = rows.find(row => !beforeIds.has(String(row?.id || '')));
     if (!item) item = rows[0];
-    if (!item || !Array.isArray(item.cards)) return false;
+    if (!item || !Array.isArray(item.cards) || isLenormandItem(item)) return false;
 
     item.cards = item.cards.map((saved, index) => enrichCard(saved, liveCards[index] || null));
     item.cardImagesVersion = VERSION;
@@ -128,6 +136,28 @@
     wrapped.__luneaArchiveCardImagesV1 = true;
     wrapped.__luneaPriorSave = prior;
     button.onclick = wrapped;
+    return true;
+  }
+
+  function installLenormandJournalBridge() {
+    const button = $('lnSave');
+    if (!button) return false;
+    if (button.dataset.luneaLenormandJournalBridge === '1') return true;
+    button.dataset.luneaLenormandJournalBridge = '1';
+    button.addEventListener('click', () => {
+      setTimeout(() => {
+        try {
+          const render = W.LUNEA_READING_JOURNAL?.render;
+          if (typeof render === 'function') {
+            Promise.resolve(render()).catch(error => {
+              console.info('[LUNEA Lenormand journal bridge] render skipped', error?.message || error);
+            });
+          }
+        } catch (error) {
+          console.info('[LUNEA Lenormand journal bridge] skipped', error?.message || error);
+        }
+      }, 0);
+    });
     return true;
   }
 
@@ -180,16 +210,16 @@
   }
 
   function safeText(value) {
-    return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[ch]));
   }
 
-  function resolvedCard(card) {
-    const match = deckMatch(card);
+  function resolvedCard(card, item) {
+    const match = isLenormandItem(item) ? null : deckMatch(card);
     return {
       ...(card || {}),
       code: card?.code || match?.code || '',
       name: card?.name || match?.name || '',
-      img: card?.img || match?.img || ''
+      img: card?.img || card?.image || match?.img || ''
     };
   }
 
@@ -200,17 +230,17 @@
     const strip = document.createElement('div');
     strip.className = 'lunea-archive-card-strip';
     strip.dataset.horizontalScroll = '1';
-    strip.setAttribute('aria-label', '저장된 타로 카드 이미지');
+    strip.setAttribute('aria-label', isLenormandItem(item) ? '저장된 레노먼드 카드 이미지' : '저장된 타로 카드 이미지');
 
     cards.forEach(card => {
-      const data = resolvedCard(card);
+      const data = resolvedCard(card, item);
       const thumb = document.createElement('div');
       thumb.className = 'lunea-archive-card-thumb' + (data.isReversed ? ' is-reversed' : '');
-      const label = data.position || data.name || '카드';
+      const label = data.position || data.name || data.text || '카드';
       const direction = data.isReversed ? '역' : '정';
       thumb.innerHTML = `
         <div class="lunea-archive-card-frame">
-          ${data.img ? `<img loading="lazy" decoding="async" src="${safeText(data.img)}" alt="${safeText(data.name || label)}">` : '<div class="lunea-archive-card-missing">✦</div>'}
+          ${data.img ? `<img loading="lazy" decoding="async" src="${safeText(data.img)}" alt="${safeText(data.name || data.text || label)}">` : '<div class="lunea-archive-card-missing">✦</div>'}
           <span class="lunea-archive-card-direction">${direction}</span>
         </div>
         <div class="lunea-archive-card-position">${safeText(label)}</div>`;
@@ -223,24 +253,60 @@
     return strip;
   }
 
-  function filteredArchiveRows() {
-    const q = String($('archiveSearch')?.value || '').trim().toLowerCase();
-    return readArchive().filter(item => !q || [item?.title, item?.q, item?.ai].join(' ').toLowerCase().includes(q));
+  function cleanNodeTitle(node) {
+    const title = node?.querySelector('.archive-title');
+    if (!title) return '';
+    const clone = title.cloneNode(true);
+    clone.querySelectorAll('.lj-badge').forEach(badge => badge.remove());
+    return String(clone.textContent || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  }
+
+  function cleanNodeQuestion(node) {
+    return String(node?.querySelector('.archive-q')?.textContent || '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  }
+
+  function findArchiveItemForNode(node, rows) {
+    const sourceId = String(node?.dataset?.sourceArchiveId || node?.dataset?.archiveId || '').trim();
+    if (sourceId) {
+      const byId = rows.find(item => String(item?.id || '') === sourceId);
+      if (byId) return byId;
+    }
+
+    const title = cleanNodeTitle(node);
+    const question = cleanNodeQuestion(node);
+    if (title || question) {
+      const exact = rows.filter(item =>
+        String(item?.title || '').normalize('NFKC').replace(/\s+/g, ' ').trim() === title &&
+        String(item?.q || '').normalize('NFKC').replace(/\s+/g, ' ').trim() === question
+      );
+      if (exact.length) return exact.sort((a,b) => Number(b?.createdAt || 0) - Number(a?.createdAt || 0))[0];
+    }
+    return null;
   }
 
   function decorateArchive() {
     const list = $('archiveList');
     if (!list) return false;
-    const rows = filteredArchiveRows();
+    const rows = readArchive();
     const nodes = [...list.querySelectorAll(':scope > .archive-item')];
-    nodes.forEach((node, index) => {
-      if (node.dataset.luneaArchiveCardImagesV1 === '1') return;
-      const item = rows[index];
-      if (!item) return;
+    nodes.forEach(node => {
+      const item = findArchiveItemForNode(node, rows);
+      const itemId = String(item?.id || '');
+      const currentId = String(node.dataset.luneaArchiveCardImagesItemId || '');
+      const existingStrip = node.querySelector(':scope > .lunea-archive-card-strip');
+
+      if (!item || !Array.isArray(item.cards) || !item.cards.length) {
+        existingStrip?.remove();
+        delete node.dataset.luneaArchiveCardImagesItemId;
+        return;
+      }
+      if (currentId === itemId && existingStrip) return;
+
+      existingStrip?.remove();
       const strip = makeStrip(item);
       if (!strip) return;
-      node.dataset.luneaArchiveCardImagesV1 = '1';
-      const actions = node.querySelector('.archive-actions');
+      node.dataset.luneaArchiveCardImagesItemId = itemId;
+      const actions = node.querySelector(':scope > .archive-actions');
       if (actions) node.insertBefore(strip, actions);
       else node.appendChild(strip);
     });
@@ -260,8 +326,10 @@
         decorateArchive();
       });
     };
-    new MutationObserver(schedule).observe(list, {childList:true});
-    $('archiveSearch')?.addEventListener('input', () => requestAnimationFrame(decorateArchive));
+    new MutationObserver(schedule).observe(list, {childList:true, subtree:false});
+    $('archiveSearch')?.addEventListener('input', schedule);
+    $('ljStatus')?.addEventListener('change', schedule);
+    $('ljCat')?.addEventListener('change', schedule);
     schedule();
     return true;
   }
@@ -270,25 +338,29 @@
     installStyles();
     migrateArchive();
     installSaveHook();
+    installLenormandJournalBridge();
     observeArchive();
 
-    // Some legacy modules reassign button handlers late. Re-check briefly without
+    // Some modules create/reassign save controls late. Re-check briefly without
     // keeping a permanent polling loop alive.
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
       installSaveHook();
+      installLenormandJournalBridge();
       observeArchive();
-      if (tries >= 20) clearInterval(timer);
+      if (tries >= 40) clearInterval(timer);
     }, 120);
 
     W.LUNEA_ARCHIVE_CARD_IMAGES_V1 = Object.freeze({
       version: VERSION,
       migrateArchive,
       decorateArchive,
-      patchNewlySaved
+      patchNewlySaved,
+      findArchiveItemForNode,
+      installLenormandJournalBridge
     });
-    console.info('🃏 LUNEA Archive Card Images V1 loaded');
+    console.info('🃏 LUNEA Archive Card Images V1.1 loaded · identity-safe');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
