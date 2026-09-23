@@ -9,7 +9,7 @@ page.on('pageerror', error => errors.push(String(error?.message || error)));
 
 try {
   await page.goto(baseURL,{waitUntil:'domcontentloaded',timeout:30000});
-  await page.waitForFunction(() => !!window.LUNEA_MEIHUA_ENGINE_V1 && !!window.LUNEA_MEIHUA_V1,{timeout:20000});
+  await page.waitForFunction(() => !!window.LUNEA_MEIHUA_ENGINE_V1 && !!window.LUNEA_MEIHUA_V1 && !!window.LUNEA_MEIHUA_POLISH_V1,{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]',{timeout:20000});
   await page.waitForTimeout(500);
 
@@ -55,7 +55,8 @@ try {
     moving:document.querySelectorAll('#mhFlow .mh-line.moving').length,
     evidence:document.querySelector('#mhEvidence')?.textContent || '',
     relation:document.querySelector('#mhRelation')?.textContent || '',
-    provenance:document.querySelector('#mhProvenance')?.textContent || ''
+    provenance:document.querySelector('#mhProvenance')?.textContent || '',
+    pngButton:document.querySelector('#mhPng')?.textContent || ''
   }));
   assert.equal(ui.cards,3,'본괘/호괘/변괘 3개가 보여야 함');
   assert.equal(ui.moving,1,'본괘에 동효 표시는 정확히 1개여야 함');
@@ -63,6 +64,7 @@ try {
   assert.match(ui.evidence,/체 · 용/);
   assert.match(ui.relation,/현재:/);
   assert.match(ui.provenance,/연·월·일·시 기괘법/);
+  assert.match(ui.pngButton,/PNG/,'매화역수 전용 PNG 버튼이 있어야 함');
 
   await page.click('#mhSave');
   const saved = await page.evaluate(() => {
@@ -73,6 +75,40 @@ try {
   assert.equal(saved.q,question);
   assert.ok(saved.meihua?.calculation?.primary?.number);
   assert.equal(saved.cards?.length,4);
+
+  const png = await page.evaluate(async () => {
+    const reading = JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3') || '[]').find(item => item?.meihua?.version === 1);
+    const file = await window.LUNEA_MEIHUA_POLISH_V1.renderPngFile(reading);
+    return {name:file.name,type:file.type,size:file.size};
+  });
+  assert.match(png.name,/LUNEA_MEIHUA_.*\.png$/);
+  assert.equal(png.type,'image/png');
+  assert.ok(png.size > 5000,'4:5 PNG가 실제 바이트를 가져야 함');
+
+  await page.click('#mhClose');
+  await page.waitForFunction(() => !document.querySelector('#luneaMeihuaOverlay')?.classList.contains('show'));
+
+  await page.evaluate(() => {
+    const reading = JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3') || '[]').find(item => item?.meihua?.version === 1);
+    window.LUNEA_MEIHUA_POLISH_V1.openArchiveReading(reading);
+  });
+  await page.waitForSelector('#luneaMeihuaOverlay.show[data-meihua-restore="1"]',{timeout:5000});
+  const restored = await page.evaluate(() => ({
+    question:document.querySelector('#mhQuestion')?.value || '',
+    readOnly:!!document.querySelector('#mhQuestion')?.readOnly,
+    cards:document.querySelectorAll('#mhFlow .mh-hex').length,
+    status:document.querySelector('#mhStatus')?.textContent || '',
+    aiHidden:!!document.querySelector('#mhAI')?.hidden,
+    saveHidden:!!document.querySelector('#mhSave')?.hidden,
+    pngVisible:!document.querySelector('#mhPng')?.hidden
+  }));
+  assert.equal(restored.question,question);
+  assert.equal(restored.readOnly,true,'기록 복원은 저장된 계산을 변경하지 않는 읽기 전용이어야 함');
+  assert.equal(restored.cards,3);
+  assert.match(restored.status,/기록함에서 불러온/);
+  assert.equal(restored.aiHidden,true);
+  assert.equal(restored.saveHidden,true);
+  assert.equal(restored.pngVisible,true);
 
   await page.click('#mhClose');
   await page.waitForFunction(() => !document.querySelector('#luneaMeihuaOverlay')?.classList.contains('show'));
