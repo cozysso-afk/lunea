@@ -133,6 +133,23 @@
   (document.head || document.documentElement).appendChild(script);
 })();
 
+// Lenormand archive V2 removes the duplicate fifth action button and repairs
+// the iPhone archive interaction state after Journal V2 renders.
+(() => {
+  if (window.__LUNEA_LENORMAND_ARCHIVE_HOTFIX_V2__) return;
+  if (document.getElementById('luneaLenormandArchiveHotfixV2Loader')) return;
+  const script = document.createElement('script');
+  script.id = 'luneaLenormandArchiveHotfixV2Loader';
+  let build = '';
+  try {
+    build = new URL(document.currentScript?.src || '', location.href).searchParams.get('v') || '';
+  } catch {}
+  script.src = `./lunea-lenormand-archive-hotfix-v2.js?v=${encodeURIComponent(build || Date.now())}`;
+  script.async = false;
+  script.onerror = () => console.info('[LUNEA Lenormand archive hotfix V2] loader skipped');
+  (document.head || document.documentElement).appendChild(script);
+})();
+
 // Reading PNG share has one owner now: lunea-cache-refresh-v1.js loads
 // lunea-reading-share-v1.js. V3 owns only the presentation/export layout.
 (() => {
