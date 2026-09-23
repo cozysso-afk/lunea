@@ -1,0 +1,25 @@
+name: Meihua V1 Branch Test
+
+on:
+  push:
+    branches: [feat/meihua-v1]
+    paths:
+      - 'lunea-meihua-engine-v1.js'
+      - 'tests/meihua-engine-v1.test.mjs'
+      - '.github/workflows/meihua-v1-branch-test.yml'
+  pull_request:
+    paths:
+      - 'lunea-meihua-engine-v1.js'
+      - 'tests/meihua-engine-v1.test.mjs'
+      - '.github/workflows/meihua-v1-branch-test.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Meihua engine contract
+        run: node tests/meihua-engine-v1.test.mjs
