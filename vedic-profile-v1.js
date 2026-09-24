@@ -46,7 +46,7 @@
   }
 
   function esc(value) {
-    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c]));
   }
 
   function render(data) {
@@ -71,7 +71,8 @@
     `;
 
     const prov = data.provenance || {};
-    status(`계산 완료 · ${prov.engine || 'Swiss Ephemeris'} · ${prov.ayanamsha || 'Lahiri'} · Node ${prov.node_policy || ''} · D9/Dasha는 V2에서 추가`, 'ok');
+    const varaBoundary = prov.panchanga_vara_boundary === 'civil_midnight_v1' ? ' · Vara=현지 날짜 기준 V1' : '';
+    status(`계산 완료 · ${prov.engine || 'Swiss Ephemeris'} · ${prov.ayanamsha || 'Lahiri'} · Node ${prov.node_policy || ''}${varaBoundary} · D9/Dasha는 V2에서 추가`, 'ok');
   }
 
   async function calculate() {
@@ -123,6 +124,7 @@
     card.innerHTML = `
       <div class="cpv3-kicker">VEDIC CORE V1 · 실제 계산</div>
       <p class="cpv3-note">공통 출생정보를 사용해 Swiss Ephemeris에서 Sidereal/Lahiri 값을 직접 계산해. Western Tropical 값의 단순 보정값을 사용하지 않아.</p>
+      <p class="cpv3-note">Panchanga의 Vara(요일)는 V1에서 현지 날짜 자정 기준으로 표시하고, 일출 경계 판정은 후속 버전에서 별도 계산해.</p>
       <button type="button" class="vedic-v1-btn" id="vedicV1Calc">🕉️ Vedic V1 자동 계산</button>
       <div class="vedic-v1-status" id="vedicV1Status">미계산 · D1/Rāśi, Lagna, Graha, Nakshatra/Pada, Panchanga V1</div>
       <div id="vedicV1Result"></div>`;
