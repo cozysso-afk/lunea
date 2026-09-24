@@ -95,6 +95,13 @@
       html.lunea-home-ia-v35 #luneaHomePortalV8 [data-key="meihua"]{--v35-rgb:143,173,83}
       html.lunea-home-ia-v35 #luneaHomePortalV8 [data-key="horary"]{--v35-rgb:160,91,224}
       html.lunea-home-ia-v35 #luneaHomePortalV8 .lunea-thai-home-tile{--v35-rgb:220,183,72}
+      html.lunea-home-ia-v35 #luneaHomePortalV8 [data-key="meihua"] .lunea-v8-object{
+        overflow:hidden!important;color:transparent!important;
+        background-image:url('assets/meihua/lunea_meihua_home_icon_v1.png?v=1')!important;
+        background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;
+        border-color:rgba(214,188,112,.40)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 15px rgba(143,173,83,.10)!important
+      }
+      html.lunea-home-ia-v35 #luneaHomePortalV8 [data-key="meihua"] .mh-icon{opacity:0!important}
 
       html.lunea-home-ia-v35 #luneaHomePortalV8 .lunea-thai-home-tile{
         grid-template-columns:42px minmax(0,1fr) 15px!important;gap:8px!important;align-items:start!important
