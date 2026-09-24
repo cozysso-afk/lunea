@@ -5,6 +5,9 @@
 
   const $ = id => document.getElementById(id);
   const norm = value => String(value ?? '').normalize('NFKC').toLowerCase().replace(/\s+/g, ' ').trim();
+  const itemCache = new WeakMap();
+  let filterFrame = 0;
+
   const STATUS_TEXT = {
     pending: ['미확인', 'pending'],
     hit: ['맞음', 'hit'],
@@ -45,17 +48,39 @@
     return `${y}-${mo}-${d}`;
   }
 
-  function itemDate(item) {
-    return canonicalDate(item?.dataset?.createdDate || item?.dataset?.date || item?.textContent || '');
+  function cachedItemData(item) {
+    const cached = itemCache.get(item);
+    if (cached) return cached;
+    const rawText = item?.textContent || '';
+    const data = {
+      text: norm(rawText),
+      date: canonicalDate(item?.dataset?.createdDate || item?.dataset?.date || rawText)
+    };
+    itemCache.set(item, data);
+    return data;
   }
 
-  function itemMatches(item) {
-    const text = norm(item.textContent);
-    const from = $('archiveDateFrom')?.value || '';
-    const to = $('archiveDateTo')?.value || '';
-    const category = $('archiveCategoryFilter')?.value || '';
-    const status = $('archiveStatusFilter')?.value || '';
-    const date = itemDate(item);
+  function invalidateNode(node) {
+    if (!node) return;
+    const el = node.nodeType === 1 ? node : node.parentElement;
+    if (!el) return;
+    const ownItem = el.matches?.('.archive-item') ? el : el.closest?.('.archive-item');
+    if (ownItem) itemCache.delete(ownItem);
+    el.querySelectorAll?.('.archive-item').forEach(item => itemCache.delete(item));
+  }
+
+  function readFilters() {
+    return {
+      from: $('archiveDateFrom')?.value || '',
+      to: $('archiveDateTo')?.value || '',
+      category: $('archiveCategoryFilter')?.value || '',
+      status: $('archiveStatusFilter')?.value || ''
+    };
+  }
+
+  function itemMatches(item, filters) {
+    const { text, date } = cachedItemData(item);
+    const { from, to, category, status } = filters;
 
     if (from && (!date || date < from)) return false;
     if (to && (!date || date > to)) return false;
@@ -71,25 +96,28 @@
   }
 
   function applyFilters() {
+    filterFrame = 0;
     const list = $('archiveList');
     if (!list) return;
-    const items = [...list.querySelectorAll('.archive-item')];
+    const filters = readFilters();
+    const items = list.querySelectorAll('.archive-item');
     let visible = 0;
+
     items.forEach(item => {
-      const show = itemMatches(item);
-      item.hidden = !show;
-      item.style.display = show ? '' : 'none';
+      const show = itemMatches(item, filters);
+      if (item.hidden === show) item.hidden = !show;
+      const nextDisplay = show ? '' : 'none';
+      if (item.style.display !== nextDisplay) item.style.display = nextDisplay;
       if (show) visible += 1;
     });
+
     const summary = $('archiveSearchSummary');
     if (summary) summary.textContent = items.length ? `${visible}건 표시` : '검색 결과 없음';
   }
 
-  function rerenderThenFilter() {
-    try {
-      if (typeof window.renderArchive === 'function') window.renderArchive();
-    } catch {}
-    requestAnimationFrame(() => requestAnimationFrame(applyFilters));
+  function scheduleApplyFilters() {
+    if (filterFrame) return;
+    filterFrame = requestAnimationFrame(applyFilters);
   }
 
   function clearFilters() {
@@ -99,7 +127,7 @@
       const el = $(id);
       if (el) el.value = '';
     });
-    rerenderThenFilter();
+    scheduleApplyFilters();
   }
 
   function addStyles() {
@@ -107,13 +135,18 @@
     const style = document.createElement('style');
     style.id = 'archiveSearchV1Style';
     style.textContent = `
-      #archiveOverlay .archive-search-advanced{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:7px 0 6px}
-      #archiveOverlay .archive-search-advanced input,#archiveOverlay .archive-search-advanced select{min-width:0;min-height:39px;padding:8px 9px;border-radius:12px;border:1px solid rgba(130,234,220,.18);background:rgba(7,13,21,.62);color:#eefafa;font-size:10px}
+      #archiveOverlay .archive-search-advanced{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:7px 0 6px}
+      #archiveOverlay .archive-search-advanced input,#archiveOverlay .archive-search-advanced select{box-sizing:border-box;width:100%;min-width:0;min-height:37px;padding:7px 8px;border-radius:11px;border:1px solid rgba(130,234,220,.18);background:rgba(7,13,21,.62);color:#eefafa;font-size:10px}
       #archiveOverlay .archive-search-advanced input:focus,#archiveOverlay .archive-search-advanced select:focus{outline:none;border-color:rgba(130,234,220,.58);box-shadow:0 0 0 2px rgba(130,234,220,.08)}
-      #archiveOverlay .archive-search-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 9px}
+      #archiveOverlay .archive-search-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;min-height:30px}
       #archiveOverlay #archiveSearchSummary{font-size:9px;color:#8fded4}
-      #archiveOverlay #archiveSearchReset{flex:0 0 auto}
-      @media(max-width:430px){#archiveOverlay .archive-search-advanced{grid-template-columns:1fr}.archive-search-foot{position:sticky;top:0;z-index:2}}
+      #archiveOverlay #archiveSearchReset{flex:0 0 auto;min-height:30px;padding:5px 9px}
+      @media(max-width:430px){
+        #archiveOverlay .archive-search-advanced{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:6px 0 5px}
+        #archiveOverlay .archive-search-advanced input,#archiveOverlay .archive-search-advanced select{min-height:35px;padding:6px 7px;font-size:9.5px}
+        #archiveOverlay .archive-search-foot{position:static;margin-bottom:7px}
+      }
+      @media(max-width:350px){#archiveOverlay .archive-search-advanced{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
   }
@@ -131,7 +164,7 @@
     if (search) {
       search.placeholder = '질문·스프레드·카드·AI 해석·메모·태그 검색';
       search.setAttribute('autocomplete', 'off');
-      search.addEventListener('input', () => requestAnimationFrame(applyFilters));
+      search.addEventListener('input', scheduleApplyFilters, { passive: true });
     }
 
     const advanced = document.createElement('div');
@@ -153,16 +186,40 @@
     foot.innerHTML = '<span id="archiveSearchSummary">검색 준비</span><button type="button" class="mini" id="archiveSearchReset">검색 초기화</button>';
     advanced.insertAdjacentElement('afterend', foot);
 
-    advanced.querySelectorAll('input,select').forEach(el => el.addEventListener('change', rerenderThenFilter));
+    advanced.querySelectorAll('input,select').forEach(el => el.addEventListener('change', scheduleApplyFilters, { passive: true }));
     $('archiveSearchReset')?.addEventListener('click', clearFilters);
 
-    const observer = new MutationObserver(() => requestAnimationFrame(applyFilters));
-    observer.observe(list, { childList: true, subtree: true, characterData: true });
+    const observer = new MutationObserver(mutations => {
+      let relevant = false;
+      for (const mutation of mutations) {
+        if (mutation.type === 'characterData') {
+          invalidateNode(mutation.target);
+          relevant = true;
+          continue;
+        }
+        if (mutation.type === 'attributes') {
+          invalidateNode(mutation.target);
+          relevant = true;
+          continue;
+        }
+        mutation.addedNodes.forEach(invalidateNode);
+        mutation.removedNodes.forEach(invalidateNode);
+        if (mutation.addedNodes.length || mutation.removedNodes.length) relevant = true;
+      }
+      if (relevant) scheduleApplyFilters();
+    });
+    observer.observe(list, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributes: true,
+      attributeFilter: ['data-created-date', 'data-date', 'data-lunea-category']
+    });
 
     overlay.addEventListener('click', event => {
-      if (event.target?.closest?.('.archive-item button')) requestAnimationFrame(applyFilters);
+      if (event.target?.closest?.('.archive-item button')) scheduleApplyFilters();
     });
-    requestAnimationFrame(applyFilters);
+    scheduleApplyFilters();
     return true;
   }
 
