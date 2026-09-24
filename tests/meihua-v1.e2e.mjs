@@ -19,18 +19,29 @@ try {
     const nodes = [...(grid?.children || [])];
     const meihua = grid?.querySelector('.lunea-v8-tile[data-key="meihua"]');
     const intimacy = grid?.querySelector('.lunea-v8-tile[data-key="intimacy"]');
+    const signal = document.getElementById('luneaSignalMessageSection');
+    const divider = grid?.querySelector('.lunea-v35-system-divider');
+    const logo = meihua?.querySelector('.mh-icon img');
     const style = meihua ? getComputedStyle(meihua) : null;
     return {
       meihuaIndex:nodes.indexOf(meihua),
       intimacyIndex:nodes.indexOf(intimacy),
+      signalIndex:nodes.indexOf(signal),
+      dividerIndex:nodes.indexOf(divider),
       gridColumn:style?.gridColumn || '',
-      label:meihua?.querySelector('.lunea-v8-label')?.textContent || ''
+      label:meihua?.querySelector('.lunea-v8-label')?.textContent || '',
+      logoSrc:logo?.getAttribute('src') || '',
+      logoLoaded:!!logo && logo.complete && logo.naturalWidth > 0
     };
   });
   assert.ok(home.meihuaIndex >= 0 && home.intimacyIndex >= 0,'Meihua와 Intimacy 홈 타일이 모두 있어야 함');
-  assert.ok(home.meihuaIndex < home.intimacyIndex,'Meihua는 Intimacy 바로 앞 계층에 배치되어야 함');
-  assert.match(home.gridColumn,/1\s*\/\s*-1|1\s*\/\s*span\s*2/i,'Meihua V1은 현재 전체폭 타일이어야 함');
+  assert.ok(home.intimacyIndex < home.signalIndex,'Intimacy는 Tarot 관련 영역에서 Signal 앞에 있어야 함');
+  assert.ok(home.signalIndex < home.dividerIndex,'Signal은 Tarot 관련 보조 오라클로 시스템 구분선보다 앞에 있어야 함');
+  assert.ok(home.dividerIndex < home.meihuaIndex,'Meihua는 DIVINATION · ASTROLOGY 영역에 있어야 함');
+  assert.match(home.gridColumn,/span\s*3|3\s*\/\s*span\s*3/i,'Meihua는 V35 시스템 영역의 2열 타일이어야 함');
   assert.equal(home.label.trim(),'MEIHUA');
+  assert.match(home.logoSrc,/assets\/meihua\/meihua_logo_v1\.png$/,'생성한 Meihua 로고 자산을 사용해야 함');
+  assert.equal(home.logoLoaded,true,'Meihua 로고 이미지가 실제로 로드되어야 함');
 
   const tile = page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]');
   assert.equal(await tile.getAttribute('aria-pressed'),'false');
