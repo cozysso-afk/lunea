@@ -63,9 +63,10 @@
       .mh-ai{display:none;margin-top:10px;padding:13px;border-radius:14px;background:rgba(128,104,168,.07);border:1px solid rgba(182,160,220,.13);white-space:pre-wrap;color:var(--text);font:400 12px/1.78 'Noto Serif KR',serif}.mh-ai.show{display:block}
       .mh-provenance{margin-top:10px;padding:9px 10px;border-radius:12px;border:1px dashed rgba(170,186,176,.15);color:#858e8b;font-size:8.8px;line-height:1.55}
       #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]{grid-column:1/-1;min-height:108px;border-color:rgba(150,206,170,.18);background:radial-gradient(circle at 15% 5%,rgba(106,187,143,.11),transparent 28%),radial-gradient(circle at 93% 93%,rgba(165,132,207,.07),transparent 35%),linear-gradient(148deg,rgba(18,38,34,.92),rgba(8,10,23,.985))}
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-object{color:#d9eadc;border-color:rgba(177,219,191,.27);background:radial-gradient(circle at 32% 23%,rgba(255,255,255,.26),transparent 19%),linear-gradient(145deg,rgba(93,161,121,.25),rgba(117,92,157,.14))}
-      .mh-icon{position:relative;width:27px;height:27px;display:grid;place-items:center;font:600 23px/1 serif}
-      .mh-icon::after{content:'✦';position:absolute;right:-2px;top:-4px;color:#c8a9e6;font-size:8px}
+      #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-object{color:#d9eadc;border-color:rgba(177,219,191,.27);background:radial-gradient(circle at 32% 23%,rgba(255,255,255,.26),transparent 19%),linear-gradient(145deg,rgba(93,161,121,.25),rgba(117,92,157,.14));overflow:hidden}
+      .mh-icon{position:relative;width:100%;height:100%;display:block}
+      .mh-icon img{display:block;width:100%;height:100%;object-fit:cover;border-radius:inherit}
+      .mh-icon::after{display:none}
       @media(max-width:520px){
         #luneaMeihuaOverlay .mh-modal{padding:15px}
         .mh-flow{gap:5px}.mh-hex{padding:10px 5px;border-radius:13px}.mh-symbols{font-size:23px}.mh-name{font-size:11px}.mh-lines{width:48px}.mh-line.yang .seg{width:42px}.mh-line.yin .seg{width:17px}.mh-evidence{grid-template-columns:1fr}.mh-actions button{min-width:100px}
@@ -292,7 +293,7 @@
       tile.className = 'lunea-v8-tile';
       tile.dataset.key = 'meihua';
       tile.setAttribute('aria-pressed','false');
-      tile.innerHTML = `<span class="lunea-v8-object"><span class="mh-icon" aria-hidden="true">☷</span></span><span class="lunea-v8-label">MEIHUA</span><span class="lunea-v8-sub">본괘 · 호괘 · 변괘 · 체용</span><span class="lunea-v8-open">＋</span>`;
+      tile.innerHTML = `<span class="lunea-v8-object"><span class="mh-icon" aria-hidden="true"><img src="./assets/meihua/meihua_logo_v1.png" alt="" draggable="false"></span></span><span class="lunea-v8-label">MEIHUA</span><span class="lunea-v8-sub">본괘 · 호괘 · 변괘 · 체용</span><span class="lunea-v8-open">＋</span>`;
       tile.onclick = open;
     }
     const intimacy = grid.querySelector('.lunea-v8-tile[data-key="intimacy"]');
