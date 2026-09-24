@@ -11,9 +11,14 @@ assert.match(source, /archiveStatusFilter/);
 assert.match(source, /archiveSearchReset/);
 assert.match(source, /MutationObserver/);
 assert.match(source, /requestAnimationFrame/);
+assert.match(source, /WeakMap/);
+assert.match(source, /scheduleApplyFilters/);
+assert.match(source, /attributeFilter:\s*\['data-created-date', 'data-date', 'data-lunea-category'\]/);
+assert.match(source, /grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
 assert.match(source, /질문·스프레드·카드·AI 해석·메모·태그 검색/);
 assert.match(source, /20\\d\{2\}/);
 assert.match(source, /INTIMACY/);
+assert.doesNotMatch(source, /renderArchive\s*\(/, 'filter changes must not rerender the entire archive');
 assert.doesNotMatch(source, /localStorage\.removeItem\(/);
 assert.doesNotMatch(source, /indexedDB\.(deleteDatabase|open)\(/);
 
@@ -21,4 +26,4 @@ const refs = loader.match(/lunea-archive-search-v1\.js\?v=101/g) || [];
 assert.equal(refs.length, 2, 'archive search must load in both loader paths');
 assert.ok(loader.indexOf('lunea-reading-journal-v2.js?v=201') < loader.indexOf('lunea-archive-search-v1.js?v=101'));
 
-console.log('LUNEA archive advanced search/date filter contract: PASS');
+console.log('LUNEA archive advanced search/date filter + performance contract: PASS');
