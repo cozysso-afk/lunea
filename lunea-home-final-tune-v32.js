@@ -104,6 +104,7 @@
       html.lunea-home-ia-v35 #luneaHomePortalV8 [data-key="meihua"] .mh-icon{opacity:0!important}
 
       html.lunea-home-ia-v35 #luneaHomePortalV8 .lunea-thai-home-tile{
+        grid-column:span 3!important;width:auto!important;max-width:none!important;display:grid!important;
         grid-template-columns:42px minmax(0,1fr) 15px!important;gap:8px!important;align-items:start!important
       }
       html.lunea-home-ia-v35 #luneaHomePortalV8 .lunea-thai-home-tile .thai-v24-copy{align-self:end!important;padding-bottom:1px!important}
@@ -156,6 +157,23 @@
     (document.head || document.documentElement).appendChild(s);
   }
 
+  function enforceGridOwnership(grid){
+    if (!grid) return;
+    grid.style.setProperty('grid-template-columns', 'repeat(6,minmax(0,1fr))', 'important');
+    grid.querySelectorAll('.lunea-v8-tile').forEach(tile => {
+      tile.style.setProperty('grid-column', 'span 3', 'important');
+      tile.style.setProperty('min-width', '0', 'important');
+    });
+    const thai = grid.querySelector('.lunea-thai-home-tile');
+    if (thai) {
+      thai.style.setProperty('grid-column', 'span 3', 'important');
+      thai.style.setProperty('width', 'auto', 'important');
+      thai.style.setProperty('max-width', 'none', 'important');
+      thai.style.setProperty('min-width', '0', 'important');
+      thai.style.setProperty('display', 'grid', 'important');
+    }
+  }
+
   function applyStructure(){
     const portal = $('#luneaHomePortalV8');
     const grid = $('#luneaHomePortalV8 .lunea-v8-grid');
@@ -190,6 +208,10 @@
     ].filter(Boolean);
     systems.forEach(n => grid.appendChild(n));
 
+    enforceGridOwnership(grid);
+    if (signal) signal.style.setProperty('grid-column', '1 / -1', 'important');
+    divider.style.setProperty('grid-column', '1 / -1', 'important');
+
     return tarot.length >= 6 && systems.length >= 4;
   }
 
@@ -201,10 +223,20 @@
   }
 
   apply();
-  [80,220,500,1000,1800,3000].forEach(ms => setTimeout(apply, ms));
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, {once:true});
-  W.addEventListener('pageshow', () => setTimeout(apply, 60), {passive:true});
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(apply, 60); });
+  [80,220,500,1000,1800,3000,5000,8000].forEach(ms => setTimeout(apply, ms));
 
-  W.LUNEA_HOME_IA_V35 = Object.freeze({version:35, apply, applyStructure});
+  let settleTries = 0;
+  let stablePasses = 0;
+  const settleTimer = setInterval(() => {
+    settleTries += 1;
+    const complete = applyStructure();
+    stablePasses = complete ? stablePasses + 1 : 0;
+    if (stablePasses >= 5 || settleTries >= 80) clearInterval(settleTimer);
+  }, 150);
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', apply, {once:true});
+  W.addEventListener('pageshow', () => setTimeout(apply, 80), {passive:true});
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(apply, 80); });
+
+  W.LUNEA_HOME_IA_V35 = Object.freeze({version:35.1, apply, applyStructure, enforceGridOwnership});
 })();
