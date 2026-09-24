@@ -6,9 +6,9 @@
   - Explicit one-tap browser geolocation for Horary.
   - Keeps the actual IANA timezone internally, but shows Asia/Seoul as
     "한국시간 (UTC+9)" in user-facing status text.
-  - Injects GPS coordinates into BOTH direct /v1/horary requests and legacy
-    resumable Horary job requests, so a label like "현재 위치 (lat, lon)" is
-    never mistaken for a city name by the API.
+  - Injects GPS coordinates into direct /v1/horary and /v1/prashna requests,
+    plus legacy resumable Horary job requests, so a label like
+    "현재 위치 (lat, lon)" is never mistaken for a city name by the API.
 */
 (() => {
   const W = window;
@@ -126,7 +126,7 @@
       } catch {}
 
       let nextInit = init;
-      if (method === 'POST' && /\/v1\/horary(?:\?|$)/i.test(url)) {
+      if (method === 'POST' && /\/v1\/(?:horary|prashna)(?:\?|$)/i.test(url)) {
         nextInit = rewriteHoraryDirect(init);
       } else if (method === 'POST' && /\/v1\/jobs\/astro(?:\?|$)/i.test(url)) {
         nextInit = rewriteHoraryJob(init);
@@ -221,4 +221,32 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
+})();
+
+/* Prashna UI loader: stays coupled to the Horary location bridge so both
+   question-moment systems receive identical location/timezone context. */
+(() => {
+  const W = window;
+  if (W.__LUNEA_PRASHNA_UI_LOADER_V1__) return;
+  W.__LUNEA_PRASHNA_UI_LOADER_V1__ = true;
+
+  const version = (() => {
+    try {
+      const src = document.currentScript?.src || '';
+      return src ? (new URL(src, location.href).searchParams.get('v') || '1') : '1';
+    } catch { return '1'; }
+  })();
+
+  function load() {
+    if (document.getElementById('luneaPrashnaV1Loader')) return;
+    const script = document.createElement('script');
+    script.id = 'luneaPrashnaV1Loader';
+    script.src = `./lunea-prashna-v1.js?v=${encodeURIComponent(version)}`;
+    script.async = false;
+    script.onerror = () => console.info('[LUNEA] Prashna V1 UI skipped');
+    (document.head || document.documentElement).appendChild(script);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load, {once:true});
+  else load();
 })();
