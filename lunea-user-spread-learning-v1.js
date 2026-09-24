@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA USER SPREAD LEARNING V1.6
+  LUNEA USER SPREAD LEARNING V1.7
   =============================
   Local-only correction memory for AI spread preflight.
 
@@ -68,7 +68,13 @@
       :categoryHint==='LOVE'||relationshipSubject||/(상대|연애|사랑|감정|마음|연락|재회|이별|썸|전남|전여|남친|여친|관계|답장)/.test(all)?'relationship'
       :'general';
 
-    const explicitPair=/(?:\ba\s*(?:와|과|랑|\/|·|vs|및|그리고)\s*b\b|a와b|a\/b|a·b|두\s*(?:사람|명|인연|상대|대상)|2\s*(?:사람|명|인연|상대|대상)|대칭\s*비교)/i.test(all);
+    const role='(?:전남친|전여친|썸남|썸녀|소개팅남|소개팅녀|남친|여친|남자|여자|상대|후보\s*\d+)';
+    const rolePair=new RegExp(`${role}\\s*(?:와|과|랑|\\/|·|vs|및|그리고)\\s*${role}`,'i').test(all);
+    const latinPair=/\b[a-z]\s*(?:와|과|랑|\/|·|vs|및|그리고)\s*[a-z]\b/i.test(all);
+    const userTwoAlias=/(?:나와|내가|나는)\s*[가-힣]{1,3}\s*[·/]\s*[가-힣]{1,3}/.test(q);
+    const shortAliasPair=/(?:^|[\s,])(?!나(?:와|과|랑))(?!내(?:가|와|랑))([가-힣]{1,2})(?:와|과|랑)\s*([가-힣]{1,2})(?:에게|한테|의\s*(?:관계|감정|미련)|\s*(?:중|각각|둘))/i.test(q);
+    const genericPair=/(?:두\s*(?:사람|명|인연|상대|대상|남자|여자|전남친|전여친|후보)|2\s*(?:사람|명|인연|상대|대상|남자|여자|후보)|둘\s*중|대칭\s*비교)/i.test(all);
+    const explicitPair=/(?:\ba\s*(?:와|과|랑|\/|·|vs|및|그리고)\s*b\b|a와b|a\/b|a·b)/i.test(all)||latinPair||rolePair||userTwoAlias||shortAliasPair||genericPair;
     const scenarioCues=[/지금|바로/,/몇\s*시간|좀\s*있/,/내일|모레/,/더\s*늦|나중/,/길게/,/짧게/,/이모티콘|ㅋㅋ|ㅎㅎ/,/카톡|메시지/,/dm|디엠/,/전화|문자/].reduce((n,re)=>n+(re.test(q)?1:0),0);
     const scenario= !explicitPair && (scenarioCues>=2 || /시나리오|경우별|각\s*방식|각각\s*반응/.test(q));
     const target=explicitPair?'pair':scenario?'single_scenarios':'single_or_unspecified';
@@ -94,7 +100,7 @@
       :/(예정|잡혀|앞두|내일\s*(?:만나|면접)|모레\s*(?:만나|면접))/.test(q)?'scheduled'
       :/(들어올|생길|잡힐|아직\s*(?:없|안)|기회)/.test(q)?'before_opportunity'
       :'current_or_unspecified';
-    return {version:3,domain,target,modes:[...new Set(modes)].sort(),stage};
+    return {version:4,domain,target,modes:[...new Set(modes)].sort(),stage};
   }
 
   function compatibility(queryProfile,rowProfile){
@@ -122,7 +128,7 @@
     if(!row||typeof row!=='object')return row;
     const category=rowCategory(row);
     const meta={intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category};
-    const structureProfile=!row.structureProfile||Number(row.structureProfile.version||0)<3?profile(row.question||'',meta):row.structureProfile;
+    const structureProfile=!row.structureProfile||Number(row.structureProfile.version||0)<4?profile(row.question||'',meta):row.structureProfile;
     return {...row,category,structureProfile};
   }
   function read(){
@@ -202,9 +208,22 @@
         intentSummary:'사용자가 질문에 맞춰 처음부터 직접 설계한 최종 배열',
         primaryIntent:'사용자 직접 설계 배열',
         targetStructure:payload.symmetric?'두 사람 A/B 대칭 비교':'사용자 지정 대상 구조',
-        requestedAxes:axes.length?axes:finalPos
+        requestedAxes:axes.length?axes:[]
       }
     });
+  }
+
+
+  const MODE_GUIDANCE={observation:'사실·관찰',perception:'인식·평가',thought:'생각·기억',feeling:'감정·끌림',action:'행동·연락',timing:'시기·타이밍',cause:'원인·계기',compare:'대칭 비교',choice:'선택지',advice:'조언·대응',outcome:'결과·흐름',general:'핵심 요구'};
+  function guidanceAxes(row,rowProfile=null){
+    const requested=positions(row?.requestedAxes||[]);
+    const finalPos=positions(row?.positions||[]);
+    if(requested.length&&!samePositions(requested,finalPos))return requested.slice(0,10);
+    const p=rowProfile||row?.structureProfile||{};
+    const out=[];
+    for(const mode of Array.isArray(p.modes)?p.modes:[]){const label=MODE_GUIDANCE[mode];if(label&&!out.includes(label))out.push(label)}
+    if(!out.length)out.push('핵심 요구');
+    return out.slice(0,10);
   }
 
   function score(q,row,options={}){
@@ -212,13 +231,13 @@
     const q3=grams(q,3),q4=grams(q,4),qw=words(q);
     const r3=grams(row.question,3),r4=grams(row.question,4),rw=words(row.question);
     const base=jac(q3,r3)*1.0+jac(q4,r4)*.72+overlap(qw,rw)*.42;
-    const axes=[row.intentSummary,row.primaryIntent,row.targetStructure,...(row.requestedAxes||[]),...(row.positions||[])].join(' ');
+    const axes=[row.intentSummary,row.primaryIntent,row.targetStructure,...(row.requestedAxes||[])].join(' ');
     const semantic=jac(q3,grams(axes,3))*.30;
     const requestedCategory=explicitCategory(options.category);
     const storedCategory=rowCategory(row);
     if(requestedCategory&&storedCategory!==requestedCategory)return {value:-99,blocked:true,reason:'category_mismatch',queryProfile:profile(q,{category:requestedCategory}),rowProfile:row.structureProfile,exact:!!exact};
     const queryProfile=profile(q,{category:requestedCategory});
-    const rowProfile=!row.structureProfile||Number(row.structureProfile.version||0)<2?profile(row.question,{intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category:storedCategory}):row.structureProfile;
+    const rowProfile=!row.structureProfile||Number(row.structureProfile.version||0)<4?profile(row.question,{intentSummary:row.intentSummary,primaryIntent:row.primaryIntent,targetStructure:row.targetStructure,requestedAxes:row.requestedAxes,category:storedCategory}):row.structureProfile;
     const fit=compatibility(queryProfile,rowProfile);
     return {value:exact+base+semantic+fit.boost,blocked:fit.blocked,reason:fit.reason,queryProfile,rowProfile,exact:!!exact};
   }
@@ -238,10 +257,10 @@
     if(!rows.length)return '사용자 교정 사례 없음';
     return rows.map((x,i)=>{
       const r=x.row;
-      const meta=[r.targetStructure,r.primaryIntent].filter(Boolean).join(' · ');
       const p=x.rowProfile||r.structureProfile||{};
       const structure=[p.domain,p.target,...(p.modes||[]),p.stage].filter(Boolean).join(' · ');
-      return `[사용자 교정 정답 ${i+1} · 구조 유사도 ${x.score.toFixed(2)}]\n과거 질문: ${r.question}\n당시 사용자가 직접 확정한 배열명: ${r.spreadTitle}\n당시 사용자가 직접 고친 최종 포지션: ${r.positions.join(' / ')}\n질문 구조: ${structure||'미분류'}\n질문 구조 메모: ${meta||'없음'}\n당시 보존축: ${(r.requestedAxes||[]).join(' / ')||'최종 포지션을 기준으로 판단'}`;
+      const axes=guidanceAxes(r,p);
+      return `[사용자 학습 구조 참고 ${i+1} · 구조 유사도 ${x.score.toFixed(2)}]\n질문 구조: ${structure||'미분류'}\n대상 구조 메모: ${clean(r.targetStructure)||'미지정'}\n핵심 의도 메모: ${clean(r.primaryIntent)||'미지정'}\n참고 가능한 요구축: ${axes.join(' / ')}`;
     }).join('\n\n');
   }
 
@@ -253,7 +272,7 @@
       const learned=formatForPrompt(question,Math.min(3,limit),{category:currentCategory()});
       const staticCases=baseFormat(question,limit);
       if(learned==='사용자 교정 사례 없음')return staticCases;
-      return `[최우선 · 이 사용자가 직접 고친 과거 정답]\n아래 사용자 교정 사례가 현재 질문과 충분히 유사하면 정적 사례보다 우선 참고한다.\n질문 구조가 다르면 포지션 문구를 그대로 복사하지 않는다.\n\n${learned}\n\n[정적 LUNEA 사례집]\n${staticCases}`;
+      return `[사용자가 확정한 과거 구조 참고]\n아래에는 과거 질문 원문·배열명·포지션 원문·카드 수를 제공하지 않는다. 현재 질문의 구조와 겹치는 요구축만 참고한다.\n\n${learned}\n\n[정적 LUNEA 사례집]\n${staticCases}`;
     };
     book.__luneaLearningBridge=true;
     return true;
@@ -331,7 +350,7 @@
   }
 
   W.LUNEA_SPREAD_LEARNING_V1={
-    version:5,
+    version:6,
     key:KEY,
     max:MAX,
     maxPositions:MAX_POSITIONS,
@@ -341,6 +360,7 @@
     profile,
     compatibility,
     formatForPrompt,
+    guidanceAxes,
     upgradeRow,
     categoryOf:rowCategory,
     list:()=>read().slice(),
@@ -350,5 +370,5 @@
 
   if(document.readyState==='complete')setTimeout(boot,0);
   else W.addEventListener('load',boot,{once:true});
-  console.info(`🧠 LUNEA User Spread Learning V1.5 loaded · ${read().length}/${MAX} learned corrections · AI edits + manual spreads · structural small-data matching`);
+  console.info(`🧠 LUNEA User Spread Learning V1.7 loaded · ${read().length}/${MAX} learned corrections · AI edits + manual spreads · structural small-data matching`);
 })();
