@@ -91,6 +91,20 @@
   function loadHoraryLocationButton() { loadBuildScopedScript('luneaHoraryLocationButtonV39Loader', './lunea-horary-location-button-v39.js', 'Horary location button V39'); }
   function loadHoraryTraditionalCore() { loadBuildScopedScript('luneaHoraryTraditionalCoreV40Loader', './lunea-horary-traditional-core-v40.js', 'Horary Traditional Core V40'); }
   function loadHoraryBalanceGuard() { loadBuildScopedScript('luneaHoraryBalanceGuardV41Loader', './lunea-horary-balance-guard-v41.js', 'Horary Balance Guard V41'); }
+  function loadHoraryInterpretationV47() {
+    if (W.__LUNEA_HORARY_INTERPRETATION_V47__) {
+      loadBuildScopedScript('luneaHoraryInterpretationBridgeV47Loader', './lunea-horary-interpretation-bridge-v47.js', 'Horary interpretation bridge V47');
+      return;
+    }
+    if (document.getElementById('luneaHoraryInterpretationV47Loader')) return;
+    const script = document.createElement('script');
+    script.id = 'luneaHoraryInterpretationV47Loader';
+    script.src = `./lunea-horary-interpretation-engine-v47.js?v=${encodeURIComponent(SELF_BUILD || Date.now())}`;
+    script.async = false;
+    script.onload = () => loadBuildScopedScript('luneaHoraryInterpretationBridgeV47Loader', './lunea-horary-interpretation-bridge-v47.js', 'Horary interpretation bridge V47');
+    script.onerror = () => console.info('[LUNEA cache refresh] Horary interpretation engine V47 skipped');
+    (document.head || document.documentElement).appendChild(script);
+  }
   function loadHoraryMobileStability() { loadBuildScopedScript('luneaHoraryMobileStabilityV42Loader', './lunea-horary-mobile-stability-v42.js', 'Horary mobile stability V42'); }
   function loadHoraryReturnStack() { loadBuildScopedScript('luneaHoraryReturnStackV1Loader', './lunea-horary-return-stack-v1.js', 'Horary return stack V1'); }
   function loadLearningAuthRecovery() { loadBuildScopedScript('luneaLearningAuthRecoveryV2Loader', './lunea-learning-auth-recovery-v2.js', 'learning auth recovery V2'); }
@@ -162,6 +176,7 @@
     loadHoraryLocationButton();
     loadHoraryTraditionalCore();
     loadHoraryBalanceGuard();
+    loadHoraryInterpretationV47();
     loadHoraryMobileStability();
     loadHoraryReturnStack();
     loadLearningAuthRecovery();
