@@ -64,7 +64,7 @@
     if (topic === 'contact' || /(연락|답장|메시지|문자|카톡|전화|DM|디엠|먼저\s*(?:연락|말)|소식)/i.test(q)) {
       return {key:'contact', label:'연락·메시지', mode};
     }
-    if (topic === 'reconciliation' || /(재회|다시\s*(?:만나|사귀)|돌아오|관계\s*회복|화해)/i.test(q)) {
+    if (topic === 'reconciliation' || /(재회|다시\s*(?:만나|만날|사귀|사귈)|돌아오|관계\s*회복|화해)/i.test(q)) {
       return {key:'reconciliation', label:'재회·관계 회복', mode};
     }
     if (topic === 'relationship' || /(연애|사귀|썸|관계|결혼|헤어|이별|상대(?:방)?\s*(?:마음|감정))/i.test(q)) {
