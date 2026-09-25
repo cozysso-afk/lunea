@@ -157,7 +157,7 @@
     const rows = String(answer || '').split(/\n|(?<=[.!?。])/).map(compact).filter(Boolean);
     return rows.some(row => {
       if (!/(유효\s*오브\s*밖|out[- ]?of[- ]?orb|기하학적|nearest)/i.test(row)) return false;
-      if (/(미채택|아니|성사각으로\s*볼\s*수\s*없|근거로\s*쓰지|승격하지)/i.test(row)) return false;
+      if (/(미채택|아니|채택하지\s*않|채택하지\s*못|성사각으로\s*볼\s*수\s*없|근거로\s*쓰지|승격하지)/i.test(row)) return false;
       return /(적용각|성사각|perfection|성사\s*근거)/i.test(row);
     });
   }
