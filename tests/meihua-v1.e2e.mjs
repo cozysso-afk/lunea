@@ -12,24 +12,33 @@ try {
   await page.waitForFunction(() => !!window.LUNEA_MEIHUA_ENGINE_V1 && !!window.LUNEA_MEIHUA_V1 && !!window.LUNEA_MEIHUA_POLISH_V1,{timeout:20000});
   assert.equal(await page.evaluate(() => document.documentElement.classList.contains('lunea-ui-regression-final-v2')),true,'latest main UI regression owner가 활성화되어야 함');
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]',{timeout:20000});
+  await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]',{timeout:20000});
+  await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="horary"]',{timeout:20000});
+  await page.waitForSelector('#luneaHomePortalV8 .lunea-thai-home-tile',{timeout:20000});
   await page.waitForTimeout(500);
 
   const home = await page.evaluate(() => {
     const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
     const nodes = [...(grid?.children || [])];
+    const lenormand = grid?.querySelector('.lunea-v8-tile[data-key="lenormand"]');
     const meihua = grid?.querySelector('.lunea-v8-tile[data-key="meihua"]');
-    const intimacy = grid?.querySelector('.lunea-v8-tile[data-key="intimacy"]');
+    const horary = grid?.querySelector('.lunea-v8-tile[data-key="horary"]');
+    const thai = grid?.querySelector('.lunea-thai-home-tile');
     const style = meihua ? getComputedStyle(meihua) : null;
     return {
+      lenormandIndex:nodes.indexOf(lenormand),
       meihuaIndex:nodes.indexOf(meihua),
-      intimacyIndex:nodes.indexOf(intimacy),
+      horaryIndex:nodes.indexOf(horary),
+      thaiIndex:nodes.indexOf(thai),
+      sameRowWithLenormand:!!lenormand && !!meihua && Math.abs(lenormand.getBoundingClientRect().top - meihua.getBoundingClientRect().top) < 4,
       gridColumn:style?.gridColumn || '',
       label:meihua?.querySelector('.lunea-v8-label')?.textContent || ''
     };
   });
-  assert.ok(home.meihuaIndex >= 0 && home.intimacyIndex >= 0,'Meihua와 Intimacy 홈 타일이 모두 있어야 함');
-  assert.ok(home.meihuaIndex < home.intimacyIndex,'Meihua는 Intimacy 바로 앞 계층에 배치되어야 함');
-  assert.match(home.gridColumn,/1\s*\/\s*-1|1\s*\/\s*span\s*2/i,'Meihua V1은 현재 전체폭 타일이어야 함');
+  assert.ok([home.lenormandIndex,home.meihuaIndex,home.horaryIndex,home.thaiIndex].every(index => index >= 0),'V35 시스템 타일 4개가 모두 있어야 함');
+  assert.ok(home.lenormandIndex < home.meihuaIndex && home.meihuaIndex < home.horaryIndex && home.horaryIndex < home.thaiIndex,'V35 시스템 순서는 LENORMAND → MEIHUA → HORARY → THAI여야 함');
+  assert.ok(home.sameRowWithLenormand,'Meihua는 V35 시스템 첫 줄에서 Lenormand와 나란히 있어야 함');
+  assert.match(home.gridColumn,/span\s*3/i,'Meihua는 6-column V35 그리드의 반폭(span 3) 타일이어야 함');
   assert.equal(home.label.trim(),'MEIHUA');
 
   const tile = page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]');
