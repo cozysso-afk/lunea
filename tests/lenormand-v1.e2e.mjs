@@ -10,6 +10,8 @@ try {
   await page.goto(baseURL,{waitUntil:'domcontentloaded',timeout:30000});
   await page.waitForFunction(() => !!window.LUNEA_LENORMAND_V1 && !!window.LUNEA_LENORMAND_POLISH_V1,{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]',{timeout:20000});
+  await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]',{timeout:20000});
+  await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="horary"]',{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-thai-home-tile',{timeout:20000});
 
   const deck = await page.evaluate(() => ({
@@ -24,29 +26,40 @@ try {
   await page.waitForFunction(() => {
     const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
     const lenormand = grid?.querySelector('.lunea-v8-tile[data-key="lenormand"]');
+    const meihua = grid?.querySelector('.lunea-v8-tile[data-key="meihua"]');
+    const horary = grid?.querySelector('.lunea-v8-tile[data-key="horary"]');
     const thai = grid?.querySelector('.lunea-thai-home-tile');
-    if (!grid || !lenormand || !thai) return false;
+    if (!grid || !lenormand || !meihua || !horary || !thai) return false;
     const children = [...grid.children];
-    const li = children.indexOf(lenormand);
-    const ti = children.indexOf(thai);
-    return li >= 0 && ti === li + 1 && Math.abs(lenormand.getBoundingClientRect().top - thai.getBoundingClientRect().top) < 4;
+    const li = children.indexOf(lenormand), mi = children.indexOf(meihua), hi = children.indexOf(horary), ti = children.indexOf(thai);
+    const firstRow = Math.abs(lenormand.getBoundingClientRect().top - meihua.getBoundingClientRect().top) < 4;
+    const secondRow = Math.abs(horary.getBoundingClientRect().top - thai.getBoundingClientRect().top) < 4;
+    return li >= 0 && mi === li + 1 && hi === mi + 1 && ti === hi + 1 && firstRow && secondRow;
   },{timeout:10000});
 
   const home = await page.evaluate(() => {
     const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
     const children = [...grid.children];
     const lenormand = grid.querySelector('.lunea-v8-tile[data-key="lenormand"]');
+    const meihua = grid.querySelector('.lunea-v8-tile[data-key="meihua"]');
+    const horary = grid.querySelector('.lunea-v8-tile[data-key="horary"]');
     const thai = grid.querySelector('.lunea-thai-home-tile');
     return {
       lenormandIndex:children.indexOf(lenormand),
+      meihuaIndex:children.indexOf(meihua),
+      horaryIndex:children.indexOf(horary),
       thaiIndex:children.indexOf(thai),
-      sameRow:Math.abs(lenormand.getBoundingClientRect().top - thai.getBoundingClientRect().top) < 4,
+      firstRow:Math.abs(lenormand.getBoundingClientRect().top - meihua.getBoundingClientRect().top) < 4,
+      secondRow:Math.abs(horary.getBoundingClientRect().top - thai.getBoundingClientRect().top) < 4,
       iconSrc:lenormand.querySelector('.lunea-v8-object img')?.getAttribute('src') || '',
       thaiTitle:thai.querySelector('.thai-v24-copy b')?.textContent?.trim() || '',
     };
   });
-  assert.equal(home.thaiIndex,home.lenormandIndex + 1,'Lenormand and Thai should stay adjacent in the Home grid');
-  assert.ok(home.sameRow,'Lenormand and Thai should share the same Home grid row');
+  assert.equal(home.meihuaIndex,home.lenormandIndex + 1,'V35 first system row should be Lenormand + Meihua');
+  assert.equal(home.horaryIndex,home.meihuaIndex + 1,'Horary should follow Meihua in V35 system order');
+  assert.equal(home.thaiIndex,home.horaryIndex + 1,'V35 second system row should be Horary + Thai');
+  assert.ok(home.firstRow,'Lenormand and Meihua should share the first V35 system row');
+  assert.ok(home.secondRow,'Horary and Thai should share the second V35 system row');
   assert.equal(home.iconSrc,'./assets/lenormand/lunea_lenormand_home_icon_v1.svg');
   assert.equal(home.thaiTitle,'THAI ASTROLOGY');
 
