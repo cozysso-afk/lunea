@@ -151,3 +151,64 @@
   });
   console.info('✦ LUNEA Astro Origin Failover V57.4 active · capability routing ON');
 })();
+
+/* HORARY ACTION BUTTON GUARD V43
+   Keeps the three post-calculation actions alive on iOS/PWA even if a later
+   runtime patch replaces their DOM nodes or drops property handlers. */
+(() => {
+  const W=window;
+  if(W.__LUNEA_HORARY_ACTION_BUTTON_GUARD_V43__)return;
+  W.__LUNEA_HORARY_ACTION_BUTTON_GUARD_V43__=true;
+
+  const IDS=['astroHoraryAI','astroHoraryCopy','astroHorarySave'];
+  const savedHandlers=new Map();
+  let observer=null;
+
+  function makeInteractive(node){
+    if(!node)return;
+    try{node.type='button';}catch{}
+    node.style.setProperty('pointer-events','auto','important');
+    node.style.setProperty('touch-action','manipulation','important');
+    node.style.setProperty('position','relative','important');
+    node.style.setProperty('z-index','51','important');
+  }
+
+  function repair(){
+    const actions=document.getElementById('astroHoraryActions');
+    if(actions){
+      actions.style.setProperty('pointer-events','auto','important');
+      actions.style.setProperty('position','relative','important');
+      actions.style.setProperty('z-index','50','important');
+    }
+
+    for(const id of IDS){
+      const node=document.getElementById(id);
+      if(!node)continue;
+      makeInteractive(node);
+      if(typeof node.onclick==='function')savedHandlers.set(id,node.onclick);
+      else if(savedHandlers.has(id))node.onclick=savedHandlers.get(id);
+    }
+  }
+
+  function install(){
+    repair();
+    if(typeof MutationObserver==='function'){
+      observer=new MutationObserver(()=>repair());
+      observer.observe(document.documentElement,{childList:true,subtree:true});
+    }
+    document.addEventListener('pointerdown',event=>{
+      const target=event.target?.closest?.('#astroHoraryAI,#astroHoraryCopy,#astroHorarySave');
+      if(target)repair();
+    },true);
+    document.addEventListener('touchstart',event=>{
+      const target=event.target?.closest?.('#astroHoraryAI,#astroHoraryCopy,#astroHorarySave');
+      if(target)repair();
+    },{capture:true,passive:true});
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+
+  W.LUNEA_HORARY_ACTION_BUTTON_GUARD_V43=Object.freeze({version:'43.0',repair});
+  console.info('✦ LUNEA Horary Action Button Guard V43 active');
+})();
