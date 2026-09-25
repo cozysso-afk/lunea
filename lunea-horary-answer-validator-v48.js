@@ -245,8 +245,25 @@
     } catch { return init; }
   }
 
+  function publicViolationReason(code) {
+    const reasons = {
+      empty_answer:'AI 응답이 비어 있음',
+      private_instruction_leak:'내부 검증 지시가 사용자 답변에 노출됨',
+      verdict_direction:'계산 엔진의 결론 방향과 AI 결론이 충돌함',
+      derived_scope:'파생 사건 근거가 질문 본체의 성사로 확대됨',
+      invented_obstruction:'계산값에 없는 방해 요소가 추가됨',
+      out_of_orb_promotion:'유효 오브 밖 각이 성사 근거로 승격됨',
+      invented_probability:'계산값에 없는 확률 수치가 추가됨',
+      invented_timing:'질문·계산값에 없는 시기 수치가 추가됨',
+      prashna_averaging:'Horary와 Prashna가 부적절하게 합산·절충됨',
+      missing_evidence_labels:'핵심 판단의 근거 표기가 누락됨'
+    };
+    return reasons[String(code || '')] || '자동 검증 기준과 일치하지 않음';
+  }
+
   function safeHoldText(check) {
-    const reasons = (check?.violations || []).map(row => `- ${row.message}`).join('\n') || '- 자동 검증 기준 불일치';
+    const reasons = [...new Set((check?.violations || []).map(row => publicViolationReason(row.code)))]
+      .map(message => `- ${message}`).join('\n') || '- 자동 검증 기준 불일치';
     const engine = String(check?.engine || '').trim();
     const evidence = engine ? engine.slice(0, 2600) : '계산 결과는 화면의 Horary 결과를 기준으로 확인해줘.';
     return `### 한줄 결론\nAI 해설이 계산 엔진과의 자동 검증을 두 번 통과하지 못해 이번 해설은 보류했어. 계산 결과 자체는 변경되지 않았고, 검증되지 않은 추가 단정은 표시하지 않아.\n\n### 검증 사유\n${reasons}\n\n### 계산 엔진 근거\n근거: ${evidence}\n\n### 신뢰도와 불확실성\n검증 실패 답변 대신 deterministic Horary 계산값만 유지했어. 다시 AI 해석을 눌러 새 응답을 받을 수 있어.`;
