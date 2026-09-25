@@ -1,12 +1,13 @@
 'use strict';
 
-/* LUNEA ASTRO ORIGIN FAILOVER V57.3
+/* LUNEA ASTRO ORIGIN FAILOVER V57.4
    Stable-host adapter for the two official Astro Core origins.
-   - V2 preferred; legacy fallback.
+   - V2 preferred for shared core routes; full Docker service owns extended routes.
    - Health checks tolerate free-tier cold starts.
    - Calculation requests fail over once on network timeout / transient server failure.
    - POST compatibility 404/405 can fail over when one origin is behind the other.
-   - Successful calculation responses pin subsequent job polling to the same origin.
+   - Prashna / Vedic / Four Pillars / Astro jobs go to the full service first.
+   - Successful shared-core responses pin subsequent shared-core calls only.
    - Custom API URLs remain untouched.
    - no localStorage / IndexedDB writes. */
 (() => {
@@ -14,9 +15,12 @@
   if(W.__LUNEA_ASTRO_ORIGIN_FAILOVER_V57__||typeof W.fetch!=='function')return;
   W.__LUNEA_ASTRO_ORIGIN_FAILOVER_V57__=true;
 
-  const ORIGINS=Object.freeze(['https://lunea-astro-api-v2.onrender.com','https://lunea-astro-api.onrender.com']);
+  const V2='https://lunea-astro-api-v2.onrender.com';
+  const FULL='https://lunea-astro-api.onrender.com';
+  const ORIGINS=Object.freeze([V2,FULL]);
   const TRANSIENT=new Set([408,425,429,500,502,503,504]);
   const HEALTH_TIMEOUTS=[7000,15000];
+  const FULL_SERVICE_PATH=/^\/v1\/(?:prashna|vedic\/profile|profile\/four-pillars|jobs\/astro)(?:\/|$)/i;
   const nativeFetch=W.fetch.bind(W);
   let lastHealthyOrigin=null;
 
@@ -25,10 +29,12 @@
   const official=url=>ORIGINS.find(o=>url===o||url.startsWith(o+'/'))||'';
   const targetUrl=(original,target)=>{const u=new URL(original);return `${target}${u.pathname}${u.search}`};
   const requestMethod=(input,init)=>String(init?.method||input?.method||'GET').toUpperCase();
+  const requiresFullService=path=>FULL_SERVICE_PATH.test(String(path||''));
 
-  function orderedOrigins(originalUrl,isHealth){
+  function orderedOrigins(originalUrl,isHealth,path=''){
     if(isHealth)return ORIGINS.slice();
-    const first=lastHealthyOrigin||ORIGINS[0]||official(originalUrl);
+    if(requiresFullService(path))return [FULL,V2];
+    const first=lastHealthyOrigin||V2||official(originalUrl);
     return [first,...ORIGINS.filter(origin=>origin!==first)];
   }
 
@@ -42,7 +48,7 @@
 
   function compatibilityMiss(response,path,method){
     if(method!=='POST'||![404,405].includes(Number(response?.status)))return false;
-    return /^\/v1\/(?:jobs\/astro|horary|returns\/context|transits\/scan)\/?$/i.test(path);
+    return /^\/v1\//i.test(path);
   }
 
   async function runFetch(input,init,url,timeoutMs){
@@ -76,7 +82,7 @@
   }
 
   async function tryOrigins(input,init,originalUrl,{isHealth=false,path='',method='GET'}={}){
-    const origins=orderedOrigins(originalUrl,isHealth);
+    const origins=orderedOrigins(originalUrl,isHealth,path);
     const timeouts=isHealth?HEALTH_TIMEOUTS:calculationTimeouts(path);
     let lastResponse=null,lastError=null;
 
@@ -87,7 +93,7 @@
         lastResponse=response;
         const retryable=TRANSIENT.has(Number(response.status))||compatibilityMiss(response,path,method);
         if(!retryable){
-          if(response.ok)lastHealthyOrigin=origin;
+          if(response.ok&&!requiresFullService(path))lastHealthyOrigin=origin;
           return {done:true,response,origin};
         }
       }catch(error){
@@ -140,6 +146,8 @@
     for(const origin of ORIGINS)nativeFetch(`${origin}/health?t=${Date.now()}`,{method:'GET',cache:'no-store'}).catch(()=>{});
   },150);
 
-  W.LUNEA_ASTRO_ORIGIN_FAILOVER_V57=Object.freeze({version:'57.3',origins:ORIGINS.slice()});
-  console.info('✦ LUNEA Astro Origin Failover V57.3 active · calculation failover ON');
+  W.LUNEA_ASTRO_ORIGIN_FAILOVER_V57=Object.freeze({
+    version:'57.4',origins:ORIGINS.slice(),fullService:FULL,requiresFullService
+  });
+  console.info('✦ LUNEA Astro Origin Failover V57.4 active · capability routing ON');
 })();
