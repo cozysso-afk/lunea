@@ -6,7 +6,7 @@ const loader = fs.readFileSync(new URL('../lunea-astro-origin-failover-v57.js', 
 
 // Active build-scoped loader must own V44 delivery.
 assert.match(loader, /HORARY POST ACTIONS V44 LOADER/);
-assert.match(loader, /lunea-horary-post-actions-v44\.js\?v=440/);
+assert.match(loader, /lunea-horary-post-actions-v44\.js\?v=441/);
 
 // AI/copy are intercepted at capture phase and no longer depend solely on
 // closed-over Horary state handlers.

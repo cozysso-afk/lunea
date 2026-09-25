@@ -13,8 +13,11 @@ on:
       - 'lunea-horary-balance-guard-v41.js'
       - 'lunea-astro-origin-failover-v57.js'
       - 'lunea-horary-post-actions-v44.js'
+      - 'lunea-horary-mobile-actions-v45.js'
+      - 'lunea-prashna-v1.js'
       - 'lunea-cache-refresh-v1.js'
       - 'tests/*horary*.test.mjs'
+      - 'tests/*prashna*.test.mjs'
       - '.github/workflows/test-horary-main.yml'
   pull_request:
     branches: [main]
@@ -38,6 +41,8 @@ jobs:
           node --check lunea-horary-balance-guard-v41.js
           node --check lunea-astro-origin-failover-v57.js
           node --check lunea-horary-post-actions-v44.js
+          node --check lunea-horary-mobile-actions-v45.js
+          node --check lunea-prashna-v1.js
           node --check lunea-cache-refresh-v1.js
       - name: Horary regression contracts
         run: |
@@ -49,3 +54,4 @@ jobs:
           node tests/horary-balance-guard-v41.test.mjs
           node tests/horary-action-buttons-v43.test.mjs
           node tests/horary-post-actions-v44.test.mjs
+          node tests/horary-mobile-actions-v45.test.mjs
