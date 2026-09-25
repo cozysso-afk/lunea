@@ -212,3 +212,22 @@
   W.LUNEA_HORARY_ACTION_BUTTON_GUARD_V43=Object.freeze({version:'43.0',repair});
   console.info('✦ LUNEA Horary Action Button Guard V43 active');
 })();
+
+/* HORARY POST ACTIONS V44 LOADER
+   V57 is a build-scoped runtime owner, so load the repair layer from here. */
+(() => {
+  const W=window;
+  if(W.__LUNEA_HORARY_POST_ACTIONS_V44_LOADER__)return;
+  W.__LUNEA_HORARY_POST_ACTIONS_V44_LOADER__=true;
+  const load=()=>{
+    if(document.getElementById('luneaHoraryPostActionsV44Loader'))return;
+    const script=document.createElement('script');
+    script.id='luneaHoraryPostActionsV44Loader';
+    script.src='./lunea-horary-post-actions-v44.js?v=440';
+    script.async=false;
+    script.onerror=()=>console.error('[LUNEA] Horary Post Actions V44 failed to load');
+    (document.head||document.documentElement).appendChild(script);
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
+  else load();
+})();
