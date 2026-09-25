@@ -130,8 +130,8 @@
     const tokens = [];
     const patterns = [
       /\b\d{4}[-/.]\d{1,2}[-/.]\d{1,2}\b/g,
-      /\b\d{1,2}월\s*\d{1,2}일\b/g,
-      /\b\d+(?:\.\d+)?\s*(?:일|주|개월|달)\b/g
+      /\d{1,2}월\s*\d{1,2}일(?=$|[\s,.;!?])/g,
+      /\d+(?:\.\d+)?\s*(?:일|주|개월|달)(?=$|[\s,.;!?])/g
     ];
     for (const regex of patterns) {
       for (const match of source.matchAll(regex)) tokens.push(match[0].replace(/\s+/g, ''));
