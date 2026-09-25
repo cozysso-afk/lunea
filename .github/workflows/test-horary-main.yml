@@ -16,6 +16,7 @@ on:
       - 'lunea-horary-mobile-actions-v45.js'
       - 'lunea-horary-interpretation-engine-v47.js'
       - 'lunea-horary-interpretation-bridge-v47.js'
+      - 'lunea-horary-answer-validator-v48.js'
       - 'lunea-prashna-v1.js'
       - 'lunea-cache-refresh-v1.js'
       - 'tests/*horary*.test.mjs'
@@ -46,6 +47,7 @@ jobs:
           node --check lunea-horary-mobile-actions-v45.js
           node --check lunea-horary-interpretation-engine-v47.js
           node --check lunea-horary-interpretation-bridge-v47.js
+          node --check lunea-horary-answer-validator-v48.js
           node --check lunea-prashna-v1.js
           node --check lunea-cache-refresh-v1.js
       - name: Horary regression contracts
@@ -61,3 +63,4 @@ jobs:
           node tests/horary-mobile-actions-v45.test.mjs
           node tests/horary-interpretation-engine-v47.test.mjs
           node tests/horary-v2-golden-questions.test.mjs
+          node tests/horary-answer-validator-v48.test.mjs
