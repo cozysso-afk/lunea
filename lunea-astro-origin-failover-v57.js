@@ -223,11 +223,30 @@
     if(document.getElementById('luneaHoraryPostActionsV44Loader'))return;
     const script=document.createElement('script');
     script.id='luneaHoraryPostActionsV44Loader';
-    script.src='./lunea-horary-post-actions-v44.js?v=440';
+    script.src='./lunea-horary-post-actions-v44.js?v=441';
     script.async=false;
     script.onerror=()=>console.error('[LUNEA] Horary Post Actions V44 failed to load');
     (document.head||document.documentElement).appendChild(script);
   };
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
   else load();
+})();
+
+/* HORARY + PRASHNA MOBILE ACTION OWNER V45 LOADER
+   Uses a fresh URL on every V45 release so iOS/PWA cannot reuse the old action layer. */
+(() => {
+  const W=window;
+  if(W.__LUNEA_HORARY_MOBILE_ACTIONS_V45_LOADER__)return;
+  W.__LUNEA_HORARY_MOBILE_ACTIONS_V45_LOADER__=true;
+  const load=()=>{
+    if(document.getElementById('luneaHoraryMobileActionsV45Loader'))return;
+    const script=document.createElement('script');
+    script.id='luneaHoraryMobileActionsV45Loader';
+    script.src='./lunea-horary-mobile-actions-v45.js?v=450';
+    script.async=false;
+    script.onerror=()=>console.error('[LUNEA] Horary + Prashna Mobile Actions V45 failed to load');
+    (document.head||document.documentElement).appendChild(script);
+  };
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
+  else setTimeout(load,0);
 })();
