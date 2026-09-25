@@ -86,13 +86,39 @@
     return priorFetch(input, nextInit);
   };
 
+  function loadAnswerValidatorV48() {
+    if (typeof document === 'undefined') return false;
+    if (document.getElementById('luneaHoraryAnswerValidatorV48Loader')) return true;
+    const script = document.createElement('script');
+    script.id = 'luneaHoraryAnswerValidatorV48Loader';
+    let build = '';
+    try {
+      const src = document.currentScript?.src || '';
+      if (src) build = new URL(src, location.href).searchParams.get('v') || '';
+    } catch {}
+    script.src = `./lunea-horary-answer-validator-v48.js?v=${encodeURIComponent(build || '480')}`;
+    script.async = false;
+    script.onerror = () => console.error('[LUNEA] Horary Answer Validator V48 failed to load');
+    (document.head || document.documentElement).appendChild(script);
+    return true;
+  }
+
   W.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47 = Object.freeze({
-    version:'47.1',
+    version:'47.2',
     rewrite,
     isHoraryPrompt,
     qualityLockedPrompt,
     qualityLock:QUALITY_LOCK,
+    loadAnswerValidatorV48,
     markers:HORARY_MARKERS.slice()
   });
-  console.info('✦ LUNEA Horary Interpretation Bridge V47 active');
+
+  if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => setTimeout(loadAnswerValidatorV48, 0), {once:true});
+    } else {
+      setTimeout(loadAnswerValidatorV48, 0);
+    }
+  }
+  console.info('✦ LUNEA Horary Interpretation Bridge V47.2 active');
 })();
