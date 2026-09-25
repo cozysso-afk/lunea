@@ -11,7 +11,7 @@ assert.match(source, /profile\\\/four-pillars/);
 assert.match(source, /jobs\\\/astro/);
 assert.match(source, /if\(requiresFullService\(path\)\)return \[FULL,V2\]/);
 assert.match(source, /method!==\'POST\'\|\|!\[404,405\]\.includes/);
-assert.match(source, /return \^\\\/v1\\\//);
+assert.ok(source.includes('return /^\\/v1\\//i.test(path);'));
 assert.match(source, /if\(response\.ok&&!requiresFullService\(path\)\)lastHealthyOrigin=origin/);
 assert.match(source, /fullService:FULL/);
 
