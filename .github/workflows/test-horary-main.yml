@@ -60,3 +60,4 @@ jobs:
           node tests/horary-post-actions-v44.test.mjs
           node tests/horary-mobile-actions-v45.test.mjs
           node tests/horary-interpretation-engine-v47.test.mjs
+          node tests/horary-v2-golden-questions.test.mjs
