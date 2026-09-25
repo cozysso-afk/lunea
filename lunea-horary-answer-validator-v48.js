@@ -85,6 +85,12 @@
     ]) || section(prompt, '[HORARY V1 · 계산 결과]', ['\n[해석 원칙]', '\n[PRASHNA', '\n[출력]']);
   }
 
+  function questionBlock(prompt) {
+    return section(prompt, '[질문 원문]', [
+      '\n[질문 분류]', '\n[HORARY ENGINE RESULT', '\n[HORARY V1', '\n[절대 금지]'
+    ]);
+  }
+
   function familyKey(prompt) {
     const match = String(prompt || '').match(/-\s*family:\s*([a-z_]+)/i);
     return String(match?.[1] || 'general').toLowerCase();
@@ -160,6 +166,8 @@
     const value = String(answer || '').trim();
     const canonical = String(prompt || '');
     const engine = engineBlock(canonical);
+    const question = questionBlock(canonical);
+    const numericEvidence = `${question}\n${engine}`;
     const family = familyKey(canonical);
     const conclusion = conclusionBlock(value);
     const violations = [];
@@ -187,14 +195,14 @@
       violations.push({code:'out_of_orb_promotion', message:'유효 오브 밖 기하학적 각을 성사각/적용각으로 승격함'});
     }
 
-    const promptPercents = new Set(extractPercentTokens(canonical));
+    const promptPercents = new Set(extractPercentTokens(numericEvidence));
     for (const token of extractPercentTokens(value)) {
       if (!promptPercents.has(token)) {
         violations.push({code:'invented_probability', message:`엔진에 없는 확률 수치 생성: ${token}`});
       }
     }
 
-    const promptTimes = new Set(extractTimeTokens(canonical));
+    const promptTimes = new Set(extractTimeTokens(numericEvidence));
     for (const token of extractTimeTokens(value)) {
       if (!promptTimes.has(token)) {
         violations.push({code:'invented_timing', message:`질문/엔진에 없는 시기 수치 생성: ${token}`});
