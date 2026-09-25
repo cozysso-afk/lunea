@@ -21,6 +21,8 @@ assert.match(bridgeSource, /FINAL VERDICT LOCK · V2 QA/);
 assert.match(bridgeSource, /NO\/부정\/근거부족 판정을 reception·dignity·Moon 분위기만으로 YES\/긍정으로 올리지 마라/);
 assert.match(bridgeSource, /derived-event perfection만 유효하면 그 파생 사건만 긍정/);
 assert.match(bridgeSource, /PRIVATE SELF-CHECK · 출력 금지/);
+assert.match(bridgeSource, /lunea-horary-answer-validator-v48\.js/);
+assert.match(bridgeSource, /luneaHoraryAnswerValidatorV48Loader/);
 assert.match(loaderSource, /lunea-horary-interpretation-engine-v47\.js/);
 assert.match(loaderSource, /lunea-horary-interpretation-bridge-v47\.js/);
 assert.match(loaderSource, /script\.onload = \(\) => loadBuildScopedScript\('luneaHoraryInterpretationBridgeV47Loader'/);
@@ -63,6 +65,7 @@ const bridgeContext = {
   URL,
   window:null,
   structuredClone: globalThis.structuredClone,
+  setTimeout(fn){ fn(); return 0; },
   fetch: async (input, init) => { captured = {input, init}; return {ok:true}; },
   LUNEA_HORARY_INTERPRETATION_V47:{aiPrompt(){return 'LUNEA HORARY INTERPRETATION ENGINE V2\nNEW STRICT PROMPT';}}
 };
@@ -76,7 +79,7 @@ let sent = JSON.parse(captured.init.body);
 assert.ok(sent.contents[0].parts[0].text.startsWith('LUNEA HORARY INTERPRETATION ENGINE V2\nNEW STRICT PROMPT'));
 assert.match(sent.contents[0].parts[0].text, /\[FINAL VERDICT LOCK · V2 QA\]/);
 assert.match(sent.contents[0].parts[0].text, /staged\/authoritative verdict와 최종 한줄 결론의 방향이 같은가/);
-assert.equal(bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.version, '47.1');
+assert.equal(bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.version, '47.2');
 
 const lockedOnce = bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.qualityLockedPrompt(sent.contents[0].parts[0].text);
 assert.equal((lockedOnce.match(/\[FINAL VERDICT LOCK · V2 QA\]/g) || []).length, 1, 'quality lock must not duplicate');
