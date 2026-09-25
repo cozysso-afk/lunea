@@ -200,7 +200,6 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
       const text = String(data?.candidates?.[0]?.content?.parts?.[0]?.text || '').trim();
       if (!text) throw new Error('AI 응답이 비어 있어.');
       if (output) output.textContent = text;
-      await repairLatestHoraryArchive({forceAI:text});
     } catch (error) {
       if (output) output.textContent = `AI 해석 실패: ${error?.message || error}`;
     } finally {
@@ -323,7 +322,7 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
     }
   }
 
-  async function repairLatestHoraryArchive({forceAI=''}={}) {
+  async function repairLatestHoraryArchive() {
     const rows = readArchive();
     const q = currentQuestion();
     let index = rows.findIndex(row => isHorary(row) && (!q || clean(row?.q) === q));
@@ -336,7 +335,7 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
         q:q,
         rationale:'질문을 처음 명확하게 이해한 시각과 장소의 Tropical · Regiomontanus 차트',
         cards:[],
-        ai:forceAI || currentAIText(),
+        ai:currentAIText(),
         category:categoryFor(q),
         horary:{version:44,screenSnapshot:archiveSnapshot()}
       });
@@ -348,7 +347,7 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
     reading.cards = Array.isArray(reading.cards) ? reading.cards : [];
     const runtime = archiveSnapshot();
     reading.horaryRuntimeV44 = runtime;
-    const ai = forceAI || currentAIText();
+    const ai = currentAIText();
     if (ai) reading.ai = ai;
     rows[index] = reading;
     writeArchive(rows);
