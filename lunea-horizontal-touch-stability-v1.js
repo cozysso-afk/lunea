@@ -133,6 +133,24 @@
   (document.head || document.documentElement).appendChild(script);
 })();
 
+// V46 restores card artwork that Horary V44 could mistakenly suppress when a
+// Tarot/Daily reading carried auxiliary Horary data. It intentionally runs as a
+// separate, late presentation repair layer so card and calculation data stay untouched.
+(() => {
+  if (window.__LUNEA_ARCHIVE_CARD_RESTORE_V46__) return;
+  if (document.getElementById('luneaArchiveCardRestoreV46Loader')) return;
+  const script = document.createElement('script');
+  script.id = 'luneaArchiveCardRestoreV46Loader';
+  let build = '';
+  try {
+    build = new URL(document.currentScript?.src || '', location.href).searchParams.get('v') || '';
+  } catch {}
+  script.src = `./lunea-archive-card-restore-v46.js?v=${encodeURIComponent(build || Date.now())}`;
+  script.async = false;
+  script.onerror = () => console.info('[LUNEA archive card restore V46] loader skipped');
+  (document.head || document.documentElement).appendChild(script);
+})();
+
 // Lenormand archive V2 removes the duplicate fifth action button and repairs
 // the iPhone archive interaction state after Journal V2 renders.
 (() => {
