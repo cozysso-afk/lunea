@@ -36,7 +36,7 @@ const PRASHNA_FIXTURE = {
     lagna:{rashi:'Kanya',rashi_ko:'처녀자리',degree:8.2,nakshatra:{name:'Uttara Phalguni',pada:4}},
     planets:{
       Moon:{rashi:'Kumbha',rashi_ko:'물병자리',degree:4.1,nakshatra:{name:'Dhanishta',pada:4}},
-      Sun:{rashi:'Kanya',rashi_ko:'처녀자리',degree:9.5},
+      Sun:{rashi:'Kanya',rashi_ko:'처녀자리',degree:9.5}
     }
   },
   panchanga:{
@@ -124,8 +124,11 @@ async function makePage(browser, {seedNatal=false}={}) {
 
 async function testHoraryPrashna(browser) {
   const {context,page,dialogs,pageErrors}=await makePage(browser);
-  await page.waitForSelector('#horaryStandaloneItem');
-  await page.locator('#horaryStandaloneItem').click({force:true});
+  const horaryTile=page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="horary"]');
+  await horaryTile.waitFor({state:'visible'});
+  await horaryTile.click();
+  await page.waitForSelector('#horaryStandaloneItem',{state:'visible'});
+  await page.locator('#horaryStandaloneItem').click();
   await page.waitForSelector('#astroHoraryOverlay.show');
   await page.locator('#astroHoraryQuestion').fill('그 사람이 나에게 먼저 연락할까요?');
   await page.locator('#astroHoraryMoment').fill('2026-09-26T18:30');
@@ -170,8 +173,9 @@ async function testHoraryPrashna(browser) {
 
 async function testThai(browser) {
   const {context,page,pageErrors}=await makePage(browser,{seedNatal:true});
-  await page.waitForSelector('#luneaThaiHomeTileV24',{timeout:25000});
-  await page.locator('#luneaThaiHomeTileV24').click({force:true});
+  const thaiTile=page.locator('#luneaHomePortalV8 .lunea-thai-home-tile');
+  await thaiTile.waitFor({state:'visible',timeout:25000});
+  await thaiTile.click();
   await page.waitForSelector('#luneaThaiStandaloneOverlay.show');
   await page.locator('#luneaThaiStandaloneRun').click();
   await page.waitForFunction(() => document.getElementById('luneaThaiStandaloneStatus')?.textContent?.includes('계산 완료'));
@@ -181,7 +185,7 @@ async function testThai(browser) {
   assert.equal(stored?.result?.birth?.ruler?.key,'Venus');
 
   await page.locator('#luneaThaiStandaloneClose').click();
-  await page.locator('#luneaThaiHomeTileV24').click({force:true});
+  await thaiTile.click();
   await page.waitForFunction(() => document.getElementById('luneaThaiStandaloneStatus')?.textContent?.includes('다시 불러왔어'));
   assert.match(await page.locator('#luneaThaiStandaloneResult').innerText(),/금요일|스리/);
   assert.equal(pageErrors.length,0,`Thai page errors:\n${pageErrors.join('\n')}`);
