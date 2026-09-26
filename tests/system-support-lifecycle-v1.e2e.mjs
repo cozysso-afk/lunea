@@ -149,7 +149,8 @@ async function testHoraryPrashna(browser) {
   await page.locator('#astroHoraryCopy').click();
   await page.waitForFunction(() => String(window.__LUNEA_E2E_CLIPBOARD__ || '').includes('LUNEA · HORARY'));
   const copied = await page.evaluate(() => window.__LUNEA_E2E_CLIPBOARD__ || '');
-  assert.match(copied,/질문: 그 사람이 나에게 먼저 연락할까요/);
+  assert.match(copied,/\[질문\]\s*그 사람이 나에게 먼저 연락할까요\?/);
+  assert.match(copied,/\[PRASHNA · 독립 교차계산\]/);
 
   await page.locator('#astroHorarySave').click();
   await page.waitForFunction(() => {
