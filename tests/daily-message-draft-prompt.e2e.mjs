@@ -35,9 +35,13 @@ await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.
   status:200, contentType:'application/json', headers:{'access-control-allow-origin':'*'}, body:JSON.stringify({ok:true})
 }));
 
+// Keep reload meaningful: clear storage only on the first document. window.name
+// survives same-tab reloads, so the saved draft/lock remain available on reopen.
 await page.addInitScript(() => {
+  if (window.name === '__lunea_daily_message_e2e_initialized__') return;
   try { localStorage.clear(); } catch {}
   try { sessionStorage.clear(); } catch {}
+  window.name = '__lunea_daily_message_e2e_initialized__';
 });
 
 function stateSnapshot() {
@@ -148,10 +152,31 @@ try {
   assert.ok(beforeReload.prompt.includes(MESSAGE_MARKER), 'current Daily AI prompt must include Message Oracle before reload');
   assert.ok(beforeReload.prompt.includes('카드:') && beforeReload.prompt.includes('Sun'), 'prompt must carry the real Message Oracle card evidence');
 
-  // Simulate PWA/browser termination and reopen. DAILY ORBIT boot should choose
-  // the exact autosaved draft because its six locked cards match today's lock.
+  // Simulate PWA/browser termination and reopen. Reopen itself should preserve
+  // local draft/lock data; the actual product UX restores it when the user taps
+  // "오늘의 카드 다시 보기" (or the generic draft Resume action).
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => document.readyState === 'complete');
+  await page.waitForFunction(() =>
+    !!window.LUNEA_DAILY_ORBIT6_V21 &&
+    !!window.LUNEA_READING_DRAFT_V1 &&
+    document.getElementById('dailyBtn')?.dataset?.dailyLocked === '1'
+  , null, {timeout:25000});
+
+  const persistedAfterReload = await page.evaluate(() => {
+    const parse = key => { try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch { return null; } };
+    return {
+      daily:parse('LUNEA_DAILY_ORBIT_V1'),
+      draft:parse('LUNEA_LAST_READING_DRAFT_V1'),
+      buttonText:document.getElementById('dailyBtn')?.textContent || ''
+    };
+  });
+  assert.equal(persistedAfterReload.daily?.drawn?.length, 6, 'Daily lock must survive PWA/browser reopen');
+  assert.equal(persistedAfterReload.draft?.drawn?.length, 6, 'temporary reading draft must survive PWA/browser reopen');
+  assert.equal(persistedAfterReload.draft?.attachments?.messageOracle?.data?.cardCode, 'Sun', 'Message Oracle draft attachment must survive reopen before restore');
+  assert.match(persistedAfterReload.buttonText, /다시 보기/, 'Daily home action must expose the locked-reading restore path');
+
+  await page.locator('#dailyBtn').click();
   await page.waitForFunction(({question, codes}) => {
     let s = null;
     try { s = state; } catch { s = window.state || null; }
