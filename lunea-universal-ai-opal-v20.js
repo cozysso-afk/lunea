@@ -367,8 +367,10 @@
           else W.LUNEA_SPREAD_LEARNING_V1?.record?.(confirmed.__luneaLearningCorrection);
         }
 
-        const now = getState();
-        if (now) now.__luneaUniversalAI = false;
+        // Do not clear the sheet-entry mode here. A wrapped startSpread can settle
+        // after the user has already opened the next AI sheet; writing false then
+        // corrupts that next selection and reuses the previous reading. Entry
+        // clicks (and the manual lifecycle owner) are the sole mode writers.
       } catch (error) {
         console.error('[LUNEA V20] universal AI spread failed', error);
         if (sessionCurrent(mySession)) alert('AI 맞춤 배열을 만드는 중 오류가 났어. 질문 내용은 그대로 유지돼.');

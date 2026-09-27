@@ -95,6 +95,7 @@ assert.match(universal, /function hydrateCategoryEntries/);
 assert.match(universal, /function nextPaint/);
 assert.match(universal, /setTimeout\(finish, 120\)/);
 assert.match(universal, /async function yieldForAiStart/);
+assert.ok(!/now\.__luneaUniversalAI\s*=\s*false/.test(universal), 'settled AI render must not clear a newer sheet entry mode');
 assert.match(universal, /const started = start\(/);
 assert.match(universal, /await Promise\.resolve\(started\)/);
 assert.match(universal, /__luneaLearningCorrection/);

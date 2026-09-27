@@ -82,6 +82,32 @@ const VEDIC_FIXTURE = {
   provenance:{engine:'Swiss Ephemeris',ayanamsha:'Lahiri',node_policy:'true',panchanga_vara_boundary:'civil_midnight_v1'}
 };
 
+const installApiFixtureBoundary = page => page.evaluate(fixtures => {
+  const previousFetch = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+    const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
+    const path = (() => { try { return new URL(url, location.href).pathname; } catch { return ''; } })();
+    if (/\/health\/?$/i.test(path)) {
+      return Promise.resolve(new Response(JSON.stringify({ok:true}), {
+        status:200,
+        headers:{'Content-Type':'application/json'}
+      }));
+    }
+    const fixture = path === '/v1/horary' ? fixtures.horary
+      : path === '/v1/prashna' ? fixtures.prashna
+      : path === '/v1/thai/taksa' ? fixtures.thai
+      : path === '/v1/vedic/profile' ? fixtures.vedic
+      : null;
+    if (fixture) {
+      return Promise.resolve(new Response(JSON.stringify(fixture), {
+        status:200,
+        headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}
+      }));
+    }
+    return previousFetch(input, init);
+  };
+}, {horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE});
+
 async function makePage(browser, {seedNatal=false}={}) {
   const context = await browser.newContext({
     viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:3,
@@ -154,31 +180,7 @@ async function makePage(browser, {seedNatal=false}={}) {
   // Install the deterministic API boundary after every runtime fetch wrapper has
   // settled. This preserves the app's real fetch/Response contract while keeping
   // late origin-failover wrappers from bypassing WebKit context routing.
-  await page.evaluate(fixtures => {
-    const previousFetch = window.fetch.bind(window);
-    window.fetch = (input, init) => {
-      const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
-      const path = (() => { try { return new URL(url, location.href).pathname; } catch { return ''; } })();
-      if (/\/health\/?$/i.test(path)) {
-        return Promise.resolve(new Response(JSON.stringify({ok:true}), {
-          status:200,
-          headers:{'Content-Type':'application/json'}
-        }));
-      }
-      const fixture = path === '/v1/horary' ? fixtures.horary
-        : path === '/v1/prashna' ? fixtures.prashna
-        : path === '/v1/thai/taksa' ? fixtures.thai
-        : path === '/v1/vedic/profile' ? fixtures.vedic
-        : null;
-      if (fixture) {
-        return Promise.resolve(new Response(JSON.stringify(fixture), {
-          status:200,
-          headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}
-        }));
-      }
-      return previousFetch(input, init);
-    };
-  }, {horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE});
+  await installApiFixtureBoundary(page);
   return {context,page,dialogs,pageErrors};
 }
 
@@ -265,6 +267,11 @@ async function testVedic(browser) {
   await page.locator('#birthPlace').fill('Seoul');
   await page.locator('#cpv4VedicTab').click();
   await page.waitForSelector('#vedicV1Calc');
+  // The profile bundle can finish installing one last fetch adapter after the
+  // general UI-ready gate. Reassert the deterministic boundary at the exact
+  // external interaction point so Vedic exercises its real click/render/cache
+  // lifecycle without reaching Render.
+  await installApiFixtureBoundary(page);
   await page.locator('#vedicV1Calc').click();
   await page.waitForFunction(() => document.getElementById('vedicV1Status')?.textContent?.includes('계산 완료'));
   assert.match(await page.locator('#vedicV1Result').innerText(),/LAGNA|Kanya|Dhanishta/);
