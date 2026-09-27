@@ -5,6 +5,7 @@ const BASE_URL=process.env.LUNEA_E2E_URL||'http://127.0.0.1:4173/index.html';
 const browser=await webkit.launch({headless:true});
 const context=await browser.newContext({
   viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:3,locale:'ko-KR',
+  serviceWorkers:'block',
   userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
 });
 const page=await context.newPage();
@@ -117,7 +118,7 @@ try{
   assert.equal(pre.savedOracle?.cards?.[0]?.code,'O01','old 120ms save window must preserve O01 while runtime is late');
 
   await page.evaluate(()=>window.__LUNEA_E2E_HELD_ORACLE_RUNTIME__?.release?.());
-  await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',{timeout:15000});
+  await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.6',{timeout:15000});
   await page.waitForFunction(()=>window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__!==true,{timeout:15000});
   await page.waitForTimeout(180);
 
@@ -142,7 +143,7 @@ try{
   console.log('POST_RELEASE',JSON.stringify({post,pageErrors,consoleErrors,dialogs},null,2));
 
   assert.deepEqual(pageErrors,[],`page errors after Oracle release:\n${pageErrors.join('\n')}`);
-  assert.equal(post.version,'36.5',`Oracle UI failed to boot: ${JSON.stringify(post)}`);
+  assert.equal(post.version,'36.6',`Oracle UI failed to boot: ${JSON.stringify(post)}`);
   assert.equal(post.methods.serialize,'function');
   assert.equal(post.methods.restore,'function');
   assert.deepEqual(post.oracleCodes,['O01'],'late runtime must restore exact O01 rather than redraw');
