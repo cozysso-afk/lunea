@@ -243,6 +243,15 @@
     script.id = 'luneaPrashnaV1Loader';
     script.src = `./lunea-prashna-v1.js?v=${encodeURIComponent(version)}`;
     script.async = false;
+    script.onload = () => {
+      if (document.getElementById('luneaHoraryPrashnaCrossV2Loader')) return;
+      const cross = document.createElement('script');
+      cross.id = 'luneaHoraryPrashnaCrossV2Loader';
+      cross.src = `./lunea-horary-prashna-cross-v2.js?v=${encodeURIComponent(version)}`;
+      cross.async = false;
+      cross.onerror = () => console.info('[LUNEA] Horary Prashna Cross V2 skipped');
+      (document.head || document.documentElement).appendChild(cross);
+    };
     script.onerror = () => console.info('[LUNEA] Prashna V1 UI skipped');
     (document.head || document.documentElement).appendChild(script);
   }
@@ -264,6 +273,7 @@
   const priorFetch = W.fetch.bind(W);
   const HORARY_MARKER = '[HORARY V1 · 질문시각 점성술 계산 결과]';
   const PRASHNA_MARKER = '[PRASHNA V1 · 독립 질문시각 Jyotisha 계산]';
+  const CROSS_V2_MARKER = '[HORARY ↔ PRASHNA CROSS INTERPRETATION V2 · AUTHORITATIVE]';
   const CROSS_RULES = `[HORARY ↔ PRASHNA 교차 원칙]\n1. Horary와 Prashna를 먼저 서로 독립적으로 해석한다.\n2. Horary의 Perfection·Reception·VOC·개입각 규칙을 Prashna 판정처럼 재사용하지 않는다.\n3. Prashna의 support band는 LUNEA_PRASHNA_RULESET_V1 내부 구조값이며 Horary 결론을 덮어쓰지 않는다.\n4. 두 체계가 같은 방향이면 '교차 보조'라고만 표현하고, 다른 방향이면 '체계 간 충돌'을 명시한다.\n5. 한 체계의 약한 근거를 다른 체계의 강한 근거인 것처럼 합산하지 않는다.\n6. 질문·시각·장소가 일치하지 않는 Prashna 결과는 사용하지 않는다.\n7. 제공되지 않은 행성 위치·하우스·각·날짜를 새로 만들지 않는다.`;
 
   function rewriteHoraryAI(init) {
@@ -272,7 +282,7 @@
       const payload = JSON.parse(init.body);
       const part = payload?.contents?.[0]?.parts?.[0];
       const text = String(part?.text || '');
-      if (!text.includes(HORARY_MARKER) || text.includes(PRASHNA_MARKER)) return init;
+      if (!text.includes(HORARY_MARKER) || text.includes(PRASHNA_MARKER) || text.includes(CROSS_V2_MARKER)) return init;
       const block = String(W.LUNEA_PRASHNA_V1?.promptBlock?.() || '').trim();
       if (!block) return init;
       const next = structuredClone(payload);
@@ -298,6 +308,6 @@
   };
 
   W.LUNEA_HORARY_PRASHNA_AI_BRIDGE_V1 = Object.freeze({
-    version:'1.0', rewriteHoraryAI, HORARY_MARKER, PRASHNA_MARKER
+    version:'1.1', rewriteHoraryAI, HORARY_MARKER, PRASHNA_MARKER, CROSS_V2_MARKER
   });
 })();

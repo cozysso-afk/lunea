@@ -38,6 +38,8 @@
   }
 
   function prashnaText() {
+    const cross = String(W.LUNEA_HORARY_PRASHNA_CROSS_V2?.promptBlock?.() || '').trim();
+    if (cross) return cross;
     const block = String(W.LUNEA_PRASHNA_V1?.promptBlock?.() || '').trim();
     return block;
   }
@@ -214,7 +216,7 @@
 `- 마음은 긍정인데 행동근거가 약하면 그 모순을 그대로 쓴다. 행동근거는 있는데 reception이 약하면 “행동 가능성은 있으나 정서적 동기/지속성은 약할 수 있음”처럼 분리한다.\n\n` +
 `[근거 표기]\n` +
 `각 핵심 판단에는 바로 뒤에 “근거:”를 붙여 화면에 실제 있는 엔진 라벨/문구를 짧게 적어라. 없는 근거를 보충하지 마라.\n\n` +
-`${prashna ? `[Horary ↔ Prashna 교차]\nHorary를 먼저 독립적으로 결론낸 뒤 Prashna를 별도로 요약한다. 방향이 같으면 “교차 보조”, 다르면 “체계 간 충돌”이라고 쓰고 왜 다른지 근거를 분리한다.\n\n` : ''}` +
+`${prashna ? `[Horary ↔ Prashna 교차]\nHorary를 먼저 독립적으로 결론낸 뒤 Prashna를 별도로 요약한다. Cross V2의 relationship·agreements·conflicts를 authoritative comparison으로 사용하고, 일치·체계 간 충돌·이유·불확실성을 분리한다. 두 체계의 등급이나 점수를 합치거나 어느 한쪽을 선택하지 않는다.\n\n` : ''}` +
 `[출력 형식]\n${outputContract(family, !!prashna)}\n\n` +
 `문장은 한국어로 간결하게 쓴다. 전문용어 뒤에는 짧은 쉬운 설명을 붙인다. 최종 결론은 질문 원문에 직접 답하되, 근거가 약하면 단정하지 않는다.`;
   }

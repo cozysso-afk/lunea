@@ -45,6 +45,14 @@
     return String(node?.innerText || node?.textContent || '').trim();
   }
 
+  function crossText() {
+    return String(W.LUNEA_HORARY_PRASHNA_CROSS_V2?.copyText?.() || '').trim();
+  }
+
+  function crossPromptBlock() {
+    return String(W.LUNEA_HORARY_PRASHNA_CROSS_V2?.promptBlock?.() || '').trim();
+  }
+
   function currentAIText() {
     const node = aiNode();
     if (!node?.classList.contains('show')) return '';
@@ -105,6 +113,8 @@
     ];
     const p = prashnaText();
     if (p) lines.push('', '[PRASHNA · 독립 교차계산]', p);
+    const cross = crossText();
+    if (cross) lines.push('', '[HORARY ↔ PRASHNA · CROSS V2]', cross);
     const ai = currentAIText();
     if (ai) lines.push('', '[AI 해석]', ai);
     return lines.join('\n');
@@ -130,7 +140,7 @@
   function aiPrompt() {
     const result = resultText();
     if (!result) return '';
-    const prashna = prashnaText();
+    const prashna = crossPromptBlock() || prashnaText();
     return `당신은 LUNEA의 전통 Horary(호라리·질문시각 점성술) 해석자다.
 아래 화면에 표시된 계산값은 엔진이 이미 확정했다. 계산값을 수정하거나 새 행성 위치·하우스·각·날짜를 만들지 마라.
 
@@ -249,12 +259,15 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
   }
 
   function archiveSnapshot() {
+    const cross = W.LUNEA_HORARY_PRASHNA_CROSS_V2?.archiveSnapshot?.() || null;
     return {
       resultText: resultText(),
       prashnaText: prashnaText(),
       moment: currentMoment(),
       place: currentPlace(),
-      topic: currentTopic()
+      topic: currentTopic(),
+      prashna_v1:cross?.prashna_v1 || null,
+      cross_interpretation_v2:cross?.cross_interpretation_v2 || null
     };
   }
 
