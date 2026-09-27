@@ -227,7 +227,30 @@ try {
     }
 
     await page.waitForSelector('#spreadOverlay.show', {timeout:18000});
-    if (run.mode === 'ai') await page.waitForFunction(() => !document.getElementById('drawBtn')?.disabled);
+    if (run.mode === 'ai') {
+      try {
+        await page.waitForFunction(() => !document.getElementById('drawBtn')?.disabled);
+      } catch (error) {
+        const diagnostic = await page.evaluate(() => {
+          let readingState = null;
+          try { readingState = state; } catch {}
+          return {
+            visibility:document.visibilityState,
+            session:document.documentElement.dataset.luneaReadingSession || '',
+            drawDisabled:!!document.getElementById('drawBtn')?.disabled,
+            drawLabel:document.getElementById('drawLabel')?.textContent || '',
+            previewVisible:document.getElementById('luneaV20PreviewOverlay')?.classList.contains('show') || false,
+            spreadVisible:document.getElementById('spreadOverlay')?.classList.contains('show') || false,
+            cardChildren:document.getElementById('cards')?.children?.length ?? -1,
+            cardWrappers:document.querySelectorAll('#cards .tarot-card-wrapper').length,
+            stateDrawn:Array.isArray(readingState?.drawn) ? readingState.drawn.length : -1,
+            stateQuestion:readingState?.question || '',
+            runtimeV60:window.LUNEA_RUNTIME_REGRESSION_V60?.getState?.() || null,
+          };
+        });
+        throw new Error(`run ${i + 1}: AI draw lock did not release\n${JSON.stringify(diagnostic, null, 2)}\n${error.message}`);
+      }
+    }
 
     const after = await snapshot();
     const expectedSession = before.session + 1;
