@@ -4,6 +4,7 @@ import { webkit } from 'playwright';
 
 const BASE_URL = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
 const BUILD = JSON.parse(readFileSync(new URL('../lunea-build.json', import.meta.url), 'utf8')).version;
+const TINY_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+ZKCZAAAAAElFTkSuQmCC','base64');
 
 // This sequence intentionally crosses sectors and modes in one long-lived WebKit
 // page. The bug under test is global reading lifecycle corruption after reading #1,
@@ -59,6 +60,13 @@ await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill
 }));
 await context.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route =>
   route.fulfill({status:204, body:''})
+);
+// Card backs use per-render cache-busting URLs and are large enough to exhaust
+// headless WebKit's image process during this deliberate 10-reading soak. Pixel
+// rendering is outside this state/DOM lifecycle test, so keep the <img> contract
+// while isolating decoding to one deterministic fixture.
+await context.route(/\/(?:back_(?:general|career|stock|love)\.PNG|tarot_back_[^/?]+\.jpe?g)(?:\?|$)/i, route =>
+  route.fulfill({status:200, contentType:'image/png', body:TINY_PNG})
 );
 // Background Astro health warming is unrelated to card lifecycle and otherwise
 // produces local-origin CORS noise in WebKit. Keep the boot probe deterministic.
