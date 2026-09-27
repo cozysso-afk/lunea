@@ -83,7 +83,7 @@ const VEDIC_FIXTURE = {
 async function makePage(browser, {seedNatal=false}={}) {
   const context = await browser.newContext({
     viewport:{width:393,height:852},isMobile:true,hasTouch:true,deviceScaleFactor:3,
-    locale:'ko-KR',userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
+    locale:'ko-KR',serviceWorkers:'block',userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
   });
   const page = await context.newPage();
   page.setDefaultTimeout(20000);
@@ -107,14 +107,14 @@ async function makePage(browser, {seedNatal=false}={}) {
     } catch {}
   }, {seedNatal});
 
-  await page.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'e2e-system-lifecycle-v1'})}));
-  await page.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));
-  await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route => route.fulfill({status:204,body:''}));
-  await page.route(/\/health(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));
-  await page.route(/\/v1\/horary(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(HORARY_FIXTURE)}));
-  await page.route(/\/v1\/prashna(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(PRASHNA_FIXTURE)}));
-  await page.route(/\/v1\/thai\/taksa(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(THAI_FIXTURE)}));
-  await page.route(/\/v1\/vedic\/profile(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(VEDIC_FIXTURE)}));
+  await context.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'e2e-system-lifecycle-v1'})}));
+  await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));
+  await context.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route => route.fulfill({status:204,body:''}));
+  await context.route(/\/health(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));
+  await context.route(/\/v1\/horary(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(HORARY_FIXTURE)}));
+  await context.route(/\/v1\/prashna(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(PRASHNA_FIXTURE)}));
+  await context.route(/\/v1\/thai\/taksa(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(THAI_FIXTURE)}));
+  await context.route(/\/v1\/vedic\/profile(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(VEDIC_FIXTURE)}));
 
   await page.goto(BASE_URL,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => document.readyState === 'complete');
