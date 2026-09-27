@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { webkit } from 'playwright';
 
 const BASE_URL = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
+const BUILD = JSON.parse(readFileSync(new URL('../lunea-build.json', import.meta.url), 'utf8')).version;
 
 const HORARY_FIXTURE = {
   schema:'LUNEA_HORARY_V1',
@@ -124,7 +126,7 @@ async function makePage(browser, {seedNatal=false}={}) {
     }
   }, {seedNatal});
 
-  await context.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'e2e-system-lifecycle-v1'})}));
+  await context.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:BUILD})}));
   await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));
   await context.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route => route.fulfill({status:204,body:''}));
   await context.route('**/health**', route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));

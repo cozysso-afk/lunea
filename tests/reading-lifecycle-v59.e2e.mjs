@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { webkit } from 'playwright';
 
 const BASE_URL = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
-const BUILD = 'fc71ade9bd12';
+const BUILD = JSON.parse(readFileSync(new URL('../lunea-build.json', import.meta.url), 'utf8')).version;
 
 // This sequence intentionally crosses sectors and modes in one long-lived WebKit
 // page. The bug under test is global reading lifecycle corruption after reading #1,
@@ -71,6 +72,22 @@ await context.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => rou
 await page.addInitScript(() => {
   try { localStorage.clear(); } catch {}
   try { sessionStorage.clear(); } catch {}
+
+  // Keep page-realm warm-up probes deterministic too. WebKit can dispatch
+  // these before context routing is fully active during a document boot.
+  const nativeFetch = window.fetch?.bind(window);
+  if (nativeFetch) {
+    window.fetch = (input, init) => {
+      const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
+      if (/\/health(?:[?#]|$)/i.test(url)) {
+        return Promise.resolve(new Response(JSON.stringify({ok:true}), {
+          status:200,
+          headers:{'Content-Type':'application/json'}
+        }));
+      }
+      return nativeFetch(input, init);
+    };
+  }
 });
 
 async function openEntry(run) {
