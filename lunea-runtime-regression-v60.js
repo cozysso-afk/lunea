@@ -10,6 +10,10 @@
      keep the reading overlay visible while V20 yields across paint frames before
      startSpread. This removes the temporary Home-screen exposure that can occur
      between preview close and card render, especially on repeated STOCK AI runs.
+     Once the confirmed card render actually starts, release V20's draw-button
+     busy lock as well. Some legacy startSpread wrappers return long-lived promises;
+     keeping the hidden sheet button disabled until those promises settle can make
+     the next AI reading look frozen even though the cards already rendered.
 
   2) Horary modal re-entry:
      closing the Horary overlay does not cancel the request, but the legacy
@@ -24,11 +28,12 @@
   if (W.__LUNEA_RUNTIME_REGRESSION_V60__) return;
   W.__LUNEA_RUNTIME_REGRESSION_V60__ = true;
 
-  const RELEASE = '60.0';
+  const RELEASE = '60.1';
   const $ = id => document.getElementById(id);
   const clean = value => String(value || '').replace(/\s+/g, ' ').trim();
 
   let aiEpoch = 0;
+  let aiMutationEpoch = 0;
   let horaryPreservePending = false;
   let horaryWasVisible = false;
   let horaryObserver = null;
@@ -52,10 +57,22 @@
     return status;
   }
 
-  function settleAiTransitionIfDrawn() {
-    if (!$('cards')?.children?.length) return false;
+  function releaseAiDrawLock() {
+    const draw = $('drawBtn');
+    if (draw?.disabled) draw.disabled = false;
+    const label = $('drawLabel');
+    if (label && /설계\s*중/.test(clean(label.textContent))) {
+      label.textContent = '질문 분석 & 맞춤 배열 설계';
+    }
+  }
+
+  function settleAiTransitionIfDrawn(fromMutation = false) {
+    if (fromMutation) aiMutationEpoch = aiEpoch;
+    if (!aiEpoch || aiMutationEpoch !== aiEpoch || !$('cards')?.children?.length) return false;
     const status = $('luneaAiTransitionStatusV60');
+    const transitionActive = !!status && status.style.display !== 'none';
     if (status) status.style.display = 'none';
+    if (transitionActive) releaseAiDrawLock();
     return true;
   }
 
@@ -68,6 +85,7 @@
     if (!preview?.classList.contains('show') || !spread) return;
 
     const epoch = ++aiEpoch;
+    aiMutationEpoch = 0;
     const question = clean($('question')?.value || '');
     const title = clean($('luneaV20PreviewTitle')?.value || $('spreadType')?.textContent || '') || '질문 맞춤 배열';
 
@@ -101,7 +119,7 @@
   function installCardsObserver() {
     const cards = $('cards');
     if (!cards || cardsObserver) return !!cards;
-    cardsObserver = new MutationObserver(settleAiTransitionIfDrawn);
+    cardsObserver = new MutationObserver(() => settleAiTransitionIfDrawn(true));
     cardsObserver.observe(cards, {childList:true});
     return true;
   }
@@ -173,8 +191,8 @@
   W.LUNEA_RUNTIME_REGRESSION_V60 = Object.freeze({
     version: RELEASE,
     install,
-    getState: () => ({aiEpoch, horaryPreservePending})
+    getState: () => ({aiEpoch, aiMutationEpoch, horaryPreservePending})
   });
 
-  console.info('✦ LUNEA Runtime Regression V60 loaded · AI transition + Horary re-entry guarded');
+  console.info('✦ LUNEA Runtime Regression V60.1 loaded · AI transition lock + Horary re-entry guarded');
 })();
