@@ -94,7 +94,7 @@ async function makePage(browser, {seedNatal=false}={}) {
   const pageErrors=[];
   page.on('pageerror', e => pageErrors.push(String(e?.stack || e)));
 
-  await page.addInitScript(({seedNatal}) => {
+  await page.addInitScript(({seedNatal, fixtures}) => {
     try {
       localStorage.setItem('LUNEA_ASTRO_API_URL','https://e2e.invalid');
       localStorage.setItem('LUNEA_API_KEY','e2e-key');
@@ -115,16 +115,28 @@ async function makePage(browser, {seedNatal=false}={}) {
     if (nativeFetch) {
       window.fetch = (input, init) => {
         const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
-        if (/\/health(?:[?#]|$)/i.test(url)) {
+        const path = (() => { try { return new URL(url, location.href).pathname; } catch { return ''; } })();
+        if (/\/health\/?$/i.test(path)) {
           return Promise.resolve(new Response(JSON.stringify({ok:true}), {
             status:200,
             headers:{'Content-Type':'application/json'}
           }));
         }
+        const fixture = path === '/v1/horary' ? fixtures.horary
+          : path === '/v1/prashna' ? fixtures.prashna
+          : path === '/v1/thai/taksa' ? fixtures.thai
+          : path === '/v1/vedic/profile' ? fixtures.vedic
+          : null;
+        if (fixture) {
+          return Promise.resolve(new Response(JSON.stringify(fixture), {
+            status:200,
+            headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}
+          }));
+        }
         return nativeFetch(input, init);
       };
     }
-  }, {seedNatal});
+  }, {seedNatal,fixtures:{horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE}});
 
   await context.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:BUILD})}));
   await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));

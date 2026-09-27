@@ -92,6 +92,8 @@ assert.ok(!/\[250,\s*800,\s*1800\]/.test(polish), 'V14 wrapper retry schedule mu
 assert.ok(!/function\s+addAIEntry/.test(universal), 'V20 must not create visible category rows');
 assert.ok(!/setInterval\s*\(/.test(universal), 'V20 must not poll for rows/draw wrapper');
 assert.match(universal, /function hydrateCategoryEntries/);
+assert.match(universal, /function nextPaint/);
+assert.match(universal, /setTimeout\(finish, 120\)/);
 assert.match(universal, /async function yieldForAiStart/);
 assert.match(universal, /const started = start\(/);
 assert.match(universal, /await Promise\.resolve\(started\)/);

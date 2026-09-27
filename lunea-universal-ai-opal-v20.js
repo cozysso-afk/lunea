@@ -54,11 +54,25 @@
     return A.length === B.length && A.every((x, i) => x === B[i]);
   }
 
+  function nextPaint() {
+    const raf = W.requestAnimationFrame;
+    return new Promise(resolve => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(fallback);
+        resolve();
+      };
+      const fallback = setTimeout(finish, 120);
+      if (typeof raf === 'function') raf(finish);
+    });
+  }
+
   async function yieldForAiStart(id) {
-    const raf = W.requestAnimationFrame || (cb => setTimeout(cb, 16));
-    await new Promise(resolve => raf(resolve));
+    await nextPaint();
     if (!sessionCurrent(id)) return false;
-    await new Promise(resolve => raf(resolve));
+    await nextPaint();
     if (!sessionCurrent(id)) return false;
     await new Promise(resolve => setTimeout(resolve, 0));
     return sessionCurrent(id);
