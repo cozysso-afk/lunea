@@ -53,6 +53,31 @@ const PRASHNA_FIXTURE = {
   }
 };
 
+const CROSS_V2_FIXTURE = {
+  schema:'LUNEA_HORARY_PRASHNA_CROSS_V2',
+  version:'2.0',
+  horary:{
+    conclusion:{grade:'A',label_ko:'직접 성사 근거'},
+    event_perfection_evidence:[{domain:'event_perfection',polarity:'support',label_ko:'적용 삼합의 직접 perfection'}],
+    intention_disposition:[{domain:'intention_disposition',polarity:'support',label_ko:'reception 있음'}],
+    moon_timing_evidence:[{domain:'moon_timing',polarity:'support',label_ko:'달의 다음 적용각'}],
+    counterevidence:[],uncertainty:[]
+  },
+  prashna:{
+    conclusion:{band:'medium',label_ko:'중간 지원'},
+    supporting_evidence:[{domain:'event_perfection',polarity:'support',label_ko:'Moon 사건축 연결'}],
+    counterevidence:[],uncertainty:[]
+  },
+  cross:{
+    relationship:'agreement',
+    agreements:['사건 진행 방향에서 두 독립 체계가 일치한다.'],
+    conflicts:[],
+    explanation:'Horary의 직접 perfection과 Prashna의 사건축 지원을 나란히 확인한다.',
+    uncertainty:['Prashna 지원 강도는 중간이며 Horary 등급을 변경하지 않는다.']
+  },
+  contracts:{independent_engines:true,no_score_combination:true,no_grade_mutation:true}
+};
+
 const THAI_FIXTURE = {
   birth:{weekday_label:'금요일',ruler:{key:'Venus',ko:'금성'},planet_number:6},
   question:{focus_positions:['Sri'],focus_rows:[{position:'Sri',position_ko:'스리'}]},
@@ -96,6 +121,7 @@ const installApiFixtureBoundary = (page, clickSelector='') => page.evaluate(({fi
     }
     const fixture = path === '/v1/horary' ? fixtures.horary
       : path === '/v1/prashna' ? fixtures.prashna
+      : path === '/v1/horary-prashna/cross-interpretation' ? fixtures.crossV2
       : path === '/v1/thai/taksa' ? fixtures.thai
       : path === '/v1/vedic/profile' ? fixtures.vedic
       : null;
@@ -108,7 +134,7 @@ const installApiFixtureBoundary = (page, clickSelector='') => page.evaluate(({fi
     return previousFetch(input, init);
   };
   if (clickSelector) document.querySelector(clickSelector)?.click();
-}, {fixtures:{horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE},clickSelector});
+}, {fixtures:{horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,crossV2:CROSS_V2_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE},clickSelector});
 
 async function makePage(browser, {seedNatal=false}={}) {
   const context = await browser.newContext({
@@ -152,6 +178,7 @@ async function makePage(browser, {seedNatal=false}={}) {
         }
         const fixture = path === '/v1/horary' ? fixtures.horary
           : path === '/v1/prashna' ? fixtures.prashna
+          : path === '/v1/horary-prashna/cross-interpretation' ? fixtures.crossV2
           : path === '/v1/thai/taksa' ? fixtures.thai
           : path === '/v1/vedic/profile' ? fixtures.vedic
           : null;
@@ -164,7 +191,7 @@ async function makePage(browser, {seedNatal=false}={}) {
         return nativeFetch(input, init);
       };
     }
-  }, {seedNatal,fixtures:{horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE}});
+  }, {seedNatal,fixtures:{horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,crossV2:CROSS_V2_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE}});
 
   await context.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:BUILD})}));
   await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));
@@ -172,6 +199,7 @@ async function makePage(browser, {seedNatal=false}={}) {
   await context.route('**/health**', route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));
   await context.route(/\/v1\/horary(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(HORARY_FIXTURE)}));
   await context.route(/\/v1\/prashna(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(PRASHNA_FIXTURE)}));
+  await context.route(/\/v1\/horary-prashna\/cross-interpretation(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(CROSS_V2_FIXTURE)}));
   await context.route(/\/v1\/thai\/taksa(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(THAI_FIXTURE)}));
   await context.route(/\/v1\/vedic\/profile(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(VEDIC_FIXTURE)}));
 
@@ -209,12 +237,23 @@ async function testHoraryPrashna(browser) {
   assert.match(await page.locator('#luneaPrashnaV1Result').innerText(), /PRASHNA V1|구조적 지원/);
   const prashnaStored = await page.evaluate(() => JSON.parse(localStorage.getItem('LUNEA_PRASHNA_V1_LAST') || 'null'));
   assert.equal(prashnaStored?.data?.schema,'LUNEA_PRASHNA_V1');
+  await page.waitForSelector('#luneaHoraryPrashnaCrossV2:not([hidden])');
+  const crossText = await page.locator('#luneaHoraryPrashnaCrossV2').innerText();
+  assert.match(crossText,/HORARY 결론[\s\S]*A · 직접 성사 근거/);
+  assert.match(crossText,/PRASHNA 결론[\s\S]*중간 지원/);
+  assert.match(crossText,/일치[\s\S]*사건 진행 방향/);
+  assert.match(crossText,/Horary 등급을 변경하지 않는다/);
+  const crossStored = await page.evaluate(() => JSON.parse(localStorage.getItem('LUNEA_HORARY_PRASHNA_CROSS_V2_LAST') || 'null'));
+  assert.equal(crossStored?.data?.schema,'LUNEA_HORARY_PRASHNA_CROSS_V2');
+  assert.equal(crossStored?.data?.horary?.conclusion?.grade,'A');
+  assert.equal(crossStored?.data?.prashna?.conclusion?.band,'medium');
 
   await page.locator('#astroHoraryCopy').click();
   await page.waitForFunction(() => String(window.__LUNEA_E2E_CLIPBOARD__ || '').includes('LUNEA · HORARY'));
   const copied = await page.evaluate(() => window.__LUNEA_E2E_CLIPBOARD__ || '');
   assert.match(copied,/\[질문\]\s*그 사람이 나에게 먼저 연락할까요\?/);
   assert.match(copied,/\[PRASHNA · 독립 교차계산\]/);
+  assert.match(copied,/\[HORARY ↔ PRASHNA · CROSS V2\]/);
 
   await page.locator('#astroHorarySave').click();
   await page.waitForFunction(() => {
@@ -223,6 +262,7 @@ async function testHoraryPrashna(browser) {
   const archive = await page.evaluate(() => JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3') || '[]'));
   assert.equal(archive[0].title,'HORARY · 질문시각 점성술');
   assert.equal(archive[0].q,'그 사람이 나에게 먼저 연락할까요?');
+  assert.equal(archive[0].result?.cross_interpretation_v2?.schema,'LUNEA_HORARY_PRASHNA_CROSS_V2');
 
   await page.locator('#astroHoraryClose').click();
   await page.locator('#archiveBtn').click({force:true});
