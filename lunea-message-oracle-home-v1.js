@@ -9,6 +9,13 @@
   const ENTRY_ID = 'luneaMessageOracleEntry';
   const STATUS_ID = 'luneaMessageOracleLoadStatus';
   const LOGO_SRC = './assets/message-oracle/message_oracle_logo.png?v=101';
+  const DRAFT_KEY = 'LUNEA_LAST_READING_DRAFT_V1';
+  let appObserver = null;
+  let spreadObserver = null;
+  let observedApp = null;
+  let observedSpread = null;
+  let syncQueued = false;
+  let supportRecovery = null;
 
   function installStyle() {
     if (document.getElementById('luneaMessageOracleHomeV1Style')) return;
@@ -144,14 +151,131 @@
       if (anchor) anchor.insertAdjacentElement('afterend', section);
       else app.appendChild(section);
     }
+    // SIGNAL is a standalone supplemental strip, never one of the hidden source categories.
+    section.classList.remove('lunea-v8-source-category', 'lunea-v8-source-active');
+    section.hidden = false;
+    section.removeAttribute('aria-hidden');
     bindHeader(section);
     bindEntry(section);
     return section;
   }
 
-  ensure();
-  W.addEventListener('pageshow', ensure);
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) ensure(); });
+  function readingState() {
+    try { return W.state || state || null; } catch { return W.state || null; }
+  }
 
-  W.LUNEA_MESSAGE_ORACLE_HOME_V1 = Object.freeze({ensure});
+  function readingSignature() {
+    const value = readingState();
+    if (!value?.drawn?.length || !String(value.question || '').trim()) return '';
+    return String(W.LUNEA_READING_ATTACHMENTS_V1?.signature?.(value) || '');
+  }
+
+  function readDraft() {
+    try {
+      const apiValue = W.LUNEA_READING_DRAFT_V1?.readDraft?.();
+      if (apiValue && typeof apiValue === 'object') return apiValue;
+    } catch {}
+    try {
+      const value = JSON.parse(localStorage.getItem(DRAFT_KEY) || 'null');
+      return value && typeof value === 'object' ? value : null;
+    } catch { return null; }
+  }
+
+  async function recoverReadingSupport() {
+    const support = W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1;
+    if (!support) return false;
+    support.ensureButton?.();
+
+    const signature = readingSignature();
+    if (!signature) return false;
+
+    const live = support.capture?.() || null;
+    if (live) {
+      if (!document.getElementById('luneaMessageOracleInline')) {
+        if (!W.LUNEA_MESSAGE_ORACLE_V1) await W.LUNEA_LOAD_FEATURE_GROUP?.('message');
+        if (readingSignature() === signature) support.restore?.({...live});
+      }
+      return true;
+    }
+
+    if (supportRecovery) return supportRecovery;
+    const draft = readDraft();
+    const container = draft?.attachments;
+    const entry = container?.messageOracle;
+    const data = entry?.data;
+    if (!container || container.readingSignature !== signature || entry?.readingSignature !== signature || data?.readingSignature !== signature) return false;
+
+    supportRecovery = (async() => {
+      try {
+        if (!W.LUNEA_MESSAGE_ORACLE_V1) {
+          const ok = await W.LUNEA_LOAD_FEATURE_GROUP?.('message');
+          if (!ok) return false;
+        }
+        if (readingSignature() !== signature || support.capture?.()) return false;
+        return support.restore?.({...data}) !== false;
+      } catch (error) {
+        console.warn('[LUNEA Message Home] support recovery skipped', error);
+        return false;
+      } finally {
+        supportRecovery = null;
+      }
+    })();
+    return supportRecovery;
+  }
+
+  function placeSignalInCurrentHome(section) {
+    const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
+    if (!section || !grid || section.parentElement === grid) return false;
+    if (typeof W.LUNEA_HOME_IA_V35?.applyStructure === 'function') {
+      W.LUNEA_HOME_IA_V35.applyStructure();
+      return section.parentElement === grid;
+    }
+    return false;
+  }
+
+  function attachObservers() {
+    const app = document.querySelector('.app');
+    if (app && app !== observedApp) {
+      appObserver?.disconnect();
+      observedApp = app;
+      appObserver = new MutationObserver(scheduleSync);
+      appObserver.observe(app, {childList:true, subtree:true});
+    }
+
+    const spread = document.getElementById('spreadOverlay');
+    if (spread && spread !== observedSpread) {
+      spreadObserver?.disconnect();
+      observedSpread = spread;
+      spreadObserver = new MutationObserver(scheduleSync);
+      spreadObserver.observe(spread, {childList:true, subtree:true, attributes:true, attributeFilter:['class']});
+    }
+  }
+
+  function syncPresence() {
+    const section = ensure();
+    if (section) placeSignalInCurrentHome(section);
+    attachObservers();
+    void recoverReadingSupport();
+    return !!section;
+  }
+
+  function scheduleSync() {
+    if (syncQueued) return;
+    syncQueued = true;
+    const run = () => {
+      syncQueued = false;
+      syncPresence();
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
+    else setTimeout(run, 16);
+  }
+
+  syncPresence();
+  [80, 220, 500, 1000, 1800, 3000, 5000, 8000].forEach(ms => setTimeout(syncPresence, ms));
+  W.addEventListener('pageshow', scheduleSync);
+  W.addEventListener('lunea:feature-group-ready', scheduleSync);
+  W.addEventListener('lunea:reading-attachments-restored', scheduleSync);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) scheduleSync(); });
+
+  W.LUNEA_MESSAGE_ORACLE_HOME_V1 = Object.freeze({ensure, sync:syncPresence, recoverReadingSupport});
 })();
