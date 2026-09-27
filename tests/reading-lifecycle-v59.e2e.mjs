@@ -211,13 +211,18 @@ try {
     const run = runs[i];
     const entry = await openEntry(run);
     const before = await snapshot();
+    assert.equal(before.sheetOpen, true, `run ${i + 1}: reading sheet did not open before draw`);
     assert.equal(before.drawDisabled, false, `run ${i + 1}: draw button disabled before draw`);
     if (run.mode === 'fixed') {
       assert.equal(entry.declaredCount, run.expected, `run ${i + 1}: menu depth does not match intended V30 preset`);
       assert.equal(before.stateCount, run.expected, `run ${i + 1}: openSheet state count does not match intended V30 preset`);
     }
 
-    await page.locator('#drawBtn').click();
+    // The lifecycle contract is already checked above (open sheet + enabled
+    // button). Dispatch the real DOM click directly so WebKit's Playwright-only
+    // rAF actionability sampler cannot stall on the continuously animated button
+    // after several readings. The same capture/property click handlers run.
+    await page.locator('#drawBtn').evaluate(button => button.click());
 
     if (run.mode === 'ai') {
       await page.waitForSelector('#luneaV20PreviewOverlay.show', {timeout:18000});

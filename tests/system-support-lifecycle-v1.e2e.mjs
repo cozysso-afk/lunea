@@ -150,6 +150,35 @@ async function makePage(browser, {seedNatal=false}={}) {
   await page.goto(BASE_URL,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => document.readyState === 'complete');
   await page.waitForFunction(() => document.documentElement.classList.contains('lunea-ui-ready'), null, {timeout:25000});
+
+  // Install the deterministic API boundary after every runtime fetch wrapper has
+  // settled. This preserves the app's real fetch/Response contract while keeping
+  // late origin-failover wrappers from bypassing WebKit context routing.
+  await page.evaluate(fixtures => {
+    const previousFetch = window.fetch.bind(window);
+    window.fetch = (input, init) => {
+      const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
+      const path = (() => { try { return new URL(url, location.href).pathname; } catch { return ''; } })();
+      if (/\/health\/?$/i.test(path)) {
+        return Promise.resolve(new Response(JSON.stringify({ok:true}), {
+          status:200,
+          headers:{'Content-Type':'application/json'}
+        }));
+      }
+      const fixture = path === '/v1/horary' ? fixtures.horary
+        : path === '/v1/prashna' ? fixtures.prashna
+        : path === '/v1/thai/taksa' ? fixtures.thai
+        : path === '/v1/vedic/profile' ? fixtures.vedic
+        : null;
+      if (fixture) {
+        return Promise.resolve(new Response(JSON.stringify(fixture), {
+          status:200,
+          headers:{'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}
+        }));
+      }
+      return previousFetch(input, init);
+    };
+  }, {horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE});
   return {context,page,dialogs,pageErrors};
 }
 
