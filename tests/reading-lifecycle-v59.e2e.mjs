@@ -246,7 +246,9 @@ try {
     await page.waitForSelector('#spreadOverlay.show', {timeout:18000});
     if (run.mode === 'ai') {
       try {
-        // Timer polling avoids WebKit's rAF starvation after repeated animated\n        // modal transitions while preserving the same state assertion/deadline.\n        await page.waitForFunction(expectedQuestion => {
+        // Timer polling avoids WebKit's rAF starvation after repeated animated
+        // modal transitions while preserving the same state assertion/deadline.
+        await page.waitForFunction(expectedQuestion => {
           let readingState = null;
           try { readingState = state; } catch {}
           const transition = document.getElementById('luneaAiTransitionStatusV60');
