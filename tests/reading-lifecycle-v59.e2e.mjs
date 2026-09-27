@@ -246,7 +246,16 @@ try {
     await page.waitForSelector('#spreadOverlay.show', {timeout:18000});
     if (run.mode === 'ai') {
       try {
-        // Timer polling avoids WebKit's rAF starvation after repeated animated\n        // modal transitions while preserving the same state assertion/deadline.\n        await page.waitForFunction(() => !document.getElementById('drawBtn')?.disabled, null, {polling:50, timeout:18000});
+        // Timer polling avoids WebKit's rAF starvation after repeated animated\n        // modal transitions while preserving the same state assertion/deadline.\n        await page.waitForFunction(expectedQuestion => {
+          let readingState = null;
+          try { readingState = state; } catch {}
+          const transition = document.getElementById('luneaAiTransitionStatusV60');
+          return readingState?.question === expectedQuestion &&
+            Array.isArray(readingState?.drawn) &&
+            readingState.drawn.length > 0 &&
+            transition?.style.display === 'none' &&
+            !document.getElementById('drawBtn')?.disabled;
+        }, run.question, {polling:50, timeout:18000});
       } catch (error) {
         const diagnostic = await page.evaluate(() => {
           let readingState = null;
