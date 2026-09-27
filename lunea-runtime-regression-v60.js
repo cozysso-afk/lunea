@@ -28,12 +28,14 @@
   if (W.__LUNEA_RUNTIME_REGRESSION_V60__) return;
   W.__LUNEA_RUNTIME_REGRESSION_V60__ = true;
 
-  const RELEASE = '60.1';
+  const RELEASE = '60.2';
   const $ = id => document.getElementById(id);
   const clean = value => String(value || '').replace(/\s+/g, ' ').trim();
 
   let aiEpoch = 0;
   let aiMutationEpoch = 0;
+  let aiBaselineFirstNode = null;
+  let aiBaselineCount = -1;
   let horaryPreservePending = false;
   let horaryWasVisible = false;
   let horaryObserver = null;
@@ -66,14 +68,32 @@
     }
   }
 
+  function aiRenderChanged() {
+    const cards = $('cards');
+    if (!cards?.children?.length) return false;
+    // Capture runs before V20's confirm handler. A real startSpread clears and
+    // rebuilds #cards, so either the first node identity or child count must
+    // differ from the preview-confirm baseline. This avoids treating cards left
+    // over from the previous reading as completion of the new AI reading.
+    return cards.firstElementChild !== aiBaselineFirstNode || cards.children.length !== aiBaselineCount;
+  }
+
   function settleAiTransitionIfDrawn(fromMutation = false) {
     if (fromMutation) aiMutationEpoch = aiEpoch;
-    if (!aiEpoch || aiMutationEpoch !== aiEpoch || !$('cards')?.children?.length) return false;
+    if (!aiEpoch || !aiRenderChanged()) return false;
     const status = $('luneaAiTransitionStatusV60');
-    const transitionActive = !!status && status.style.display !== 'none';
     if (status) status.style.display = 'none';
-    if (transitionActive) releaseAiDrawLock();
+    releaseAiDrawLock();
     return true;
+  }
+
+  function watchAiTransition(epoch) {
+    const startedAt = performance.now();
+    const tick = () => {
+      if (epoch !== aiEpoch || settleAiTransitionIfDrawn()) return;
+      if (performance.now() - startedAt < 6000) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
   }
 
   function prepareAiTransition(event) {
@@ -84,8 +104,11 @@
     const spread = $('spreadOverlay');
     if (!preview?.classList.contains('show') || !spread) return;
 
+    const cards = $('cards');
     const epoch = ++aiEpoch;
     aiMutationEpoch = 0;
+    aiBaselineFirstNode = cards?.firstElementChild || null;
+    aiBaselineCount = cards?.children?.length ?? -1;
     const question = clean($('question')?.value || '');
     const title = clean($('luneaV20PreviewTitle')?.value || $('spreadType')?.textContent || '') || '질문 맞춤 배열';
 
@@ -105,6 +128,11 @@
       status.textContent = '카드를 펼치는 중…';
       status.style.display = 'block';
     }
+
+    // MutationObserver is the fast path, while rAF polling is a WebKit-safe
+    // fallback for render paths where the observer callback can be missed or
+    // delayed behind legacy async wrappers.
+    watchAiTransition(epoch);
 
     setTimeout(() => {
       if (epoch !== aiEpoch || settleAiTransitionIfDrawn()) return;
@@ -191,8 +219,8 @@
   W.LUNEA_RUNTIME_REGRESSION_V60 = Object.freeze({
     version: RELEASE,
     install,
-    getState: () => ({aiEpoch, aiMutationEpoch, horaryPreservePending})
+    getState: () => ({aiEpoch, aiMutationEpoch, aiBaselineCount, horaryPreservePending})
   });
 
-  console.info('✦ LUNEA Runtime Regression V60.1 loaded · AI transition lock + Horary re-entry guarded');
+  console.info('✦ LUNEA Runtime Regression V60.2 loaded · AI transition lock + Horary re-entry guarded');
 })();
