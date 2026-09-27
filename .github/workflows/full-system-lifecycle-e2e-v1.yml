@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'tests/system-support-lifecycle-v1.e2e.mjs'
+      - 'tests/reading-lifecycle-v59.e2e.mjs'
+      - 'lunea-reading-share-ui-v6.js'
       - '.github/workflows/full-system-lifecycle-e2e-v1.yml'
       - 'astro-horary-v1.js'
       - 'lunea-prashna-v1.js'
