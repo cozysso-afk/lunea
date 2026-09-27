@@ -150,6 +150,7 @@
     button.innerHTML = `<span class="thai-v24-orb">${thaiIcon()}</span><span class="thai-v24-copy"><small>THAI ASTROLOGY · MAHA TAKSA</small><b>태국점성술</b><span>출생요일 · 8영역 · 오늘의 주제별 보조 흐름</span></span><span class="thai-v24-arrow">›</span>`;
     button.onclick = open;
     grid.appendChild(button);
+    W.dispatchEvent(new CustomEvent('lunea:home-tile-ready', {detail:{key:'thai'}}));
     return true;
   }
 
@@ -285,12 +286,8 @@
     addStyles();
     injectOverlay();
     removeLegacyReadingUI();
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      removeLegacyReadingUI();
-      if (injectHomeTile() || tries > 180) clearInterval(timer);
-    }, 80);
+    injectHomeTile();
+    [120,480].forEach(ms => setTimeout(injectHomeTile,ms));
 
     // Legacy Thai module can inject after this module on unusual load paths.
     const bodyObserver = new MutationObserver(() => removeLegacyReadingUI());
@@ -299,6 +296,7 @@
   }
 
   W.LUNEA_THAI_STANDALONE_V24 = {open,run,getResult:() => result};
+  W.addEventListener('lunea:home-portal-ready', injectHomeTile);
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();

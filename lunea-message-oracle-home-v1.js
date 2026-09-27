@@ -224,13 +224,10 @@
   }
 
   function placeSignalInCurrentHome(section) {
-    const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
-    if (!section || !grid || section.parentElement === grid) return false;
-    if (typeof W.LUNEA_HOME_IA_V35?.applyStructure === 'function') {
-      W.LUNEA_HOME_IA_V35.applyStructure();
-      return section.parentElement === grid;
-    }
-    return false;
+    if (!section) return false;
+    W.dispatchEvent(new CustomEvent('lunea:home-tile-ready', {detail:{key:'signal'}}));
+    W.LUNEA_HOME_LAYOUT_V36?.requestLayout?.();
+    return true;
   }
 
   function attachObservers() {
@@ -271,7 +268,7 @@
   }
 
   syncPresence();
-  [80, 220, 500, 1000, 1800, 3000, 5000, 8000].forEach(ms => setTimeout(syncPresence, ms));
+  [80, 320, 900].forEach(ms => setTimeout(syncPresence, ms));
   W.addEventListener('pageshow', scheduleSync);
   W.addEventListener('lunea:feature-group-ready', scheduleSync);
   W.addEventListener('lunea:reading-attachments-restored', scheduleSync);
