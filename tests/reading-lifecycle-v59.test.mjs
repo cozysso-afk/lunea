@@ -29,6 +29,7 @@ const noStartAssignment = (source, label) => {
 noStartAssignment(lifecycle, 'V59');
 assert.ok(!/setInterval\s*\(/.test(lifecycle), 'V59 must not poll');
 assert.ok(!/__luneaMobileV57Yield/.test(lifecycle), 'V59 must not fake V57 installation markers');
+assert.match(universal, /sessionCurrent\(mySession\) && !renderHandedOff/, 'V20 must keep draw locked until the guarded render handoff releases it');
 assert.ok(!/__luneaV14Wrapped/.test(lifecycle), 'V59 must not fake V14 installation markers');
 assert.ok(!/__luneaV27Wrapped/.test(lifecycle), 'V59 must not fake V27 installation markers');
 assert.ok(!/markStableStartSpread/.test(lifecycle), 'V59 must not stamp startSpread compatibility markers');
