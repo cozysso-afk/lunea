@@ -180,6 +180,42 @@ try {
   // this point is a regression toward the old wrapper/polling race.
   await page.waitForTimeout(1200);
 
+  await page.waitForFunction(() => window.LUNEA_READING_SHARE_UI_V6?.version === '6.2', null, {timeout:20000});
+  const pngContract = await page.evaluate(async () => {
+    const api = window.LUNEA_READING_SHARE_UI_V6;
+    const source = document.createElement('canvas');
+    source.width = 1080;
+    source.height = 1350;
+    const rendered = await api.normalizeResult({
+      pages:[source],
+      payload:{category:'GENERAL',title:'PNG E2E',question:'4:5 export contract',tarot:[],a:{}}
+    });
+    const file = rendered.files[0];
+    const url = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve,reject) => {
+        const node = new Image();
+        node.onload = () => resolve(node);
+        node.onerror = () => reject(new Error('normalized PNG decode failed'));
+        node.src = url;
+      });
+      return {
+        width:image.naturalWidth,
+        height:image.naturalHeight,
+        type:file.type,
+        output:api.output
+      };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  });
+  assert.deepEqual(pngContract, {
+    width:1200,
+    height:1500,
+    type:'image/png',
+    output:{width:1200,height:1500,aspectRatio:'4:5'}
+  }, 'current-reading PNG must remain a 1200×1500 4:5 export');
+
   const initialRows = await page.evaluate(() => {
     const out = {};
     for (const category of ['GENERAL','CAREER','LOVE','STOCK']) {
