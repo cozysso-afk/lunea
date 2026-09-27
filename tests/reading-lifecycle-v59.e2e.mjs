@@ -28,6 +28,7 @@ const context = await browser.newContext({
   hasTouch:true,
   deviceScaleFactor:3,
   locale:'ko-KR',
+  serviceWorkers:'block',
   userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
 });
 const page = await context.newPage();
@@ -45,22 +46,22 @@ page.on('dialog', async dialog => {
   await dialog.dismiss();
 });
 
-await page.route('**/lunea-build.json?*', route => route.fulfill({
+await context.route('**/lunea-build.json?*', route => route.fulfill({
   status:200,
   contentType:'application/json',
   body:JSON.stringify({version:BUILD})
 }));
-await page.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({
+await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({
   status:200,
   contentType:'text/css; charset=utf-8',
   body:''
 }));
-await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route =>
+await context.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route =>
   route.fulfill({status:204, body:''})
 );
 // Background Astro health warming is unrelated to card lifecycle and otherwise
 // produces local-origin CORS noise in WebKit. Keep the boot probe deterministic.
-await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({
+await context.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({
   status:200,
   contentType:'application/json',
   headers:{'access-control-allow-origin':'*'},
