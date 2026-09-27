@@ -36,6 +36,7 @@
   let aiMutationEpoch = 0;
   let aiBaselineFirstNode = null;
   let aiBaselineCount = -1;
+  let aiExpectedQuestion = '';
   let horaryPreservePending = false;
   let horaryWasVisible = false;
   let horaryObserver = null;
@@ -75,6 +76,9 @@
     // rebuilds #cards, so either the first node identity or child count must
     // differ from the preview-confirm baseline. This avoids treating cards left
     // over from the previous reading as completion of the new AI reading.
+    let renderedQuestion = '';
+    try { renderedQuestion = clean(state?.question || ''); } catch {}
+    if (!aiExpectedQuestion || renderedQuestion !== aiExpectedQuestion) return false;
     return cards.firstElementChild !== aiBaselineFirstNode || cards.children.length !== aiBaselineCount;
   }
 
@@ -110,6 +114,7 @@
     aiBaselineFirstNode = cards?.firstElementChild || null;
     aiBaselineCount = cards?.children?.length ?? -1;
     const question = clean($('question')?.value || '');
+    aiExpectedQuestion = question;
     const title = clean($('luneaV20PreviewTitle')?.value || $('spreadType')?.textContent || '') || '질문 맞춤 배열';
 
     // V20 closes the preview and then intentionally yields across paint frames.
@@ -219,7 +224,7 @@
   W.LUNEA_RUNTIME_REGRESSION_V60 = Object.freeze({
     version: RELEASE,
     install,
-    getState: () => ({aiEpoch, aiMutationEpoch, aiBaselineCount, horaryPreservePending})
+    getState: () => ({aiEpoch, aiMutationEpoch, aiBaselineCount, aiExpectedQuestion, horaryPreservePending})
   });
 
   console.info('✦ LUNEA Runtime Regression V60.2 loaded · AI transition lock + Horary re-entry guarded');

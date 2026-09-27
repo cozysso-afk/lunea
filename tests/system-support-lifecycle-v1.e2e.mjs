@@ -82,7 +82,7 @@ const VEDIC_FIXTURE = {
   provenance:{engine:'Swiss Ephemeris',ayanamsha:'Lahiri',node_policy:'true',panchanga_vara_boundary:'civil_midnight_v1'}
 };
 
-const installApiFixtureBoundary = page => page.evaluate(fixtures => {
+const installApiFixtureBoundary = (page, clickSelector='') => page.evaluate(({fixtures, clickSelector}) => {
   const previousFetch = window.fetch.bind(window);
   window.fetch = (input, init) => {
     const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
@@ -106,7 +106,8 @@ const installApiFixtureBoundary = page => page.evaluate(fixtures => {
     }
     return previousFetch(input, init);
   };
-}, {horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE});
+  if (clickSelector) document.querySelector(clickSelector)?.click();
+}, {fixtures:{horary:HORARY_FIXTURE,prashna:PRASHNA_FIXTURE,thai:THAI_FIXTURE,vedic:VEDIC_FIXTURE},clickSelector});
 
 async function makePage(browser, {seedNatal=false}={}) {
   const context = await browser.newContext({
@@ -271,8 +272,7 @@ async function testVedic(browser) {
   // general UI-ready gate. Reassert the deterministic boundary at the exact
   // external interaction point so Vedic exercises its real click/render/cache
   // lifecycle without reaching Render.
-  await installApiFixtureBoundary(page);
-  await page.locator('#vedicV1Calc').click();
+  await installApiFixtureBoundary(page, '#vedicV1Calc');
   await page.waitForFunction(() => document.getElementById('vedicV1Status')?.textContent?.includes('계산 완료'));
   assert.match(await page.locator('#vedicV1Result').innerText(),/LAGNA|Kanya|Dhanishta/);
   const stored=await page.evaluate(() => JSON.parse(localStorage.getItem('LUNEA_VEDIC_PROFILE_V1') || 'null'));

@@ -9,6 +9,7 @@ const learning = read('lunea-learning-success-gate-v1.js');
 const boundary = read('lunea-reading-boundary-reset-v31.js');
 const runtimeState = read('lunea-runtime-state-v56.js');
 const universal = read('lunea-universal-ai-opal-v20.js');
+const runtimeRegression = read('lunea-runtime-regression-v60.js');
 const manual = read('lunea-manual-structure-v1.js');
 const manualEverywhere = read('lunea-manual-everywhere-v1.js');
 const manual20 = read('lunea-manual-limit20-v17.js');
@@ -100,6 +101,7 @@ assert.match(universal, /const started = start\(/);
 assert.match(universal, /await Promise\.resolve\(started\)/);
 assert.match(universal, /__luneaLearningCorrection/);
 assert.match(universal, /gate\?\.commit/);
+assert.match(runtimeRegression, /renderedQuestion !== aiExpectedQuestion/);
 
 // Learning gate is a post-success commit helper only.
 assert.ok(!/\.record\s*=/.test(learning), 'learning gate must not replace learning.record');
