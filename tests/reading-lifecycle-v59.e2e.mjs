@@ -246,7 +246,7 @@ try {
     await page.waitForSelector('#spreadOverlay.show', {timeout:18000});
     if (run.mode === 'ai') {
       try {
-        await page.waitForFunction(() => !document.getElementById('drawBtn')?.disabled);
+        // Timer polling avoids WebKit's rAF starvation after repeated animated\n        // modal transitions while preserving the same state assertion/deadline.\n        await page.waitForFunction(() => !document.getElementById('drawBtn')?.disabled, null, {polling:50, timeout:18000});
       } catch (error) {
         const diagnostic = await page.evaluate(() => {
           let readingState = null;
