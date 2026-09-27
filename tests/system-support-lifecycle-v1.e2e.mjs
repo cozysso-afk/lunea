@@ -105,6 +105,23 @@ async function makePage(browser, {seedNatal=false}={}) {
     try {
       Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text => { window.__LUNEA_E2E_CLIPBOARD__=String(text); }}});
     } catch {}
+
+    // The app performs very-early background origin health probes during boot and
+    // again after its cache-refresh navigation. Mock those in the page realm so
+    // both documents stay deterministic even when WebKit routing misses the probe.
+    const nativeFetch = window.fetch?.bind(window);
+    if (nativeFetch) {
+      window.fetch = (input, init) => {
+        const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
+        if (/\/health(?:[?#]|$)/i.test(url)) {
+          return Promise.resolve(new Response(JSON.stringify({ok:true}), {
+            status:200,
+            headers:{'Content-Type':'application/json'}
+          }));
+        }
+        return nativeFetch(input, init);
+      };
+    }
   }, {seedNatal});
 
   await context.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'e2e-system-lifecycle-v1'})}));
