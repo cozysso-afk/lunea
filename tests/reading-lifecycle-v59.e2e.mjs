@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { webkit } from 'playwright';
 
 const BASE_URL = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
-const BUILD = 'fc71ade9bd12';
+const BUILD = JSON.parse(readFileSync(new URL('../lunea-build.json', import.meta.url), 'utf8')).version;
+const TINY_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+ZKCZAAAAAElFTkSuQmCC','base64');
 
 // This sequence intentionally crosses sectors and modes in one long-lived WebKit
 // page. The bug under test is global reading lifecycle corruption after reading #1,
@@ -28,6 +30,7 @@ const context = await browser.newContext({
   hasTouch:true,
   deviceScaleFactor:3,
   locale:'ko-KR',
+  serviceWorkers:'block',
   userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
 });
 const page = await context.newPage();
@@ -45,22 +48,29 @@ page.on('dialog', async dialog => {
   await dialog.dismiss();
 });
 
-await page.route('**/lunea-build.json?*', route => route.fulfill({
+await context.route('**/lunea-build.json?*', route => route.fulfill({
   status:200,
   contentType:'application/json',
   body:JSON.stringify({version:BUILD})
 }));
-await page.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({
+await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({
   status:200,
   contentType:'text/css; charset=utf-8',
   body:''
 }));
-await page.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route =>
+await context.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route =>
   route.fulfill({status:204, body:''})
+);
+// Card backs use per-render cache-busting URLs and are large enough to exhaust
+// headless WebKit's image process during this deliberate 10-reading soak. Pixel
+// rendering is outside this state/DOM lifecycle test, so keep the <img> contract
+// while isolating decoding to one deterministic fixture.
+await context.route(/\/(?:back_(?:general|career|stock|love)\.PNG|tarot_back_[^/?]+\.jpe?g)(?:\?|$)/i, route =>
+  route.fulfill({status:200, contentType:'image/png', body:TINY_PNG})
 );
 // Background Astro health warming is unrelated to card lifecycle and otherwise
 // produces local-origin CORS noise in WebKit. Keep the boot probe deterministic.
-await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({
+await context.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({
   status:200,
   contentType:'application/json',
   headers:{'access-control-allow-origin':'*'},
@@ -70,6 +80,22 @@ await page.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.
 await page.addInitScript(() => {
   try { localStorage.clear(); } catch {}
   try { sessionStorage.clear(); } catch {}
+
+  // Keep page-realm warm-up probes deterministic too. WebKit can dispatch
+  // these before context routing is fully active during a document boot.
+  const nativeFetch = window.fetch?.bind(window);
+  if (nativeFetch) {
+    window.fetch = (input, init) => {
+      const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
+      if (/\/health(?:[?#]|$)/i.test(url)) {
+        return Promise.resolve(new Response(JSON.stringify({ok:true}), {
+          status:200,
+          headers:{'Content-Type':'application/json'}
+        }));
+      }
+      return nativeFetch(input, init);
+    };
+  }
 });
 
 async function openEntry(run) {
@@ -154,6 +180,42 @@ try {
   // this point is a regression toward the old wrapper/polling race.
   await page.waitForTimeout(1200);
 
+  await page.waitForFunction(() => window.LUNEA_READING_SHARE_UI_V6?.version === '6.2', null, {timeout:20000});
+  const pngContract = await page.evaluate(async () => {
+    const api = window.LUNEA_READING_SHARE_UI_V6;
+    const source = document.createElement('canvas');
+    source.width = 1080;
+    source.height = 1350;
+    const rendered = await api.normalizeResult({
+      pages:[source],
+      payload:{category:'GENERAL',title:'PNG E2E',question:'4:5 export contract',tarot:[],a:{}}
+    });
+    const file = rendered.files[0];
+    const url = URL.createObjectURL(file);
+    try {
+      const image = await new Promise((resolve,reject) => {
+        const node = new Image();
+        node.onload = () => resolve(node);
+        node.onerror = () => reject(new Error('normalized PNG decode failed'));
+        node.src = url;
+      });
+      return {
+        width:image.naturalWidth,
+        height:image.naturalHeight,
+        type:file.type,
+        output:api.output
+      };
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  });
+  assert.deepEqual(pngContract, {
+    width:1200,
+    height:1500,
+    type:'image/png',
+    output:{width:1200,height:1500,aspectRatio:'4:5'}
+  }, 'current-reading PNG must remain a 1200×1500 4:5 export');
+
   const initialRows = await page.evaluate(() => {
     const out = {};
     for (const category of ['GENERAL','CAREER','LOVE','STOCK']) {
@@ -193,23 +255,66 @@ try {
     const run = runs[i];
     const entry = await openEntry(run);
     const before = await snapshot();
+    assert.equal(before.sheetOpen, true, `run ${i + 1}: reading sheet did not open before draw`);
     assert.equal(before.drawDisabled, false, `run ${i + 1}: draw button disabled before draw`);
     if (run.mode === 'fixed') {
       assert.equal(entry.declaredCount, run.expected, `run ${i + 1}: menu depth does not match intended V30 preset`);
       assert.equal(before.stateCount, run.expected, `run ${i + 1}: openSheet state count does not match intended V30 preset`);
     }
 
-    await page.locator('#drawBtn').click();
+    // The lifecycle contract is already checked above (open sheet + enabled
+    // button). Dispatch the real DOM click directly so WebKit's Playwright-only
+    // rAF actionability sampler cannot stall on the continuously animated button
+    // after several readings. The same capture/property click handlers run.
+    await page.locator('#drawBtn').evaluate(button => button.click());
 
     if (run.mode === 'ai') {
       await page.waitForSelector('#luneaV20PreviewOverlay.show', {timeout:18000});
       const previewText = await page.locator('#luneaV20PreviewPositions').inputValue();
       assert.ok(previewText.split(/\n+/).filter(Boolean).length >= 2, `run ${i + 1}: AI preview has <2 positions`);
-      await page.locator('#luneaV20PreviewConfirm').click();
+      assert.equal(await page.locator('#luneaV20PreviewConfirm').isEnabled(), true, `run ${i + 1}: AI preview confirm disabled`);
+      // As with drawBtn, bypass Playwright's rAF-based stability sampler after
+      // explicitly checking the preview contract. WebKit can starve that sampler
+      // while the modal's continuous visual effects are active.
+      await page.locator('#luneaV20PreviewConfirm').evaluate(button => button.click());
     }
 
     await page.waitForSelector('#spreadOverlay.show', {timeout:18000});
-    if (run.mode === 'ai') await page.waitForFunction(() => !document.getElementById('drawBtn')?.disabled);
+    if (run.mode === 'ai') {
+      try {
+        // Timer polling avoids WebKit's rAF starvation after repeated animated
+        // modal transitions while preserving the same state assertion/deadline.
+        await page.waitForFunction(expectedQuestion => {
+          let readingState = null;
+          try { readingState = state; } catch {}
+          const transition = document.getElementById('luneaAiTransitionStatusV60');
+          return readingState?.question === expectedQuestion &&
+            Array.isArray(readingState?.drawn) &&
+            readingState.drawn.length > 0 &&
+            transition?.style.display === 'none' &&
+            !document.getElementById('drawBtn')?.disabled;
+        }, run.question, {polling:50, timeout:18000});
+      } catch (error) {
+        const diagnostic = await page.evaluate(() => {
+          let readingState = null;
+          try { readingState = state; } catch {}
+          return {
+            visibility:document.visibilityState,
+            session:document.documentElement.dataset.luneaReadingSession || '',
+            drawDisabled:!!document.getElementById('drawBtn')?.disabled,
+            drawLabel:document.getElementById('drawLabel')?.textContent || '',
+            previewVisible:document.getElementById('luneaV20PreviewOverlay')?.classList.contains('show') || false,
+            spreadVisible:document.getElementById('spreadOverlay')?.classList.contains('show') || false,
+            cardChildren:document.getElementById('cards')?.children?.length ?? -1,
+            cardWrappers:document.querySelectorAll('#cards .tarot-card-wrapper').length,
+            stateDrawn:Array.isArray(readingState?.drawn) ? readingState.drawn.length : -1,
+            stateQuestion:readingState?.question || '',
+            runtimeV60:window.LUNEA_RUNTIME_REGRESSION_V60?.getState?.() || null,
+          };
+        });
+        throw new Error(`run ${i + 1}: AI draw lock did not release\n${JSON.stringify(diagnostic, null, 2)}\n${error.message}`);
+      }
+    }
 
     const after = await snapshot();
     const expectedSession = before.session + 1;
