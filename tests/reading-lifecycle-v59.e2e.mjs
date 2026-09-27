@@ -228,7 +228,11 @@ try {
       await page.waitForSelector('#luneaV20PreviewOverlay.show', {timeout:18000});
       const previewText = await page.locator('#luneaV20PreviewPositions').inputValue();
       assert.ok(previewText.split(/\n+/).filter(Boolean).length >= 2, `run ${i + 1}: AI preview has <2 positions`);
-      await page.locator('#luneaV20PreviewConfirm').click();
+      assert.equal(await page.locator('#luneaV20PreviewConfirm').isEnabled(), true, `run ${i + 1}: AI preview confirm disabled`);
+      // As with drawBtn, bypass Playwright's rAF-based stability sampler after
+      // explicitly checking the preview contract. WebKit can starve that sampler
+      // while the modal's continuous visual effects are active.
+      await page.locator('#luneaV20PreviewConfirm').evaluate(button => button.click());
     }
 
     await page.waitForSelector('#spreadOverlay.show', {timeout:18000});

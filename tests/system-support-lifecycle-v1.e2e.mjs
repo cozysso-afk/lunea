@@ -87,6 +87,7 @@ const installApiFixtureBoundary = (page, clickSelector='') => page.evaluate(({fi
   window.fetch = (input, init) => {
     const url = typeof input === 'string' ? input : (input?.url || String(input || ''));
     const path = (() => { try { return new URL(url, location.href).pathname; } catch { return ''; } })();
+    (window.__LUNEA_E2E_FETCH_PATHS__ ||= []).push(path);
     if (/\/health\/?$/i.test(path)) {
       return Promise.resolve(new Response(JSON.stringify({ok:true}), {
         status:200,
@@ -263,17 +264,29 @@ async function testVedic(browser) {
   await page.locator('#profileBtn').click({force:true});
   await page.waitForSelector('#profileOverlay.show');
   await page.waitForSelector('#cpv4VedicTab',{timeout:25000});
+  await page.locator('#cpv4VedicTab').click();
   await page.locator('#birthDate').fill('1990-05-12');
   await page.locator('#birthTime').fill('10:30');
   await page.locator('#birthPlace').fill('Seoul');
-  await page.locator('#cpv4VedicTab').click();
   await page.waitForSelector('#vedicV1Calc');
   // The profile bundle can finish installing one last fetch adapter after the
   // general UI-ready gate. Reassert the deterministic boundary at the exact
   // external interaction point so Vedic exercises its real click/render/cache
   // lifecycle without reaching Render.
   await installApiFixtureBoundary(page, '#vedicV1Calc');
-  await page.waitForFunction(() => document.getElementById('vedicV1Status')?.textContent?.includes('계산 완료'));
+  try {
+    await page.waitForFunction(() => document.getElementById('vedicV1Status')?.textContent?.includes('계산 완료'));
+  } catch (error) {
+    const diagnostic=await page.evaluate(() => ({
+      status:document.getElementById('vedicV1Status')?.textContent || '',
+      buttonDisabled:!!document.getElementById('vedicV1Calc')?.disabled,
+      birthDate:document.getElementById('birthDate')?.value || '',
+      birthTime:document.getElementById('birthTime')?.value || '',
+      birthPlace:document.getElementById('birthPlace')?.value || '',
+      fetchPaths:window.__LUNEA_E2E_FETCH_PATHS__ || []
+    }));
+    throw new Error(`Vedic completion missing\n${JSON.stringify(diagnostic,null,2)}\n${error.message}`);
+  }
   assert.match(await page.locator('#vedicV1Result').innerText(),/LAGNA|Kanya|Dhanishta/);
   const stored=await page.evaluate(() => JSON.parse(localStorage.getItem('LUNEA_VEDIC_PROFILE_V1') || 'null'));
   assert.equal(stored?.birthDate,'1990-05-12');
