@@ -262,7 +262,7 @@ async function testHoraryPrashna(browser) {
   const archive = await page.evaluate(() => JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3') || '[]'));
   assert.equal(archive[0].title,'HORARY · 질문시각 점성술');
   assert.equal(archive[0].q,'그 사람이 나에게 먼저 연락할까요?');
-  assert.equal(archive[0].result?.cross_interpretation_v2?.schema,'LUNEA_HORARY_PRASHNA_CROSS_V2');
+  assert.equal(archive[0].horary?.cross_interpretation_v2?.schema,'LUNEA_HORARY_PRASHNA_CROSS_V2');
 
   await page.locator('#astroHoraryClose').click();
   await page.locator('#archiveBtn').click({force:true});
