@@ -110,7 +110,7 @@ async function makePage(browser, {seedNatal=false}={}) {
   await context.route('**/lunea-build.json?*', route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({version:'e2e-system-lifecycle-v1'})}));
   await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));
   await context.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route => route.fulfill({status:204,body:''}));
-  await context.route(/\/health(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));
+  await context.route('**/health**', route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true})}));
   await context.route(/\/v1\/horary(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(HORARY_FIXTURE)}));
   await context.route(/\/v1\/prashna(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(PRASHNA_FIXTURE)}));
   await context.route(/\/v1\/thai\/taksa(?:\?|$)/, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify(THAI_FIXTURE)}));
