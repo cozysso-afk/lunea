@@ -40,6 +40,7 @@
 
   function statusesFromPrompt(prompt) {
     const matches = [...String(prompt || '').matchAll(/- 사용자가 선택한 애정 상태:\s*([^\n]+)/g)];
+    if (!matches.length) return null;
     const raw = String(matches.at(-1)?.[1] || '').trim();
     if (!raw || /미선택/.test(raw)) return [];
     return [...new Set(raw.split(/[,·]/).map(x => x.trim()).map(label => LABEL_CODES[label]).filter(Boolean))];
@@ -109,7 +110,7 @@
     if (!isDailyOrbitPrompt(source)) return source;
 
     const promptStatuses = statusesFromPrompt(source);
-    const statuses = promptStatuses.length ? promptStatuses : readStoredStatuses();
+    const statuses = promptStatuses === null ? readStoredStatuses() : promptStatuses;
     const parsed = stripGeneratedBlocks(source);
     const timing = parsed.timingBlocks.at(-1) || '';
     let out = `${parsed.text}\n\n${dailyContractBlock(statuses)}`.trim();
@@ -131,6 +132,10 @@
       return canonicalizePrompt(prior.apply(this, arguments));
     };
     wrapped.__luneaDailyInterpretationContractV2 = true;
+    // Reading Context V1 repeatedly re-checks ownership for ~20s. The final
+    // canonicalizer already contains that wrapper in `prior`, so inherit its
+    // ownership marker to prevent an unnecessary wrapper chain from growing.
+    wrapped.__luneaReadingContextV1 = true;
     wrapped.__luneaDailyInterpretationContractBase = prior;
     W.promptString = wrapped;
     try { promptString = wrapped; } catch {}
@@ -165,6 +170,7 @@
       return prior.call(this, input, init);
     };
     wrapped.__luneaDailyInterpretationContractV2 = true;
+    wrapped.__luneaReadingContextV1 = true;
     wrapped.__luneaDailyInterpretationContractBase = prior;
     W.fetch = wrapped;
     return true;
