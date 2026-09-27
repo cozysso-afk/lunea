@@ -112,12 +112,29 @@
     return true;
   }
 
+  function ensureDailyInterpretationContract(){
+    if(W.LUNEA_DAILY_INTERPRETATION_CONTRACT_V2||document.getElementById('luneaDailyInterpretationContractV2Loader'))return true;
+    const script=document.createElement('script');
+    script.id='luneaDailyInterpretationContractV2Loader';
+    script.src='./lunea-daily-interpretation-contract-v2.js?v=20260928-1';
+    script.async=false;
+    script.onerror=()=>console.error('[LUNEA V29] daily interpretation contract V2 failed to load');
+    document.head.appendChild(script);
+    return true;
+  }
+
   function ensureReadingContext(){
-    if(W.LUNEA_READING_CONTEXT_V1||document.getElementById('luneaReadingContextV1Loader'))return true;
+    if(W.LUNEA_READING_CONTEXT_V1)return ensureDailyInterpretationContract();
+    const existing=document.getElementById('luneaReadingContextV1Loader');
+    if(existing){
+      existing.addEventListener('load',ensureDailyInterpretationContract,{once:true});
+      return true;
+    }
     const script=document.createElement('script');
     script.id='luneaReadingContextV1Loader';
     script.src='./lunea-reading-context-v1.js?v=20260922-1';
     script.async=false;
+    script.onload=ensureDailyInterpretationContract;
     script.onerror=()=>console.error('[LUNEA V29] reading context module failed to load');
     document.head.appendChild(script);
     return true;
