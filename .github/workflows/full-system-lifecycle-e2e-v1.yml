@@ -6,6 +6,7 @@ on:
     paths:
       - 'tests/system-support-lifecycle-v1.e2e.mjs'
       - 'tests/reading-lifecycle-v59.e2e.mjs'
+      - 'tests/reading-share-output-v6.test.mjs'
       - 'lunea-reading-share-ui-v6.js'
       - '.github/workflows/full-system-lifecycle-e2e-v1.yml'
       - 'astro-horary-v1.js'
