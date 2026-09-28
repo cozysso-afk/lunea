@@ -30,7 +30,7 @@ vm.runInNewContext(source, {
 
 const learning = window.LUNEA_SPREAD_LEARNING_V1;
 assert.ok(learning, 'learning API should be exposed');
-assert.equal(learning.version, 5);
+assert.equal(learning.version, 6);
 assert.equal(learning.max, 1000);
 
 const scenario = learning.record({
@@ -91,7 +91,10 @@ assert.equal(manual.row.source, 'manual');
 assert.equal(manual.row.primaryIntent, '사용자 직접 설계 배열');
 
 const prompt = learning.formatForPrompt('답장을 바로 할지 내일 할지 반응 비교', 3);
-assert.match(prompt, /사용자 교정 정답/);
+assert.match(prompt, /사용자 학습 구조 참고/);
 assert.match(prompt, /질문 구조:/);
+assert.doesNotMatch(prompt, /답장 시점 비교/, 'historical spread title must not be exposed as prompt guidance');
+assert.doesNotMatch(prompt, /지금 답장했을 때의 즉각 반응/, 'historical final positions must not be exposed as prompt guidance');
+assert.doesNotMatch(prompt, /그 사람한테 답장을 지금 할지 내일 할지 각각 반응을 보고 싶어/, 'raw historical question must not be exposed as prompt guidance');
 
 console.log('spread-learning tests: PASS');
