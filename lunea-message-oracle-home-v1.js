@@ -37,6 +37,95 @@
       #${ENTRY_ID} span{font-size:12px;margin:4px 0}
       #${ENTRY_ID} small{font-size:11px;line-height:1.55;color:var(--dim)}
       #${STATUS_ID}{margin:7px 0 2px;color:var(--dim);font-size:10.5px;line-height:1.45}
+
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active){
+        --signal-gold:235,205,143;--signal-violet:183,151,238;
+        height:82px!important;min-height:82px!important;border-radius:23px!important;
+        border:1px solid rgba(244,241,255,.24)!important;
+        background:
+          radial-gradient(92% 190% at 3% -10%,rgba(var(--signal-gold),.25),transparent 50%),
+          radial-gradient(72% 160% at 98% 118%,rgba(var(--signal-violet),.22),transparent 55%),
+          linear-gradient(146deg,rgba(255,255,255,.135),rgba(255,255,255,.038) 38%,rgba(8,10,30,.34) 76%,rgba(4,6,20,.46)),
+          rgba(12,15,39,.43)!important;
+        -webkit-backdrop-filter:blur(9px) saturate(132%)!important;backdrop-filter:blur(9px) saturate(132%)!important;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.36),
+          inset 1px 0 0 rgba(var(--signal-gold),.14),
+          inset -1px 0 0 rgba(var(--signal-violet),.10),
+          inset 0 -1px 0 rgba(1,3,14,.50),
+          inset 0 -18px 30px rgba(2,4,18,.12),
+          0 10px 24px rgba(0,1,13,.22),0 2px 5px rgba(0,0,0,.14)!important;
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active)::before{
+        content:'';position:absolute;z-index:0;pointer-events:none;inset:-58% -22%;
+        background:
+          radial-gradient(ellipse at 18% 43%,rgba(var(--signal-gold),.34),transparent 29%),
+          radial-gradient(ellipse at 80% 64%,rgba(var(--signal-violet),.25),transparent 32%);
+        opacity:.88;transform:translate3d(-3%,1%,0) rotate(-1deg);
+        animation:luneaSignalMessageAurora 13s ease-in-out infinite alternate
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active)::after{
+        content:'';position:absolute;z-index:3;pointer-events:none;inset:1px;border-radius:21px;
+        border:1px solid rgba(255,255,255,.055);border-top-color:rgba(255,255,255,.26);
+        background:linear-gradient(110deg,transparent 8%,rgba(255,255,255,.105) 30%,transparent 47%,rgba(var(--signal-violet),.04) 76%,transparent 92%);
+        opacity:.88
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .category-header{
+        height:80px!important;min-height:80px!important;padding:12px 15px!important;position:relative;z-index:4
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .cat-left{
+        gap:13px!important;min-width:0!important;overflow:hidden!important;align-items:center!important
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .message-oracle-home-logo{
+        width:50px!important;height:50px!important;flex:0 0 50px!important;padding:2px;box-sizing:border-box;
+        border-radius:17px!important;border:1px solid rgba(var(--signal-gold),.34)!important;
+        background:
+          radial-gradient(circle at 30% 20%,rgba(255,255,255,.25),transparent 32%),
+          linear-gradient(145deg,rgba(var(--signal-gold),.16),rgba(var(--signal-violet),.06))!important;
+        box-shadow:
+          inset 0 1px 0 rgba(255,255,255,.31),
+          inset -1px -1px 0 rgba(var(--signal-violet),.10),
+          inset 0 -8px 16px rgba(2,4,20,.16),
+          0 6px 15px rgba(0,0,0,.15),0 0 16px rgba(var(--signal-gold),.08)!important;
+        opacity:.92!important;filter:saturate(.90) brightness(.98) contrast(.96)!important
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .cat-text{min-width:0!important;overflow:hidden!important}
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .cat-text h3{
+        margin:0!important;min-width:0;font-size:14.6px!important;line-height:1.08!important;color:#fbfaff!important;font-weight:650!important;letter-spacing:.1px!important;
+        white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .cat-text p{
+        display:block!important;margin-top:5px!important;color:#c1c5d8!important;font-size:9.7px!important;line-height:1.18!important;
+        white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .message-oracle-home-contexts{display:none!important}
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .toggle{
+        width:34px!important;height:34px!important;flex:0 0 34px!important;border-radius:999px!important;
+        display:grid!important;place-items:center!important;align-self:center!important;margin-left:10px!important;
+        border:1px solid rgba(var(--signal-gold),.25)!important;
+        background:linear-gradient(145deg,rgba(255,255,255,.10),rgba(var(--signal-violet),.055))!important;
+        color:rgb(var(--signal-gold))!important;font-size:19px!important;line-height:1!important;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.23),inset 0 -5px 10px rgba(3,5,20,.12),0 4px 12px rgba(0,0,0,.12)!important
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active):active{
+        transform:scale(.985)!important;border-color:rgba(var(--signal-gold),.40)!important
+      }
+      @keyframes luneaSignalMessageAurora{
+        0%{transform:translate3d(-4%,2%,0) rotate(-1deg);opacity:.72}
+        55%{transform:translate3d(2%,-2%,0) rotate(1deg);opacity:.92}
+        100%{transform:translate3d(5%,1%,0) rotate(2deg);opacity:.78}
+      }
+      @media(max-width:390px){
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active){height:78px!important;min-height:78px!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .category-header{height:76px!important;min-height:76px!important;padding:10px 13px!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .message-oracle-home-logo{width:47px!important;height:47px!important;flex-basis:47px!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .cat-text h3{font-size:13.8px!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .cat-text p{font-size:9.3px!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active) .toggle{width:32px!important;height:32px!important;flex-basis:32px!important;margin-left:8px!important}
+      }
+      @media(prefers-reduced-motion:reduce){
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #${SECTION_ID}:not(.active)::before{animation:none!important;transform:none!important}
+      }
     `;
     (document.head || document.documentElement).appendChild(style);
   }
