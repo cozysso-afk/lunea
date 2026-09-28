@@ -232,6 +232,44 @@
   else load();
 })();
 
+/* SHARED AI RESPONSE GUARD + HORARY V49 LOADER
+   Loads the request ownership/validation layer and then the Horary binding.
+   Both modules are additive: V44 still owns prompt/copy/archive semantics. */
+(() => {
+  const W=window;
+  if(W.__LUNEA_HORARY_AI_GUARD_V49_LOADER__)return;
+  W.__LUNEA_HORARY_AI_GUARD_V49_LOADER__=true;
+
+  const loadHoraryGuard=()=>{
+    if(document.getElementById('luneaHoraryAiGuardV49Loader'))return;
+    const script=document.createElement('script');
+    script.id='luneaHoraryAiGuardV49Loader';
+    script.src='./lunea-horary-ai-guard-v49.js?v=490';
+    script.async=false;
+    script.onerror=()=>console.error('[LUNEA] Horary AI Guard V49 failed to load');
+    (document.head||document.documentElement).appendChild(script);
+  };
+
+  const load=()=>{
+    if(W.LUNEA_AI_RESPONSE_GUARD_V1){loadHoraryGuard();return;}
+    const existing=document.getElementById('luneaAiResponseGuardV1Loader');
+    if(existing){
+      existing.addEventListener('load',loadHoraryGuard,{once:true});
+      return;
+    }
+    const script=document.createElement('script');
+    script.id='luneaAiResponseGuardV1Loader';
+    script.src='./lunea-ai-response-guard-v1.js?v=100';
+    script.async=false;
+    script.onload=loadHoraryGuard;
+    script.onerror=()=>console.error('[LUNEA] AI Response Guard V1 failed to load');
+    (document.head||document.documentElement).appendChild(script);
+  };
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',load,{once:true});
+  else load();
+})();
+
 /* HORARY + PRASHNA MOBILE ACTION OWNER V45 LOADER
    Uses a fresh URL on every V45 release so iOS/PWA cannot reuse the old action layer. */
 (() => {
@@ -242,7 +280,7 @@
     if(document.getElementById('luneaHoraryMobileActionsV45Loader'))return;
     const script=document.createElement('script');
     script.id='luneaHoraryMobileActionsV45Loader';
-    script.src='./lunea-horary-mobile-actions-v45.js?v=450';
+    script.src='./lunea-horary-mobile-actions-v45.js?v=451';
     script.async=false;
     script.onerror=()=>console.error('[LUNEA] Horary + Prashna Mobile Actions V45 failed to load');
     (document.head||document.documentElement).appendChild(script);
