@@ -29,9 +29,9 @@ test('INTIMACY Tarot back has one owner without an intermediate shared restore p
 });
 
 test('V40 gives the INTIMACY tile a dedicated burgundy wine palette', () => {
-  assert.match(source, /linear-gradient\(145deg,rgba\(91,19,50/);
-  assert.match(source, /rgba\(232,92,145/);
-  assert.match(source, /#310b20/);
+  assert.match(source, /linear-gradient\(155deg,rgba\(69,16,40/);
+  assert.match(source, /rgba\(222,126,164/);
+  assert.match(source, /#19070f/);
   assert.match(source, /luneaIntimacyBurgundyV40Style/);
 });
 

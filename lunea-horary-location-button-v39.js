@@ -1,15 +1,14 @@
 'use strict';
 
 /*
-  LUNEA HORARY LOCATION BUTTON V39
-  ================================
-  Visible one-tap current-location control for the Horary modal.
-
-  - Adds a main-screen "현재 위치 인식" button beside the place field.
-  - Uses browser Geolocation only after an explicit tap.
-  - Fills latitude/longitude and timezone controls used by Horary Hardening V38.
-  - Keeps the existing manual place input as a fallback and never requests
-    location permission automatically on modal open.
+  LUNEA HORARY LOCATION BUTTON V39.3
+  ==================================
+  - Explicit one-tap browser geolocation for Horary.
+  - Keeps the actual IANA timezone internally, but shows Asia/Seoul as
+    "한국시간 (UTC+9)" in user-facing status text.
+  - Injects GPS coordinates into direct /v1/horary and /v1/prashna requests,
+    plus legacy resumable Horary job requests, so a label like
+    "현재 위치 (lat, lon)" is never mistaken for a city name by the API.
 */
 (() => {
   const W = window;
@@ -48,6 +47,94 @@
     status.className = `horary-status ${ok ? 'ok' : 'err'}`;
   }
 
+  function displayTimezone(timezone) {
+    const tz = String(timezone || '').trim();
+    if (tz === 'Asia/Seoul') return '한국시간 (UTC+9)';
+    return tz || '시간대 미확인';
+  }
+
+  function readCurrentGeo() {
+    const latRaw = String($('luneaHoraryLatV38')?.value || '').trim();
+    const lonRaw = String($('luneaHoraryLonV38')?.value || '').trim();
+    let lat = latRaw === '' ? NaN : Number(latRaw);
+    let lon = lonRaw === '' ? NaN : Number(lonRaw);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      const place = String($('astroHoraryPlace')?.value || '').trim();
+      const match = place.match(/\(\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*\)/);
+      if (match) {
+        lat = Number(match[1]);
+        lon = Number(match[2]);
+      }
+    }
+
+    let timezone = String($('luneaHoraryTimezoneV38')?.value || '').trim();
+    if (!timezone) {
+      try { timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Seoul'; }
+      catch { timezone = 'Asia/Seoul'; }
+    }
+    return {lat, lon, timezone};
+  }
+
+  function enrichPayload(payload) {
+    const next = {...(payload || {})};
+    const geo = readCurrentGeo();
+    if (geo.timezone) next.timezone = geo.timezone;
+    if (Number.isFinite(geo.lat) && Number.isFinite(geo.lon)) {
+      next.lat = geo.lat;
+      next.lon = geo.lon;
+    }
+    return next;
+  }
+
+  function rewriteHoraryJob(init) {
+    if (!init?.body || typeof init.body !== 'string') return init;
+    try {
+      const envelope = JSON.parse(init.body);
+      if (String(envelope?.kind || '').toLowerCase() !== 'horary' || !envelope?.payload) return init;
+      return {
+        ...init,
+        body: JSON.stringify({...envelope, payload: enrichPayload(envelope.payload)})
+      };
+    } catch {
+      return init;
+    }
+  }
+
+  function rewriteHoraryDirect(init) {
+    if (!init?.body || typeof init.body !== 'string') return init;
+    try {
+      const payload = JSON.parse(init.body);
+      return {...init, body: JSON.stringify(enrichPayload(payload))};
+    } catch {
+      return init;
+    }
+  }
+
+  function installHoraryGeoBridge() {
+    if (W.__LUNEA_HORARY_GEO_JOB_BRIDGE_V39__ || typeof W.fetch !== 'function') return;
+    W.__LUNEA_HORARY_GEO_JOB_BRIDGE_V39__ = true;
+    const priorFetch = W.fetch.bind(W);
+
+    W.fetch = function(input, init = {}) {
+      let url = '';
+      const method = String(init?.method || input?.method || 'GET').toUpperCase();
+      try {
+        url = typeof input === 'string'
+          ? input
+          : (input instanceof URL ? input.href : String(input?.url || ''));
+      } catch {}
+
+      let nextInit = init;
+      if (method === 'POST' && /\/v1\/(?:horary|prashna)(?:\?|$)/i.test(url)) {
+        nextInit = rewriteHoraryDirect(init);
+      } else if (method === 'POST' && /\/v1\/jobs\/astro(?:\?|$)/i.test(url)) {
+        nextInit = rewriteHoraryJob(init);
+      }
+      return priorFetch(input, nextInit);
+    };
+  }
+
   function resolveCurrentLocation() {
     const btn = $(BUTTON_ID);
     if (!btn) return;
@@ -81,7 +168,7 @@
 
       btn.disabled = false;
       btn.textContent = '✓ 현재 위치 인식됨';
-      updateStatus(`현재 위치 반영 완료 · ${lat.toFixed(4)}, ${lon.toFixed(4)} · ${tz}`);
+      updateStatus(`현재 위치 반영 완료 · ${lat.toFixed(4)}, ${lon.toFixed(4)} · ${displayTimezone(tz)}`);
       setTimeout(() => { if (btn) btn.textContent = old; }, 1800);
     }, err => {
       btn.disabled = false;
@@ -102,37 +189,125 @@
 
     ensureStyle();
     const parent = field.parentElement;
-    if (parent?.classList?.contains('horary-grid')) {
-      const row = document.createElement('div');
-      row.className = 'lunea-horary-place-row-v39';
-      parent.insertBefore(row, field);
-      row.appendChild(field);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'mini';
-      btn.id = BUTTON_ID;
-      btn.textContent = '⌖ 현재 위치 인식';
-      row.appendChild(btn);
-      btn.addEventListener('click', resolveCurrentLocation);
-      return true;
-    }
-
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'mini';
     btn.id = BUTTON_ID;
     btn.textContent = '⌖ 현재 위치 인식';
-    field.insertAdjacentElement('afterend', btn);
     btn.addEventListener('click', resolveCurrentLocation);
+
+    if (parent?.classList?.contains('horary-grid')) {
+      const row = document.createElement('div');
+      row.className = 'lunea-horary-place-row-v39';
+      parent.insertBefore(row, field);
+      row.appendChild(field);
+      row.appendChild(btn);
+      return true;
+    }
+
+    field.insertAdjacentElement('afterend', btn);
     return true;
   }
 
   function boot() {
+    installHoraryGeoBridge();
     ensureButton();
     const observer = new MutationObserver(() => ensureButton());
     observer.observe(document.documentElement, {childList:true, subtree:true});
+    W.LUNEA_HORARY_LOCATION_BUTTON_V39 = Object.freeze({
+      version:'39.3', readCurrentGeo, rewriteHoraryJob, rewriteHoraryDirect, displayTimezone
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
+})();
+
+/* Prashna UI loader: stays coupled to the Horary location bridge so both
+   question-moment systems receive identical location/timezone context. */
+(() => {
+  const W = window;
+  if (W.__LUNEA_PRASHNA_UI_LOADER_V1__) return;
+  W.__LUNEA_PRASHNA_UI_LOADER_V1__ = true;
+
+  const version = (() => {
+    try {
+      const src = document.currentScript?.src || '';
+      return src ? (new URL(src, location.href).searchParams.get('v') || '1') : '1';
+    } catch { return '1'; }
+  })();
+
+  function load() {
+    if (document.getElementById('luneaPrashnaV1Loader')) return;
+    const script = document.createElement('script');
+    script.id = 'luneaPrashnaV1Loader';
+    script.src = `./lunea-prashna-v1.js?v=${encodeURIComponent(version)}`;
+    script.async = false;
+    script.onload = () => {
+      if (document.getElementById('luneaHoraryPrashnaCrossV2Loader')) return;
+      const cross = document.createElement('script');
+      cross.id = 'luneaHoraryPrashnaCrossV2Loader';
+      cross.src = `./lunea-horary-prashna-cross-v2.js?v=${encodeURIComponent(version)}`;
+      cross.async = false;
+      cross.onerror = () => console.info('[LUNEA] Horary Prashna Cross V2 skipped');
+      (document.head || document.documentElement).appendChild(cross);
+    };
+    script.onerror = () => console.info('[LUNEA] Prashna V1 UI skipped');
+    (document.head || document.documentElement).appendChild(script);
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', load, {once:true});
+  else load();
+})();
+
+/* HORARY ↔ PRASHNA AI BRIDGE V1
+   A Prashna block may be appended only to an actual Horary interpretation
+   request, and only when LUNEA_PRASHNA_V1 confirms that its stored result
+   exactly matches the current Horary question/moment/place/topic signature.
+*/
+(() => {
+  const W = window;
+  if (W.__LUNEA_HORARY_PRASHNA_AI_BRIDGE_V1__ || typeof W.fetch !== 'function') return;
+  W.__LUNEA_HORARY_PRASHNA_AI_BRIDGE_V1__ = true;
+
+  const priorFetch = W.fetch.bind(W);
+  const HORARY_MARKER = '[HORARY V1 · 질문시각 점성술 계산 결과]';
+  const PRASHNA_MARKER = '[PRASHNA V1 · 독립 질문시각 Jyotisha 계산]';
+  const CROSS_V2_MARKER = '[HORARY ↔ PRASHNA CROSS INTERPRETATION V2 · AUTHORITATIVE]';
+  const CROSS_RULES = `[HORARY ↔ PRASHNA 교차 원칙]\n1. Horary와 Prashna를 먼저 서로 독립적으로 해석한다.\n2. Horary의 Perfection·Reception·VOC·개입각 규칙을 Prashna 판정처럼 재사용하지 않는다.\n3. Prashna의 support band는 LUNEA_PRASHNA_RULESET_V1 내부 구조값이며 Horary 결론을 덮어쓰지 않는다.\n4. 두 체계가 같은 방향이면 '교차 보조'라고만 표현하고, 다른 방향이면 '체계 간 충돌'을 명시한다.\n5. 한 체계의 약한 근거를 다른 체계의 강한 근거인 것처럼 합산하지 않는다.\n6. 질문·시각·장소가 일치하지 않는 Prashna 결과는 사용하지 않는다.\n7. 제공되지 않은 행성 위치·하우스·각·날짜를 새로 만들지 않는다.`;
+
+  function rewriteHoraryAI(init) {
+    if (!init?.body || typeof init.body !== 'string') return init;
+    try {
+      const payload = JSON.parse(init.body);
+      const part = payload?.contents?.[0]?.parts?.[0];
+      const text = String(part?.text || '');
+      if (!text.includes(HORARY_MARKER) || text.includes(PRASHNA_MARKER) || text.includes(CROSS_V2_MARKER)) return init;
+      const block = String(W.LUNEA_PRASHNA_V1?.promptBlock?.() || '').trim();
+      if (!block) return init;
+      const next = structuredClone(payload);
+      next.contents[0].parts[0].text = `${text}\n\n${block}\n\n${CROSS_RULES}`;
+      return {...init, body:JSON.stringify(next)};
+    } catch {
+      return init;
+    }
+  }
+
+  W.fetch = function(input, init = {}) {
+    let url = '';
+    const method = String(init?.method || input?.method || 'GET').toUpperCase();
+    try {
+      url = typeof input === 'string'
+        ? input
+        : (input instanceof URL ? input.href : String(input?.url || ''));
+    } catch {}
+    const nextInit = method === 'POST' && /generativelanguage\.googleapis\.com\/.+:generateContent(?:\?|$)/i.test(url)
+      ? rewriteHoraryAI(init)
+      : init;
+    return priorFetch(input, nextInit);
+  };
+
+  W.LUNEA_HORARY_PRASHNA_AI_BRIDGE_V1 = Object.freeze({
+    version:'1.1', rewriteHoraryAI, HORARY_MARKER, PRASHNA_MARKER, CROSS_V2_MARKER
+  });
 })();

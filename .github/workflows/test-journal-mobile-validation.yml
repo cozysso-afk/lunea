@@ -1,0 +1,42 @@
+name: Test Journal Mobile Validation
+
+on:
+  pull_request:
+    paths:
+      - 'lunea-journal-header-fix-v1.js'
+      - 'tests/journal-validation-mobile-v4.e2e.mjs'
+      - '.github/workflows/test-journal-mobile-validation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  journal-mobile-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-journal-mobile.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-journal-mobile.log
+          exit 1
+      - name: Run journal mobile validation E2E
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/journal-validation-mobile-v4.e2e.mjs
+      - name: Show local server log
+        if: always()
+        run: cat /tmp/lunea-journal-mobile.log || true

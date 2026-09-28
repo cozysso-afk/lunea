@@ -50,6 +50,11 @@ button.onclick = () => { baseCalls += 1; };
 const document = {
   readyState:'complete',
   documentElement:root,
+  head:{appendChild(){}},
+  createElement(tag) {
+    if (tag === 'script') return {id:'',src:'',async:true,onerror:null};
+    return {};
+  },
   getElementById(id) {
     if (id === 'drawBtn') return button;
     if (id === 'drawLabel') return label;

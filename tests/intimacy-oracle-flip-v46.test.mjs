@@ -5,7 +5,7 @@ const source=fs.readFileSync(new URL('../lunea-intimacy-oracle-ui-v36.js',import
 const bridge=fs.readFileSync(new URL('../lunea-intimacy-ai-bridge-v34.js',import.meta.url),'utf8');
 test('Oracle V47 uses the current 3:5 display assets',()=>{
   assert.match(source,/CARD_ASSET_VERSION='v47'/);
-  assert.match(source,/backgroundSize='cover'/);
+  assert.match(source,/backgroundSize='contain'/);
   assert.match(source,/lio-card-front/);
 });
 test('Oracle cards are true two-sided 3D flips on iOS-safe CSS',()=>{
@@ -26,5 +26,6 @@ test('Reveal all staggers base and supplemental Oracle flips at the Tarot 110ms 
   assert.match(render,/host\.querySelectorAll\('\.lio-card:not\(\.revealed\)'\)/);
 });
 test('Oracle runtime cache token advances for PWA refresh',()=>{
-  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3615/);
+  assert.match(bridge,/const SELF_BUILD/);
+  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=\$\{encodeURIComponent\(SELF_BUILD \|\| '3615'\)\}/);
 });

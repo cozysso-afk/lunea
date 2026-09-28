@@ -10,8 +10,12 @@
   const COUNT = 'luneaSharePreviewCountV6';
   const STATUS = 'luneaShareStatusV6';
   const SHARE = 'luneaShareOpenV6';
+  // Keep the approved 4:5 layout coordinates stable, then export near the
+  // iPhone 17 Pro's 1206px screen width for sharper Photos viewing.
   const BW = 1080;
   const BH = 1350;
+  const OUTPUT_WIDTH = 1200;
+  const OUTPUT_HEIGHT = 1500;
 
   let prepared = null;
   let urls = [];
@@ -61,7 +65,7 @@
       const timer = setTimeout(() => done(new Error('PNG 검증 시간 초과')), 12000);
       im.onload = () => {
         clearTimeout(timer);
-        if (im.naturalWidth !== BW || im.naturalHeight !== BH) {
+        if (im.naturalWidth !== OUTPUT_WIDTH || im.naturalHeight !== OUTPUT_HEIGHT) {
           done(new Error(`PNG 크기 오류: ${im.naturalWidth}×${im.naturalHeight}`));
           return;
         }
@@ -235,15 +239,15 @@
       if (!source || !source.width || !source.height) throw new Error(`PNG ${i + 1}페이지 캔버스 오류`);
 
       const flat = document.createElement('canvas');
-      flat.width = BW;
-      flat.height = BH;
+      flat.width = OUTPUT_WIDTH;
+      flat.height = OUTPUT_HEIGHT;
       const ctx = flat.getContext('2d', {alpha:false});
       if (!ctx) throw new Error('PNG 캔버스를 만들지 못했어.');
       ctx.imageSmoothingEnabled = true;
       try { ctx.imageSmoothingQuality = 'high'; } catch {}
       ctx.fillStyle = '#07050b';
-      ctx.fillRect(0, 0, BW, BH);
-      ctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, BW, BH);
+      ctx.fillRect(0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
+      ctx.drawImage(source, 0, 0, source.width, source.height, 0, 0, OUTPUT_WIDTH, OUTPUT_HEIGHT);
 
       const blob = await canvasToBlob(flat);
       await verifyPngBlob(blob);
@@ -373,7 +377,7 @@
     const can = !!(navigator.share && (!navigator.canShare || navigator.canShare({files})));
     $(SHARE).disabled = !can;
     $(SHARE).textContent = can ? `공유창 열기 · ${files.length}장` : '이 기기에서는 파일 공유를 지원하지 않음';
-    status(files.length ? '1080 × 1350 PNG · 좌우로 넘겨서 확인' : '생성된 PNG가 없어.');
+    status(files.length ? `${OUTPUT_WIDTH} × ${OUTPUT_HEIGHT} PNG · 4:5 · 좌우로 넘겨서 확인` : '생성된 PNG가 없어.');
     updateIndex(0,files.length);
     lockBody();
     o.dataset.open = 'true';
@@ -436,8 +440,14 @@
     hideLegacy();
     overlay();
     document.addEventListener('click',intercept,true);
-    W.LUNEA_READING_SHARE_UI_V6 = Object.freeze({version:'6.1',prepare,close,normalizeResult});
-    console.info('✨ LUNEA Reading Share UI V6.1 ready');
+    W.LUNEA_READING_SHARE_UI_V6 = Object.freeze({
+      version:'6.2',
+      output:Object.freeze({width:OUTPUT_WIDTH,height:OUTPUT_HEIGHT,aspectRatio:'4:5'}),
+      prepare,
+      close,
+      normalizeResult
+    });
+    console.info('✨ LUNEA Reading Share UI V6.2 ready · 1200×1500 4:5 export');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true});

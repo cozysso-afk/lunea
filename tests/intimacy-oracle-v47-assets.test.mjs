@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 const ui=fs.readFileSync(new URL('../lunea-intimacy-oracle-ui-v36.js',import.meta.url),'utf8');
 assert.match(ui,/oracle_back_v2\.png/);
 assert.match(ui,/CARD_ASSET_VERSION='v47'/);
-assert.match(ui,/backgroundSize='cover'/);
-assert.match(ui,/brightness\(1\.14\)/);
-assert.match(ui,/min-height:26%/);
+assert.match(ui,/backgroundSize='contain'/);
+assert.match(ui,/\.lio-card-front\{[^}]*filter:none/);
+assert.match(ui,/\.lio-card-lens\{position:static;display:block/);
 for(let i=1;i<=36;i++){
   const n=String(i).padStart(2,'0');
   const b=fs.readFileSync(new URL(`../assets/intimacy-oracle/cards/oracle_${n}.png`,import.meta.url));

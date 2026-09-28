@@ -9,6 +9,7 @@ const learning = read('lunea-learning-success-gate-v1.js');
 const boundary = read('lunea-reading-boundary-reset-v31.js');
 const runtimeState = read('lunea-runtime-state-v56.js');
 const universal = read('lunea-universal-ai-opal-v20.js');
+const runtimeRegression = read('lunea-runtime-regression-v60.js');
 const manual = read('lunea-manual-structure-v1.js');
 const manualEverywhere = read('lunea-manual-everywhere-v1.js');
 const manual20 = read('lunea-manual-limit20-v17.js');
@@ -28,6 +29,7 @@ const noStartAssignment = (source, label) => {
 noStartAssignment(lifecycle, 'V59');
 assert.ok(!/setInterval\s*\(/.test(lifecycle), 'V59 must not poll');
 assert.ok(!/__luneaMobileV57Yield/.test(lifecycle), 'V59 must not fake V57 installation markers');
+assert.match(universal, /sessionCurrent\(mySession\) && !renderHandedOff/, 'V20 must keep draw locked until the guarded render handoff releases it');
 assert.ok(!/__luneaV14Wrapped/.test(lifecycle), 'V59 must not fake V14 installation markers');
 assert.ok(!/__luneaV27Wrapped/.test(lifecycle), 'V59 must not fake V27 installation markers');
 assert.ok(!/markStableStartSpread/.test(lifecycle), 'V59 must not stamp startSpread compatibility markers');
@@ -92,11 +94,15 @@ assert.ok(!/\[250,\s*800,\s*1800\]/.test(polish), 'V14 wrapper retry schedule mu
 assert.ok(!/function\s+addAIEntry/.test(universal), 'V20 must not create visible category rows');
 assert.ok(!/setInterval\s*\(/.test(universal), 'V20 must not poll for rows/draw wrapper');
 assert.match(universal, /function hydrateCategoryEntries/);
+assert.match(universal, /function nextPaint/);
+assert.match(universal, /setTimeout\(finish, 120\)/);
 assert.match(universal, /async function yieldForAiStart/);
+assert.ok(!/now\.__luneaUniversalAI\s*=\s*false/.test(universal), 'settled AI render must not clear a newer sheet entry mode');
 assert.match(universal, /const started = start\(/);
 assert.match(universal, /await Promise\.resolve\(started\)/);
 assert.match(universal, /__luneaLearningCorrection/);
 assert.match(universal, /gate\?\.commit/);
+assert.match(runtimeRegression, /renderedQuestion !== aiExpectedQuestion/);
 
 // Learning gate is a post-success commit helper only.
 assert.ok(!/\.record\s*=/.test(learning), 'learning gate must not replace learning.record');

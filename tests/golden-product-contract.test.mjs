@@ -9,6 +9,7 @@ const expectedOrder = [
   'flipAll',
   'extraCard',
   'saveReading',
+  'luneaShareReadingPng',
   'retry',
   'timingSupportBtn',
   'luneaMessageOracleSupportBtn',

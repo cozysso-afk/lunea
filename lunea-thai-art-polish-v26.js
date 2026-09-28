@@ -24,7 +24,7 @@
     const s=document.createElement('style');
     s.id='luneaThaiArtPolishV26Style';
     s.textContent=`
-      #luneaThaiHomeTileV24 .thai-v24-orb{
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb{
         overflow:hidden!important;
         isolation:isolate;
         border-color:rgba(238,219,157,.30)!important;
@@ -36,9 +36,9 @@
           0 0 18px rgba(222,188,94,.11),
           0 8px 18px rgba(0,0,0,.22)!important;
       }
-      #luneaThaiHomeTileV24 .thai-v24-orb img,
-      #luneaThaiHomeTileV24 .thai-v25-img,
-      #luneaThaiHomeTileV24 img[data-lunea-thai-art]{
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb img,
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v25-img,
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 img[data-lunea-thai-art]{
         width:100%!important;
         height:100%!important;
         display:block!important;
@@ -48,35 +48,35 @@
         transform-origin:50% 50%!important;
         filter:brightness(1.16) contrast(1.09) saturate(1.08) drop-shadow(0 0 5px rgba(255,213,117,.18))!important;
       }
-      #luneaThaiHomeTileV24 .thai-v24-orb::before{
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb::before{
         content:'';position:absolute;inset:0;z-index:2;pointer-events:none;border-radius:inherit;
         background:
           radial-gradient(circle at 50% 47%,rgba(255,226,151,.16),transparent 38%),
           linear-gradient(132deg,rgba(255,255,255,.15),transparent 22%,transparent 73%,rgba(155,188,224,.08));
         mix-blend-mode:screen;
       }
-      #luneaThaiHomeTileV24 .thai-v24-orb::after{
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb::after{
         content:'';position:absolute;inset:1px;z-index:3;pointer-events:none;border-radius:inherit;
         border:1px solid rgba(255,240,197,.16);
         box-shadow:inset 0 0 12px rgba(8,12,35,.24);
       }
-      #luneaThaiHomeTileV24{
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24{
         border-color:rgba(220,207,166,.20)!important;
         background:
           radial-gradient(circle at 13% 28%,rgba(213,183,101,.09),transparent 24%),
           radial-gradient(circle at 89% 82%,rgba(115,160,185,.055),transparent 27%),
           linear-gradient(148deg,rgba(29,31,49,.96),rgba(8,12,27,.99))!important;
       }
-      #luneaThaiHomeTileV24 .thai-v24-copy small{color:#c8b681!important}
-      #luneaThaiHomeTileV24 .thai-v24-arrow{color:#d1bd82!important;filter:drop-shadow(0 0 5px rgba(229,197,111,.14))}
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-copy small{color:#c8b681!important}
+      html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-arrow{color:#d1bd82!important;filter:drop-shadow(0 0 5px rgba(229,197,111,.14))}
       @media(max-width:380px){
-        #luneaThaiHomeTileV24 .thai-v24-orb img,
-        #luneaThaiHomeTileV24 .thai-v25-img,
-        #luneaThaiHomeTileV24 img[data-lunea-thai-art]{transform:scale(1.22)!important}
+        html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb img,
+        html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v25-img,
+        html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 img[data-lunea-thai-art]{transform:scale(1.22)!important}
       }
       @media(prefers-reduced-motion:no-preference){
-        #luneaThaiHomeTileV24 .thai-v24-orb{transition:box-shadow .25s ease,transform .25s ease}
-        #luneaThaiHomeTileV24:active .thai-v24-orb{transform:scale(.97)}
+        html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb{transition:box-shadow .25s ease,transform .25s ease}
+        html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24:active .thai-v24-orb{transform:scale(.97)}
       }
     `;
     document.head.appendChild(s);

@@ -22,7 +22,7 @@
 
   const RELEASE = '34.4';
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
-  const EXPECTED_ORACLE_VERSION = '36.5';
+  const EXPECTED_ORACLE_VERSION = '36.6';
   const SELF_BUILD = (() => { try { const src=document.currentScript?.src||''; return src ? (new URL(src,location.href).searchParams.get('v')||'') : ''; } catch { return ''; } })();
   const ORACLE_SOURCES = Object.freeze([
     './lunea-intimacy-oracle-v35.js?v=352',

@@ -48,21 +48,24 @@ assert.match(rangeSource, /tarotState\.renderSignature === signature/);
 
 // Stable reading action order requested for the 3-column mobile grid.
 const expectedOrder = [
-  'flipAll','aiRead','saveReading',
-  'retry','extraCard','timingSupportBtn',
-  'astroTransitBtn','luneaThaiTarotBridgeBtn','luneaThaiTarotRangeBtn',
-  'astroReturnBtn','astroHoraryBtn'
+  'flipAll','extraCard','saveReading','luneaShareReadingPng',
+  'retry','timingSupportBtn','luneaMessageOracleSupportBtn',
+  'astroTransitBtn','astroReturnBtn','astroHoraryBtn',
+  'thaiTaksaBtn','luneaThaiTarotRangeBtn','aiRead','luneaTopCopyPrompt'
 ];
-for (let i = 0; i < expectedOrder.length - 1; i += 1) {
-  assert.ok(orderSource.indexOf(`'${expectedOrder[i]}'`) < orderSource.indexOf(`'${expectedOrder[i+1]}'`), `action order regressed around ${expectedOrder[i]}`);
-}
+const orderBlock = orderSource.match(/const ORDER = \[([\s\S]*?)\];/);
+assert.ok(orderBlock, 'action ORDER block missing');
+const actualOrder = [...orderBlock[1].matchAll(/'([^']+)'/g)].map(match => match[1]);
+assert.deepEqual(actualOrder, expectedOrder);
+assert.match(orderSource, /rank\.set\('luneaThaiTarotBridgeBtn',\s*rank\.get\('thaiTaksaBtn'\)\)/,
+  'legacy Thai bridge must share the approved Thai support rank');
 assert.match(orderSource, /Unknown\/future buttons are preserved/);
 assert.match(orderSource, /const desired = \[\.\.\.known\.map\(x => x\.node\), \.\.\.unknown\.map\(x => x\.node\)\]/);
 assert.match(orderSource, /if \(already\) return true/);
 
 // Long spreads get small convenience controls immediately after the prompt-copy box.
-assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.5/);
-assert.match(orderSource, /version:'33\.5'/);
+assert.match(orderSource, /LUNEA READING ACTION ORDER V33\.6/);
+assert.match(orderSource, /version:'33\.6'/);
 assert.match(orderSource, /luneaBottomReadingActions/);
 assert.match(orderSource, /luneaBottomAiRead/);
 assert.match(orderSource, /luneaBottomSaveReading/);
@@ -100,4 +103,4 @@ for (const asset of [
   assert.match(workflow, new RegExp(asset.replaceAll('.', '\\.')));
 }
 
-console.log('Thai range V33 + reading action order V33.5 regression tests: PASS');
+console.log('Thai range V33 + reading action order V33.6 regression tests: PASS');

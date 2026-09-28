@@ -54,11 +54,25 @@
     return A.length === B.length && A.every((x, i) => x === B[i]);
   }
 
+  function nextPaint() {
+    const raf = W.requestAnimationFrame;
+    return new Promise(resolve => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(fallback);
+        resolve();
+      };
+      const fallback = setTimeout(finish, 120);
+      if (typeof raf === 'function') raf(finish);
+    });
+  }
+
   async function yieldForAiStart(id) {
-    const raf = W.requestAnimationFrame || (cb => setTimeout(cb, 16));
-    await new Promise(resolve => raf(resolve));
+    await nextPaint();
     if (!sessionCurrent(id)) return false;
-    await new Promise(resolve => raf(resolve));
+    await nextPaint();
     if (!sessionCurrent(id)) return false;
     await new Promise(resolve => setTimeout(resolve, 0));
     return sessionCurrent(id);
@@ -328,6 +342,7 @@
       const label = byId('drawLabel');
       const oldLabel = label?.textContent || '질문 분석 & 맞춤 배열 설계';
       btn.disabled = true;
+      let renderHandedOff = false;
       if (label) label.textContent = '질문 구조 분석 & 배열 설계 중…';
 
       try {
@@ -344,6 +359,7 @@
         const start = W.startSpread || (typeof startSpread === 'function' ? startSpread : null);
         if (typeof start !== 'function') throw new Error('startSpread unavailable');
         const started = start(question, confirmed.positions, confirmed.spreadTitle, confirmed.designRationale);
+        renderHandedOff = true;
         await Promise.resolve(started);
         if (!sessionCurrent(mySession)) return;
 
@@ -353,13 +369,16 @@
           else W.LUNEA_SPREAD_LEARNING_V1?.record?.(confirmed.__luneaLearningCorrection);
         }
 
-        const now = getState();
-        if (now) now.__luneaUniversalAI = false;
+        // Do not clear the sheet-entry mode here. A wrapped startSpread can settle
+        // after the user has already opened the next AI sheet; writing false then
+        // corrupts that next selection and reuses the previous reading. Entry
+        // clicks (and the manual lifecycle owner) are the sole mode writers.
       } catch (error) {
+        renderHandedOff = false;
         console.error('[LUNEA V20] universal AI spread failed', error);
         if (sessionCurrent(mySession)) alert('AI 맞춤 배열을 만드는 중 오류가 났어. 질문 내용은 그대로 유지돼.');
       } finally {
-        if (sessionCurrent(mySession)) {
+        if (sessionCurrent(mySession) && !renderHandedOff) {
           btn.disabled = false;
           if (label) label.textContent = oldLabel.includes('질문') ? oldLabel : '질문 분석 & 맞춤 배열 설계';
         }

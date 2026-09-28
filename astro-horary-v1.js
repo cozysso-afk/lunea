@@ -424,6 +424,7 @@
       stateHorary.result = data;
       stateHorary.aiText = '';
       renderResult();
+      window.LUNEA_HORARY_PRASHNA_CROSS_V2?.onHoraryResult?.(data);
       if (stateHorary.mode === 'support') {
         renderInline();
         notifyAttachmentChanged();
@@ -742,6 +743,7 @@ ${horaryPromptBlock(stateHorary.result)}
     const data = stateHorary.result;
     if (!data) return null;
     const enriched = window.LUNEA_HORARY_HARDENING_V38?.enrichedArchiveObject?.(data) || data;
+    const cross = window.LUNEA_HORARY_PRASHNA_CROSS_V2?.archiveSnapshot?.() || null;
     return {
       schema:enriched.schema,
       question:enriched.question,
@@ -756,7 +758,9 @@ ${horaryPromptBlock(stateHorary.result)}
       judgment_support:enriched.judgment_support,
       mode_v38:enriched.mode_v38,
       meta:enriched.meta,
-      ai_text:String(stateHorary.aiText || '').slice(0,30000)
+      ai_text:String(stateHorary.aiText || '').slice(0,30000),
+      prashna_v1:cross?.prashna_v1 || null,
+      cross_interpretation_v2:cross?.cross_interpretation_v2 || null
     };
   }
 
@@ -797,6 +801,10 @@ ${horaryPromptBlock(stateHorary.result)}
     window.LUNEA_HORARY_TRADITIONAL_CORE_V40?.restoreResult?.(stateHorary.result);
     window.LUNEA_HORARY_BALANCE_GUARD_V41?.restoreResult?.(stateHorary.result);
     renderInline();
+    window.LUNEA_HORARY_PRASHNA_CROSS_V2?.restoreSnapshot?.({
+      prashna_v1:snapshot.result?.prashna_v1,
+      cross_interpretation_v2:snapshot.result?.cross_interpretation_v2
+    });
     return true;
   }
 
@@ -922,6 +930,12 @@ ${summaryText(data)}`;
     installStartReset();
     installPromptIntegration();
     installArchiveIntegration();
+    window.LUNEA_ASTRO_HORARY_V1 = Object.freeze({
+      version:'1.1',
+      getCurrent:() => stateHorary.result,
+      getMode:() => stateHorary.mode,
+      getQuestion:() => stateHorary.question
+    });
     console.info('✦ LUNEA HORARY V1 loaded');
   }
 
