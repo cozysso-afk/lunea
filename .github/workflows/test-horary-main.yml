@@ -16,6 +16,7 @@ on:
       - 'lunea-horary-mobile-actions-v45.js'
       - 'lunea-ai-response-guard-v1.js'
       - 'lunea-horary-ai-guard-v49.js'
+      - 'lunea-horary-result-ui-v2.js'
       - 'lunea-horary-interpretation-engine-v47.js'
       - 'lunea-horary-interpretation-bridge-v47.js'
       - 'lunea-horary-answer-validator-v48.js'
@@ -51,6 +52,7 @@ jobs:
           node --check lunea-horary-mobile-actions-v45.js
           node --check lunea-ai-response-guard-v1.js
           node --check lunea-horary-ai-guard-v49.js
+          node --check lunea-horary-result-ui-v2.js
           node --check lunea-horary-interpretation-engine-v47.js
           node --check lunea-horary-interpretation-bridge-v47.js
           node --check lunea-horary-answer-validator-v48.js
@@ -70,6 +72,7 @@ jobs:
           node tests/horary-mobile-actions-v45.test.mjs
           node tests/ai-response-guard-v1.test.mjs
           node tests/horary-ai-stale-guard-v49.test.mjs
+          node tests/horary-result-ui-v2.test.mjs
           node tests/horary-interpretation-engine-v47.test.mjs
           node tests/horary-v2-golden-questions.test.mjs
           node tests/horary-answer-validator-v48.test.mjs

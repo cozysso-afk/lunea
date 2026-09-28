@@ -195,3 +195,22 @@
   });
   console.info('✦ LUNEA Horary AI Guard V49 active · stale-response protection ON');
 })();
+
+/* HORARY RESULT UI / EVIDENCE V2 LOADER
+   Presentation-only follow-up to the guarded Horary result lifecycle. */
+(() => {
+  const W = window;
+  if (W.__LUNEA_HORARY_RESULT_UI_V2_LOADER__) return;
+  W.__LUNEA_HORARY_RESULT_UI_V2_LOADER__ = true;
+  const load = () => {
+    if (document.getElementById('luneaHoraryResultUiV2Loader')) return;
+    const script = document.createElement('script');
+    script.id = 'luneaHoraryResultUiV2Loader';
+    script.src = './lunea-horary-result-ui-v2.js?v=200';
+    script.async = false;
+    script.onerror = () => console.error('[LUNEA] Horary Result UI / Evidence V2 failed to load');
+    (document.head || document.documentElement).appendChild(script);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',load,{once:true});
+  else setTimeout(load,0);
+})();
