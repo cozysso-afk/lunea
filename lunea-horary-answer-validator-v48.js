@@ -139,6 +139,21 @@
     return [...new Set(tokens)];
   }
 
+  function extractAstrologyTokens(text) {
+    const source = String(text || '');
+    const tokens = [];
+    const patterns = [
+      /\b(?:conjunction|sextile|square|trine|opposition)\b/gi,
+      /(?:합|육합|사각|삼합|충|컨정션|섹스타일|스퀘어|트라인|오포지션)(?:각)?/g,
+      /\b(?:1[0-2]|[1-9])H\b/gi,
+      /(?:상호|일방|한쪽|부분)\s*(?:리셉션|reception)/gi,
+    ];
+    for (const regex of patterns) {
+      for (const match of source.matchAll(regex)) tokens.push(compact(match[0]).toLowerCase());
+    }
+    return [...new Set(tokens)];
+  }
+
   function hasNoObstruction(engine) {
     return /(confirmed\s+obstruction\s*:\s*none|별도\s*경고\s*없음|prohibition[^\n]{0,35}(?:없음|none)|frustration[^\n]{0,35}(?:없음|none)|refranation[^\n]{0,35}(?:없음|none|해당\s*없음))/i.test(engine);
   }
@@ -213,6 +228,18 @@
       violations.push({code:'prashna_averaging', message:'Horary와 Prashna를 평균/합산/절충함'});
     }
 
+    if (/HORARY ↔ PRASHNA CROSS INTERPRETATION V2/i.test(canonical)) {
+      const allowedAstrology = new Set(extractAstrologyTokens(canonical));
+      for (const token of extractAstrologyTokens(value)) {
+        if (!allowedAstrology.has(token)) {
+          violations.push({code:'invented_cross_fact', message:`Cross V2 authoritative facts에 없는 점성 요소 생성: ${token}`});
+        }
+      }
+      if (/(Horary|Prashna|호라리|프라슈나)[^.!?\n]{0,55}(?:더\s*(?:맞|정확|우월)|우선해야|채택해야)/i.test(value)) {
+        violations.push({code:'preferred_system', message:'두 독립 체계 중 하나를 더 맞는 체계로 선언함'});
+      }
+    }
+
     if (value && !/근거\s*:/.test(value)) {
       violations.push({code:'missing_evidence_labels', message:'핵심 판단에 “근거:” 표기가 없음'});
     }
@@ -256,6 +283,8 @@
       invented_probability:'계산값에 없는 확률 수치가 추가됨',
       invented_timing:'질문·계산값에 없는 시기 수치가 추가됨',
       prashna_averaging:'Horary와 Prashna가 부적절하게 합산·절충됨',
+      invented_cross_fact:'Cross V2 입력에 없는 aspect·house·reception·Prashna factor가 추가됨',
+      preferred_system:'두 독립 체계 중 하나를 더 맞는 체계로 선언함',
       missing_evidence_labels:'핵심 판단의 근거 표기가 누락됨'
     };
     return reasons[String(code || '')] || '자동 검증 기준과 일치하지 않음';

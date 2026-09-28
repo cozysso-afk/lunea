@@ -14,6 +14,8 @@ assert.match(source, /out_of_orb_promotion/);
 assert.match(source, /invented_probability/);
 assert.match(source, /invented_timing/);
 assert.match(source, /prashna_averaging/);
+assert.match(source, /invented_cross_fact/);
+assert.match(source, /preferred_system/);
 assert.match(bridgeSource, /lunea-horary-answer-validator-v48\.js/);
 
 const basePrompt = `LUNEA HORARY INTERPRETATION ENGINE V2
@@ -88,6 +90,14 @@ const prashnaPrompt = `${basePrompt}\n\n[PRASHNA V1]\nPrashna result: conflictin
 const averaged = `${safe}\n\n### Horary ↔ Prashna 교차\n두 체계를 평균해서 절충 결론을 내립니다. 근거: 두 체계`;
 const prashnaCheck = api.validate(averaged, prashnaPrompt);
 assert.ok(prashnaCheck.violations.some(row => row.code === 'prashna_averaging'));
+
+const crossPrompt = `${basePrompt}\n\n[HORARY ↔ PRASHNA CROSS INTERPRETATION V2 · AUTHORITATIVE]\nHorary: 7H trine · Reception: mutual\nPrashna: subject_lord_dignity\nrelationship: partial_agreement`;
+const inventedCross = `${safe}\n\n### Horary ↔ Prashna 교차\nPrashna의 5H square가 확정적이므로 Prashna가 더 정확하고 두 체계를 합산하면 82%야. 근거: 임의 계산`;
+const crossCheck = api.validate(inventedCross, crossPrompt);
+const crossCodes = new Set(crossCheck.violations.map(row => row.code));
+for (const code of ['invented_cross_fact','preferred_system','invented_probability','prashna_averaging']) {
+  assert.ok(crossCodes.has(code), `expected Cross V2 guard ${code}`);
+}
 
 const leaked = `${safe}\nPRIVATE SELF-CHECK`;
 assert.ok(api.validate(leaked, basePrompt).violations.some(row => row.code === 'private_instruction_leak'));

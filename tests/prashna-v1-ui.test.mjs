@@ -30,7 +30,7 @@ assert.match(bridge, /next\.lon = geo\.lon/);
 // AI cross-check is narrow: only a real Horary prompt, only when a matching Prashna block exists.
 assert.match(bridge, /HORARY_MARKER = '\[HORARY V1 · 질문시각 점성술 계산 결과\]'/);
 assert.match(bridge, /PRASHNA_MARKER = '\[PRASHNA V1 · 독립 질문시각 Jyotisha 계산\]'/);
-assert.match(bridge, /if \(!text\.includes\(HORARY_MARKER\) \|\| text\.includes\(PRASHNA_MARKER\)\) return init/);
+assert.match(bridge, /if \(!text\.includes\(HORARY_MARKER\) \|\| text\.includes\(PRASHNA_MARKER\) \|\| text\.includes\(CROSS_V2_MARKER\)\) return init/);
 assert.match(bridge, /LUNEA_PRASHNA_V1\?\.promptBlock\?\.\(\)/);
 assert.match(bridge, /if \(!block\) return init/);
 assert.match(bridge, /Horary와 Prashna를 먼저 서로 독립적으로 해석한다/);

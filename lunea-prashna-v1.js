@@ -127,6 +127,17 @@
     const out = $('luneaPrashnaV1Result');
     if (out) out.innerHTML = '';
     if ($('luneaPrashnaV1Status')) status(message);
+    W.LUNEA_HORARY_PRASHNA_CROSS_V2?.clear?.();
+  }
+
+  function restoreData(data) {
+    if (data?.schema !== 'LUNEA_PRASHNA_V1') return false;
+    const sig = signatureOf();
+    state.signature = sig;
+    state.data = data;
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify({signature:sig,data,savedAt:new Date().toISOString()})); } catch {}
+    render(data);
+    return true;
   }
 
   function restoreIfMatching() {
@@ -185,6 +196,7 @@
       state.data = data;
       try { localStorage.setItem(STORAGE_KEY, JSON.stringify({signature:sig,data,savedAt:new Date().toISOString()})); } catch {}
       render(data);
+      await W.LUNEA_HORARY_PRASHNA_CROSS_V2?.refresh?.();
     } catch (error) {
       if (sig === signatureOf()) status(`Prashna 계산 실패: ${error?.message || error}`, 'err');
     } finally {
@@ -280,6 +292,7 @@ ${flags}
     promptBlock,
     isCurrent: () => !!state.data && state.signature === signatureOf(),
     restoreIfMatching,
+    restoreData,
     run,
   });
 })();

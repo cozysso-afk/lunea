@@ -29,6 +29,11 @@ const context = await browser.newContext({
   isMobile:true,
   hasTouch:true,
   deviceScaleFactor:3,
+  // This soak verifies state/DOM lifecycle, not decorative motion. Exercise the
+  // app's real reduced-motion contract so headless WebKit does not retain ten
+  // readings' compositor animations while the iPhone-scale DOM assertions stay
+  // unchanged.
+  reducedMotion:'reduce',
   locale:'ko-KR',
   serviceWorkers:'block',
   userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.6 Mobile/15E148 Safari/604.1'
