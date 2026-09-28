@@ -7,11 +7,13 @@ on:
       - 'lunea-home-portal-v8.js'
       - 'lunea-mobile-interaction-hotfix-v1.js'
       - 'lunea-meihua-v1.js'
+      - 'lunea-meihua-ui-final-v2.js'
       - 'lunea-lenormand-v1.js'
       - 'lunea-thai-standalone-v24.js'
       - 'lunea-message-oracle-home-v1.js'
       - 'lunea-intimacy-clean-v39.js'
       - 'lunea-cache-refresh-v1.js'
+      - 'lunea-sector-color-system-v28.js'
       - 'tests/home-layout-visual-v36.*.mjs'
       - '.github/workflows/home-layout-visual-v36.yml'
   workflow_dispatch:
