@@ -69,6 +69,9 @@
       }
       html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-copy small{color:#c8b681!important}
       html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-arrow{color:#d1bd82!important;filter:drop-shadow(0 0 5px rgba(229,197,111,.14))}
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy b{
+        font-family:'Cinzel','Pretendard',sans-serif!important;
+      }
       @media(max-width:380px){
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb img,
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v25-img,
