@@ -116,6 +116,11 @@
   }
 
   async function runAI(button) {
+    const guarded = W.LUNEA_HORARY_AI_GUARD_V49?.runAI;
+    if (typeof guarded === 'function') {
+      return guarded.call(W.LUNEA_HORARY_AI_GUARD_V49,button);
+    }
+
     const v44 = W.LUNEA_HORARY_POST_ACTIONS_V44;
     const prompt = String(v44?.aiPrompt?.() || '');
     if (!prompt || !resultReady()) {
@@ -280,7 +285,7 @@
   else install();
 
   W.LUNEA_HORARY_MOBILE_ACTIONS_V45 = Object.freeze({
-    version:'45.0',activate,candidate,makeInteractive,runPrashna,runAI,copyResult,saveResult
+    version:'45.1',activate,candidate,makeInteractive,runPrashna,runAI,copyResult,saveResult
   });
-  console.info('✦ LUNEA Horary + Prashna Mobile Action Owner V45 active');
+  console.info('✦ LUNEA Horary + Prashna Mobile Action Owner V45.1 active');
 })();
