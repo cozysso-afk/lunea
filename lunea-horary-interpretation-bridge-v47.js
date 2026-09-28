@@ -37,6 +37,21 @@
 6. Prashna는 Horary 뒤에 독립 교차검증으로만 사용했는가?
 이 체크리스트 자체는 사용자에게 출력하지 마라.`;
 
+  const EXPLANATION_LOCK = `
+
+[AI EXPLANATION V2 · EVIDENCE-LINKED]
+기존 [출력 형식]의 제목과 질문 유형별 구조를 유지하되, 설명층은 다음 규칙을 추가로 지킨다.
+- 최종 결론과 중요한 사건 판단은 먼저 “판정:”으로 짧게 말하고, 바로 다음 줄에 “근거:”를 붙인다.
+- “근거:”에는 [HORARY ENGINE RESULT · AUTHORITATIVE] 또는 Cross V2에 실제로 존재하는 근거만 요약한다. 화면에 없는 하우스·행성·각·리셉션·점수·시기 근거를 새로 만들지 않는다.
+- 결론을 약화하거나 반대하는 실제 엔진 근거가 있으면 “반증:”으로 별도 표시한다. 잠재 후보를 확정 반증처럼 쓰지 않는다.
+- 해석의 한계, 근거 부족, 서로 충돌하는 신호는 “불확실성:”으로 명시한다. 불확실성을 임의 확률이나 숫자 점수로 바꾸지 않는다.
+- reception/dignity가 말하는 의향·수용성·상태와 perfection/derived-event axis가 말하는 실제 행동·사건을 한 문장 안에서 섞어 확정하지 않는다.
+- Moon은 전개·순서·보조 시기층으로만 설명하고 다른 핵심 성사축을 덮어쓰지 않는다.
+- Prashna가 있으면 Horary 판정을 먼저 완료한 뒤 독립 교차층으로 설명한다. 같은 방향, 충돌, 이유, 불확실성을 구분하고 평균·합산·절충하지 않는다.
+- 엔진에 없는 확률(%), 점수, 달력 날짜, N일/N주/N개월을 생성하지 않는다.
+- 전문용어는 그대로 쓰되 바로 뒤에 쉬운 한국어 뜻을 짧게 붙인다.
+- 설명을 길게 늘이기보다 “질문에 대한 답 → 근거 → 반증/제한 → 불확실성”의 읽기 순서를 우선한다.`;
+
   function isGeminiGenerate(url) {
     return /generativelanguage\.googleapis\.com\/.+:generateContent(?:\?|$)/i.test(String(url || ''));
   }
@@ -47,9 +62,11 @@
   }
 
   function qualityLockedPrompt(prompt) {
-    const value = String(prompt || '').trim();
-    if (!value || value.includes('[FINAL VERDICT LOCK · V2 QA]')) return value;
-    return value + QUALITY_LOCK;
+    let value = String(prompt || '').trim();
+    if (!value) return value;
+    if (!value.includes('[FINAL VERDICT LOCK · V2 QA]')) value += QUALITY_LOCK;
+    if (!value.includes('[AI EXPLANATION V2 · EVIDENCE-LINKED]')) value += EXPLANATION_LOCK;
+    return value;
   }
 
   function rewrite(init = {}) {
@@ -59,10 +76,12 @@
       const part = payload?.contents?.[0]?.parts?.[0];
       const original = String(part?.text || '');
       if (!isHoraryPrompt(original)) return init;
-      if (original.includes('LUNEA HORARY INTERPRETATION ENGINE V2')) return init;
 
-      const prompt = qualityLockedPrompt(W.LUNEA_HORARY_INTERPRETATION_V47?.aiPrompt?.());
-      if (!prompt) return init;
+      const canonical = original.includes('LUNEA HORARY INTERPRETATION ENGINE V2')
+        ? original
+        : String(W.LUNEA_HORARY_INTERPRETATION_V47?.aiPrompt?.() || '').trim();
+      const prompt = qualityLockedPrompt(canonical);
+      if (!prompt || prompt === original) return init;
 
       const next = typeof structuredClone === 'function'
         ? structuredClone(payload)
@@ -86,39 +105,62 @@
     return priorFetch(input, nextInit);
   };
 
-  function loadAnswerValidatorV48() {
-    if (typeof document === 'undefined') return false;
-    if (document.getElementById('luneaHoraryAnswerValidatorV48Loader')) return true;
-    const script = document.createElement('script');
-    script.id = 'luneaHoraryAnswerValidatorV48Loader';
+  function buildToken(fallback='') {
     let build = '';
     try {
       const src = document.currentScript?.src || '';
       if (src) build = new URL(src, location.href).searchParams.get('v') || '';
     } catch {}
-    script.src = `./lunea-horary-answer-validator-v48.js?v=${encodeURIComponent(build || '480')}`;
+    return build || fallback;
+  }
+
+  function loadAiExplanationV2() {
+    if (typeof document === 'undefined') return false;
+    if (document.getElementById('luneaHoraryAiExplanationV2Loader')) return true;
+    const script = document.createElement('script');
+    script.id = 'luneaHoraryAiExplanationV2Loader';
+    script.src = `./lunea-horary-ai-explanation-v2.js?v=${encodeURIComponent(buildToken('200'))}`;
+    script.async = false;
+    script.onerror = () => console.error('[LUNEA] Horary AI Explanation V2 failed to load');
+    (document.head || document.documentElement).appendChild(script);
+    return true;
+  }
+
+  function loadAnswerValidatorV48() {
+    if (typeof document === 'undefined') return false;
+    if (document.getElementById('luneaHoraryAnswerValidatorV48Loader')) return true;
+    const script = document.createElement('script');
+    script.id = 'luneaHoraryAnswerValidatorV48Loader';
+    script.src = `./lunea-horary-answer-validator-v48.js?v=${encodeURIComponent(buildToken('480'))}`;
     script.async = false;
     script.onerror = () => console.error('[LUNEA] Horary Answer Validator V48 failed to load');
     (document.head || document.documentElement).appendChild(script);
     return true;
   }
 
+  function loadExplanationLayers() {
+    loadAiExplanationV2();
+    loadAnswerValidatorV48();
+  }
+
   W.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47 = Object.freeze({
-    version:'47.2',
+    version:'47.3',
     rewrite,
     isHoraryPrompt,
     qualityLockedPrompt,
     qualityLock:QUALITY_LOCK,
+    explanationLock:EXPLANATION_LOCK,
+    loadAiExplanationV2,
     loadAnswerValidatorV48,
     markers:HORARY_MARKERS.slice()
   });
 
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => setTimeout(loadAnswerValidatorV48, 0), {once:true});
+      document.addEventListener('DOMContentLoaded', () => setTimeout(loadExplanationLayers, 0), {once:true});
     } else {
-      setTimeout(loadAnswerValidatorV48, 0);
+      setTimeout(loadExplanationLayers, 0);
     }
   }
-  console.info('✦ LUNEA Horary Interpretation Bridge V47.2 active');
+  console.info('✦ LUNEA Horary Interpretation Bridge V47.3 active · AI Explanation V2 contract ON');
 })();
