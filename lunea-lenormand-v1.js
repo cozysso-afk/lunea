@@ -240,7 +240,7 @@
     tile.innerHTML = `<span class="lunea-v8-object"><img src="./lenormand_033_key.jpg" alt="" aria-hidden="true"></span><span class="lunea-v8-label">LENORMAND</span><span class="lunea-v8-sub">조합 · 흐름 · 사건 · 타이밍</span><span class="lunea-v8-open">＋</span>`;
     tile.onclick = open;
     grid.appendChild(tile);
-    W.LUNEA_MOBILE_INTERACTION_HOTFIX_V1?.normalizePortalOrder?.();
+    W.dispatchEvent(new CustomEvent('lunea:home-tile-ready', {detail:{key:'lenormand'}}));
     return true;
   }
 
@@ -386,14 +386,13 @@
   function install() {
     installStyle();
     createModal();
-    let tries=0;
-    const timer=setInterval(()=>{tries++; if(ensureHomeTile()||tries>=100) clearInterval(timer);},100);
+    ensureHomeTile();
+    [120,480].forEach(ms => setTimeout(ensureHomeTile,ms));
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',install,{once:true});
   else install();
-  W.addEventListener('pageshow',()=>setTimeout(ensureHomeTile,70),{passive:true});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(ensureHomeTile,70)});
+  W.addEventListener('lunea:home-portal-ready',ensureHomeTile);
 
   W.LUNEA_LENORMAND_V1 = Object.freeze({
     version:VERSION, cards:DECK, spreads:SPREADS,

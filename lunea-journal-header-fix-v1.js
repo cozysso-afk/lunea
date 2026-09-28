@@ -6,6 +6,11 @@
    category controls and is intentionally hidden here. Its live-list observer is
    detached so chunked journal rendering does not rescan the whole archive on
    every appended row.
+
+   V4 adds two iPhone journal safeguards:
+   - compact two-column result/due date controls instead of full-width mobile rows
+   - in-place validation status updates so the archive list is not rebuilt and the
+     actual .archive-modal scroll position/open review panel are preserved
 */
 (() => {
   if (window.__LUNEA_JOURNAL_HEADER_FIX_V1__) return;
@@ -13,7 +18,20 @@
 
   const W = window;
   const $ = id => document.getElementById(id);
+  const DB_NAME = 'LUNEA_READING_DB';
+  const DB_VERSION = 1;
+  const STORE = 'journal';
+  const STATUS = Object.freeze({
+    pending:'○ 미확인',
+    hit:'✓ 맞음',
+    partial:'△ 부분',
+    miss:'× 틀림',
+    unverifiable:'? 판정불가'
+  });
+  const STATUS_BY_LABEL = Object.freeze(Object.fromEntries(Object.entries(STATUS).map(([key, label]) => [label, key])));
   let searchTimer = 0;
+  let annotateTimer = 0;
+  let journalDbPromise = null;
 
   const style = document.createElement('style');
   style.id = 'luneaJournalHeaderFixV1Style';
@@ -51,6 +69,39 @@
       display:none!important;
     }
 
+    /* Keep post-validation dates compact on iPhone. The final mobile regression
+       owner intentionally used a one-column journal grid, so this selector is
+       more specific and is the authoritative post-validation override. */
+    @media (max-width:430px){
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review .lj-grid,
+      #archiveOverlay .lj-review .lj-grid{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:6px!important;
+        align-items:start!important;
+      }
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review .lj-grid .lj-field,
+      #archiveOverlay .lj-review .lj-grid .lj-field{
+        min-width:0!important;
+        width:auto!important;
+        overflow:visible!important;
+      }
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review .lj-grid .lj-field input[type='date'],
+      #archiveOverlay .lj-review .lj-grid .lj-field input[type='date']{
+        min-width:0!important;
+        width:100%!important;
+        max-width:158px!important;
+        padding-left:6px!important;
+        padding-right:4px!important;
+        font-size:10px!important;
+        justify-self:start!important;
+      }
+    }
+    @media (max-width:330px){
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review .lj-grid,
+      #archiveOverlay .lj-review .lj-grid{grid-template-columns:minmax(0,1fr)!important}
+    }
+
     /* Let off-screen records stay cheap until scrolled into view. */
     #archiveOverlay .archive-item{
       content-visibility:auto;
@@ -58,6 +109,13 @@
     }
   `;
   document.head.appendChild(style);
+
+  const normalize = value => String(value ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
+  const localDay = () => {
+    const d = new Date();
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 10);
+  };
 
   function patchButton() {
     const btn = $('archiveBtn');
@@ -105,11 +163,195 @@
     return true;
   }
 
+  function filteredJournalRows(rows) {
+    const query = normalize($('archiveSearch')?.value).toLowerCase();
+    const status = $('ljStatus')?.value || '';
+    const category = $('ljCat')?.value || '';
+    return (rows || []).filter(entry => {
+      if (status && entry.status !== status) return false;
+      if (category && entry.category !== category) return false;
+      if (!query) return true;
+      const reading = entry.reading || {};
+      return [
+        reading.title,
+        reading.q,
+        reading.ai,
+        entry.outcome,
+        entry.note,
+        (entry.tags || []).join(' '),
+        (reading.cards || []).map(card => card.name || card.text).join(' ')
+      ].join(' ').toLowerCase().includes(query);
+    });
+  }
+
+  async function annotateVisibleRows() {
+    clearTimeout(annotateTimer);
+    const list = $('archiveList');
+    const journal = W.LUNEA_READING_JOURNAL;
+    if (!list || typeof journal?.getAll !== 'function') return false;
+    try {
+      const rows = filteredJournalRows(await journal.getAll());
+      const cards = [...list.children].filter(node => node.classList?.contains('archive-item'));
+      cards.forEach((card, index) => {
+        const row = rows[index];
+        if (row?.id) card.dataset.luneaJournalId = String(row.id);
+      });
+      return true;
+    } catch (error) {
+      console.warn('[LUNEA Journal V4] row annotation skipped', error);
+      return false;
+    }
+  }
+
+  function queueAnnotation(delay = 0) {
+    clearTimeout(annotateTimer);
+    annotateTimer = setTimeout(() => { void annotateVisibleRows(); }, delay);
+  }
+
+  function installListAnnotator() {
+    const list = $('archiveList');
+    if (!list || list.dataset.luneaValidationObserverV4 === '1') return false;
+    list.dataset.luneaValidationObserverV4 = '1';
+    const observer = new MutationObserver(() => queueAnnotation(0));
+    observer.observe(list, {childList:true});
+    list.__luneaValidationObserverV4 = observer;
+    queueAnnotation(0);
+    return true;
+  }
+
+  function openJournalDb() {
+    if (journalDbPromise) return journalDbPromise;
+    journalDbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, DB_VERSION);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error || new Error('journal db open failed'));
+    });
+    return journalDbPromise;
+  }
+
+  async function patchStatus(id, status) {
+    if (!STATUS[status]) throw new Error(`unknown journal status: ${status}`);
+    const db = await openJournalDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readwrite');
+      const store = tx.objectStore(STORE);
+      const get = store.get(id);
+      let updated = null;
+      get.onsuccess = () => {
+        const row = get.result;
+        if (!row) {
+          tx.abort();
+          reject(new Error('journal row not found'));
+          return;
+        }
+        row.status = status;
+        if (status !== 'pending' && !row.resultDate) row.resultDate = localDay();
+        row.updatedAt = Date.now();
+        updated = row;
+        store.put(row);
+      };
+      get.onerror = () => reject(get.error || new Error('journal row read failed'));
+      tx.oncomplete = () => resolve(updated);
+      tx.onerror = () => reject(tx.error || new Error('journal status save failed'));
+      tx.onabort = () => reject(tx.error || new Error('journal status save aborted'));
+    });
+  }
+
+  function syncSummary(rows) {
+    const counts = {pending:0, hit:0, partial:0, miss:0, unverifiable:0};
+    (rows || []).forEach(row => {
+      if (Object.hasOwn(counts, row.status)) counts[row.status] += 1;
+    });
+    const verified = counts.hit + counts.partial + counts.miss;
+    const score = verified ? Math.round((counts.hit + counts.partial * 0.5) / verified * 100) : null;
+    const values = [(rows || []).length, verified, score == null ? '—' : `${score}%`, counts.pending];
+    [...document.querySelectorAll('#ljStats .lj-stat b')].forEach((node, index) => {
+      if (index < values.length) node.textContent = values[index];
+    });
+    const note = $('ljNote');
+    if (note) {
+      note.textContent = `IndexedDB 장기 보관 · 맞음 ${counts.hit} · 부분 ${counts.partial} · 틀림 ${counts.miss} · 판정불가 ${counts.unverifiable} · 점수=(맞음+부분×0.5)/확인 완료`;
+    }
+    const count = $('archiveCount');
+    if (count) count.textContent = `${(rows || []).length}개`;
+  }
+
+  async function applyStatusInPlace(button, card, id, status) {
+    if (button.dataset.luneaStatusSaving === '1') return;
+    button.dataset.luneaStatusSaving = '1';
+    const modal = $('archiveOverlay')?.querySelector('.archive-modal');
+    const scrollTop = modal?.scrollTop || 0;
+    try {
+      const updated = await patchStatus(id, status);
+      if (!updated) return;
+
+      const badge = card.querySelector('.lj-badge');
+      if (badge) {
+        badge.dataset.s = status;
+        badge.textContent = STATUS[status];
+      }
+      card.querySelectorAll('.lj-statuses button').forEach(node => {
+        node.classList.toggle('on', STATUS_BY_LABEL[normalize(node.textContent)] === status);
+      });
+      const reviewButton = card.querySelector('.archive-actions button');
+      if (reviewButton) reviewButton.textContent = status === 'pending' ? '검증하기' : '검증 수정';
+      const resultDate = card.querySelector('.lj-grid input[type="date"]');
+      if (resultDate && !resultDate.value && updated.resultDate) resultDate.value = updated.resultDate;
+
+      const rows = await W.LUNEA_READING_JOURNAL?.getAll?.();
+      if (Array.isArray(rows)) syncSummary(rows);
+
+      /* If the user is looking at a status-filtered list and changes the row out
+         of that filter, remove only this card. Never rebuild #archiveList. */
+      const activeStatus = $('ljStatus')?.value || '';
+      if (activeStatus && activeStatus !== status) card.remove();
+
+      if (modal) {
+        modal.scrollTop = scrollTop;
+        requestAnimationFrame(() => { modal.scrollTop = scrollTop; });
+        setTimeout(() => { modal.scrollTop = scrollTop; }, 60);
+      }
+      document.documentElement.dataset.luneaJournalValidationUpdate = 'in-place-v4';
+    } catch (error) {
+      console.error('[LUNEA Journal V4] status update failed', error);
+      /* Do not invoke the old rerendering onclick after a failed intercepted save.
+         Surface the failure and keep the user's current scroll/panel untouched. */
+      try { alert('검증 상태 저장에 실패했어. 다시 눌러줘.'); } catch {}
+    } finally {
+      delete button.dataset.luneaStatusSaving;
+    }
+  }
+
+  function bindInPlaceStatusUpdates() {
+    if (document.documentElement.dataset.luneaJournalStatusV4 === '1') return false;
+    document.documentElement.dataset.luneaJournalStatusV4 = '1';
+    document.addEventListener('click', event => {
+      const button = event.target?.closest?.('#archiveOverlay .lj-statuses button');
+      if (!button) return;
+      const card = button.closest('.archive-item');
+      const id = card?.dataset?.luneaJournalId || '';
+      const status = STATUS_BY_LABEL[normalize(button.textContent)] || '';
+      /* If a just-rendered chunk has not been annotated yet, let Journal V2's
+         original handler run rather than risking a write to the wrong record. */
+      if (!card || !id || !status) {
+        queueAnnotation(0);
+        return;
+      }
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      void applyStatusInPlace(button, card, id, status);
+    }, true);
+    return true;
+  }
+
   function settleJournal() {
     patchButton();
     bindDebouncedSearch();
     detachArchiveSearchObserver();
-    document.documentElement.dataset.luneaJournalFix = 'v3';
+    installListAnnotator();
+    bindInPlaceStatusUpdates();
+    queueAnnotation(20);
+    document.documentElement.dataset.luneaJournalFix = 'v4';
   }
 
   if (document.readyState === 'loading') {
@@ -120,8 +362,11 @@
 
   [120, 420, 900, 1700, 3000].forEach(ms => setTimeout(settleJournal, ms));
   document.addEventListener('pointerdown', event => {
-    if (event.target?.closest?.('#archiveBtn')) settleJournal();
+    if (event.target?.closest?.('#archiveBtn')) {
+      settleJournal();
+      queueAnnotation(80);
+    }
   }, true);
 
-  console.info('✧ LUNEA Journal Header/Fast Fix V3 active');
+  console.info('✧ LUNEA Journal Header/Fast Fix V4 active · compact dates + in-place validation');
 })();

@@ -39,7 +39,8 @@ test('legacy orbit presentation is removed without adding a global mutation obse
 test('INTIMACY becomes one Home Portal entry while the opened source header stays visible with the small heart', () => {
   assert.match(source, /tile\.dataset\.key = 'intimacy'/);
   assert.match(source, /grid\.appendChild\(tile\)/);
-  assert.match(source, /grid-column:1\/-1!important/);
+  assert.match(source, /lunea:home-tile-ready/);
+  assert.doesNotMatch(source, /grid-column:1\/-1!important/, 'Home V36 owns final tile geometry');
   assert.match(source, /:not\(\.lunea-thai-home-tile\)/);
   assert.doesNotMatch(source, /lunea-intimacy-category\.lunea-v8-source-category\.lunea-v8-source-active > \.category-header\{\s*display:none!important;/);
   assert.doesNotMatch(source, /lunea-intimacy-category\.lunea-v8-source-category\.lunea-v8-source-active > \.category-content\{\s*padding-top:5px!important;/);

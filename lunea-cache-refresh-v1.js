@@ -119,8 +119,7 @@
   function loadMeihuaV1() { loadBuildScopedScript('luneaMeihuaV1Loader', './lunea-meihua-v1.js', 'Meihua standalone UI V1'); }
   function loadMeihuaPolishV1() { loadBuildScopedScript('luneaMeihuaPolishV1Loader', './lunea-meihua-polish-v1.js', 'Meihua archive and PNG polish V1'); }
   function loadReadingShareV1() { loadBuildScopedScript('luneaReadingShareV1Loader', './lunea-reading-share-v1.js', 'reading 4:5 PNG share V1'); }
-  function loadHomeReadabilityV31() { loadBuildScopedScript('luneaHomeReadabilityV31Loader', './lunea-home-readability-v31.js', 'Home readability and color V31'); }
-  function loadHomeFinalTuneV32() { loadBuildScopedScript('luneaHomeFinalTuneV32Loader', './lunea-home-final-tune-v32.js', 'Home final screenshot tune V32'); }
+  function loadHomeVisualV36() { loadBuildScopedScript('luneaHomeVisualV36Loader', './lunea-home-visual-v36.js', 'Home layout owner and visual V36'); }
 
   function readingBusy(){return !!document.hidden||!!document.getElementById('spreadOverlay')?.classList.contains('show')||!!document.getElementById('sheet')?.classList.contains('open')}
   function refreshTo(build) {
@@ -191,8 +190,7 @@
     loadMeihuaV1();
     loadMeihuaPolishV1();
     loadReadingShareV1();
-    loadHomeReadabilityV31();
-    loadHomeFinalTuneV32();
+    loadHomeVisualV36();
     installResumeBuildChecks();
     checkBuild();
     W.LUNEA_CACHE_REFRESH_V1=Object.freeze({checkNow:checkBuild,requestFreshDocument,flushPending});

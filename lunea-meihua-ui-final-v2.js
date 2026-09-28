@@ -4,7 +4,7 @@
   LUNEA MEIHUA UI FINAL V2
   ========================
   Image-free visual polish for Meihua V1.
-  - Keeps the home tile intentionally full-width, but compact and balanced.
+  - Keeps legacy home-tile polish as a fallback when Visual V36 is not active.
   - Replaces the placeholder glyph with a CSS/DOM hexagram emblem (no image asset).
   - Tightens mobile result spacing and makes the AI reading easier to scan.
   - Compacts the PNG preview sheet without changing the deterministic 1080x1350 export.
@@ -24,7 +24,7 @@
       html.lunea-meihua-ui-final-v2{}
 
       /* Home: keep the solo row intentional instead of looking like a stretched 2-column tile. */
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]{
+      html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]{
         grid-column:1/-1!important;
         min-height:88px!important;
         padding:12px 18px!important;
@@ -40,7 +40,7 @@
           radial-gradient(circle at 92% 84%,rgba(164,132,205,.075),transparent 34%),
           linear-gradient(145deg,rgba(17,35,31,.94),rgba(8,10,23,.99))!important;
       }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-object{
+      html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-object{
         grid-column:1!important;grid-row:1/3!important;
         width:54px!important;height:54px!important;margin:0!important;
         display:grid!important;place-items:center!important;
@@ -51,15 +51,15 @@
           linear-gradient(145deg,rgba(80,143,108,.22),rgba(105,83,146,.16))!important;
         box-shadow:inset 0 0 0 1px rgba(255,255,255,.035),0 8px 22px rgba(0,0,0,.13)!important;
       }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-label{
+      html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-label{
         grid-column:2!important;grid-row:1!important;align-self:end!important;
         margin:0!important;line-height:1.15!important;letter-spacing:.25px!important;
       }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-sub{
+      html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-sub{
         grid-column:2!important;grid-row:2!important;align-self:start!important;
         margin:2px 0 0!important;line-height:1.3!important;
       }
-      #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-open{
+      html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-open{
         grid-column:3!important;grid-row:1/3!important;align-self:center!important;justify-self:end!important;
       }
 
@@ -124,8 +124,8 @@
       }
 
       @media(max-width:520px){
-        #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]{min-height:84px!important;padding:11px 15px!important;grid-template-columns:58px minmax(0,1fr) 22px!important;column-gap:10px!important}
-        #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-object{width:50px!important;height:50px!important;border-radius:16px!important}
+        html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]{min-height:84px!important;padding:11px 15px!important;grid-template-columns:58px minmax(0,1fr) 22px!important;column-gap:10px!important}
+        html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-object{width:50px!important;height:50px!important;border-radius:16px!important}
         #luneaMeihuaOverlay .mh-modal{padding:14px!important}
         #luneaMeihuaOverlay .mh-hex{padding:9px 4px 8px!important}
         #luneaMeihuaOverlay .mh-ai.show{padding:12px!important;line-height:1.7!important}
@@ -143,7 +143,7 @@
   }
 
   function applyEmblem() {
-    const icon = $('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .mh-icon');
+    const icon = $('html:not(.lunea-home-visual-v36) #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .mh-icon');
     if (!icon || icon.classList.contains('mh-emblem-v2')) return false;
     icon.classList.add('mh-emblem-v2');
     icon.setAttribute('aria-hidden','true');

@@ -258,6 +258,7 @@
     tile.innerHTML = `<span class="lunea-v8-object">${ICONS[meta.key]}</span><span class="lunea-v8-label">${meta.title}</span><span class="lunea-v8-sub">${meta.sub}</span><span class="lunea-v8-open">＋</span>`;
     tile.addEventListener('click', () => openSource(meta, cat, tile));
     grid.appendChild(tile);
+    W.dispatchEvent(new CustomEvent('lunea:home-tile-ready', {detail:{key:meta.key}}));
     return tile;
   }
 
@@ -275,6 +276,7 @@
     if (note) note.textContent = count ? `${count} ORACLES` : 'ORACLE CABINET';
     hideOldHeading();
     ensureDailyRelic();
+    W.dispatchEvent(new CustomEvent('lunea:home-portal-ready'));
     return count >= 4;
   }
 
@@ -282,7 +284,7 @@
     document.documentElement.classList.add('lunea-home-portal-v8');
     addStyles();
     refresh();
-    [220,650,1250,2200,3600].forEach(ms => setTimeout(refresh, ms));
+    [120,480].forEach(ms => setTimeout(refresh, ms));
     W.addEventListener('pageshow', () => setTimeout(refresh,80));
     document.addEventListener('visibilitychange', () => { if (!document.hidden) setTimeout(refresh,80); });
     console.info('🌙 LUNEA Home Portal V8 loaded · celestial object cabinet');

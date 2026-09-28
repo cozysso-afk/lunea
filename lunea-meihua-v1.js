@@ -294,9 +294,9 @@
       tile.setAttribute('aria-pressed','false');
       tile.innerHTML = `<span class="lunea-v8-object"><span class="mh-icon" aria-hidden="true">☷</span></span><span class="lunea-v8-label">MEIHUA</span><span class="lunea-v8-sub">본괘 · 호괘 · 변괘 · 체용</span><span class="lunea-v8-open">＋</span>`;
       tile.onclick = open;
+      grid.appendChild(tile);
+      W.dispatchEvent(new CustomEvent('lunea:home-tile-ready', {detail:{key:'meihua'}}));
     }
-    const intimacy = grid.querySelector('.lunea-v8-tile[data-key="intimacy"]');
-    if (tile.parentElement !== grid || (intimacy && tile.nextElementSibling !== intimacy)) grid.insertBefore(tile,intimacy || null);
     return true;
   }
 
@@ -317,8 +317,8 @@
   function install() {
     installStyle();
     createModal();
-    let tries=0;
-    const timer=setInterval(()=>{tries++; if(ensureHomeTile()||tries>=120) clearInterval(timer);},100);
+    ensureHomeTile();
+    [120,480].forEach(ms => setTimeout(ensureHomeTile,ms));
   }
 
   W.LUNEA_MEIHUA_V1 = Object.freeze({
@@ -329,6 +329,5 @@
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',install,{once:true});
   else install();
-  W.addEventListener('pageshow',()=>setTimeout(ensureHomeTile,120),{passive:true});
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(ensureHomeTile,120)});
+  W.addEventListener('lunea:home-portal-ready',ensureHomeTile);
 })();
