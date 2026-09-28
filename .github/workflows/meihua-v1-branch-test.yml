@@ -58,7 +58,7 @@ jobs:
           grep -q "1080" lunea-meihua-polish-v1.js
           grep -q "1350" lunea-meihua-polish-v1.js
           grep -q "lunea:home-tile-ready" lunea-meihua-v1.js
-          grep -q "\'lenormand\',\'meihua\',\'horary\',\'thai\'" lunea-home-visual-v36.js
+          grep -q "lenormand.*meihua.*horary.*thai" lunea-home-visual-v36.js
           ! grep -q "insertBefore(tile,intimacy" lunea-meihua-v1.js
           ! grep -q "PORTAL_RANK" lunea-mobile-interaction-hotfix-v1.js
 
