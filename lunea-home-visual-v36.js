@@ -223,8 +223,20 @@
   }
 
   function tileForKey(grid, key) {
-    if (key === 'thai') return grid.querySelector('.lunea-thai-home-tile,[data-key="thai"]');
-    return grid.querySelector(`.lunea-v8-tile[data-key="${key}"]`);
+    const matches = [...grid.children].filter(node => {
+      if (key === 'thai') return node.classList?.contains('lunea-thai-home-tile') || node.dataset?.key === 'thai';
+      return node.classList?.contains('lunea-v8-tile') && node.dataset?.key === key;
+    });
+    const [tile, ...duplicates] = matches;
+    duplicates.forEach(node => node.remove());
+    return tile || null;
+  }
+
+  function uniqueSignal() {
+    const matches = [...document.querySelectorAll('#luneaSignalMessageSection')];
+    const [signal, ...duplicates] = matches;
+    duplicates.forEach(node => node.remove());
+    return signal || null;
   }
 
   function unwrapLegacyDock(grid) {
@@ -264,7 +276,7 @@
 
       const primary = TILE_KEYS.filter(key => PRIMARY_KEYS.has(key)).map(key => tileForKey(grid, key)).filter(Boolean);
       const secondary = TILE_KEYS.filter(key => SECONDARY_KEYS.has(key)).map(key => tileForKey(grid, key)).filter(Boolean);
-      const signal = document.getElementById('luneaSignalMessageSection');
+      const signal = uniqueSignal();
       const divider = ensureDivider(grid);
       const desired = [...primary, ...(signal ? [signal] : []), divider, ...secondary];
       const desiredSet = new Set(desired);
