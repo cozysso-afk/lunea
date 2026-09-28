@@ -6,11 +6,12 @@ const source = fs.readFileSync(new URL('../lunea-horary-mobile-actions-v45.js', 
 const loader = fs.readFileSync(new URL('../lunea-astro-origin-failover-v57.js', import.meta.url), 'utf8');
 
 assert.match(loader, /lunea-horary-post-actions-v44\.js\?v=441/);
-assert.match(loader, /lunea-horary-mobile-actions-v45\.js\?v=450/);
+assert.match(loader, /lunea-horary-mobile-actions-v45\.js\?v=451/);
 assert.match(source, /pointerdown/);
 assert.match(source, /pointerup/);
 assert.match(source, /getBoundingClientRect/);
 assert.match(source, /LUNEA_PRASHNA_V1\?\.run/);
+assert.match(source, /LUNEA_HORARY_AI_GUARD_V49\?\.runAI/);
 assert.match(source, /repairLatestHoraryArchive/);
 
 const handlers = new Map();
