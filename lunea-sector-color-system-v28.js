@@ -83,11 +83,11 @@
       [data-lunea-sector="daily"]{--sec-rgb:198,185,255;--sec2-rgb:154,204,235;--sec-text:#eee9ff}
       [data-lunea-sector="thai"]{--sec-rgb:237,186,104;--sec2-rgb:177,121,218;--sec-text:#ffe7b8}
 
-      .lunea-v8-tile[data-lunea-sector]{border-color:rgba(var(--sec-rgb),.20)!important;background:radial-gradient(circle at 13% 4%,rgba(var(--sec-rgb),.15),transparent 29%),radial-gradient(circle at 96% 96%,rgba(var(--sec2-rgb),.08),transparent 36%),linear-gradient(148deg,rgba(20,22,42,.87),rgba(8,10,23,.97))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 11px 28px rgba(0,0,0,.15),0 0 20px rgba(var(--sec-rgb),.025)!important}
-      .lunea-v8-tile[data-lunea-sector]::after{background:linear-gradient(90deg,transparent,rgba(var(--sec-rgb),.38),rgba(var(--sec2-rgb),.18),transparent)!important}
-      .lunea-v8-tile[data-lunea-sector] .lunea-v8-object{color:var(--sec-text)!important;border-color:rgba(var(--sec-rgb),.31)!important;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.34),transparent 19%),radial-gradient(circle at 74% 78%,rgba(var(--sec2-rgb),.18),transparent 38%),linear-gradient(145deg,rgba(var(--sec-rgb),.22),rgba(var(--sec2-rgb),.12))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 0 20px rgba(var(--sec-rgb),.08)!important}
-      .lunea-v8-tile[data-lunea-sector] h3,.lunea-v8-tile[data-lunea-sector] b{color:#fbfaff!important}
-      .lunea-v8-tile[data-lunea-sector][aria-pressed="true"]{border-color:rgba(var(--sec-rgb),.42)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(var(--sec-rgb),.07),0 14px 34px rgba(0,0,0,.18),0 0 28px rgba(var(--sec-rgb),.08)!important}
+      html:not(.lunea-home-visual-v36) .lunea-v8-tile[data-lunea-sector]{border-color:rgba(var(--sec-rgb),.20)!important;background:radial-gradient(circle at 13% 4%,rgba(var(--sec-rgb),.15),transparent 29%),radial-gradient(circle at 96% 96%,rgba(var(--sec2-rgb),.08),transparent 36%),linear-gradient(148deg,rgba(20,22,42,.87),rgba(8,10,23,.97))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.055),0 11px 28px rgba(0,0,0,.15),0 0 20px rgba(var(--sec-rgb),.025)!important}
+      html:not(.lunea-home-visual-v36) .lunea-v8-tile[data-lunea-sector]::after{background:linear-gradient(90deg,transparent,rgba(var(--sec-rgb),.38),rgba(var(--sec2-rgb),.18),transparent)!important}
+      html:not(.lunea-home-visual-v36) .lunea-v8-tile[data-lunea-sector] .lunea-v8-object{color:var(--sec-text)!important;border-color:rgba(var(--sec-rgb),.31)!important;background:radial-gradient(circle at 30% 20%,rgba(255,255,255,.34),transparent 19%),radial-gradient(circle at 74% 78%,rgba(var(--sec2-rgb),.18),transparent 38%),linear-gradient(145deg,rgba(var(--sec-rgb),.22),rgba(var(--sec2-rgb),.12))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.13),0 0 20px rgba(var(--sec-rgb),.08)!important}
+      html:not(.lunea-home-visual-v36) .lunea-v8-tile[data-lunea-sector] h3,html:not(.lunea-home-visual-v36) .lunea-v8-tile[data-lunea-sector] b{color:#fbfaff!important}
+      html:not(.lunea-home-visual-v36) .lunea-v8-tile[data-lunea-sector][aria-pressed="true"]{border-color:rgba(var(--sec-rgb),.42)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 0 1px rgba(var(--sec-rgb),.07),0 14px 34px rgba(0,0,0,.18),0 0 28px rgba(var(--sec-rgb),.08)!important}
 
       .category.lunea-v8-source-active[data-lunea-sector]{position:relative!important;overflow:hidden!important;border-color:rgba(var(--sec-rgb),.24)!important;background:radial-gradient(circle at 7% 0%,rgba(var(--sec-rgb),.12),transparent 31%),radial-gradient(circle at 100% 100%,rgba(var(--sec2-rgb),.06),transparent 38%),linear-gradient(155deg,rgba(18,20,36,.91),rgba(10,12,25,.97))!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 13px 30px rgba(0,0,0,.14)!important}
       .category.lunea-v8-source-active[data-lunea-sector]::before{content:'';position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:0 5px 5px 0;background:linear-gradient(180deg,rgba(var(--sec-rgb),.9),rgba(var(--sec2-rgb),.55));box-shadow:0 0 15px rgba(var(--sec-rgb),.2)}
@@ -115,7 +115,7 @@
 
       .daily[data-lunea-sector="daily"]{border-color:rgba(var(--sec-rgb),.28)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 22px 48px rgba(0,0,0,.26),0 0 38px rgba(var(--sec-rgb),.075)!important}
       #luneaThaiStandaloneOverlay[data-lunea-sector="thai"] #luneaThaiStandaloneModal{border-color:rgba(var(--sec-rgb),.30)!important;box-shadow:0 28px 75px rgba(0,0,0,.74),0 0 34px rgba(var(--sec-rgb),.065)!important}
-      @media(max-width:390px){.lunea-v8-tile[data-lunea-sector]{min-height:120px}#sheet[data-lunea-sector]{padding-bottom:calc(18px + env(safe-area-inset-bottom))!important}}
+      @media(max-width:390px){html:not(.lunea-home-visual-v36) .lunea-v8-tile[data-lunea-sector]{min-height:120px}#sheet[data-lunea-sector]{padding-bottom:calc(18px + env(safe-area-inset-bottom))!important}}
     `;
     document.head.appendChild(style);
   }
