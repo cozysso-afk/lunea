@@ -31,6 +31,7 @@ const loader = read('lunea-cache-refresh-v1.js');
 
 assert.match(owner, /order:Object\.freeze\(\['general','love','career','stock','timing','intimacy','signal','divider','lenormand','meihua','horary','thai'\]\)/);
 assert.match(owner, /new MutationObserver\(requestLayout\)/, 'late tiles must be handled by one event-driven owner');
+assert.match(owner, /duplicates\.forEach\(node => node\.remove\(\)\)/, 'BFCache restore must remove duplicate managed tiles');
 assert.match(owner, /addEventListener\('pageshow', apply/);
 assert.match(owner, /visibilitychange[\s\S]*apply\(\)/);
 assert.doesNotMatch(owner, /setInterval\(/, 'V36 must not win ownership through a settle interval');
