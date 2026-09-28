@@ -75,6 +75,25 @@
     catch { return null; }
   }
 
+  function matchingDailyDraft(stored) {
+    const draft = W.LUNEA_READING_DRAFT_V1?.readDraft?.();
+    if (!validOrbit6(stored) || !draft || draft.category !== 'DAILY') return null;
+    if (localDay(Number(draft.savedAt || 0)) !== localDay()) return null;
+    if (!Array.isArray(draft.drawn) || draft.drawn.length < 6) return null;
+    const identity = card => `${String(card?.code || card?.name || '')}:${card?.isReversed ? 'R' : 'U'}`;
+    const locked = stored.drawn.slice(0, 6).map(identity).join('|');
+    const saved = draft.drawn.slice(0, 6).map(identity).join('|');
+    return locked && locked === saved ? draft : null;
+  }
+
+  function restoreExactDailyDraft(stored) {
+    if (!matchingDailyDraft(stored)) return false;
+    const restore = W.LUNEA_READING_DRAFT_V1?.restoreDraft;
+    if (typeof restore !== 'function') return false;
+    restore();
+    return true;
+  }
+
   function clearLegacyFourCardOnce() {
     const d = rawStoredDaily();
     if (d && d.day === localDay() && Array.isArray(d.drawn) && d.drawn.length >= 6) return false;
@@ -341,6 +360,7 @@
     requestAnimationFrame(() => {
       decorateReading();
       try { W.LUNEA_DAILY_ORBIT_V1?.saveNow?.(); } catch {}
+      try { W.LUNEA_READING_DRAFT_V1?.snapshot?.(); } catch {}
       setTimeout(() => {
         renderHome();
         decorateReading();
@@ -355,11 +375,12 @@
     let stored = null;
     try { stored = lock?.read?.() || rawStoredDaily(); } catch { stored = rawStoredDaily(); }
 
-    if (validOrbit6(stored) && typeof lock?.restoreToday === 'function') {
-      lock.restoreToday();
+    if (validOrbit6(stored) && (restoreExactDailyDraft(stored) || typeof lock?.restoreToday === 'function')) {
+      if (!matchingDailyDraft(stored)) lock?.restoreToday?.();
       requestAnimationFrame(() => {
         decorateReading();
         renderHome();
+        try { W.LUNEA_READING_DRAFT_V1?.snapshot?.(); } catch {}
       });
       return;
     }

@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA INTIMACY AI BRIDGE V34.2
+  LUNEA INTIMACY AI BRIDGE V34.4
   ===============================
   Integration bridge for the existing V34 78-card intimacy layer.
 
@@ -9,22 +9,39 @@
   - preserves INTIMACY interpretation after the AI designer replaces the title;
   - recognizes restored AI intimacy readings from their question text;
   - keeps the legacy anatomical 9-card reading hidden;
+  - clears INTIMACY-only Oracle UI immediately when another sector opens;
   - loads the canonical V35.2 Oracle data + V36 runtime only after the late
-    reading-action wrappers are installed, preserving final wrapper order.
+    reading-action wrappers are installed, preserving final wrapper order;
+  - immediately synchronizes V36 to an already-open INTIMACY reading when the
+    Oracle runtime finishes loading late.
 */
 (() => {
   const W = window;
   if (W.__LUNEA_INTIMACY_AI_BRIDGE_V34__) return;
   W.__LUNEA_INTIMACY_AI_BRIDGE_V34__ = true;
 
-  const RELEASE = '34.2';
+  const RELEASE = '34.4';
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
+  const EXPECTED_ORACLE_VERSION = '36.6';
+  const SELF_BUILD = (() => { try { const src=document.currentScript?.src||''; return src ? (new URL(src,location.href).searchParams.get('v')||'') : ''; } catch { return ''; } })();
   const ORACLE_SOURCES = Object.freeze([
     './lunea-intimacy-oracle-v35.js?v=352',
-    './lunea-intimacy-oracle-ui-v36.js?v=3614'
+    `./lunea-intimacy-oracle-ui-v36.js?v=${encodeURIComponent(SELF_BUILD || '3615')}`
   ]);
   let active = false;
   let oracleLoadPromise = null;
+  let pendingOracleRestore = null;
+
+  function oracleRuntimeReady(){
+    const ui=W.LUNEA_INTIMACY_ORACLE_UI_V36;
+    return ui?.version===EXPECTED_ORACLE_VERSION&&typeof ui?.sync==='function'&&typeof ui?.serializeOracleDraft==='function'&&typeof ui?.restoreSerializedOracle==='function';
+  }
+  function requestFreshDocument(reason='stale-intimacy-oracle'){W.__LUNEA_INTIMACY_ORACLE_STALE__=String(reason);try{W.LUNEA_CACHE_REFRESH_V1?.requestFreshDocument?.(reason)}catch{}}
+  function cloneSnapshot(value){try{return JSON.parse(JSON.stringify(value))}catch{return null}}
+  function serializeOracleDraft(){if(!isActiveContext())return null;try{return cloneSnapshot(W.LUNEA_INTIMACY_ORACLE_UI_V36?.serializeOracleDraft?.()||null)}catch{return null}}
+  function applyPendingOracleRestore(){if(!pendingOracleRestore||!oracleRuntimeReady())return false;const snapshot=pendingOracleRestore;let applied=false;try{applied=!!W.LUNEA_INTIMACY_ORACLE_UI_V36.restoreSerializedOracle?.(snapshot)}catch(err){console.warn('[LUNEA INTIMACY] Oracle exact restore failed',err)}if(applied)pendingOracleRestore=null;return applied}
+  function restoreOracleDraft(snapshot){const cloned=cloneSnapshot(snapshot);if(!cloned)return false;pendingOracleRestore=cloned;if(oracleRuntimeReady())return applyPendingOracleRestore();ensureOracleRuntime().catch(()=>{});return true}
+  async function restoreOracleDraftExact(snapshot){const cloned=cloneSnapshot(snapshot);if(!cloned)return false;pendingOracleRestore=cloned;if(oracleRuntimeReady())return applyPendingOracleRestore();try{await ensureOracleRuntime()}catch{}if(!oracleRuntimeReady())return false;if(!pendingOracleRestore)return true;return applyPendingOracleRestore()}
 
   function api() { return W.LUNEA_INTIMACY_V34 || null; }
   function isIntimacyQuestion(input) {
@@ -49,6 +66,16 @@
       const fixed = !!api()?.getSpread?.(title);
       return active || String(state?.category || '').toUpperCase() === 'INTIMACY' || fixed || isIntimacyQuestion(state?.question || '');
     } catch { return active; }
+  }
+
+  function clearOracleVisualResidue() {
+    const panel = document.getElementById('luneaIntimacyOraclePanel');
+    if (panel) {
+      panel.hidden = true;
+      panel.replaceChildren();
+    }
+    const tools = document.getElementById('luneaIntimacyOracleTools');
+    if (tools) tools.style.display = 'none';
   }
 
   function hideLegacy() {
@@ -97,6 +124,7 @@
       if (!item) return;
       const isIntimacy = String(item.dataset.cat || '').toUpperCase() === 'INTIMACY';
       setActive(isIntimacy);
+      if (!isIntimacy) clearOracleVisualResidue();
       if (isIntimacy) {
         try { state.category = 'INTIMACY'; } catch {}
       }
@@ -140,14 +168,36 @@
     });
   }
 
+  function syncOracleRuntimeToCurrentReading() {
+    try {
+      if(!oracleRuntimeReady())return false;
+      if(applyPendingOracleRestore())return true;
+      W.LUNEA_INTIMACY_ORACLE_UI_V36?.sync?.();
+      return true;
+    } catch (err) {
+      console.warn('[LUNEA INTIMACY] Oracle late-runtime sync failed', err);
+      return false;
+    }
+  }
+
   function ensureOracleRuntime() {
-    if (W.LUNEA_INTIMACY_ORACLE_UI_V36) return Promise.resolve();
+    if (W.LUNEA_INTIMACY_ORACLE_UI_V36 && !oracleRuntimeReady()) {
+      requestFreshDocument(`oracle-${W.LUNEA_INTIMACY_ORACLE_UI_V36?.version||'unknown'}-expected-${EXPECTED_ORACLE_VERSION}`);
+      return Promise.resolve(false);
+    }
+    if (oracleRuntimeReady()) {
+      syncOracleRuntimeToCurrentReading();
+      return Promise.resolve(true);
+    }
     if (oracleLoadPromise) return oracleLoadPromise;
-    oracleLoadPromise = ORACLE_SOURCES.reduce((promise, src) => promise.then(() => loadScriptOnce(src)), Promise.resolve()).catch(err => {
-      oracleLoadPromise = null;
-      console.error('[LUNEA INTIMACY] Oracle runtime load failed', err);
-      throw err;
-    });
+    oracleLoadPromise = ORACLE_SOURCES
+      .reduce((promise, src) => promise.then(() => loadScriptOnce(src)), Promise.resolve())
+      .then(() => { if(!oracleRuntimeReady()){requestFreshDocument('oracle-runtime-version-mismatch');return false}syncOracleRuntimeToCurrentReading();return true; })
+      .catch(err => {
+        oracleLoadPromise = null;
+        console.error('[LUNEA INTIMACY] Oracle runtime load failed', err);
+        throw err;
+      });
     return oracleLoadPromise;
   }
 
@@ -170,7 +220,8 @@
     installContextTracking();
     patchPrompt();
     scheduleOracleRuntimeLoad();
-    W.LUNEA_INTIMACY_AI_BRIDGE_V34 = Object.freeze({ version: RELEASE, isIntimacyQuestion, isActiveContext, installAiEntry, ensureOracleRuntime, oracleSources:[...ORACLE_SOURCES] });
+    if(W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__){pendingOracleRestore=cloneSnapshot(W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__);delete W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__;}
+    W.LUNEA_INTIMACY_AI_BRIDGE_V34 = Object.freeze({ version: RELEASE, expectedOracleVersion:EXPECTED_ORACLE_VERSION, isIntimacyQuestion, isActiveContext, installAiEntry, ensureOracleRuntime, serializeOracleDraft, restoreOracleDraft, restoreOracleDraftExact, oracleSources:[...ORACLE_SOURCES] });
     console.info(`🌹 LUNEA INTIMACY AI bridge V${RELEASE} ready`);
   }
 

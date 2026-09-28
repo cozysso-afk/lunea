@@ -3,52 +3,53 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const source=fs.readFileSync(new URL('../lunea-learning-success-gate-v1.js',import.meta.url),'utf8');
-let previewShown=true;
 let saves=0;
 let shouldThrow=false;
-const overlay={classList:{contains(name){return name==='show'&&previewShown;}}};
-const document={
-  readyState:'loading',
-  getElementById(id){return id==='luneaV20PreviewOverlay'?overlay:null;}
-};
-const learning={record(payload){saves++;return{saved:true,row:payload};}};
+const learning={record(payload){
+  if(shouldThrow) throw new Error('save failed');
+  saves++;
+  return {saved:true,row:payload};
+}};
+const originalStart=function startSpread(question){return{question};};
 const window={
   LUNEA_SPREAD_LEARNING_V1:learning,
-  startSpread(question){if(shouldThrow)throw new Error('draw failed');return{question};},
-  addEventListener(){}
+  startSpread:originalStart,
 };
 window.window=window;
 
 vm.runInNewContext(source,{
-  window,document,
+  window,
   console:{info(){},warn(){},error(){}},
-  setInterval(){return 0;},clearInterval(){},
-  setTimeout(){return 1;},clearTimeout(){},
-  Date,String,Error,Promise
+  Object,Error
 });
 
 const gate=window.LUNEA_LEARNING_SUCCESS_GATE_V1;
 assert.ok(gate,'success gate API should be exposed');
-assert.equal(gate.installRecordGate(),true);
-assert.equal(gate.installStartGate(),true);
+assert.equal(gate.version,2,'success gate must expose the wrapper-free V2 contract');
+assert.equal(typeof gate.commit,'function');
+assert.equal(window.startSpread,originalStart,'success gate must not wrap or replace startSpread');
 
-const deferred=learning.record({question:'재회 가능성',positions:['현재','장벽']});
-assert.equal(deferred.saved,false);
-assert.equal(deferred.reason,'deferred_until_draw');
-assert.equal(saves,0,'preview confirmation alone must not learn');
-assert.equal(gate.pending()?.question,'재회 가능성');
+const empty=gate.commit(null);
+assert.equal(empty.saved,false);
+assert.equal(empty.reason,'empty_payload');
+assert.equal(saves,0);
 
-previewShown=false;
-window.startSpread('재회 가능성',['현재','장벽'],'테스트','');
-assert.equal(saves,1,'successful matching draw must commit exactly once');
-assert.equal(gate.pending(),null);
+const payload={question:'재회 가능성',positions:['현재','장벽']};
+const saved=gate.commit(payload);
+assert.equal(saved.saved,true);
+assert.equal(saved.row,payload);
+assert.equal(saves,1,'explicit post-success commit must write exactly once');
 
-previewShown=true;
-learning.record({question:'연락 가능성',positions:['현재','행동']});
-previewShown=false;
 shouldThrow=true;
-assert.throws(()=>window.startSpread('연락 가능성',['현재','행동'],'실패',''),/draw failed/);
-assert.equal(saves,1,'failed draw must not become a learned correction');
-assert.equal(gate.pending(),null);
+const failed=gate.commit({question:'연락 가능성',positions:['현재','행동']});
+assert.equal(failed.saved,false);
+assert.equal(failed.reason,'commit_failed');
+assert.equal(saves,1,'failed learning write must not count as a saved correction');
 
-console.log('spread-learning success-gate tests: PASS');
+window.LUNEA_SPREAD_LEARNING_V1=null;
+const unavailable=gate.commit({question:'다른 질문'});
+assert.equal(unavailable.saved,false);
+assert.equal(unavailable.reason,'learning_unavailable');
+assert.equal(saves,1);
+
+console.log('spread-learning success-gate V2 tests: PASS');

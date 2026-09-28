@@ -1,13 +1,12 @@
 'use strict';
 
 /*
-  LUNEA THAI ARCHIVE + TIMING QUESTION ISOLATION V27
-  ==================================================
+  LUNEA THAI ARCHIVE + TIMING QUESTION ISOLATION V27.1
+  ====================================================
   1) Standalone Thai Maha Taksa gets Copy / Save to LUNEA Archive / Open Archive.
   2) Timing Oracle UI/result state is isolated per tarot question.
-     Old A/B source cards are cleared before a new spread or timing draw so the
-     V16 mirror cannot resurrect a previous question's two cards beside a new
-     single Timing card.
+  3) No startSpread wrapper and no polling/re-wrap loop. Reading lifecycle V59
+     owns the reading boundary and calls resetTimingDOM() exactly once per start.
 */
 (() => {
   const W = window;
@@ -18,9 +17,6 @@
   const $ = id => document.getElementById(id);
   const clean = v => String(v || '').replace(/\s+/g, ' ').trim();
 
-  // ----------------------------------------------------------
-  // Thai standalone: copy + archive save/open
-  // ----------------------------------------------------------
   function addStyles() {
     if ($('luneaV27Style')) return;
     const s = document.createElement('style');
@@ -180,45 +176,25 @@
     const topics = $('luneaThaiTopicGrid');
     if (topics && !topics.__luneaV27Observed) {
       topics.__luneaV27Observed = true;
-      topics.addEventListener('click', () => setTimeout(syncThaiActions, 0));
+      topics.addEventListener('click', syncThaiActions);
     }
     syncThaiActions();
     return true;
   }
 
-  // ----------------------------------------------------------
-  // Timing Oracle: hard isolate visual/source state per question
-  // ----------------------------------------------------------
   function resetTimingDOM() {
-    // Main reading mirrors.
     $('luneaTimingABInline')?.remove();
     $('luneaTimingInline')?.remove();
 
-    // A/B source DOM. V16 mirrors this node, so it MUST be empty when the
-    // question changes; hiding the panel alone is not enough.
     const cards = $('luneaTimingABCards');
     if (cards) cards.replaceChildren();
 
-    const panel = $('luneaTimingABPanel');
-    panel?.classList.remove('show');
+    $('luneaTimingABPanel')?.classList.remove('show');
 
     const ai = $('luneaTimingABAI');
     if (ai) { ai.classList.remove('show'); ai.textContent = ''; }
 
     try { W.LUNEA_TIMING_AB_LAST = null; } catch {}
-  }
-
-  function wrapStartSpread() {
-    const fn = W.startSpread;
-    if (typeof fn !== 'function' || fn.__luneaV27Wrapped) return false;
-    function wrappedStartSpread(...args) {
-      resetTimingDOM();
-      return fn.apply(this, args);
-    }
-    wrappedStartSpread.__luneaV27Wrapped = true;
-    wrappedStartSpread.__luneaV27Original = fn;
-    W.startSpread = wrappedStartSpread;
-    return true;
   }
 
   function wrapTimingDraw() {
@@ -261,29 +237,21 @@
     }
   }
 
-  function boot() {
+  function installAll() {
     addStyles();
-    let tries = 0;
-    const timer = setInterval(() => {
-      tries += 1;
-      installThaiActions();
-      wrapStartSpread();
-      wrapTimingDraw();
-      observeQuestionBoundaries();
-      if (tries > 240 || (
-        $('luneaThaiActionsV27') &&
-        W.startSpread?.__luneaV27Wrapped &&
-        $('timingDraw')?.__luneaV27Wrapped
-      )) clearInterval(timer);
-    }, 80);
-
     installThaiActions();
-    wrapStartSpread();
     wrapTimingDraw();
     observeQuestionBoundaries();
   }
 
-  W.LUNEA_V27 = { resetTimingDOM, installThaiActions };
+  function boot() {
+    installAll();
+    // One deterministic load-phase retry for late-created Thai/Timing DOM.
+    // No interval and no startSpread ownership.
+    if (document.readyState !== 'complete') W.addEventListener('load', installAll, {once:true});
+  }
+
+  W.LUNEA_V27 = { version:27.1, resetTimingDOM, installThaiActions, install:installAll };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();

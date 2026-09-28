@@ -51,18 +51,26 @@
     const select = $('astroTransitDays');
     if (!wrap || !select) return false;
     LONG.forEach(([days, , chipLabel]) => {
-      if (wrap.querySelector(`[data-lunea-long-days="${days}"]`)) return;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'astro-range-chip';
+      const matches = [...wrap.querySelectorAll('.astro-range-chip')]
+        .filter(button => Number(button.dataset.days || 0) === days);
+      let button = matches.find(node => node.dataset.luneaLongDays === String(days)) || matches[0] || null;
+      matches.forEach(node => { if (node !== button) node.remove(); });
+      if (!button) {
+        button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'astro-range-chip';
+        button.addEventListener('click', () => {
+          select.value = String(days);
+          select.dispatchEvent(new Event('change', {bubbles:true}));
+        });
+        wrap.appendChild(button);
+      }
       button.dataset.luneaLongDays = String(days);
+      // V57 used a second ownership marker for the same chips. Mark the canonical
+      // node as already satisfied so the legacy mobile helper cannot add a duplicate.
+      button.dataset.luneaV57Days = String(days);
       button.dataset.days = String(days);
       button.textContent = chipLabel;
-      button.addEventListener('click', () => {
-        select.value = String(days);
-        select.dispatchEvent(new Event('change', {bubbles:true}));
-      });
-      wrap.appendChild(button);
     });
     return true;
   }
@@ -88,6 +96,21 @@
   function install() {
     if (!ensureLongOptions()) return false;
     ensureLongChips();
+
+    const wrap = document.querySelector('#astroTransitOverlay .astro-range-chips');
+    if (wrap && !wrap.__luneaLongRangeDedupeV3) {
+      wrap.__luneaLongRangeDedupeV3 = true;
+      let queued = false;
+      new MutationObserver(() => {
+        if (queued) return;
+        queued = true;
+        queueMicrotask(() => {
+          queued = false;
+          ensureLongChips();
+          updateLongChipState();
+        });
+      }).observe(wrap, {childList:true});
+    }
 
     const select = $('astroTransitDays');
     if (select && !select.__luneaLongRangeBoundV3) {

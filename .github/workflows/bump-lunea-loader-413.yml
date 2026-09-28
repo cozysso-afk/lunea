@@ -3,6 +3,7 @@ name: Refresh LUNEA build cache
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,7 +15,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Gate one-time scheduled recovery
+        id: gate
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ ! -f .github/PAGES_REPAIR_ONCE ]; then
+            echo "run=no" >> "$GITHUB_OUTPUT"
+            echo "One-time Pages recovery already consumed; skipping."
+          else
+            echo "run=yes" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Stamp build, icon, and loader URLs
+        if: steps.gate.outputs.run == 'yes'
         shell: bash
         run: |
           python - <<'PY'
@@ -25,8 +38,6 @@ jobs:
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
-          # Every human/code change receives unique URLs for behavior-critical
-          # top-level loaders so iOS/PWA cannot keep an older build in cache.
           for asset in (
               'lunea-structural-routing-v4.js',
               'lunea-astro-stability-v2.js',
@@ -38,9 +49,6 @@ jobs:
               if count != 1:
                   raise SystemExit(f'Could not stamp required loader: {asset}')
 
-          # Behavior-critical scripts loaded from inside the structural loader
-          # appear twice (parser path + sequential fallback). Stamp both paths so
-          # iOS/PWA cannot keep an older repair/prompt/Thai/INTIMACY policy after release.
           loader_path = Path('lunea-structural-routing-v4.js')
           loader = loader_path.read_text(encoding='utf-8')
           for asset in (
@@ -49,10 +57,19 @@ jobs:
               'lunea-thai-tarot-bridge-v32.js',
               'lunea-thai-range-v33.js',
               'lunea-reading-action-order-v33.js',
+              'lunea-astro-job-queue-v1.js',
+              'lunea-astro-resume-v23.js',
+              'lunea-transit-long-run-v1.js',
               'lunea-intimacy-v34.js',
               'lunea-intimacy-ai-bridge-v34.js',
               'lunea-intimacy-legacy-v35.js',
               'lunea-intimacy-readability-v36.js',
+              'lunea-reading-draft-v1.js',
+              'lunea-transit-range-v1.js',
+              'lunea-fixed-spread-depth-v30.js',
+              'lunea-general-order-v30-5.js',
+              'lunea-universal-ai-opal-v20.js',
+              'lunea-boot-reveal-v29.js',
           ):
               pattern = re.escape(asset) + r'\?v=[^"\']+'
               replacement = f'{asset}?v={build}'
@@ -61,40 +78,45 @@ jobs:
                   raise SystemExit(f'Could not stamp both nested loader paths for {asset}: {count}')
           loader_path.write_text(loader, encoding='utf-8')
 
-          # Canonical iOS Home Screen artwork: original selected #4 opal tarot card.
-          # A new filename intentionally breaks Safari/iOS icon cache from the timing-oracle icon.
           icon_tag = '<link rel="apple-touch-icon" sizes="180x180" href="./lunea-icon-opal-card-v11.png">'
           if re.search(r'<link[^>]+rel=["\']apple-touch-icon["\'][^>]*>', s, flags=re.I):
-              s = re.sub(
-                  r'<link[^>]+rel=["\']apple-touch-icon["\'][^>]*>',
-                  icon_tag,
-                  s,
-                  count=1,
-                  flags=re.I,
-              )
+              s = re.sub(r'<link[^>]+rel=["\']apple-touch-icon["\'][^>]*>', icon_tag, s, count=1, flags=re.I)
           else:
               s = s.replace('</title>', '</title>\n' + icon_tag, 1)
 
           app_title = '<meta name="apple-mobile-web-app-title" content="LUNEA">'
           if re.search(r'<meta[^>]+name=["\']apple-mobile-web-app-title["\'][^>]*>', s, flags=re.I):
-              s = re.sub(
-                  r'<meta[^>]+name=["\']apple-mobile-web-app-title["\'][^>]*>',
-                  app_title,
-                  s,
-                  count=1,
-                  flags=re.I,
-              )
+              s = re.sub(r'<meta[^>]+name=["\']apple-mobile-web-app-title["\'][^>]*>', app_title, s, count=1, flags=re.I)
           else:
               s = s.replace(icon_tag, icon_tag + '\n' + app_title, 1)
 
+          manifest_tag = '<link rel="manifest" href="./manifest.webmanifest">'
+          if re.search(r'<link[^>]+rel=["\']manifest["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<link[^>]+rel=["\']manifest["\'][^>]*>', manifest_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(app_title, app_title + '\n' + manifest_tag, 1)
+
+          capable_tag = '<meta name="apple-mobile-web-app-capable" content="yes">'
+          if re.search(r'<meta[^>]+name=["\']apple-mobile-web-app-capable["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<meta[^>]+name=["\']apple-mobile-web-app-capable["\'][^>]*>', capable_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(manifest_tag, manifest_tag + '\n' + capable_tag, 1)
+
+          status_tag = '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">'
+          if re.search(r'<meta[^>]+name=["\']apple-mobile-web-app-status-bar-style["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<meta[^>]+name=["\']apple-mobile-web-app-status-bar-style["\'][^>]*>', status_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(capable_tag, capable_tag + '\n' + status_tag, 1)
+
+          mobile_tag = '<meta name="mobile-web-app-capable" content="yes">'
+          if re.search(r'<meta[^>]+name=["\']mobile-web-app-capable["\'][^>]*>', s, flags=re.I):
+              s = re.sub(r'<meta[^>]+name=["\']mobile-web-app-capable["\'][^>]*>', mobile_tag, s, count=1, flags=re.I)
+          else:
+              s = s.replace(status_tag, status_tag + '\n' + mobile_tag, 1)
+
           refresh_tag = f'<script src="./lunea-cache-refresh-v1.js?v={build}"></script>'
           if 'lunea-cache-refresh-v1.js' in s:
-              s = re.sub(
-                  r'<script src="\./lunea-cache-refresh-v1\.js\?v=[^"]+"></script>',
-                  refresh_tag,
-                  s,
-                  count=1,
-              )
+              s = re.sub(r'<script src="\./lunea-cache-refresh-v1\.js\?v=[^"]+"></script>', refresh_tag, s, count=1)
           else:
               anchor = '<script src="./spread-engine-v7.4.js?v=75"></script>'
               if anchor not in s:
@@ -102,22 +124,24 @@ jobs:
               s = s.replace(anchor, refresh_tag + '\n  ' + anchor, 1)
 
           p.write_text(s, encoding='utf-8')
-          Path('lunea-build.json').write_text(
-              json.dumps({'version': build}, ensure_ascii=False) + '\n',
-              encoding='utf-8',
-          )
-          print('Stamped LUNEA build, nested repairs/prompt/Thai/INTIMACY UI policy, request watchdog loaders, and canonical Home Screen icon:', build)
+          Path('lunea-build.json').write_text(json.dumps({'version': build}, ensure_ascii=False) + '\n', encoding='utf-8')
+          print('Stamped LUNEA build:', build)
           PY
 
       - name: Commit build stamp
+        if: steps.gate.outputs.run == 'yes'
         shell: bash
         run: |
-          if git diff --quiet -- index.html lunea-build.json lunea-structural-routing-v4.js; then
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            rm -f .github/PAGES_REPAIR_ONCE
+          fi
+          if git diff --quiet -- index.html lunea-build.json lunea-structural-routing-v4.js .github/PAGES_REPAIR_ONCE; then
             echo 'No cache/icon stamp change needed'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add index.html lunea-build.json lunea-structural-routing-v4.js
+          git add -A .github/PAGES_REPAIR_ONCE
           git commit -m "Stamp LUNEA Pages build and canonical Home Screen icon"
           git push

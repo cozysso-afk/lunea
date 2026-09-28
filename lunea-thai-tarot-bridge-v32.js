@@ -279,6 +279,7 @@ ${now ? `- 현재 요일 행성 ${d.current_day?.ruler?.key || ''}(${d.current_d
       bridgeState.result = data;
       bridgeState.renderSignature = '';
       renderInline({force:true});
+      notifyAttachmentChanged();
     } catch (error) {
       bridgeState.result = null;
       bridgeState.renderSignature = '';
@@ -308,10 +309,51 @@ ${now ? `- 현재 요일 행성 ${d.current_day?.ruler?.key || ''}(${d.current_d
     return true;
   }
 
+  function archiveObject() {
+    const data = bridgeState.result;
+    if (!data) return null;
+    return {
+      schema:data.schema,
+      birth:data.birth || null,
+      grid:(data.grid || []).slice(0,8),
+      question:data.question ? {...data.question, focus_rows:(data.question.focus_rows || []).slice(0,8)} : null,
+      current_day:data.current_day || null
+    };
+  }
+
+  function attachmentSnapshot() {
+    const question = currentQuestion();
+    if (!bridgeState.result || bridgeState.question !== question) return null;
+    return {version:1, question, topic:bridgeState.topic, result:archiveObject()};
+  }
+
+  function restoreAttachment(snapshot) {
+    const question = currentQuestion();
+    if (!snapshot || String(snapshot.question || '').trim() !== question || !snapshot.result) return false;
+    bridgeState.question = question;
+    bridgeState.topic = snapshot.topic || 'general';
+    bridgeState.result = snapshot.result;
+    bridgeState.running = false;
+    bridgeState.renderSignature = '';
+    return renderInline({force:true}) !== false;
+  }
+
+  function registerAttachment() {
+    const adapter = {group:'finish', capture:attachmentSnapshot, restore:restoreAttachment, toArchive:snapshot => snapshot?.result || null, clear:clearResult};
+    const registry = W.LUNEA_READING_ATTACHMENTS_V1;
+    if (registry?.register) registry.register('thaiTaksa', adapter);
+    else (W.__LUNEA_READING_ATTACHMENT_QUEUE_V1 ||= []).push({name:'thaiTaksa', adapter});
+  }
+
+  function notifyAttachmentChanged() {
+    W.LUNEA_READING_ATTACHMENTS_V1?.notifyChanged?.('thaiTaksa');
+  }
+
   function boot() {
     addStyles();
     injectButton();
     installPromptBridge();
+    registerAttachment();
 
     let tries = 0;
     const timer = setInterval(() => {

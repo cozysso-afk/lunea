@@ -22,6 +22,8 @@
   let restoring = false;
   let saveTimer = 0;
   let observersInstalled = false;
+  let oracleRestoreGeneration = 0;
+  let intimacyOracleFallback = null;
 
   function getState() {
     try { return state; } catch { return null; }
@@ -59,6 +61,21 @@
     return text;
   }
 
+  function intimacyOracleSignature(s){return [String(s?.title||''),String(s?.question||''),(s?.drawn||[]).map(card=>String(card?.code||'')).join(',')].join('|')}
+  function setIntimacyOracleFallback(s,snapshot){const cloned=clone(snapshot);intimacyOracleFallback=cloned?{signature:intimacyOracleSignature(s),snapshot:cloned}:null}
+  function currentIntimacyOracle(s){
+    if(String(s?.category||'').toUpperCase()!=='INTIMACY')return null;
+    try{
+      const live=clone(W.LUNEA_INTIMACY_AI_BRIDGE_V34?.serializeOracleDraft?.()??W.LUNEA_INTIMACY_ORACLE_UI_V36?.serializeOracleDraft?.()??null);
+      if(live){if(intimacyOracleFallback?.signature===intimacyOracleSignature(s))intimacyOracleFallback=null;return live}
+      if(intimacyOracleFallback?.signature===intimacyOracleSignature(s))return clone(intimacyOracleFallback.snapshot);
+      return null;
+    }catch{
+      if(intimacyOracleFallback?.signature===intimacyOracleSignature(s))return clone(intimacyOracleFallback.snapshot);
+      return null;
+    }
+  }
+
   function snapshot() {
     if (restoring) return;
     const s = getState();
@@ -68,7 +85,7 @@
     if (!drawn?.length) return;
 
     const payload = {
-      version: 1,
+      version: 2,
       savedAt: Date.now(),
       category: String(s.category || 'GENERAL'),
       title: String(s.title || ''),
@@ -84,8 +101,16 @@
       aiText: currentAIText(),
       manualReading: !!s.__luneaManualReading,
       manualMode: !!s.__luneaManualMode,
-      manualPositions: clone(s.__luneaManualPositions || null)
+      manualPositions: clone(s.__luneaManualPositions || null),
+      intimacyOracle: currentIntimacyOracle(s)
     };
+
+    const attachmentOwner = W.LUNEA_READING_ATTACHMENTS_V1;
+    const attachments = attachmentOwner?.captureDraft?.(s);
+    if (attachments) {
+      payload.attachments = attachments;
+      payload.readingSignature = attachments.readingSignature;
+    }
 
     try {
       localStorage.setItem(KEY, JSON.stringify(payload));
@@ -97,11 +122,19 @@
 
   function scheduleSave(delay = 60) {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(snapshot, delay);
+    saveTimer = 0;
+    if (restoring) return;
+    saveTimer = setTimeout(() => {
+      saveTimer = 0;
+      snapshot();
+    }, delay);
   }
 
   function clearDraft() {
-    try { localStorage.removeItem(KEY); } catch {}
+    const d=readDraft();
+    intimacyOracleFallback=null;
+    oracleRestoreGeneration+=1;
+    try { localStorage.removeItem(KEY); if(d?.intimacyOracle)localStorage.removeItem('LUNEA_INTIMACY_ORACLE_DRAFT_V1'); } catch {}
     renderResumeBar();
   }
 
@@ -254,9 +287,18 @@
     if (!d) return alert('복원할 임시 리딩이 없어.');
     if (!Array.isArray(d.drawn) || !d.drawn.length) return alert('임시 리딩 카드 정보가 비어 있어.');
 
+    const restoreGeneration=++oracleRestoreGeneration;
+    clearTimeout(saveTimer);
+    saveTimer=0;
+    let restoringIntimacyOracle=false;
     try {
       restoring = true;
+      W.LUNEA_RUNTIME_STATE_V56?.beginDraftRestore?.();
+      W.LUNEA_READING_ATTACHMENTS_V1?.prepareRestore?.();
+      restoringIntimacyOracle=String(d.category||'').toUpperCase()==='INTIMACY'&&!!d.intimacyOracle;
+      if(restoringIntimacyOracle)W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=true;
       const s = setStateFromDraft(d);
+      if(restoringIntimacyOracle)setIntimacyOracleFallback(s,d.intimacyOracle);
       $('cards')?.replaceChildren();
       $('results')?.replaceChildren();
       $('aiBox')?.replaceChildren();
@@ -285,24 +327,51 @@
         document.body.classList.add('modal-open');
       }
 
-      requestAnimationFrame(() => {
-        const flipped = new Set((d.flipped || []).map(Number));
-        s.drawn.forEach((_, i) => {
-          if (!flipped.has(i)) return;
-          try {
-            const fn = W.flipAt || flipAt;
-            fn(i);
-          } catch {
-            $('card-' + i)?.classList.add('flipped');
+      requestAnimationFrame(async () => {
+        try {
+          const flipped = new Set((d.flipped || []).map(Number));
+          s.drawn.forEach((_, i) => {
+            if (!flipped.has(i)) return;
+            try {
+              const fn = W.flipAt || flipAt;
+              fn(i);
+            } catch {
+              $('card-' + i)?.classList.add('flipped');
+            }
+            appendSavedClarifiers(i);
+          });
+          restoreAI(d.aiText || '');
+
+          if(d.intimacyOracle){
+            const oracleSnapshot=clone(d.intimacyOracle);
+            const bridge=W.LUNEA_INTIMACY_AI_BRIDGE_V34;
+            if(bridge?.restoreOracleDraftExact){
+              await Promise.resolve(bridge.restoreOracleDraftExact(oracleSnapshot)).catch(()=>false);
+            }else if(bridge?.restoreOracleDraft){
+              bridge.restoreOracleDraft(oracleSnapshot);
+            }else{
+              W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__=oracleSnapshot;
+            }
           }
-          appendSavedClarifiers(i);
-        });
-        restoreAI(d.aiText || '');
-        restoring = false;
-        renderResumeBar();
-        scheduleSave(120);
+
+          await W.LUNEA_READING_ATTACHMENTS_V1?.restoreDraft?.(d);
+        } catch (err) {
+          console.error('[LUNEA Draft] async restore failed', err);
+        } finally {
+          if(restoreGeneration===oracleRestoreGeneration&&restoringIntimacyOracle){
+            W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
+          }
+          W.LUNEA_RUNTIME_STATE_V56?.endDraftRestore?.();
+          restoring = false;
+          renderResumeBar();
+          scheduleSave(120);
+        }
       });
     } catch (err) {
+      if(restoreGeneration===oracleRestoreGeneration&&restoringIntimacyOracle){
+        W.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__=false;
+      }
+      W.LUNEA_RUNTIME_STATE_V56?.endDraftRestore?.();
       restoring = false;
       console.error('[LUNEA Draft] restore failed', err);
       alert('마지막 리딩 복원 중 오류가 났어: ' + (err?.message || err));
@@ -330,7 +399,7 @@
     }).observe(overlay, {attributes:true, attributeFilter:['class']});
 
     document.addEventListener('click', event => {
-      if (event.target?.closest?.('#extraCard,#flipAll,[data-clarify],#aiRead,#retry')) scheduleSave(120);
+      if (event.target?.closest?.('#extraCard,#flipAll,[data-clarify],#aiRead,#retry,#luneaOracleAddExtra,#luneaOracleRevealAll,.lio-card,[data-lio-mode]')) scheduleSave(120);
     }, true);
 
     window.addEventListener('pagehide', snapshot);

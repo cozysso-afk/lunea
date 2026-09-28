@@ -199,6 +199,26 @@
     };
   }
 
+  function loadProfileV4(){
+    if(window.__LUNEA_CELESTIAL_PROFILE_V4__ || document.querySelector('script[data-lunea-profile-v4="1"]')) return;
+    const script=document.createElement('script');
+    script.src='./celestial-profile-v4.js?v=401';
+    script.async=false;
+    script.dataset.luneaProfileV4='1';
+    script.onerror=()=>{ script.remove(); console.error('[LUNEA Profile] V4 auto-calc layer failed to load'); };
+    (document.head||document.documentElement).appendChild(script);
+  }
+
+  function loadVedicProfileV1(){
+    if(window.__LUNEA_VEDIC_PROFILE_V1__ || document.querySelector('script[data-lunea-vedic-profile-v1="1"]')) return;
+    const script=document.createElement('script');
+    script.src='./vedic-profile-v1.js?v=101';
+    script.async=false;
+    script.dataset.luneaVedicProfileV1='1';
+    script.onerror=()=>{ script.remove(); console.error('[LUNEA Profile] Vedic V1 client failed to load'); };
+    (document.head||document.documentElement).appendChild(script);
+  }
+
   function boot(){
     addStyles();
     installPillarSelectors();
@@ -211,6 +231,8 @@
       if(typeof loadAdvancedFields==='function') loadAdvancedFields();
     }catch{}
     refreshChipsFromLoadedValues();
+    loadProfileV4();
+    loadVedicProfileV1();
 
     console.info('✦ LUNEA PROFILE SELECT UI V2.1 loaded');
   }

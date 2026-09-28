@@ -1,56 +1,35 @@
 'use strict';
 
 /*
-  LUNEA ASTRO STABILITY V2
-  ========================
+  LUNEA ASTRO STABILITY V2.2
+  ==========================
   Purpose:
-  - remove the old global 60s cutoff from Astro requests without touching
-    iOS card/compositor code
   - keep one Gemini watchdog, allowing 75s for long tarot/profile prompts
   - actively abort a timed-out Gemini request so it does not keep running
-  - warm Astro Core before Transit / Return buttons run
+  - prime Astro Core in the background without serially blocking the user's POST
   - leave Natal V1.1's own one-tap lifecycle intact
   - preserve Lag Guard's AbortController for stale auxiliary requests
 
-  Load order:
-    astro-natal-client-v1.js
-    astro-transit-v1.js
-    astro-return-v1.js
-    thai-taksa-v1.js
-    astro-horary-v1.js
-    lunea-lag-guard-v1.js
-    lunea-astro-stability-v2.js   <-- HERE
-    lunea-ios-performance-v3.js
-
-  No automatic Gemini retry: generateContent is a billable POST, so an
-  automatic retry after an ambiguous network failure could duplicate usage.
-  The existing UI remains the explicit retry path.
-
-  No MutationObserver.
-  No card DOM/CSS changes.
-  No routing/RNG changes.
+  IMPORTANT V2.2 CHANGE:
+  A /health request must never sit in front of Transit / Return / Horary.
+  The real calculation request is now sent on the first tap immediately while
+  the health probe continues in parallel. This removes the old double-latency
+  path on a cold Render instance.
 */
 (() => {
   const W = window;
   if (W.__LUNEA_ASTRO_STABILITY_V2__) return;
   W.__LUNEA_ASTRO_STABILITY_V2__ = true;
 
-  /*
-    iOS Performance V306 contains an older combined Gemini/Astro watchdog.
-    Pre-claim its flag so there is exactly one request watchdog in production.
-  */
   W.__LUNEA_REQUEST_WATCHDOG_V305__ = true;
 
   const API_KEY = 'LUNEA_ASTRO_API_URL';
   const DEFAULT_API_URL = 'https://lunea-astro-api.onrender.com';
   const GEMINI_TIMEOUT_MS = 75000;
-
-  // At this point Lag Guard is already loaded, so this retains its stale-request
-  // AbortController behavior for Transit / Return / Thai.
   const baseFetch = typeof W.fetch === 'function' ? W.fetch.bind(W) : null;
 
   if (!baseFetch) {
-    console.warn('[LUNEA Astro Stability V2] fetch unavailable');
+    console.warn('[LUNEA Astro Stability V2.2] fetch unavailable');
     return;
   }
 
@@ -59,7 +38,6 @@
   // ------------------------------------------------------------
   if (!W.__LUNEA_GEMINI_WATCHDOG_V3__) {
     W.__LUNEA_GEMINI_WATCHDOG_V3__ = true;
-    // Also claim the legacy flag so no older patch can add a second wrapper.
     W.__LUNEA_GEMINI_WATCHDOG_V2__ = true;
 
     W.fetch = function(input, init) {
@@ -99,12 +77,10 @@
 
       return new Promise((resolve, reject) => {
         let settled = false;
-
         const cleanup = () => {
           clearTimeout(timer);
           if (detachUpstreamAbort) detachUpstreamAbort();
         };
-
         const timer = setTimeout(() => {
           if (settled) return;
           settled = true;
@@ -163,136 +139,81 @@
 
     try {
       const res = await baseFetch(`${api}/health`, {
-        method: 'GET',
-        cache: 'no-store',
-        headers: {'Accept':'application/json'},
-        signal: controller.signal
+        method:'GET',
+        cache:'no-store',
+        headers:{'Accept':'application/json'},
+        signal:controller.signal
       });
-
       if (!res.ok) {
-        const e = new Error(`Astro Core 준비 확인 실패: HTTP ${res.status}`);
-        e.httpStatus = res.status;
-        throw e;
+        const error = new Error(`Astro Core 준비 확인 실패: HTTP ${res.status}`);
+        error.httpStatus = res.status;
+        throw error;
       }
-
       let data = null;
       try { data = await res.json(); } catch {}
-      if (data && data.ok === false) {
-        throw new Error('Astro Core health 응답이 정상 상태가 아니야.');
-      }
+      if (data && data.ok === false) throw new Error('Astro Core health 응답이 정상 상태가 아니야.');
       return true;
     } finally {
       clearTimeout(timer);
     }
   }
 
-  function ensureReady(force = false) {
+  function ensureReadyStrict(force = false) {
     const api = apiUrl();
-    const fresh =
-      warm.api === api &&
-      warm.readyAt &&
-      Date.now() - warm.readyAt < 5 * 60 * 1000;
-
+    const fresh = warm.api === api && warm.readyAt && Date.now() - warm.readyAt < 5 * 60 * 1000;
     if (!force && fresh) return Promise.resolve(true);
     if (!force && warm.promise && warm.api === api) return warm.promise;
 
     warm.api = api;
     warm.lastError = '';
-
     warm.promise = (async () => {
       try {
         await fetchHealth(api);
         warm.readyAt = Date.now();
         return true;
-      } catch (err) {
-        warm.lastError = String(err?.message || err);
-        throw err;
+      } catch (error) {
+        warm.lastError = String(error?.message || error);
+        throw error;
       } finally {
         warm.promise = null;
       }
     })();
-
     return warm.promise;
   }
 
-  function setText(id, text) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = text;
+  function primeReady(force = false) {
+    ensureReadyStrict(force).catch(error => {
+      console.info('[LUNEA Astro Stability V2.2] warm-up pending/failed:', error?.message || error);
+    });
+    // Compatibility contract: callers such as Horary may await ensureReady().
+    // Resolve immediately so the actual POST is never serialized behind /health.
+    return Promise.resolve(true);
   }
 
-  /*
-    Wrap only the RUN buttons. This does not replace Transit/Return calculation
-    functions or their fetch/result rendering. It merely wakes/verifies the
-    server before the existing handler starts.
-  */
-  function wrapRunButton(buttonId, statusId, waitingText) {
+  function wrapRunButton(buttonId) {
     const btn = document.getElementById(buttonId);
-    if (!btn || btn.dataset.luneaAstroStabilityV2 === '1') return;
-
+    if (!btn || btn.dataset.luneaAstroStabilityV2 === '1') return !!btn;
     const original = btn.onclick;
-    if (typeof original !== 'function') return;
+    if (typeof original !== 'function') return false;
 
     btn.dataset.luneaAstroStabilityV2 = '1';
-
-    btn.onclick = async function(event) {
-      if (btn.dataset.luneaWarmBusy === '1') return;
-
-      btn.dataset.luneaWarmBusy = '1';
-      const oldDisabled = btn.disabled;
-      const oldText = btn.textContent;
-
-      btn.disabled = true;
-      btn.setAttribute('aria-busy', 'true');
-      btn.textContent = '🌌 서버 준비 중…';
-      setText(statusId, waitingText);
-
-      try {
-        await ensureReady(false);
-      } catch (err) {
-        /*
-          Do not spend the user's click. A health probe can fail transiently
-          while the actual POST endpoint is already reachable. Continue once
-          with the existing calculation handler and let it report the real error.
-        */
-        console.warn('[LUNEA Astro Stability V2] warm-up warning:', err);
-      } finally {
-        btn.dataset.luneaWarmBusy = '0';
-        btn.disabled = oldDisabled;
-        btn.removeAttribute('aria-busy');
-        btn.textContent = oldText;
-      }
-
+    btn.onclick = function(event) {
+      // Fire-and-forget warm-up. The original handler owns button busy state and
+      // sends the real calculation request immediately on this same first tap.
+      primeReady(false);
       return original.call(this, event);
     };
+    return true;
   }
 
   function boot() {
-    wrapRunButton(
-      'astroTransitRun',
-      'astroTransitStatus',
-      'Astro Core 서버 준비 확인 중… 준비되면 트랜짓 계산을 자동으로 이어서 시작해.'
-    );
+    wrapRunButton('astroTransitRun');
+    wrapRunButton('astroReturnRun');
+    wrapRunButton('astroHoraryRun');
 
-    wrapRunButton(
-      'astroReturnRun',
-      'astroReturnStatus',
-      'Astro Core 서버 준비 확인 중… 준비되면 회귀 계산을 자동으로 이어서 시작해.'
-    );
-
-    wrapRunButton(
-      'astroHoraryRun',
-      'astroHoraryStatus',
-      'Astro Core 서버 준비 확인 중… 준비되면 호라리 계산을 자동으로 이어서 시작해.'
-    );
-
-    // Warm in the background. Network I/O only; no synchronous ephemeris or DOM work.
-    setTimeout(() => {
-      ensureReady(false).catch(err => {
-        console.info('[LUNEA Astro Stability V2] background warm pending/failed:', err?.message || err);
-      });
-    }, 0);
-
-    console.info('✦ LUNEA ASTRO STABILITY V2 loaded · Gemini 75s watchdog · Astro 60s cutoff disabled');
+    // Prime once at page readiness. This is never awaited by user actions.
+    setTimeout(() => primeReady(false), 0);
+    console.info('✦ LUNEA ASTRO STABILITY V2.2 loaded · non-blocking Astro warm-up');
   }
 
   if (document.readyState === 'loading') {
@@ -302,12 +223,15 @@
   }
 
   W.LUNEA_ASTRO_STABILITY = {
-    ensureReady,
+    // Public compatibility method is deliberately non-blocking.
+    ensureReady: primeReady,
+    ensureReadyStrict,
+    primeReady,
     getState: () => ({
-      api: warm.api || apiUrl(),
-      readyAt: warm.readyAt,
-      warming: !!warm.promise,
-      lastError: warm.lastError
+      api:warm.api || apiUrl(),
+      readyAt:warm.readyAt,
+      warming:!!warm.promise,
+      lastError:warm.lastError
     })
   };
 })();

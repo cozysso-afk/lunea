@@ -18,21 +18,20 @@ test('V40 uses separate final PNGs for branding and Tarot back', () => {
   }
   assert.match(source, /intimacy_sector_final\.png/);
   assert.match(source, /tarot_back_intimacy_final\.png/);
-  assert.doesNotMatch(source, /oracle_back_intimacy_final\.png/);
+  assert.doesNotMatch(source, /oracle_back_v2\.png/);
   assert.match(source, /backImg\.setAttribute\('src', TAROT_BACK_SRC\)/);
 });
 
-test('shared back restore runs first and INTIMACY Tarot back wins last', () => {
-  const restoreAt = source.indexOf('repairVisibleReading?.()');
-  const applyAt = source.indexOf('wrappers.forEach(repairTarotWrapper)', restoreAt);
-  assert.ok(restoreAt >= 0);
-  assert.ok(applyAt > restoreAt);
+test('INTIMACY Tarot back has one owner without an intermediate shared restore paint', () => {
+  const repair = source.slice(source.indexOf('function repairTarotCards'), source.indexOf('function wrapCardFactory'));
+  assert.doesNotMatch(repair, /repairVisibleReading/);
+  assert.match(repair, /wrappers\.forEach\(repairTarotWrapper\)/);
 });
 
 test('V40 gives the INTIMACY tile a dedicated burgundy wine palette', () => {
-  assert.match(source, /linear-gradient\(145deg,rgba\(91,19,50/);
-  assert.match(source, /rgba\(232,92,145/);
-  assert.match(source, /#310b20/);
+  assert.match(source, /linear-gradient\(155deg,rgba\(69,16,40/);
+  assert.match(source, /rgba\(222,126,164/);
+  assert.match(source, /#19070f/);
   assert.match(source, /luneaIntimacyBurgundyV40Style/);
 });
 

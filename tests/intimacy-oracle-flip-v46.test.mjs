@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const source=fs.readFileSync(new URL('../lunea-intimacy-oracle-ui-v36.js',import.meta.url),'utf8');
 const bridge=fs.readFileSync(new URL('../lunea-intimacy-ai-bridge-v34.js',import.meta.url),'utf8');
-test('Oracle V46 uses one standardized 3:5 display asset without browser crop',()=>{
-  assert.match(source,/CARD_ASSET_VERSION='v46'/);
-  assert.match(source,/backgroundSize='100% 100%'/);
+test('Oracle V47 uses the current 3:5 display assets',()=>{
+  assert.match(source,/CARD_ASSET_VERSION='v47'/);
+  assert.match(source,/backgroundSize='contain'/);
   assert.match(source,/lio-card-front/);
 });
 test('Oracle cards are true two-sided 3D flips on iOS-safe CSS',()=>{
@@ -17,13 +17,15 @@ test('Oracle cards are true two-sided 3D flips on iOS-safe CSS',()=>{
   assert.match(source,/rotateY\(180deg\)/);
   assert.match(source,/transition:transform \.62s/);
 });
-test('Reveal all staggers Oracle flips at the Tarot 110ms rhythm without rerender',()=>{
+test('Reveal all staggers base and supplemental Oracle flips at the Tarot 110ms rhythm',()=>{
   assert.match(source,/ORACLE_FLIP_GAP=110/);
   assert.match(source,/seq\*ORACLE_FLIP_GAP/);
   const render=source.slice(source.indexOf('function renderOraclePanel'),source.indexOf('function performOracleDraw'));
-  assert.doesNotMatch(render,/renderOraclePanel\(\);saveSidecar/);
-  assert.match(render,/revealOracleButton\(b,i\)/);
+  assert.match(render,/b\.dataset\.oracleKind/);
+  assert.match(render,/revealOracleButton\(b,i,kind\)/);
+  assert.match(render,/host\.querySelectorAll\('\.lio-card:not\(\.revealed\)'\)/);
 });
 test('Oracle runtime cache token advances for PWA refresh',()=>{
-  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=3614/);
+  assert.match(bridge,/const SELF_BUILD/);
+  assert.match(bridge,/lunea-intimacy-oracle-ui-v36\.js\?v=\$\{encodeURIComponent\(SELF_BUILD \|\| '3615'\)\}/);
 });

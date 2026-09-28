@@ -1,26 +1,17 @@
 'use strict';
 
 /*
-  LUNEA READING ACTION ORDER V33.3
+  LUNEA READING ACTION ORDER V33.6
   ================================
-  Keeps the reading action grid in a stable, task-oriented order even though
-  several buttons are injected by independent feature modules.
+  Keeps the reading action grid in the approved stable order while preserving
+  the current INTIMACY presentation-runtime loaders.
 
-  Row intent (3-column mobile grid):
-  1) AI 해석 · 저장 · 다시 뽑기
-  2) 전체 뒤집기 · 추가 카드 · 시기 오라클
-  3) Astro Timing · Thai 보조 · Thai 기간
-  4) Returns · Horary
-
-  Also adds small AI 해석 / 저장 shortcuts directly below the prompt-copy
-  control for long spreads. These shortcuts delegate to the existing source
-  buttons; they never duplicate interpretation or persistence logic.
-
-  V33.2 also hardens the Thai period date grid on iOS so native date inputs do
-  not overflow their grid tracks or collide in the middle of the modal.
-
-  V33.3 loads the isolated INTIMACY V43 repair layer after the existing clean
-  and burgundy layers. It does not change RNG, AI interpretation, or storage.
+  Approved action order:
+  - flip all · extra card · save · share PNG
+  - retry · timing · Message Oracle
+  - Transit · Returns · Horary
+  - Thai support · Thai range · AI
+  - master prompt copy
 
   Unknown/future buttons are preserved after the known controls.
 */
@@ -31,26 +22,31 @@
 
   const SELF_VERSION = (() => {
     try {
-      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3303';
+      return new URL(document.currentScript?.src || location.href, location.href).searchParams.get('v') || '3306';
     } catch {
-      return '3303';
+      return '3306';
     }
   })();
 
   const ORDER = [
-    'aiRead',
-    'saveReading',
-    'retry',
     'flipAll',
     'extraCard',
+    'saveReading',
+    'luneaShareReadingPng',
+    'retry',
     'timingSupportBtn',
+    'luneaMessageOracleSupportBtn',
     'astroTransitBtn',
-    'luneaThaiTarotBridgeBtn',
-    'luneaThaiTarotRangeBtn',
     'astroReturnBtn',
     'astroHoraryBtn',
+    'thaiTaksaBtn',
+    'luneaThaiTarotRangeBtn',
+    'aiRead',
+    'luneaTopCopyPrompt',
   ];
 
+  const TOP_COPYBOX_ID = 'luneaTopPromptCopyBox';
+  const TOP_COPY_ID = 'luneaTopCopyPrompt';
   const BOTTOM_ID = 'luneaBottomReadingActions';
   const BOTTOM_AI_ID = 'luneaBottomAiRead';
   const BOTTOM_SAVE_ID = 'luneaBottomSaveReading';
@@ -58,18 +54,21 @@
   const INTIMACY_CLEAN_LOADER_ID = 'luneaIntimacyCleanV39Loader';
   const INTIMACY_BURGUNDY_LOADER_ID = 'luneaIntimacyBurgundyV40Loader';
   const INTIMACY_REPAIR_LOADER_ID = 'luneaIntimacyRepairV43Loader';
+  const RESULT_COPY_LOADER_ID = 'luneaResultCopyV36Loader';
 
   function actionBar() {
     return document.querySelector('#spreadOverlay .actionbar');
   }
 
   function reorder() {
+    reorderSupport();
     const bar = actionBar();
     if (!bar) return false;
     const children = [...bar.children];
     if (!children.length) return true;
 
     const rank = new Map(ORDER.map((id, index) => [id, index]));
+    rank.set('luneaThaiTarotBridgeBtn', rank.get('thaiTaksaBtn'));
     const known = [];
     const unknown = [];
     children.forEach((node, index) => {
@@ -83,8 +82,26 @@
     const already = desired.length === children.length && desired.every((node, index) => node === children[index]);
     if (already) return true;
 
-    desired.forEach(node => bar.appendChild(node));
+    desired.forEach((node, index) => {
+      if (bar.children[index] !== node) bar.insertBefore(node, bar.children[index] || null);
+    });
     return true;
+  }
+
+  function reorderSupport() {
+    W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.sync?.();
+    const ids = ['luneaTimingInline','luneaMessageOracleInline','luneaAstroTransitInline',
+      'luneaThaiTarotBridgeInline','luneaThaiTaksaInline','luneaThaiRangeInline',
+      'luneaReturnInline','luneaHoraryInline'];
+    const cards = document.getElementById('cards');
+    if (!cards?.parentNode) return;
+    let anchor = cards;
+    for (const id of ids) {
+      const node = document.getElementById(id);
+      if (!node || node.parentNode !== cards.parentNode) continue;
+      if (anchor.nextSibling !== node) anchor.parentNode.insertBefore(node, anchor.nextSibling);
+      anchor = node;
+    }
   }
 
   function ensureBottomStyle() {
@@ -92,6 +109,36 @@
     const style = document.createElement('style');
     style.id = BOTTOM_STYLE_ID;
     style.textContent = `
+      #spreadOverlay .actionbar.actionbar{
+        display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        grid-auto-flow:row!important;grid-auto-rows:minmax(48px,auto);gap:7px!important;
+      }
+      #spreadOverlay .actionbar.actionbar > button{
+        grid-column:auto!important;grid-row:auto!important;
+        width:100%!important;min-width:0!important;height:100%!important;min-height:48px!important;
+        margin:0!important;box-sizing:border-box;white-space:normal!important;
+      }
+      #spreadOverlay .actionbar.actionbar #${TOP_COPY_ID}{grid-column:1 / -1!important}
+      ${ORDER.map((id,index)=>`#spreadOverlay .actionbar.actionbar #${id}{order:${index}!important}`).join('\n')}
+      #spreadOverlay .actionbar.actionbar #luneaThaiTarotBridgeBtn{order:${ORDER.indexOf('thaiTaksaBtn')}!important}
+      #${TOP_COPYBOX_ID}{
+        display:none!important;margin:0!important;padding:0!important;
+      }
+      #spreadOverlay .actionbar #${TOP_COPY_ID}{
+        width:100%!important;min-height:43px!important;margin:0!important;padding:10px 9px!important;
+        grid-column:1 / -1!important;border-radius:13px!important;border:1px solid rgba(215,218,233,.13)!important;
+        background:linear-gradient(145deg,rgba(167,145,217,.10),rgba(91,125,168,.06))!important;
+        color:#e9e3ef!important;font:650 11.5px/1.22 system-ui,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif!important;
+        white-space:normal!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.035)!important;
+        -webkit-tap-highlight-color:transparent;
+      }
+      #${TOP_COPY_ID}:active{transform:translateY(1px);opacity:.84}
+      #${TOP_COPY_ID}:disabled{opacity:.42;pointer-events:none}
+      body.lunea-intimacy-reading #${TOP_COPY_ID}{
+        color:#f8edf2!important;border-color:rgba(225,132,168,.22)!important;
+        background:linear-gradient(145deg,rgba(112,34,69,.16),rgba(67,22,55,.09))!important;
+      }
+
       #${BOTTOM_ID}{
         display:grid;grid-template-columns:1fr 1fr;gap:8px;
         max-width:360px;margin:8px auto 2px;padding:0 2px;
@@ -127,6 +174,54 @@
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function syncTopPromptCopy() {
+    const top = document.getElementById(TOP_COPY_ID);
+    const source = document.getElementById('copyPrompt');
+    if (top) top.disabled = !source || !!source.disabled;
+  }
+
+  function ensureTopPromptCopy() {
+    ensureBottomStyle();
+    const source = document.getElementById('copyPrompt');
+    const bar = actionBar();
+    if (!source || !bar || !bar.parentNode) return false;
+
+    let box = document.getElementById(TOP_COPYBOX_ID);
+    let top = document.getElementById(TOP_COPY_ID);
+    if (!box || !top) {
+      box = document.createElement('div');
+      box.id = TOP_COPYBOX_ID;
+      box.className = 'copybox lunea-top-prompt-copybox';
+      box.setAttribute('aria-label', '상단 마스터 리딩 프롬프트 복사');
+
+      top = document.createElement('button');
+      top.id = TOP_COPY_ID;
+      top.type = 'button';
+      top.className = 'primary full-btn';
+      top.textContent = '📋 마스터 리딩 프롬프트 복사';
+      top.title = '아래 프롬프트 복사와 같은 내용';
+      top.addEventListener('click', () => {
+        const live = document.getElementById('copyPrompt');
+        if (!live || live.disabled) return;
+        live.click();
+      });
+      box.appendChild(top);
+    }
+
+    if (box.parentNode !== bar.parentNode || box.nextElementSibling !== bar) {
+      bar.parentNode.insertBefore(box, bar);
+    }
+
+    box.hidden = true;
+    box.setAttribute('aria-hidden', 'true');
+    top.classList.remove('primary', 'full-btn');
+    top.classList.add('mini');
+    if (top.parentNode !== bar) bar.appendChild(top);
+    reorder();
+    syncTopPromptCopy();
+    return true;
   }
 
   function clickSource(id) {
@@ -203,9 +298,19 @@
     return ensureScript(INTIMACY_REPAIR_LOADER_ID, './lunea-intimacy-repair-v43.js', 'INTIMACY repair UI V43');
   }
 
+  function ensureResultCopyBridge() {
+    const loadedVersion = String(W.LUNEA_TIMING_COPY_V35?.version || '');
+    if (loadedVersion === '36.0') return true;
+    if (document.getElementById(RESULT_COPY_LOADER_ID)) return true;
+    try { W.__LUNEA_TIMING_COPY_V35__ = false; } catch {}
+    return ensureScript(RESULT_COPY_LOADER_ID, './lunea-timing-result-copy-v35.js', 'result copy bridge V36');
+  }
+
   function boot() {
     reorder();
+    ensureTopPromptCopy();
     ensureBottomActions();
+    ensureResultCopyBridge();
     ensureIntimacyCleanUi();
     ensureIntimacyBurgundyUi();
     ensureIntimacyRepairUi();
@@ -219,37 +324,43 @@
         const run = () => {
           queued = false;
           reorder();
+          syncTopPromptCopy();
           syncBottomButtons();
         };
         if (typeof requestAnimationFrame === 'function') requestAnimationFrame(run);
         else setTimeout(run, 16);
       });
       observer.observe(bar, {childList:true,attributes:true,attributeFilter:['disabled']});
+      const supportParent = document.getElementById('cards')?.parentNode;
+      if (supportParent && supportParent !== bar) observer.observe(supportParent, {childList:true});
+      const cards = document.getElementById('cards');
+      if (cards) observer.observe(cards, {childList:true,subtree:true});
     }
 
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
-      reorder();
-      ensureBottomActions();
       ensureIntimacyCleanUi();
       ensureIntimacyBurgundyUi();
       ensureIntimacyRepairUi();
-      const ready = ORDER.slice(0,9).every(id => !!document.getElementById(id));
-      if ((ready && document.getElementById(BOTTOM_ID)) || tries > 80) clearInterval(timer);
+      const ready = !!W.LUNEA_INTIMACY_CLEAN_V39 && !!W.LUNEA_INTIMACY_BURGUNDY_V40 && !!W.__LUNEA_INTIMACY_REPAIR_V43__;
+      if (ready || tries > 80) clearInterval(timer);
     }, 250);
   }
 
   W.LUNEA_READING_ACTION_ORDER_V33 = {
-    version:'33.3',
+    version:'33.6',
     order:[...ORDER],
     reorder,
+    ensureTopPromptCopy,
+    syncTopPromptCopy,
     ensureBottomActions,
     syncBottomButtons,
+    ensureResultCopyBridge,
     ensureIntimacyCleanUi,
     ensureIntimacyBurgundyUi,
     ensureIntimacyRepairUi,
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot,{once:true});
   else boot();
 })();

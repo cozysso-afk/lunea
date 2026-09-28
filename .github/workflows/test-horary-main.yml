@@ -1,0 +1,69 @@
+name: Test Horary Main
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'astro-horary-v1.js'
+      - 'lunea-horary-balance-v19-5.js'
+      - 'lunea-horary-question-modes-v37.js'
+      - 'lunea-horary-hardening-v38.js'
+      - 'lunea-horary-location-button-v39.js'
+      - 'lunea-horary-traditional-core-v40.js'
+      - 'lunea-horary-balance-guard-v41.js'
+      - 'lunea-astro-origin-failover-v57.js'
+      - 'lunea-horary-post-actions-v44.js'
+      - 'lunea-horary-mobile-actions-v45.js'
+      - 'lunea-horary-interpretation-engine-v47.js'
+      - 'lunea-horary-interpretation-bridge-v47.js'
+      - 'lunea-horary-answer-validator-v48.js'
+      - 'lunea-prashna-v1.js'
+      - 'lunea-horary-prashna-cross-v2.js'
+      - 'lunea-cache-refresh-v1.js'
+      - 'tests/*horary*.test.mjs'
+      - 'tests/*prashna*.test.mjs'
+      - '.github/workflows/test-horary-main.yml'
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Horary JavaScript syntax
+        run: |
+          node --check astro-horary-v1.js
+          node --check lunea-horary-balance-v19-5.js
+          node --check lunea-horary-question-modes-v37.js
+          node --check lunea-horary-hardening-v38.js
+          node --check lunea-horary-location-button-v39.js
+          node --check lunea-horary-traditional-core-v40.js
+          node --check lunea-horary-balance-guard-v41.js
+          node --check lunea-astro-origin-failover-v57.js
+          node --check lunea-horary-post-actions-v44.js
+          node --check lunea-horary-mobile-actions-v45.js
+          node --check lunea-horary-interpretation-engine-v47.js
+          node --check lunea-horary-interpretation-bridge-v47.js
+          node --check lunea-horary-answer-validator-v48.js
+          node --check lunea-prashna-v1.js
+          node --check lunea-horary-prashna-cross-v2.js
+          node --check lunea-cache-refresh-v1.js
+      - name: Horary regression contracts
+        run: |
+          node tests/v30-spread-horary-contract.test.mjs
+          node tests/horary-question-modes-v37.test.mjs
+          node tests/horary-hardening-v38.test.mjs
+          node tests/horary-location-button-v39.test.mjs
+          node tests/horary-traditional-core-v40.test.mjs
+          node tests/horary-balance-guard-v41.test.mjs
+          node tests/horary-action-buttons-v43.test.mjs
+          node tests/horary-post-actions-v44.test.mjs
+          node tests/horary-mobile-actions-v45.test.mjs
+          node tests/horary-interpretation-engine-v47.test.mjs
+          node tests/horary-v2-golden-questions.test.mjs
+          node tests/horary-answer-validator-v48.test.mjs
+          node tests/horary-prashna-cross-v2.test.mjs

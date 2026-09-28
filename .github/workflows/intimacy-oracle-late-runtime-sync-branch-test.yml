@@ -1,0 +1,60 @@
+name: Intimacy Oracle late-runtime sync branch checks
+
+on:
+  push:
+    branches:
+      - fix/intimacy-oracle-late-runtime-sync
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check
+        run: |
+          node --check lunea-intimacy-ai-bridge-v34.js
+          node --check tests/intimacy-oracle-late-runtime.e2e.mjs
+      - name: AI bridge contract
+        run: node --test tests/intimacy-ai-bridge-v34.test.mjs
+      - name: Supplemental Oracle contract
+        run: node tests/intimacy-oracle-ui-v36.test.mjs
+      - name: Reading lifecycle invariants
+        run: node tests/reading-lifecycle-v59.test.mjs
+
+  webkit-late-runtime:
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-intimacy-late-runtime.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-intimacy-late-runtime.log
+          exit 1
+      - name: Run real-path late-runtime regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/intimacy-oracle-late-runtime.e2e.mjs
+      - name: Show local server log
+        if: always()
+        run: cat /tmp/lunea-intimacy-late-runtime.log || true
