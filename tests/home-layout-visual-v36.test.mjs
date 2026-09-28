@@ -8,11 +8,13 @@ const files = [
   'lunea-home-portal-v8.js',
   'lunea-mobile-interaction-hotfix-v1.js',
   'lunea-meihua-v1.js',
+  'lunea-meihua-ui-final-v2.js',
   'lunea-lenormand-v1.js',
   'lunea-thai-standalone-v24.js',
   'lunea-message-oracle-home-v1.js',
   'lunea-intimacy-clean-v39.js',
   'lunea-cache-refresh-v1.js',
+  'lunea-sector-color-system-v28.js',
 ];
 
 for (const file of files) {
@@ -24,10 +26,12 @@ const owner = read('lunea-home-visual-v36.js');
 const portal = read('lunea-home-portal-v8.js');
 const hotfix = read('lunea-mobile-interaction-hotfix-v1.js');
 const meihua = read('lunea-meihua-v1.js');
+const meihuaUi = read('lunea-meihua-ui-final-v2.js');
 const lenormand = read('lunea-lenormand-v1.js');
 const thai = read('lunea-thai-standalone-v24.js');
 const signal = read('lunea-message-oracle-home-v1.js');
 const loader = read('lunea-cache-refresh-v1.js');
+const sectorColors = read('lunea-sector-color-system-v28.js');
 
 assert.match(owner, /order:Object\.freeze\(\['general','love','career','stock','timing','intimacy','signal','divider','lenormand','meihua','horary','thai'\]\)/);
 assert.match(owner, /new MutationObserver\(requestLayout\)/, 'late tiles must be handled by one event-driven owner');
@@ -43,6 +47,12 @@ assert.doesNotMatch(lenormand, /normalizePortalOrder\?\./, 'Lenormand must not i
 assert.doesNotMatch(lenormand, /addEventListener\('pageshow'/, 'Lenormand must not independently act on BFCache restore');
 assert.doesNotMatch(hotfix, /PORTAL_RANK|\.sort\(\(a, b\) => a\.rank/, 'mobile hotfix must not own Home order');
 assert.doesNotMatch(thai, /setInterval\([\s\S]*injectHomeTile/, 'Thai Home creation must not poll for seconds');
+assert.match(meihuaUi, /html:not\(\.lunea-home-visual-v36\) #luneaHomePortalV8 \.lunea-v8-tile\[data-key="meihua"\]/, 'legacy Meihua geometry must yield to V36');
+assert.doesNotMatch(meihuaUi, /(?<!html:not\(\.lunea-home-visual-v36\) )#luneaHomePortalV8 \.lunea-v8-tile\[data-key="meihua"\]/, 'Meihua must not override V36 Home geometry');
+assert.match(thai, /html:not\(\.lunea-home-visual-v36\) \.lunea-thai-home-tile/, 'legacy Thai geometry must yield to V36');
+assert.doesNotMatch(thai, /(?<!html:not\(\.lunea-home-visual-v36\) )\.lunea-thai-home-tile\s*\{/, 'Thai must not override V36 Home geometry');
+assert.match(sectorColors, /html:not\(\.lunea-home-visual-v36\) \.lunea-v8-tile\[data-lunea-sector\]/, 'legacy sector surfaces must yield to V36');
+assert.doesNotMatch(sectorColors, /(?<!html:not\(\.lunea-home-visual-v36\) )\.lunea-v8-tile\[data-lunea-sector\]/, 'sector colors must not override V36 Home surfaces');
 for (const source of [portal, hotfix, meihua, lenormand, thai, signal]) {
   assert.match(source, /lunea:home-(?:tile|portal)-ready|LUNEA_HOME_LAYOUT_V36/, 'tile producers must notify the layout owner');
 }
