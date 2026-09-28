@@ -16,7 +16,7 @@ function runtime(){
   return {learning:window.LUNEA_SPREAD_LEARNING_V1,cloud:window.LUNEA_LEARNING_CLOUD_SYNC_V1};
 }
 
-test('canonical upgrader converts legacy v2 cloud payloads to v3 before merge',()=>{
+test('canonical upgrader converts legacy cloud payloads to v4 before merge',()=>{
   const {learning,cloud}=runtime();
   assert.equal(typeof learning.upgradeRow,'function');
   assert.equal(cloud.version,2);
@@ -27,13 +27,13 @@ test('canonical upgrader converts legacy v2 cloud payloads to v3 before merge',(
     structureProfile:{version:2,domain:'relationship',target:'single_or_unspecified',modes:['general'],stage:'current_or_unspecified'}
   };
   const upgraded=cloud.normalizeCloudRow({question_key:`LOVE::${old.questionKey}`,source:'manual',payload:old,updated_at:'2026-09-04T00:00:00Z'});
-  assert.equal(upgraded.structureProfile.version,3);
+  assert.equal(upgraded.structureProfile.version,4);
   assert.equal(upgraded.structureProfile.domain,'relationship');
   assert.equal(upgraded.structureProfile.stage,'after');
   assert.ok(upgraded.structureProfile.modes.includes('perception'));
 });
 
-test('remote-newer merge still returns v3 timing/cause/outcome profiles',()=>{
+test('remote-newer merge returns v4 timing/cause/outcome profiles',()=>{
   const {cloud}=runtime();
   const remote=[{
     question_key:'LOVE::legacy',source:'ai_correction',updated_at:'2026-09-04T10:00:00Z',payload:{
@@ -45,14 +45,14 @@ test('remote-newer merge still returns v3 timing/cause/outcome profiles',()=>{
   const merged=cloud.mergeRows([],remote);
   assert.equal(merged.length,1);
   const p=merged[0].structureProfile;
-  assert.equal(p.version,3);
+  assert.equal(p.version,4);
   assert.ok(p.modes.includes('timing'));
   assert.ok(p.modes.includes('cause'));
   assert.ok(p.modes.includes('outcome'));
 });
 
-test('loader cache keys force v3 learning and cloud sync code onto clients',()=>{
+test('loader cache keys force v4 learning and cloud sync code onto clients',()=>{
   const loader=read('lunea-structural-routing-v4.js');
-  assert.equal((loader.match(/lunea-user-spread-learning-v1\.js\?v=108/g)||[]).length,2);
+  assert.equal((loader.match(/lunea-user-spread-learning-v1\.js\?v=109/g)||[]).length,2);
   assert.equal((loader.match(/lunea-learning-cloud-sync-v1\.js\?v=104/g)||[]).length,2);
 });
