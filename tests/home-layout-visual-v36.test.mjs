@@ -76,6 +76,12 @@ assert.match(owner, /scale\(\.985\)/, 'touch compression must be preserved');
 assert.match(owner, /300ms ease/, 'glass bloom must stay in the requested range');
 assert.match(owner, /\.cat-text h3::before,[\s\S]*\.cat-text h3::after\{content:none!important;display:none!important\}/, 'SIGNAL must render its real title only once');
 assert.doesNotMatch(owner, /h3::after\{content:'SIGNAL · MESSAGE'/, 'SIGNAL must not synthesize a duplicate title');
+assert.match(signal, /height:82px!important;min-height:82px!important/, 'SIGNAL collapsed capsule must have deliberate visual weight');
+assert.match(signal, /width:50px!important;height:50px!important;flex:0 0 50px!important/, 'SIGNAL icon must use a full glass well');
+assert.match(signal, /width:34px!important;height:34px!important;flex:0 0 34px!important;border-radius:999px!important/, 'SIGNAL plus control must be a circular glass button');
+assert.match(signal, /animation:luneaSignalMessageAurora 13s/, 'SIGNAL aurora must drift independently and subtly');
+assert.match(signal, /height:78px!important;min-height:78px!important/, 'SIGNAL capsule must remain substantial at <=390px');
+assert.match(signal, /@media\(prefers-reduced-motion:reduce\)[\s\S]*animation:none!important/, 'SIGNAL aurora must respect reduced motion');
 assert.match(owner, /\.thai-v24-copy b\{[\s\S]*white-space:nowrap;overflow:hidden;text-overflow:ellipsis/, 'Thai title must stay on one contained line');
 assert.match(owner, /\.thai-v24-copy span\{[\s\S]*white-space:nowrap;overflow:hidden;text-overflow:ellipsis/, 'Thai description must not overlap or escape the card');
 assert.match(owner, /@media\(prefers-reduced-motion:reduce\)/);
@@ -83,4 +89,4 @@ assert.match(owner, /animation:none/);
 assert.doesNotMatch(owner, /(?:7\/10|progress-bar|combined-score)/i, 'Home must not imply a combined score');
 assert.doesNotMatch(owner, /lunea-daily-celestial|lunea-v22-moon|dailyBtn/, 'V36 must not downgrade DAILY ORBIT 6');
 
-console.log('Home layout owner and Visual V36.1 contract tests passed');
+console.log('Home layout owner and Visual V36.2 SIGNAL capsule contract tests passed');
