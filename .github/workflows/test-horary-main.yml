@@ -14,12 +14,15 @@ on:
       - 'lunea-astro-origin-failover-v57.js'
       - 'lunea-horary-post-actions-v44.js'
       - 'lunea-horary-mobile-actions-v45.js'
+      - 'lunea-ai-response-guard-v1.js'
+      - 'lunea-horary-ai-guard-v49.js'
       - 'lunea-horary-interpretation-engine-v47.js'
       - 'lunea-horary-interpretation-bridge-v47.js'
       - 'lunea-horary-answer-validator-v48.js'
       - 'lunea-prashna-v1.js'
       - 'lunea-horary-prashna-cross-v2.js'
       - 'lunea-cache-refresh-v1.js'
+      - 'tests/ai-response-guard-v1.test.mjs'
       - 'tests/*horary*.test.mjs'
       - 'tests/*prashna*.test.mjs'
       - '.github/workflows/test-horary-main.yml'
@@ -46,6 +49,8 @@ jobs:
           node --check lunea-astro-origin-failover-v57.js
           node --check lunea-horary-post-actions-v44.js
           node --check lunea-horary-mobile-actions-v45.js
+          node --check lunea-ai-response-guard-v1.js
+          node --check lunea-horary-ai-guard-v49.js
           node --check lunea-horary-interpretation-engine-v47.js
           node --check lunea-horary-interpretation-bridge-v47.js
           node --check lunea-horary-answer-validator-v48.js
@@ -63,6 +68,8 @@ jobs:
           node tests/horary-action-buttons-v43.test.mjs
           node tests/horary-post-actions-v44.test.mjs
           node tests/horary-mobile-actions-v45.test.mjs
+          node tests/ai-response-guard-v1.test.mjs
+          node tests/horary-ai-stale-guard-v49.test.mjs
           node tests/horary-interpretation-engine-v47.test.mjs
           node tests/horary-v2-golden-questions.test.mjs
           node tests/horary-answer-validator-v48.test.mjs
