@@ -91,9 +91,9 @@
     document.write('<script src="./lunea-daily-orbit6-v21.js?v=2102"><\/script>');
     document.write('<script src="./lunea-daily-celestial-v22.js?v=2201"><\/script>');
     document.write('<script src="./lunea-astro-resume-v23.js?v=c544a8cb0d7f"><\/script>');
-    document.write('<script src="./lunea-thai-standalone-v24.js?v=2401"><\/script>');
+    document.write('<script src="./lunea-thai-standalone-v24.js?v=2402"><\/script>');
     document.write('<script src="./lunea-thai-art-v25.js?v=2501"><\/script>');
-    document.write('<script src="./lunea-thai-art-polish-v26.js?v=2601"><\/script>');
+    document.write('<script src="./lunea-thai-art-polish-v26.js?v=2602"><\/script>');
     document.write('<script src="./lunea-mobile-journal-polish-v27.js?v=2701"><\/script>');
     document.write('<script src="./lunea-sector-color-system-v28.js?v=2801"><\/script>');
     document.write('<script src="./lunea-fixed-spread-depth-v30.js?v=c544a8cb0d7f"><\/script>');
@@ -161,9 +161,9 @@
     './lunea-daily-orbit6-v21.js?v=2102',
     './lunea-daily-celestial-v22.js?v=2201',
     './lunea-astro-resume-v23.js?v=c544a8cb0d7f',
-    './lunea-thai-standalone-v24.js?v=2401',
+    './lunea-thai-standalone-v24.js?v=2402',
     './lunea-thai-art-v25.js?v=2501',
-    './lunea-thai-art-polish-v26.js?v=2601',
+    './lunea-thai-art-polish-v26.js?v=2602',
     './lunea-mobile-journal-polish-v27.js?v=2701',
     './lunea-sector-color-system-v28.js?v=2801',
     './lunea-fixed-spread-depth-v30.js?v=c544a8cb0d7f',
