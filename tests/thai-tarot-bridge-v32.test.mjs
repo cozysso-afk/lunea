@@ -69,7 +69,7 @@ for (let offset = 0, i = 0; i < 2; i += 1) {
 }
 
 // The standalone Thai experience remains present and independent.
-assert.match(loader, /lunea-thai-standalone-v24\.js\?v=2401/);
+assert.match(loader, /lunea-thai-standalone-v24\.js\?v=2402/);
 assert.match(standalone, /LUNEA THAI ASTROLOGY STANDALONE V24/);
 assert.match(standalone, /luneaThaiHomeTileV24/);
 assert.match(standalone, /오늘의 Taksa 계산/);
