@@ -14,7 +14,7 @@ try {
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]',{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]',{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="horary"]',{timeout:20000});
-  await page.waitForSelector('#luneaHomePortalV8 .lunea-thai-home-tile',{timeout:20000});
+  await page.waitForSelector('#luneaHomePortalV8 [data-key="thai"]',{timeout:20000});
   await page.waitForTimeout(500);
 
   const home = await page.evaluate(() => {
@@ -23,7 +23,7 @@ try {
     const lenormand = grid?.querySelector('.lunea-v8-tile[data-key="lenormand"]');
     const meihua = grid?.querySelector('.lunea-v8-tile[data-key="meihua"]');
     const horary = grid?.querySelector('.lunea-v8-tile[data-key="horary"]');
-    const thai = grid?.querySelector('.lunea-thai-home-tile');
+    const thai = grid?.querySelector('[data-key="thai"]');
     const style = meihua ? getComputedStyle(meihua) : null;
     return {
       lenormandIndex:nodes.indexOf(lenormand),
