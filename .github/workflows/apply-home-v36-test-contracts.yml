@@ -1,0 +1,58 @@
+name: Apply Home V36 Thai test contracts
+
+on:
+  push:
+    branches:
+      - test/home-v36-thai-contracts-20260930
+
+permissions:
+  contents: write
+
+jobs:
+  patch-tests:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: test/home-v36-thai-contracts-20260930
+      - name: Update stale Thai Home contracts only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+              'tests/thai-tarot-bridge-v32.test.mjs': [
+                  ("lunea-thai-standalone-v24\\.js\\?v=2401", "lunea-thai-standalone-v24\\.js\\?v=2402"),
+              ],
+              'tests/system-support-lifecycle-v1.e2e.mjs': [
+                  ('.lunea-thai-home-tile', '[data-key="thai"]'),
+              ],
+              'tests/lenormand-v1.e2e.mjs': [
+                  ('.lunea-thai-home-tile', '[data-key="thai"]'),
+                  ('.thai-v24-copy b', '.lunea-v8-label'),
+              ],
+              'tests/meihua-v1.e2e.mjs': [
+                  ('.lunea-thai-home-tile', '[data-key="thai"]'),
+              ],
+          }
+
+          for name, pairs in replacements.items():
+              path = Path(name)
+              text = path.read_text(encoding='utf-8')
+              before = text
+              for old, new in pairs:
+                  if old not in text:
+                      raise SystemExit(f'missing expected stale contract in {name}: {old}')
+                  text = text.replace(old, new)
+              if text == before:
+                  raise SystemExit(f'no change made in {name}')
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit test-only contract update
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add tests/thai-tarot-bridge-v32.test.mjs tests/system-support-lifecycle-v1.e2e.mjs tests/lenormand-v1.e2e.mjs tests/meihua-v1.e2e.mjs
+          git commit -m 'test: align Home V36 Thai contracts'
+          git push origin HEAD:test/home-v36-thai-contracts-20260930
