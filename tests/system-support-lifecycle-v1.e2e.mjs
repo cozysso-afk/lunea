@@ -278,7 +278,7 @@ async function testHoraryPrashna(browser) {
 
 async function testThai(browser) {
   const {context,page,pageErrors}=await makePage(browser,{seedNatal:true});
-  const thaiTile=page.locator('#luneaHomePortalV8 .lunea-thai-home-tile');
+  const thaiTile=page.locator('#luneaHomePortalV8 [data-key="thai"]');
   await thaiTile.waitFor({state:'visible',timeout:25000});
   await thaiTile.click();
   await page.waitForSelector('#luneaThaiStandaloneOverlay.show');

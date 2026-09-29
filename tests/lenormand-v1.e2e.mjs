@@ -12,7 +12,7 @@ try {
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"]',{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"]',{timeout:20000});
   await page.waitForSelector('#luneaHomePortalV8 .lunea-v8-tile[data-key="horary"]',{timeout:20000});
-  await page.waitForSelector('#luneaHomePortalV8 .lunea-thai-home-tile',{timeout:20000});
+  await page.waitForSelector('#luneaHomePortalV8 [data-key="thai"]',{timeout:20000});
 
   const deck = await page.evaluate(() => ({
     count:window.LUNEA_LENORMAND_V1.cards.length,
@@ -28,7 +28,7 @@ try {
     const lenormand = grid?.querySelector('.lunea-v8-tile[data-key="lenormand"]');
     const meihua = grid?.querySelector('.lunea-v8-tile[data-key="meihua"]');
     const horary = grid?.querySelector('.lunea-v8-tile[data-key="horary"]');
-    const thai = grid?.querySelector('.lunea-thai-home-tile');
+    const thai = grid?.querySelector('[data-key="thai"]');
     if (!grid || !lenormand || !meihua || !horary || !thai) return false;
     const children = [...grid.children];
     const li = children.indexOf(lenormand), mi = children.indexOf(meihua), hi = children.indexOf(horary), ti = children.indexOf(thai);
@@ -43,7 +43,7 @@ try {
     const lenormand = grid.querySelector('.lunea-v8-tile[data-key="lenormand"]');
     const meihua = grid.querySelector('.lunea-v8-tile[data-key="meihua"]');
     const horary = grid.querySelector('.lunea-v8-tile[data-key="horary"]');
-    const thai = grid.querySelector('.lunea-thai-home-tile');
+    const thai = grid.querySelector('[data-key="thai"]');
     return {
       lenormandIndex:children.indexOf(lenormand),
       meihuaIndex:children.indexOf(meihua),
@@ -52,7 +52,7 @@ try {
       firstRow:Math.abs(lenormand.getBoundingClientRect().top - meihua.getBoundingClientRect().top) < 4,
       secondRow:Math.abs(horary.getBoundingClientRect().top - thai.getBoundingClientRect().top) < 4,
       iconSrc:lenormand.querySelector('.lunea-v8-object img')?.getAttribute('src') || '',
-      thaiTitle:thai.querySelector('.thai-v24-copy b')?.textContent?.trim() || '',
+      thaiTitle:thai.querySelector('.lunea-v8-label')?.textContent?.trim() || '',
     };
   });
   assert.equal(home.meihuaIndex,home.lenormandIndex + 1,'V35 first system row should be Lenormand + Meihua');
