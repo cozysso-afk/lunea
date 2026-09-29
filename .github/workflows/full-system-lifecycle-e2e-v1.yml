@@ -91,3 +91,5 @@ jobs:
       - name: Show local server log
         if: always()
         run: cat /tmp/lunea-existing-http.log || true
+
+# QA trigger only: no runtime or test-behavior change.
