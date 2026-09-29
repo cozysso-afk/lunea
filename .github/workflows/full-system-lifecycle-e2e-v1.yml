@@ -32,6 +32,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Normalize retired Thai Home selector in legacy E2E
+        run: sed -i 's/#luneaHomePortalV8 \.lunea-thai-home-tile/#luneaHomePortalV8 [data-key="thai"]/g' tests/system-support-lifecycle-v1.e2e.mjs
       - name: Syntax check support-system E2E
         run: node --check tests/system-support-lifecycle-v1.e2e.mjs
       - name: Install Playwright WebKit
@@ -71,6 +73,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Normalize retired Thai Home selector in legacy E2E
+        run: sed -i 's/#luneaHomePortalV8 \.lunea-thai-home-tile/#luneaHomePortalV8 [data-key="thai"]/g' tests/lenormand-v1.e2e.mjs tests/meihua-v1.e2e.mjs
       - name: Install Playwright WebKit
         run: |
           npm install --no-save playwright@1.55.0
@@ -92,4 +96,4 @@ jobs:
         if: always()
         run: cat /tmp/lunea-existing-http.log || true
 
-# QA trigger only: no runtime or test-behavior change.
+# QA trigger only: selector normalization is temporary and this PR must not merge.
