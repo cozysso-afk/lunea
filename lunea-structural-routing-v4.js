@@ -93,7 +93,7 @@
     document.write('<script src="./lunea-astro-resume-v23.js?v=c54bfef34ea2"><\/script>');
     document.write('<script src="./lunea-thai-standalone-v24.js?v=2402"><\/script>');
     document.write('<script src="./lunea-thai-art-v25.js?v=2501"><\/script>');
-    document.write('<script src="./lunea-thai-art-polish-v26.js?v=2602"><\/script>');
+    document.write('<script src="./lunea-thai-art-polish-v26.js?v=2603"><\/script>');
     document.write('<script src="./lunea-mobile-journal-polish-v27.js?v=2701"><\/script>');
     document.write('<script src="./lunea-sector-color-system-v28.js?v=2801"><\/script>');
     document.write('<script src="./lunea-fixed-spread-depth-v30.js?v=c54bfef34ea2"><\/script>');
@@ -163,7 +163,7 @@
     './lunea-astro-resume-v23.js?v=c54bfef34ea2',
     './lunea-thai-standalone-v24.js?v=2402',
     './lunea-thai-art-v25.js?v=2501',
-    './lunea-thai-art-polish-v26.js?v=2602',
+    './lunea-thai-art-polish-v26.js?v=2603',
     './lunea-mobile-journal-polish-v27.js?v=2701',
     './lunea-sector-color-system-v28.js?v=2801',
     './lunea-fixed-spread-depth-v30.js?v=c54bfef34ea2',
