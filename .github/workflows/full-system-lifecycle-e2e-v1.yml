@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: '22'
       - name: Normalize retired Thai Home selector in legacy E2E
-        run: sed -i 's/#luneaHomePortalV8 \.lunea-thai-home-tile/#luneaHomePortalV8 [data-key="thai"]/g' tests/system-support-lifecycle-v1.e2e.mjs
+        run: sed -i 's/\.lunea-thai-home-tile/[data-key="thai"]/g' tests/system-support-lifecycle-v1.e2e.mjs
       - name: Syntax check support-system E2E
         run: node --check tests/system-support-lifecycle-v1.e2e.mjs
       - name: Install Playwright WebKit
@@ -74,7 +74,9 @@ jobs:
         with:
           node-version: '22'
       - name: Normalize retired Thai Home selector in legacy E2E
-        run: sed -i 's/#luneaHomePortalV8 \.lunea-thai-home-tile/#luneaHomePortalV8 [data-key="thai"]/g' tests/lenormand-v1.e2e.mjs tests/meihua-v1.e2e.mjs
+        run: |
+          sed -i 's/\.lunea-thai-home-tile/[data-key="thai"]/g' tests/lenormand-v1.e2e.mjs tests/meihua-v1.e2e.mjs
+          sed -i 's/\.thai-v24-copy b/\.lunea-v8-label/g' tests/lenormand-v1.e2e.mjs
       - name: Install Playwright WebKit
         run: |
           npm install --no-save playwright@1.55.0
