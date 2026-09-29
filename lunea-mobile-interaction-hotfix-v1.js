@@ -68,6 +68,21 @@
       overscroll-behavior:contain;
     }
 
+    /* Keep the 43px glass wells, but let Lenormand / Meihua artwork occupy
+       the same visual area as Horary / Thai instead of floating inside padding. */
+    html.lunea-home-visual-v36 #luneaHomePortalV8 .lunea-v8-tile[data-key="lenormand"] .lunea-v8-object img{
+      width:100%!important;
+      height:100%!important;
+      object-fit:cover!important;
+      object-position:center!important;
+      transform:scale(1.24)!important;
+      transform-origin:center!important;
+    }
+    html.lunea-home-visual-v36 #luneaHomePortalV8 .lunea-v8-tile[data-key="meihua"] .lunea-v8-object{
+      background-size:cover,128% 128%!important;
+      background-position:center,center!important;
+    }
+
     /* Thai is a standard secondary Home card in V36. Keep its feature-owned
        markup, but make the final visual geometry identical to sibling tiles. */
     html.lunea-home-visual-v36 #luneaHomePortalV8 .lunea-thai-home-tile{
