@@ -70,25 +70,29 @@
       html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-copy small{color:#c8b681!important}
       html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-arrow{color:#d1bd82!important;filter:drop-shadow(0 0 5px rgba(229,197,111,.14))}
 
-      /* V36: Thai must occupy the exact same visual anchors as Horary/Meihua.
-         Pin the whole content block; do not fake alignment by moving pixels
-         inside the artwork. */
+      /* V36 uses the exact same content flow as every V8 secondary card.
+         The legacy copy wrapper stays in DOM for compatibility, but becomes
+         display:contents so its label/subtitle participate as direct tile items. */
       html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24{
         display:block!important;
-        position:relative!important;
         grid-template-columns:none!important;
         gap:0!important;
         align-items:initial!important;
         text-align:left!important;
-        padding:11px 12px!important;
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy{
+        display:contents!important;
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy small{
+        display:none!important;
       }
       html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-orb{
-        position:absolute!important;
-        top:11px!important;
-        left:12px!important;
+        position:relative!important;
+        top:auto!important;
+        left:auto!important;
         width:43px!important;
         height:43px!important;
-        margin:0!important;
+        margin:0 0 8px 0!important;
         display:grid!important;
         place-items:center!important;
         overflow:hidden!important;
@@ -143,23 +147,10 @@
         background:linear-gradient(128deg,rgba(255,255,255,.07),transparent 35%,rgba(var(--v36-b),.045))!important;
         box-shadow:none!important;
       }
-      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy{
-        position:absolute!important;
-        top:62px!important;
-        left:12px!important;
-        right:12px!important;
-        display:block!important;
-        min-width:0!important;
-        max-width:none!important;
-        width:auto!important;
-        overflow:visible!important;
-        padding:0!important;
-        text-align:left!important;
-      }
-      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy small{display:none!important}
       html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy b{
         display:block!important;
-        max-width:none!important;
+        position:static!important;
+        max-width:100%!important;
         margin:0!important;
         color:#fbfaff!important;
         font-family:'Cinzel','Pretendard',sans-serif!important;
@@ -168,11 +159,12 @@
         line-height:1.1!important;
         letter-spacing:-.1px!important;
         white-space:nowrap!important;
-        overflow:visible!important;
-        text-overflow:clip!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
       }
       html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy span{
         display:block!important;
+        position:static!important;
         min-width:0!important;
         max-width:100%!important;
         margin-top:4px!important;
@@ -201,23 +193,14 @@
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb img,
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v25-img,
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 img[data-lunea-thai-art]{transform:scale(1.22)!important}
-        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24{
-          padding:10px 11px!important;
-        }
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-orb{
-          top:10px!important;
-          left:11px!important;
           width:43px!important;
           height:43px!important;
+          margin-bottom:8px!important;
         }
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-orb img,
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v25-img,
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 img[data-lunea-thai-art]{transform:scale(1.20)!important}
-        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy{
-          top:61px!important;
-          left:11px!important;
-          right:11px!important;
-        }
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy b{font-size:12.2px!important}
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy span{font-size:8.7px!important}
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-arrow{
@@ -233,6 +216,30 @@
     document.head.appendChild(s);
   }
 
+  function normalizeHomeTile(){
+    const tile=$('luneaThaiHomeTileV24');
+    if(!tile) return false;
+    tile.dataset.key='thai';
+    tile.setAttribute('aria-pressed','false');
+
+    const orb=tile.querySelector('.thai-v24-orb');
+    const copy=tile.querySelector('.thai-v24-copy');
+    const title=copy?.querySelector('b');
+    const sub=copy?.querySelector('span');
+    const arrow=tile.querySelector('.thai-v24-arrow');
+    if(!orb || !copy || !title || !sub || !arrow) return false;
+
+    orb.classList.add('lunea-v8-object');
+    title.classList.add('lunea-v8-label');
+    sub.classList.add('lunea-v8-sub');
+    arrow.classList.add('lunea-v8-open');
+
+    title.textContent='THAI ASTROLOGY';
+    sub.textContent='출생운 · 8영역 · 보조 흐름';
+    arrow.textContent='＋';
+    return true;
+  }
+
   function tagImage(){
     const orb=document.querySelector('#luneaThaiHomeTileV24 .thai-v24-orb');
     if(!orb) return false;
@@ -243,6 +250,12 @@
       return true;
     }
     return false;
+  }
+
+  function prepareHomeTile(){
+    const normalized=normalizeHomeTile();
+    const tagged=tagImage();
+    return normalized && tagged;
   }
 
   function loadV27(){
@@ -258,8 +271,8 @@
   function boot(){
     addStyle();
     loadV27();
-    if(tagImage()) return;
-    const mo=new MutationObserver(()=>{ if(tagImage()) mo.disconnect(); });
+    if(prepareHomeTile()) return;
+    const mo=new MutationObserver(()=>{ if(prepareHomeTile()) mo.disconnect(); });
     mo.observe(document.documentElement,{childList:true,subtree:true});
     setTimeout(()=>mo.disconnect(),10000);
   }
