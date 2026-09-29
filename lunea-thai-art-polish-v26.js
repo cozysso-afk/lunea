@@ -70,11 +70,30 @@
       html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-copy small{color:#c8b681!important}
       html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-arrow{color:#d1bd82!important;filter:drop-shadow(0 0 5px rgba(229,197,111,.14))}
 
-      /* Home V36 owns the card material. Thai keeps its own artwork, but the
-         icon well must read as the same glass object as Horary / Meihua. */
+      /* V36: Thai must occupy the exact same visual anchors as Horary/Meihua.
+         Pin the whole content block; do not fake alignment by moving pixels
+         inside the artwork. */
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24{
+        display:block!important;
+        position:relative!important;
+        grid-template-columns:none!important;
+        gap:0!important;
+        align-items:initial!important;
+        text-align:left!important;
+        padding:11px 12px!important;
+      }
       html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-orb{
+        position:absolute!important;
+        top:11px!important;
+        left:12px!important;
+        width:43px!important;
+        height:43px!important;
+        margin:0!important;
+        display:grid!important;
+        place-items:center!important;
         overflow:hidden!important;
         isolation:isolate!important;
+        border-radius:15px!important;
         border:1px solid rgba(var(--v36-a),.31)!important;
         background:
           radial-gradient(circle at 29% 19%,rgba(255,255,255,.22),transparent 31%),
@@ -93,11 +112,11 @@
         height:100%!important;
         display:block!important;
         object-fit:cover!important;
-        object-position:50% 44%!important;
+        object-position:50% 50%!important;
         border-radius:inherit!important;
         opacity:.91!important;
         filter:saturate(.88) brightness(.96) contrast(.95)!important;
-        transform:translateY(-40%) scale(1.42)!important;
+        transform:scale(1.20)!important;
         transform-origin:50% 50%!important;
       }
       html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-orb::before{
@@ -124,17 +143,87 @@
         background:linear-gradient(128deg,rgba(255,255,255,.07),transparent 35%,rgba(var(--v36-b),.045))!important;
         box-shadow:none!important;
       }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy{
+        position:absolute!important;
+        top:62px!important;
+        left:12px!important;
+        right:12px!important;
+        display:block!important;
+        min-width:0!important;
+        max-width:none!important;
+        width:auto!important;
+        overflow:visible!important;
+        padding:0!important;
+        text-align:left!important;
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy small{display:none!important}
       html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy b{
+        display:block!important;
+        max-width:none!important;
+        margin:0!important;
+        color:#fbfaff!important;
         font-family:'Cinzel','Pretendard',sans-serif!important;
+        font-size:12.8px!important;
+        font-weight:650!important;
+        line-height:1.1!important;
+        letter-spacing:-.1px!important;
+        white-space:nowrap!important;
+        overflow:visible!important;
+        text-overflow:clip!important;
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy span{
+        display:block!important;
+        min-width:0!important;
+        max-width:100%!important;
+        margin-top:4px!important;
+        color:#bec2d4!important;
+        font-size:9px!important;
+        line-height:1.23!important;
+        font-weight:500!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+      }
+      html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-arrow{
+        position:absolute!important;
+        top:14px!important;
+        right:12px!important;
+        align-self:auto!important;
+        justify-self:auto!important;
+        color:rgb(var(--v36-a))!important;
+        font-size:15px!important;
+        font-weight:300!important;
+        line-height:1!important;
+        opacity:.9!important;
       }
 
-      @media(max-width:380px){
+      @media(max-width:390px){
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb img,
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v25-img,
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 img[data-lunea-thai-art]{transform:scale(1.22)!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24{
+          padding:10px 11px!important;
+        }
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-orb{
+          top:10px!important;
+          left:11px!important;
+          width:43px!important;
+          height:43px!important;
+        }
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-orb img,
         html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v25-img,
-        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 img[data-lunea-thai-art]{transform:translateY(-40%) scale(1.44)!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 img[data-lunea-thai-art]{transform:scale(1.20)!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy{
+          top:61px!important;
+          left:11px!important;
+          right:11px!important;
+        }
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy b{font-size:12.2px!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-copy span{font-size:8.7px!important}
+        html.lunea-home-visual-v36 #luneaHomePortalV8 #luneaThaiHomeTileV24 .thai-v24-arrow{
+          top:14px!important;
+          right:11px!important;
+        }
       }
       @media(prefers-reduced-motion:no-preference){
         html:not(.lunea-home-visual-v36) #luneaThaiHomeTileV24 .thai-v24-orb{transition:box-shadow .25s ease,transform .25s ease}
