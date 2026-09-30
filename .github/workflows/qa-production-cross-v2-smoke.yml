@@ -1,0 +1,115 @@
+name: QA Production Cross V2 Smoke
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/qa-production-cross-v2-smoke.yml'
+  workflow_dispatch:
+
+jobs:
+  production-cross-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Verify deployed LUNEA client contract and production API chain
+        shell: python
+        run: |
+          import json
+          import time
+          import urllib.request
+          import urllib.error
+
+          PAGE_JS = 'https://cozysso-afk.github.io/lunea/lunea-horary-prashna-cross-v2.js'
+          API = 'https://lunea-astro-api.onrender.com'
+
+          def get_text(url, attempts=6):
+              last = None
+              for i in range(attempts):
+                  try:
+                      with urllib.request.urlopen(url, timeout=90) as r:
+                          return r.read().decode('utf-8')
+                  except Exception as exc:
+                      last = exc
+                      time.sleep(min(5 * (i + 1), 20))
+              raise last
+
+          def post_json(path, payload, attempts=6):
+              body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+              req = urllib.request.Request(
+                  API + path,
+                  data=body,
+                  headers={
+                      'Content-Type': 'application/json',
+                      'Origin': 'https://cozysso-afk.github.io',
+                  },
+                  method='POST',
+              )
+              last = None
+              for i in range(attempts):
+                  try:
+                      with urllib.request.urlopen(req, timeout=120) as r:
+                          raw = r.read().decode('utf-8')
+                          assert r.status == 200, (path, r.status, raw[:1000])
+                          return json.loads(raw)
+                  except Exception as exc:
+                      last = exc
+                      time.sleep(min(5 * (i + 1), 20))
+              raise last
+
+          deployed = get_text(PAGE_JS)
+          assert "const DEFAULT_API = 'https://lunea-astro-api.onrender.com';" in deployed
+          assert '/v1/horary-prashna/cross-interpretation' in deployed
+          assert 'LUNEA_HORARY_PRASHNA_CROSS_V2' in deployed
+
+          common = {
+              'question_text': '테스트 연락 가능성',
+              'question_iso': '2026-09-26T18:30:00',
+              'topic': 'contact',
+              'timezone': 'Asia/Seoul',
+              'place': '서울',
+          }
+
+          horary = post_json('/v1/horary', common)
+          assert horary.get('schema') == 'LUNEA_HORARY_V1', horary.get('schema')
+
+          prashna = post_json('/v1/prashna', common)
+          assert prashna.get('schema') == 'LUNEA_PRASHNA_V1', prashna.get('schema')
+
+          cross = post_json('/v1/horary-prashna/cross-interpretation', {
+              'horary': horary,
+              'prashna': prashna,
+          })
+          assert cross.get('schema') == 'LUNEA_HORARY_PRASHNA_CROSS_V2', cross.get('schema')
+          relationship = (cross.get('cross') or {}).get('relationship')
+          assert relationship in {'agreement', 'partial_agreement', 'conflict', 'insufficient'}, relationship
+
+          contract = cross.get('independence_contract') or {}
+          assert contract.get('horary_grade_preserved') is True
+          assert contract.get('prashna_support_preserved') is True
+          assert contract.get('score_combination_performed') is False
+          assert contract.get('weighted_average_performed') is False
+          assert contract.get('majority_vote_performed') is False
+          assert contract.get('comparison_layer_only') is True
+
+          h_v8 = (((horary.get('judgment_support') or {}).get('judgment_hierarchy_v8')) or
+                  ((horary.get('judgment_support') or {}).get('traditional_core_v8')) or {})
+          h_cross = ((cross.get('horary') or {}).get('authoritative_snapshot') or {})
+          assert h_cross.get('grade') == (h_v8.get('qualified_evidence_grade_v8') or 'NONE')
+          assert h_cross.get('band') == (h_v8.get('grade_band_v8') or 'NONE')
+
+          p_support = prashna.get('judgment_support') or {}
+          p_cross = ((cross.get('prashna') or {}).get('authoritative_snapshot') or {})
+          assert p_cross.get('support_score') == p_support.get('support_score')
+          assert p_cross.get('support_band') == p_support.get('support_band')
+
+          print(json.dumps({
+              'client_contract': 'PASS',
+              'horary_schema': horary.get('schema'),
+              'prashna_schema': prashna.get('schema'),
+              'cross_schema': cross.get('schema'),
+              'relationship': relationship,
+              'horary_grade': h_cross.get('grade'),
+              'horary_band': h_cross.get('band'),
+              'prashna_support_band': p_cross.get('support_band'),
+              'independence_contract': contract,
+          }, ensure_ascii=False, indent=2))
