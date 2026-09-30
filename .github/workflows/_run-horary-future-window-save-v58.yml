@@ -14,7 +14,9 @@ jobs:
         with:
           node-version: '22'
       - name: Apply patch
-        run: python .github/scripts/apply_horary_future_window_save_v58.py
+        run: |
+          python .github/scripts/apply_horary_future_window_save_v58.py
+          python .github/scripts/align_horary_v58_tests.py
       - name: Run focused contract
         run: node tests/horary-future-window-save-v58.test.mjs
       - name: Run existing Horary action contracts
@@ -26,6 +28,7 @@ jobs:
         run: |
           rm -f .github/workflows/_run-horary-future-window-save-v58.yml
           rm -f .github/scripts/apply_horary_future_window_save_v58.py
+          rm -f .github/scripts/align_horary_v58_tests.py
           git config user.name 'openai-codex'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
