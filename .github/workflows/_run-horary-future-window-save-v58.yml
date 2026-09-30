@@ -1,0 +1,33 @@
+name: Run Horary Future Window Save V58
+on: push
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/horary-future-window-save-v58
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply patch
+        run: python .github/scripts/apply_horary_future_window_save_v58.py
+      - name: Run focused contract
+        run: node tests/horary-future-window-save-v58.test.mjs
+      - name: Run existing Horary action contracts
+        run: |
+          node tests/horary-post-actions-v44.test.mjs
+          node tests/horary-mobile-actions-v45.test.mjs
+      - name: Commit patch
+        shell: bash
+        run: |
+          rm -f .github/workflows/_run-horary-future-window-save-v58.yml
+          rm -f .github/scripts/apply_horary_future_window_save_v58.py
+          git config user.name 'openai-codex'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Fix Horary future-window interpretation and iPhone save'
+          git push origin HEAD:fix/horary-future-window-save-v58
