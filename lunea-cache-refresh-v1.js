@@ -91,6 +91,7 @@
   function loadHoraryLocationButton() { loadBuildScopedScript('luneaHoraryLocationButtonV39Loader', './lunea-horary-location-button-v39.js', 'Horary location button V39'); }
   function loadHoraryTraditionalCore() { loadBuildScopedScript('luneaHoraryTraditionalCoreV40Loader', './lunea-horary-traditional-core-v40.js', 'Horary Traditional Core V40'); }
   function loadHoraryBalanceGuard() { loadBuildScopedScript('luneaHoraryBalanceGuardV41Loader', './lunea-horary-balance-guard-v41.js', 'Horary Balance Guard V41'); }
+  function loadHoraryFutureWindowV2() { loadBuildScopedScript('luneaHoraryFutureWindowV2Loader', './lunea-horary-future-window-v2.js', 'Horary Future Window V2'); }
   function loadHoraryInterpretationV47() {
     if (W.__LUNEA_HORARY_INTERPRETATION_V47__) {
       loadBuildScopedScript('luneaHoraryInterpretationBridgeV47Loader', './lunea-horary-interpretation-bridge-v47.js', 'Horary interpretation bridge V47');
@@ -175,6 +176,7 @@
     loadHoraryLocationButton();
     loadHoraryTraditionalCore();
     loadHoraryBalanceGuard();
+    loadHoraryFutureWindowV2();
     loadHoraryInterpretationV47();
     loadHoraryMobileStability();
     loadHoraryReturnStack();
