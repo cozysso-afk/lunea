@@ -14,12 +14,7 @@ jobs:
         with:
           node-version: '22'
       - name: Align stale V45 loader contract
-        run: python - <<'PY'
-          from pathlib import Path
-          p=Path('tests/horary-ai-stale-guard-v49.test.mjs')
-          s=p.read_text().replace('v=451','v=452')
-          p.write_text(s)
-          PY
+        run: python -c "from pathlib import Path; p=Path('tests/horary-ai-stale-guard-v49.test.mjs'); p.write_text(p.read_text().replace('v=451','v=452'))"
       - name: Run Horary contracts
         run: |
           set -e
