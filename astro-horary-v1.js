@@ -471,6 +471,8 @@
     const perfection = j.perfection || {};
     const moon = j.moon_course || {};
     const event = sig.event;
+    const futureWindow = j.future_window_v1 || null;
+    const futureIngress = futureWindow?.active ? (futureWindow.ingresses || []) : [];
 
     let html = `
       <div class="horary-summary">
@@ -501,6 +503,14 @@
           : `다음 적용각 ${moon.next_aspects?.length || 0}개 확인 · 첫 각 ${esc(moon.next_aspects?.[0]?.body_ko || '')} ${esc(moon.next_aspects?.[0]?.aspect_ko || '')}`}</p>
         <p>현재 별자리 이탈까지 약 ${moon.hours_to_sign_exit ?? '—'}시간</p>
       </div>
+      ${futureWindow?.active ? `<div class="horary-card">
+        <h5>목표기간 전 상태변화 · Future Window</h5>
+        <p>질문에서 읽은 목표일: ${esc(futureWindow.target_date || '—')}</p>
+        ${futureIngress.length ? futureIngress.map(row => `<p>${esc(row.body_ko || row.body)} · ${esc(row.from_sign_ko || row.from_sign_en)} → ${esc(row.to_sign_ko || row.to_sign_en)} · ${esc(fmtDate(row.time_local || row.utc))}${row.before_target_start ? ' · 목표일 시작 전' : row.within_target_date ? ' · 목표일 중' : ''}</p>`).join('') : '<p>목표기간 전 주요 시그니피케이터 별자리 이동 없음</p>'}
+        ${futureWindow.moon_voc_scope_ends_before_target_end ? '<p>※ 현재 Moon VOC는 별자리 이탈 전까지만 유효하므로 목표기간 전체로 확장하지 않음.</p>' : ''}
+        ${futureWindow.current_reception_not_guaranteed_through_target ? '<p>※ 주요 시그니피케이터 ingress가 있어 현재 dignity/reception 조건이 목표기간까지 그대로 유지된다고 가정하지 않음.</p>' : ''}
+        <p>※ ingress 자체는 Perfection(성사각)이 아니며 기존 판정을 자동으로 뒤집지 않음.</p>
+      </div>` : ''}
     `;
 
     if (j.potential_prohibition?.length) {
@@ -535,6 +545,11 @@
     const interventions = (j.potential_prohibition || []).slice(0,4).map(x =>
       `- ${x.intervening}(${x.intervening_ko}) → ${x.target}(${x.target_ko}) ${x.aspect_ko}, 약 ${x.estimated_days}일 후보 · 잠재 개입각일 뿐 확정 금지 아님`
     ).join('\n') || '- 없음';
+    const futureWindow = j.future_window_v1 || {};
+    const futureIngress = futureWindow.active ? (futureWindow.ingresses || []).map(x =>
+      `- ${x.time_local || x.utc}: ${x.body}(${x.body_ko || x.body}) ${x.from_sign_ko || x.from_sign_en} → ${x.to_sign_ko || x.to_sign_en} · 역할 ${(x.roles || []).join('/') || '—'}${x.before_target_start ? ' · 목표일 시작 전' : x.within_target_date ? ' · 목표일 중' : ''}`
+    ).join('\n') || '- 없음' : '- 질문에서 별도 미래 목표일을 확정하지 못함';
+    const futureRules = futureWindow.active ? (futureWindow.interpretation_rules_ko || []).map(x => `- ${x}`).join('\n') : '- 없음';
 
     return `[HORARY V1 · 질문시각 점성술 계산 결과]
 [질문 원문]
@@ -555,6 +570,15 @@ ${sig.event ? `- 사건 보조 시그니피케이터: ${sig.event.ruler}(${sig.e
 - Perfection(퍼펙션·성사각): ${p.reason_ko || '확인되지 않음'}${p.exact_local ? ` / 후보 ${p.exact_local}` : ''}
 - Reception(리셉션·수용 관계): ${receptionText(j.reception)}
 - Void of Course(보이드 오브 코스·공전달): ${moon.void_of_course ? '해당' : '아님'}
+
+[미래 목표기간 상태변화 · Future Window]
+- 목표일: ${futureWindow.active ? futureWindow.target_date : '별도 인식 없음'}
+- 현재 Moon VOC를 목표기간 전체로 확장 금지: ${futureWindow.moon_voc_scope_ends_before_target_end ? '예' : '해당 없음'}
+- 현재 reception/dignity 조건 유지 보장 안 됨: ${futureWindow.current_reception_not_guaranteed_through_target ? '예' : '해당 없음'}
+${futureIngress}
+
+[미래기간 해석 규칙]
+${futureRules}
 
 [Moon(달)의 다음 적용각]
 ${moonNext}

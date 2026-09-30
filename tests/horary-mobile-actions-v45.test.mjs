@@ -5,7 +5,7 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../lunea-horary-mobile-actions-v45.js', import.meta.url), 'utf8');
 const loader = fs.readFileSync(new URL('../lunea-astro-origin-failover-v57.js', import.meta.url), 'utf8');
 
-assert.match(loader, /lunea-horary-post-actions-v44\.js\?v=441/);
+assert.match(loader, /lunea-horary-post-actions-v44\.js\?v=442/);
 assert.match(loader, /lunea-horary-mobile-actions-v45\.js\?v=451/);
 assert.match(source, /pointerdown/);
 assert.match(source, /pointerup/);

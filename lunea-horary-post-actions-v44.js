@@ -335,6 +335,82 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
     }
   }
 
+
+  function lightweightHorarySnapshot(fullResult, runtime) {
+    const j = fullResult?.judgment_support || {};
+    return {
+      schema:'LUNEA_HORARY_V1',
+      lightweight:true,
+      question:fullResult?.question || {text:currentQuestion()},
+      moment:fullResult?.moment || {local_iso:currentMoment(),place_resolved:currentPlace()},
+      angles:fullResult?.angles || null,
+      significators:fullResult?.significators || null,
+      judgment_support:{
+        perfection:j.perfection || null,
+        reception:j.reception || null,
+        moon_course:j.moon_course || null,
+        future_window_v1:j.future_window_v1 || null,
+        traditional_core_v6:j.traditional_core_v6 ? {evidence_grade:j.traditional_core_v6.evidence_grade,staged_judgment:j.traditional_core_v6.staged_judgment} : null
+      },
+      screenSnapshot:runtime
+    };
+  }
+
+  async function saveStandaloneHardened(button) {
+    const fullResult = W.LUNEA_ASTRO_HORARY_V1?.getCurrent?.();
+    if (!fullResult || !resultText()) {
+      alert('먼저 호라리 차트를 계산해줘.');
+      return null;
+    }
+    const old = button?.textContent || '💾 기록';
+    if (button) { button.disabled = true; button.textContent = '💾 저장 중…'; }
+    try {
+      const cross = W.LUNEA_HORARY_PRASHNA_CROSS_V2?.archiveSnapshot?.() || null;
+      const runtime = archiveSnapshot();
+      const id = uid();
+      const ai = currentAIText();
+      const fullHorary = JSON.parse(JSON.stringify(fullResult));
+      fullHorary.ai_text = ai;
+      fullHorary.prashna_v1 = cross?.prashna_v1 || null;
+      fullHorary.cross_interpretation_v2 = cross?.cross_interpretation_v2 || null;
+      const fullReading = {
+        id, createdAt:Date.now(), date:new Date().toLocaleString('ko-KR'),
+        title:'HORARY · 질문시각 점성술', q:currentQuestion(),
+        rationale:'질문을 처음 명확하게 이해한 시각과 장소의 Tropical · Regiomontanus 차트',
+        cards:[], ai, category:categoryFor(currentQuestion()),
+        horary:fullHorary, horaryRuntimeV44:runtime
+      };
+
+      // IndexedDB Journal is the canonical full-fidelity store for Horary.
+      await upsertJournalReading(fullReading);
+
+      // Keep only a lightweight compatibility row in localStorage so iPhone quota
+      // pressure cannot destroy an otherwise successful Journal save.
+      const rows = readArchive().filter(row => String(row?.id || '') !== id);
+      const lightReading = {
+        ...fullReading,
+        ai:String(ai || '').slice(0,2000),
+        horary:lightweightHorarySnapshot(fullResult,runtime)
+      };
+      rows.unshift(lightReading);
+      const localOk = writeArchive(rows);
+      try { await Promise.resolve(W.LUNEA_READING_JOURNAL?.render?.()); } catch {}
+      try { repairArchivePresentation(); } catch {}
+      if (button) button.textContent = localOk ? '✓ 기록 저장' : '✓ 기록 저장 · DB';
+      alert(localOk ? '✨ 호라리 리딩을 기록함에 저장했어.' : '✨ 호라리 리딩을 기록함 DB에 저장했어. 기기 캐시 용량 때문에 목록 호환 저장은 줄였어.');
+      return fullReading;
+    } catch (error) {
+      console.error('[LUNEA Horary V44] hardened save failed', error);
+      alert('호라리 기록 저장 중 오류가 났어: ' + (error?.message || error));
+      return null;
+    } finally {
+      if (button) {
+        button.disabled = false;
+        setTimeout(() => { if (button.isConnected) button.textContent = old; }, 1500);
+      }
+    }
+  }
+
   async function repairLatestHoraryArchive() {
     const rows = readArchive();
     const q = currentQuestion();
@@ -494,8 +570,11 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
       }
       const saveButton = event.target?.closest?.('#astroHorarySave');
       if (saveButton) {
-        setTimeout(() => repairLatestHoraryArchive(),40);
-        setTimeout(() => repairLatestHoraryArchive(),260);
+        event.preventDefault();
+        event.stopPropagation();
+        try { event.stopImmediatePropagation(); } catch {}
+        saveStandaloneHardened(saveButton);
+        return;
       }
     },true);
   }
@@ -515,6 +594,7 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
       copyPayload,
       aiPrompt,
       repairLatestHoraryArchive,
+      saveStandaloneHardened,
       repairSavedHoraryRows,
       repairArchivePresentation
     });
