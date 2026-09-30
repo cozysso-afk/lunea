@@ -314,6 +314,12 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
       const sig = signature(reading);
       const existing = rows.find(row => String(row?.sourceArchiveId || '') === sourceId)
         || rows.find(row => row?.signature === sig && Math.abs(Number(row?.createdAt || 0) - Number(reading.createdAt || 0)) < 86400000);
+      const preserveFullHorary = !!(
+        reading?.horary?.lightweight &&
+        existing?.reading?.horary &&
+        !existing.reading.horary.lightweight
+      );
+      const storedReading = preserveFullHorary ? existing.reading : reading;
       const row = {
         id:String(existing?.id || uid()),
         sourceArchiveId:sourceId,
@@ -327,7 +333,7 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
         note:String(existing?.note || ''),
         tags:Array.isArray(existing?.tags) ? existing.tags : [],
         signature:sig,
-        reading:JSON.parse(JSON.stringify(reading))
+        reading:JSON.parse(JSON.stringify(storedReading))
       };
       return await putJournal(db,row);
     } finally {
