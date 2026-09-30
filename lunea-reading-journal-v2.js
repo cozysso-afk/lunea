@@ -460,6 +460,7 @@
     statuses.className = 'lj-statuses';
     for (const [key, label] of Object.entries(STATUS)) {
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'mini' + (entry.status === key ? ' on' : '');
       btn.textContent = label;
       btn.onclick = async () => {
@@ -519,6 +520,7 @@
     panel.append(tagWrap);
 
     const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
     saveBtn.className = 'mini lj-save';
     saveBtn.textContent = '✓ 검증 내용 저장';
     saveBtn.onclick = async () => {
@@ -530,7 +532,9 @@
         tags: [...new Set(tags.value.split(',').map(norm).filter(Boolean))].slice(0, 30)
       });
       saveBtn.textContent = '✓ 저장됨';
-      setTimeout(() => rerender(entry.id), 250);
+      setTimeout(() => {
+        if (saveBtn.isConnected) saveBtn.textContent = '✓ 검증 내용 저장';
+      }, 900);
     };
     panel.append(saveBtn);
     return panel;
@@ -565,6 +569,7 @@
     actions.className = 'archive-actions';
     const mk = text => {
       const btn = document.createElement('button');
+      btn.type = 'button';
       btn.className = 'mini';
       btn.textContent = text;
       return btn;
@@ -582,7 +587,18 @@
     const review = reviewPanel(entry, rerender);
     if (openId === entry.id) review.classList.add('open');
 
-    reviewBtn.onclick = () => review.classList.toggle('open');
+    reviewBtn.onclick = event => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      const modal = $('archiveOverlay')?.querySelector('.archive-modal') || $('archiveOverlay')?.querySelector('.modal');
+      const scrollTop = modal?.scrollTop || 0;
+      review.classList.toggle('open');
+      if (modal) {
+        modal.scrollTop = scrollTop;
+        requestAnimationFrame(() => { modal.scrollTop = scrollTop; });
+        setTimeout(() => { if (review.isConnected) modal.scrollTop = scrollTop; }, 60);
+      }
+    };
     detailBtn.onclick = () => {
       if (!detail.dataset.loaded) {
         detail.textContent = readingText(reading);

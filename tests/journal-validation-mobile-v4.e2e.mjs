@@ -90,8 +90,20 @@ try {
 
   const target = page.locator('#archiveList > .archive-item').nth(10);
   await target.scrollIntoViewIfNeeded();
-  await target.locator('.archive-actions button').first().click();
+  const openBefore = await target.evaluate(() => {
+    const modal = document.querySelector('#archiveOverlay .archive-modal');
+    return modal?.scrollTop || 0;
+  });
+  const reviewButton = target.locator('.archive-actions button').first();
+  assert.equal(await reviewButton.getAttribute('type'), 'button', 'review button must never submit/navigate');
+  await reviewButton.click();
   await target.locator('.lj-review.open').waitFor();
+  await page.waitForTimeout(90);
+  const openAfter = await target.evaluate(() => {
+    const modal = document.querySelector('#archiveOverlay .archive-modal');
+    return modal?.scrollTop || 0;
+  });
+  assert.ok(Math.abs(openAfter - openBefore) <= 2, `opening validation moved archive-modal scroll (${openBefore} -> ${openAfter})`);
 
   const dateLayout = await target.evaluate(card => {
     const fields = [...card.querySelectorAll('.lj-grid .lj-field')];
@@ -102,6 +114,8 @@ try {
     return {
       fieldTops:fieldRects.map(rect => rect.top),
       widths:inputRects.map(rect => rect.width),
+      heights:inputRects.map(rect => rect.height),
+      textAligns:inputs.map(el => getComputedStyle(el).textAlign),
       rightEdges:inputRects.map(rect => rect.right),
       cardRight:cardRect.right,
       viewportWidth:innerWidth,
@@ -110,7 +124,9 @@ try {
   });
   assert.equal(dateLayout.widths.length, 2, 'journal must expose both result/due date controls');
   assert.ok(Math.abs(dateLayout.fieldTops[0] - dateLayout.fieldTops[1]) < 3, `date controls must stay in one compact row on 390px iPhone: ${JSON.stringify(dateLayout)}`);
-  assert.ok(dateLayout.widths.every(width => width <= 160.5), `date controls are still too wide: ${JSON.stringify(dateLayout.widths)}`);
+  assert.ok(Math.abs(dateLayout.widths[0] - dateLayout.widths[1]) <= 2, `date controls must use equal columns: ${JSON.stringify(dateLayout.widths)}`);
+  assert.ok(dateLayout.heights.every(height => height <= 40.5), `date controls are still too tall: ${JSON.stringify(dateLayout.heights)}`);
+  assert.ok(dateLayout.textAligns.every(value => value === 'center'), `date values must be centered: ${JSON.stringify(dateLayout.textAligns)}`);
   assert.ok(dateLayout.rightEdges.every(right => right <= dateLayout.cardRight + 1), 'date controls overflow their journal card');
   assert.ok(dateLayout.documentWidth <= dateLayout.viewportWidth + 1, `journal created horizontal viewport overflow: ${JSON.stringify(dateLayout)}`);
 
