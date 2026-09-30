@@ -5,8 +5,8 @@ import vm from 'node:vm';
 const source = fs.readFileSync(new URL('../lunea-horary-mobile-actions-v45.js', import.meta.url), 'utf8');
 const loader = fs.readFileSync(new URL('../lunea-astro-origin-failover-v57.js', import.meta.url), 'utf8');
 
-assert.match(loader, /lunea-horary-post-actions-v44\.js\?v=441/);
-assert.match(loader, /lunea-horary-mobile-actions-v45\.js\?v=451/);
+assert.match(loader, /lunea-horary-post-actions-v44\.js\?v=442/);
+assert.match(loader, /lunea-horary-mobile-actions-v45\.js\?v=452/);
 assert.match(source, /pointerdown/);
 assert.match(source, /pointerup/);
 assert.match(source, /getBoundingClientRect/);
@@ -15,7 +15,7 @@ assert.match(source, /LUNEA_HORARY_AI_GUARD_V49\?\.runAI/);
 assert.match(source, /repairLatestHoraryArchive/);
 
 const handlers = new Map();
-const calls = {prashna:0, save:0};
+const calls = {prashna:0, save:0, legacySave:0};
 
 function button(id,left,top,width=120,height=44) {
   return {
@@ -78,7 +78,8 @@ context.LUNEA_PRASHNA_V1 = {run:async()=>{calls.prashna += 1;}};
 context.LUNEA_HORARY_POST_ACTIONS_V44 = {
   aiPrompt:()=> 'prompt',
   copyPayload:()=> 'copy text',
-  repairLatestHoraryArchive:async()=>{calls.save += 1;}
+  saveStandaloneHardened:async()=>{calls.save += 1;},
+  repairLatestHoraryArchive:async()=>{calls.legacySave += 1;}
 };
 
 vm.createContext(context);
@@ -105,7 +106,8 @@ assert.equal(calls.prashna,1,'Prashna tap must invoke run directly');
 tap(save,20,170,2);
 await Promise.resolve();
 await Promise.resolve();
-assert.equal(calls.save,1,'Horary save tap must invoke Journal/archive repair directly');
+assert.equal(calls.save,1,'Horary save tap must invoke hardened IndexedDB-first save directly');
+assert.equal(calls.legacySave,0,'Horary save tap must not fall back to legacy repair when hardened save exists');
 
 // Transparent hit-test layer: target is not the button, but coordinates are.
 const blocker = {closest(){return null;}};

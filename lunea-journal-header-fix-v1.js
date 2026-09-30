@@ -88,13 +88,38 @@
       }
       html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review .lj-grid .lj-field input[type='date'],
       #archiveOverlay .lj-review .lj-grid .lj-field input[type='date']{
+        -webkit-appearance:none!important;
+        appearance:none!important;
+        box-sizing:border-box!important;
         min-width:0!important;
         width:100%!important;
-        max-width:158px!important;
-        padding-left:6px!important;
-        padding-right:4px!important;
+        max-width:100%!important;
+        height:38px!important;
+        min-height:38px!important;
+        max-height:38px!important;
+        padding:0 8px!important;
         font-size:10px!important;
-        justify-self:start!important;
+        line-height:38px!important;
+        text-align:center!important;
+        justify-self:stretch!important;
+        border-radius:10px!important;
+      }
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review .lj-grid .lj-field input[type='date']::-webkit-date-and-time-value,
+      #archiveOverlay .lj-review .lj-grid .lj-field input[type='date']::-webkit-date-and-time-value{
+        box-sizing:border-box!important;
+        width:100%!important;
+        margin:0!important;
+        padding:0!important;
+        text-align:center!important;
+      }
+      html.lunea-ui-regression-final-v2 #archiveOverlay .lj-review .lj-grid .lj-field input[type='date']::-webkit-datetime-edit,
+      #archiveOverlay .lj-review .lj-grid .lj-field input[type='date']::-webkit-datetime-edit{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        width:100%!important;
+        margin:0!important;
+        padding:0!important;
       }
     }
     @media (max-width:330px){

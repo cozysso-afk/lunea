@@ -223,7 +223,7 @@
     if(document.getElementById('luneaHoraryPostActionsV44Loader'))return;
     const script=document.createElement('script');
     script.id='luneaHoraryPostActionsV44Loader';
-    script.src='./lunea-horary-post-actions-v44.js?v=441';
+    script.src='./lunea-horary-post-actions-v44.js?v=442';
     script.async=false;
     script.onerror=()=>console.error('[LUNEA] Horary Post Actions V44 failed to load');
     (document.head||document.documentElement).appendChild(script);
@@ -280,7 +280,7 @@
     if(document.getElementById('luneaHoraryMobileActionsV45Loader'))return;
     const script=document.createElement('script');
     script.id='luneaHoraryMobileActionsV45Loader';
-    script.src='./lunea-horary-mobile-actions-v45.js?v=451';
+    script.src='./lunea-horary-mobile-actions-v45.js?v=452';
     script.async=false;
     script.onerror=()=>console.error('[LUNEA] Horary + Prashna Mobile Actions V45 failed to load');
     (document.head||document.documentElement).appendChild(script);

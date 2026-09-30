@@ -185,8 +185,11 @@
     button.disabled = true;
     button.textContent = '저장 중…';
     try {
+      const hardened = W.LUNEA_HORARY_POST_ACTIONS_V44?.saveStandaloneHardened;
       const repair = W.LUNEA_HORARY_POST_ACTIONS_V44?.repairLatestHoraryArchive;
-      if (typeof repair === 'function') {
+      if (typeof hardened === 'function') {
+        await hardened(button);
+      } else if (typeof repair === 'function') {
         await repair();
       } else if (typeof button.onclick === 'function') {
         await button.onclick.call(button,{preventDefault(){},stopPropagation(){}});
@@ -285,7 +288,7 @@
   else install();
 
   W.LUNEA_HORARY_MOBILE_ACTIONS_V45 = Object.freeze({
-    version:'45.1',activate,candidate,makeInteractive,runPrashna,runAI,copyResult,saveResult
+    version:'45.2',activate,candidate,makeInteractive,runPrashna,runAI,copyResult,saveResult
   });
-  console.info('✦ LUNEA Horary + Prashna Mobile Action Owner V45.1 active');
+  console.info('✦ LUNEA Horary + Prashna Mobile Action Owner V45.2 active');
 })();

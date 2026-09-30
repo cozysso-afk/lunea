@@ -9,7 +9,7 @@ const loaderSource = fs.readFileSync(new URL('../lunea-astro-origin-failover-v57
 
 assert.match(loaderSource, /lunea-ai-response-guard-v1\.js\?v=100/);
 assert.match(loaderSource, /lunea-horary-ai-guard-v49\.js\?v=490/);
-assert.match(loaderSource, /lunea-horary-mobile-actions-v45\.js\?v=451/);
+assert.match(loaderSource, /lunea-horary-mobile-actions-v45\.js\?v=452/);
 assert.match(mobileSource, /LUNEA_HORARY_AI_GUARD_V49\?\.runAI/);
 
 const classes = (...initial) => {
