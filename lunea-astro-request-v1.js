@@ -1,8 +1,7 @@
 'use strict';
 // Resumable Astro request owner.
-// Transit / Return are submitted as server jobs and then polled so iOS can
-// suspend the PWA without killing long calculations. Horary stays direct:
-// it is interactive, should fail fast, and must not get stuck behind stale jobs.
+// Transit / Return / Horary are submitted as server jobs and then polled so iOS can
+// suspend the PWA without killing calculations during Render cold starts.
 (() => {
   const W = window;
   if (W.LUNEA_ASTRO_REQUEST_V1) return;
@@ -20,13 +19,10 @@
 
   function endpointKind(url) {
     const value = String(url || '');
+    if (/\/v1\/horary(?:\?|$)/.test(value)) return 'horary';
     if (/\/v1\/transits\/scan(?:\?|$)/.test(value)) return 'transit';
     if (/\/v1\/returns\/context(?:\?|$)/.test(value)) return 'return';
     return '';
-  }
-
-  function isHoraryEndpoint(url) {
-    return /\/v1\/horary(?:\?|$)/.test(String(url || ''));
   }
 
   function apiBase(url) {
@@ -83,10 +79,6 @@
       const row = JSON.parse(localStorage.getItem(pendingKey(kind)) || 'null');
       if (!row || !jobId || row.jobId === jobId) localStorage.removeItem(pendingKey(kind));
     } catch {}
-  }
-
-  function clearLegacyHoraryPending() {
-    try { localStorage.removeItem(pendingKey('horary')); } catch {}
   }
 
   function wait(ms, signal) {
@@ -217,8 +209,6 @@
   function json(url, options={}, config={}) {
     const {timeoutMs=240000, scope='reading', prepare, fetcher=(...args)=>W.fetch(...args)} = config;
     const method = String(options?.method || 'GET').toUpperCase();
-    const horary = method === 'POST' && isHoraryEndpoint(url);
-    if (horary) clearLegacyHoraryPending();
     const kind = method === 'POST' ? endpointKind(url) : '';
     const effectiveTimeout = kind ? Math.max(timeoutMs, JOB_TIMEOUT_MS) : timeoutMs;
     const controller = new AbortController();
