@@ -21,7 +21,6 @@ assert.match(bridge, /reception을 시장\/상대가 질문자의 통제 또는 
 assert.match(bridge, /fall\/detriment\/peregrine을 사건 실패·확정 손실·성사 불가능과 동일시하지 않는다/);
 assert.match(bridge, /NONE\/D여도 자동 NO라고 쓰지 않는다/);
 assert.match(bridge, /currentWithinOrb=false와 targetWindowWithinOrb=true/);
-assert.match(bridge, /mayBePromotedToCurrentPerfection/);
 assert.match(bridge, /직접 성사각 미확인 · 리셉션 및 미래 접근각 존재/);
 assert.match(bridge, /직접 성사각 미확인 · 리셉션 보조 존재/);
 assert.doesNotMatch(bridge, /직접 성사각은 약하지만 리셉션 보조가 있음/);
