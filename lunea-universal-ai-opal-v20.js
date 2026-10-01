@@ -71,10 +71,6 @@
 
   async function yieldForAiStart(id) {
     await nextPaint();
-    if (!sessionCurrent(id)) return false;
-    await nextPaint();
-    if (!sessionCurrent(id)) return false;
-    await new Promise(resolve => setTimeout(resolve, 0));
     return sessionCurrent(id);
   }
 

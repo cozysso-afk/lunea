@@ -356,7 +356,9 @@
     try { current = W.startSpread || startSpread; } catch { current = W.startSpread; }
     if (typeof current !== 'function' || current.__luneaReadingAttachmentsV1) return false;
     const wrapped = function() {
-      clearForNewReading();
+      // Reading Lifecycle V59 already clears attachments at the user-action boundary.
+      // Keep this wrapper only as a legacy fallback when that lifecycle owner is absent.
+      if (!W.LUNEA_READING_LIFECYCLE_V59) clearForNewReading();
       return current.apply(this, arguments);
     };
     wrapped.__luneaReadingAttachmentsV1 = true;
