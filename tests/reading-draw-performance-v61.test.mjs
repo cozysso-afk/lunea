@@ -16,9 +16,11 @@ assert.doesNotMatch(runtime, /function watchAiTransition\(/, 'V60 must not poll 
 assert.match(runtime, /new MutationObserver\(\(\) => settleAiTransitionIfDrawn\(true\)\)/, 'MutationObserver remains the primary completion signal');
 assert.match(runtime, /requestAnimationFrame\(\(\) => \{\s*if \(epoch === aiEpoch\) settleAiTransitionIfDrawn\(\);\s*\}\);/, 'one-frame safety check remains');
 
-assert.match(manual, /document\.createDocumentFragment\(\)/, 'manual cards should build off-DOM');
-assert.match(manual, /fragment\.appendChild\(makeCardWrapper/, 'manual card wrappers should append to the fragment');
-assert.match(manual, /cards\?\.appendChild\(fragment\)/, 'manual cards should enter the live DOM in one append');
+assert.match(manual, /document\.createDocumentFragment\(\)/, 'manual cards should build off-DOM when fragments are supported');
+assert.match(manual, /const wrapper = makeCardWrapper\(/, 'manual card wrapper should be created before insertion');
+assert.match(manual, /if \(fragment\) fragment\.appendChild\(wrapper\)/, 'manual card wrappers should append to the fragment when available');
+assert.match(manual, /else cards\?\.appendChild\(wrapper\)/, 'manual path should retain a non-fragment fallback');
+assert.match(manual, /if \(fragment\) cards\?\.appendChild\(fragment\)/, 'manual cards should enter the live DOM in one append when fragments are supported');
 
 assert.match(attachments, /if \(!W\.LUNEA_READING_LIFECYCLE_V59\) clearForNewReading\(\);/, 'attachment cleanup wrapper must defer to V59 when present');
 
