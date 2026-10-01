@@ -91,15 +91,6 @@
     return true;
   }
 
-  function watchAiTransition(epoch) {
-    const startedAt = performance.now();
-    const tick = () => {
-      if (epoch !== aiEpoch || settleAiTransitionIfDrawn()) return;
-      if (performance.now() - startedAt < 6000) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }
-
   function prepareAiTransition(event) {
     const button = event.target?.closest?.('#luneaV20PreviewConfirm');
     if (!button || button.disabled || !aiPositionsValid()) return;
@@ -137,7 +128,9 @@
     // MutationObserver is the fast path, while rAF polling is a WebKit-safe
     // fallback for render paths where the observer callback can be missed or
     // delayed behind legacy async wrappers.
-    watchAiTransition(epoch);
+    requestAnimationFrame(() => {
+      if (epoch === aiEpoch) settleAiTransitionIfDrawn();
+    });
 
     setTimeout(() => {
       if (epoch !== aiEpoch || settleAiTransitionIfDrawn()) return;

@@ -92,12 +92,19 @@
     try {
       if (typeof secureShuffle !== 'function' || typeof TAROT_DECK === 'undefined' || typeof makeCardWrapper !== 'function') throw new Error('tarot draw primitives unavailable');
       const selected = secureShuffle(TAROT_DECK).slice(0, p.positions.length);
+      const cards = $('cards');
+      const fragment = typeof document.createDocumentFragment === 'function'
+        ? document.createDocumentFragment()
+        : null;
       selected.forEach((card, i) => {
         const isReversed = !!state.allowReversed && (typeof secureBool === 'function' ? secureBool() : false);
         state.used.add(card.code);
         state.drawn.push({...card,isReversed,position:p.positions[i],subCards:[]});
-        $('cards')?.appendChild(makeCardWrapper(i, card, isReversed));
+        const wrapper = makeCardWrapper(i, card, isReversed);
+        if (fragment) fragment.appendChild(wrapper);
+        else cards?.appendChild(wrapper);
       });
+      if (fragment) cards?.appendChild(fragment);
       if (originCategory === 'INTIMACY') {
         W.__LUNEA_INTIMACY_ACTIVE__ = true;
         document.body?.classList?.add('lunea-intimacy-reading');
