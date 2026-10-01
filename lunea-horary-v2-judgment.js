@@ -88,13 +88,11 @@
     if (perfection.perfects) return;
     const reception = !!(j.reception || {}).has_reception;
     const futureApproach = hasFutureApproach(data);
-    if (reception && futureApproach) {
-      title.textContent = '직접 성사각 미확인 · 리셉션 및 미래 접근각 존재';
-    } else if (reception) {
-      title.textContent = '직접 성사각 미확인 · 리셉션 보조 존재';
-    } else if (futureApproach) {
-      title.textContent = '직접 성사각 미확인 · 미래 접근각 존재';
-    }
+    let next = '';
+    if (reception && futureApproach) next = '직접 성사각 미확인 · 리셉션 및 미래 접근각 존재';
+    else if (reception) next = '직접 성사각 미확인 · 리셉션 보조 존재';
+    else if (futureApproach) next = '직접 성사각 미확인 · 미래 접근각 존재';
+    if (next && title.textContent !== next) title.textContent = next;
   }
 
   function renderTrace(data = current()) {
@@ -110,7 +108,8 @@
       root.appendChild(row);
     }
     const rules = v2.horaryRuleset || {};
-    row.textContent = `RULESET · ${rules.id || '—'} · ${rules.aspectSystem || '—'} · ${rules.orbPolicy?.method || '—'} · VOC ${rules.vocPolicy || '—'}`;
+    const trace = `RULESET · ${rules.id || '—'} · ${rules.aspectSystem || '—'} · ${rules.orbPolicy?.method || '—'} · VOC ${rules.vocPolicy || '—'}`;
+    if (row.textContent !== trace) row.textContent = trace;
   }
 
   function installFetchBridge() {
