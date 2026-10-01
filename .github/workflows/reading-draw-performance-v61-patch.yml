@@ -1,0 +1,117 @@
+name: Apply Reading Draw Performance V61 Patch
+
+on:
+  push:
+    branches: [fix/reading-draw-lag-v61]
+    paths:
+      - '.github/workflows/reading-draw-performance-v61-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/reading-draw-lag-v61
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Apply narrow performance patches
+        shell: python
+        run: |
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              text = p.read_text(encoding='utf-8')
+              if text.count(old) != 1:
+                  raise SystemExit(f'{path}: expected exactly one match, got {text.count(old)}')
+              p.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'lunea-universal-ai-opal-v20.js',
+              '''  async function yieldForAiStart(id) {\n    await nextPaint();\n    if (!sessionCurrent(id)) return false;\n    await nextPaint();\n    if (!sessionCurrent(id)) return false;\n    await new Promise(resolve => setTimeout(resolve, 0));\n    return sessionCurrent(id);\n  }''',
+              '''  async function yieldForAiStart(id) {\n    await nextPaint();\n    return sessionCurrent(id);\n  }'''
+          )
+
+          replace_once(
+              'lunea-runtime-regression-v60.js',
+              '''  function watchAiTransition(epoch) {\n    const startedAt = performance.now();\n    const tick = () => {\n      if (epoch !== aiEpoch || settleAiTransitionIfDrawn()) return;\n      if (performance.now() - startedAt < 6000) requestAnimationFrame(tick);\n    };\n    requestAnimationFrame(tick);\n  }\n\n''',
+              ''
+          )
+          replace_once(
+              'lunea-runtime-regression-v60.js',
+              '''    watchAiTransition(epoch);''',
+              '''    requestAnimationFrame(() => {\n      if (epoch === aiEpoch) settleAiTransitionIfDrawn();\n    });'''
+          )
+
+          replace_once(
+              'lunea-manual-limit20-v17.js',
+              '''      const selected = secureShuffle(TAROT_DECK).slice(0, p.positions.length);\n      selected.forEach((card, i) => {\n        const isReversed = !!state.allowReversed && (typeof secureBool === 'function' ? secureBool() : false);\n        state.used.add(card.code);\n        state.drawn.push({...card,isReversed,position:p.positions[i],subCards:[]});\n        $('cards')?.appendChild(makeCardWrapper(i, card, isReversed));\n      });''',
+              '''      const selected = secureShuffle(TAROT_DECK).slice(0, p.positions.length);\n      const cards = $('cards');\n      const fragment = document.createDocumentFragment();\n      selected.forEach((card, i) => {\n        const isReversed = !!state.allowReversed && (typeof secureBool === 'function' ? secureBool() : false);\n        state.used.add(card.code);\n        state.drawn.push({...card,isReversed,position:p.positions[i],subCards:[]});\n        fragment.appendChild(makeCardWrapper(i, card, isReversed));\n      });\n      cards?.appendChild(fragment);'''
+          )
+
+          replace_once(
+              'lunea-reading-attachments-v1.js',
+              '''    const wrapped = function() {\n      clearForNewReading();\n      return current.apply(this, arguments);\n    };''',
+              '''    const wrapped = function() {\n      // Reading Lifecycle V59 already clears attachments at the user-action boundary.\n      // Keep this wrapper only as a legacy fallback when that lifecycle owner is absent.\n      if (!W.LUNEA_READING_LIFECYCLE_V59) clearForNewReading();\n      return current.apply(this, arguments);\n    };'''
+          )
+
+          test = Path('tests/reading-draw-performance-v61.test.mjs')
+          test.write_text(r'''import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+
+          const read = name => fs.readFileSync(new URL(`../${name}`, import.meta.url), 'utf8');
+
+          const ai = read('lunea-universal-ai-opal-v20.js');
+          const runtime = read('lunea-runtime-regression-v60.js');
+          const manual = read('lunea-manual-limit20-v17.js');
+          const attachments = read('lunea-reading-attachments-v1.js');
+
+          const yieldBody = ai.match(/async function yieldForAiStart\(id\) \{([\s\S]*?)\n  \}/)?.[1] || '';
+          assert.equal((yieldBody.match(/await nextPaint\(\);/g) || []).length, 1, 'AI confirm should yield exactly one paint frame');
+          assert.doesNotMatch(yieldBody, /setTimeout/, 'AI confirm should not add an extra zero-delay timer');
+
+          assert.doesNotMatch(runtime, /function watchAiTransition\(/, 'V60 must not poll every animation frame');
+          assert.match(runtime, /new MutationObserver\(\(\) => settleAiTransitionIfDrawn\(true\)\)/, 'MutationObserver remains the primary completion signal');
+          assert.match(runtime, /requestAnimationFrame\(\(\) => \{\s*if \(epoch === aiEpoch\) settleAiTransitionIfDrawn\(\);\s*\}\);/, 'one-frame safety check remains');
+
+          assert.match(manual, /document\.createDocumentFragment\(\)/, 'manual cards should build off-DOM');
+          assert.match(manual, /fragment\.appendChild\(makeCardWrapper/, 'manual card wrappers should append to the fragment');
+          assert.match(manual, /cards\?\.appendChild\(fragment\)/, 'manual cards should enter the live DOM in one append');
+
+          assert.match(attachments, /if \(!W\.LUNEA_READING_LIFECYCLE_V59\) clearForNewReading\(\);/, 'attachment cleanup wrapper must defer to V59 when present');
+
+          console.log('Reading draw performance V61 source invariants: PASS');
+          ''', encoding='utf-8')
+
+      - name: Syntax checks
+        run: |
+          node --check lunea-universal-ai-opal-v20.js
+          node --check lunea-runtime-regression-v60.js
+          node --check lunea-manual-limit20-v17.js
+          node --check lunea-reading-attachments-v1.js
+          node --check tests/reading-draw-performance-v61.test.mjs
+
+      - name: Targeted performance regression
+        run: node tests/reading-draw-performance-v61.test.mjs
+
+      - name: Existing lifecycle regressions
+        run: |
+          node tests/reading-lifecycle-v59.test.mjs
+          node tests/timing-oracle-reading-boundary.test.mjs
+
+      - name: Commit patch and remove temporary workflow
+        run: |
+          rm .github/workflows/reading-draw-performance-v61-patch.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add lunea-universal-ai-opal-v20.js lunea-runtime-regression-v60.js lunea-manual-limit20-v17.js lunea-reading-attachments-v1.js tests/reading-draw-performance-v61.test.mjs .github/workflows/reading-draw-performance-v61-patch.yml
+          git commit -m 'fix: reduce AI and manual card draw jank'
+          git push origin HEAD:fix/reading-draw-lag-v61
