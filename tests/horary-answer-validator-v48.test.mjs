@@ -11,6 +11,8 @@ assert.match(source, /verdict_direction/);
 assert.match(source, /derived_scope/);
 assert.match(source, /invented_obstruction/);
 assert.match(source, /out_of_orb_promotion/);
+assert.match(source, /targetWindowWithinOrb/);
+assert.match(source, /futureWindowOrbSupported/);
 assert.match(source, /invented_probability/);
 assert.match(source, /invented_timing/);
 assert.match(source, /prashna_averaging/);
@@ -54,7 +56,7 @@ function makeContext(fetchImpl, prompt = basePrompt) {
 const staticContext = makeContext(async () => new Response('{}', {status:200}));
 const api = staticContext.LUNEA_HORARY_ANSWER_VALIDATOR_V48;
 assert.ok(api);
-assert.equal(api.version, '48.0');
+assert.equal(api.version, '48.1');
 
 const bad = `### 한줄 결론
 재회 가능성이 높고 결국 성사될 가능성이 큽니다.
@@ -85,6 +87,34 @@ const safe = `### 한줄 결론
 ### 신뢰도와 불확실성
 유효 오브 밖의 nearest aspect는 성사각으로 채택하지 않아. 근거: out-of-orb`;
 assert.equal(api.validate(safe, basePrompt).ok, true);
+
+// Future Window evidence may legitimately describe an out-of-orb pair entering
+// orb later, but it must not be promoted to the radical/current perfection.
+const futureOrbPrompt = `LUNEA HORARY INTERPRETATION ENGINE V2
+[질문 원문]
+목표기간에 수익실현 가능한가요?
+
+[질문 분류]
+- family: general
+
+[HORARY ENGINE RESULT · AUTHORITATIVE]
+AUTHORITATIVE JUDGMENT: INSUFFICIENT · direct perfection: NO · nearest geometric aspect: out-of-orb
+{"currentWithinOrb":false,"targetWindowWithinOrb":true,"targetWindowEvidence":{"mayBeDiscussedAsFutureDevelopment":true,"mayBePromotedToCurrentPerfection":false}}
+
+[절대 금지]
+- Future Window를 current perfection으로 승격하지 마라.`;
+assert.equal(api.futureWindowOrbSupported(api.engineBlock(futureOrbPrompt)), true);
+const futureOrbSafe = `### 한줄 결론
+현재 직접 성사각은 확인되지 않아. 근거: direct perfection: NO
+
+### Future Window
+현재 유효 오브 밖이지만 목표기간 중 오브 안으로 진입해 접근 중인 미래 진행은 언급할 수 있어. 근거: currentWithinOrb=false · targetWindowWithinOrb=true`;
+assert.equal(api.validate(futureOrbSafe, futureOrbPrompt).ok, true);
+
+const futureOrbBad = `### 한줄 결론
+현재 유효 오브 밖 각이 직접 성사각으로 작동한다. 근거: targetWindowWithinOrb=true`;
+const futureOrbBadCheck = api.validate(futureOrbBad, futureOrbPrompt);
+assert.ok(futureOrbBadCheck.violations.some(row => row.code === 'out_of_orb_promotion'));
 
 const prashnaPrompt = `${basePrompt}\n\n[PRASHNA V1]\nPrashna result: conflicting direction`;
 const averaged = `${safe}\n\n### Horary ↔ Prashna 교차\n두 체계를 평균해서 절충 결론을 내립니다. 근거: 두 체계`;
