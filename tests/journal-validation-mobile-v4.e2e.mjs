@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { webkit } from 'playwright';
 
 const BASE_URL = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
-const BUILD = 'journal-validation-mobile-v4-e2e';
+const BUILD = 'journal-validation-mobile-v5-e2e';
 
 const browser = await webkit.launch({headless:true});
 const context = await browser.newContext({
@@ -37,7 +37,7 @@ await context.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => rou
 try {
   await page.goto(BASE_URL, {waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => document.readyState === 'complete');
-  await page.waitForFunction(() => !!window.LUNEA_READING_JOURNAL && document.documentElement.dataset.luneaJournalFix === 'v4');
+  await page.waitForFunction(() => !!window.LUNEA_READING_JOURNAL && document.documentElement.dataset.luneaJournalFix === 'v5');
 
   await page.evaluate(async () => {
     const db = await new Promise((resolve, reject) => {
@@ -99,6 +99,8 @@ try {
   await reviewButton.click();
   await target.locator('.lj-review.open').waitFor();
   await page.waitForTimeout(90);
+  const verdictLabels = await target.locator('.lj-statuses button').allTextContents();
+  assert.deepEqual(verdictLabels.map(x => x.trim()), ['맞', '애', '틀'], 'review must expose exactly 맞 / 애 / 틀');
   const openAfter = await target.evaluate(() => {
     const modal = document.querySelector('#archiveOverlay .archive-modal');
     return modal?.scrollTop || 0;
@@ -142,11 +144,11 @@ try {
   assert.ok(before.scrollTop > 0, `test must exercise a genuinely scrolled journal position, got ${before.scrollTop}`);
   assert.equal(before.reviewOpen, true, 'review panel must be open before status change');
 
-  await target.locator('.lj-statuses button', {hasText:'✓ 맞음'}).click();
+  await target.locator('.lj-statuses button', {hasText:'맞'}).click();
   await page.waitForFunction(id => {
     const card = [...document.querySelectorAll('#archiveList > .archive-item')].find(node => node.dataset.luneaJournalId === id);
-    return card?.querySelector('.lj-badge')?.textContent?.includes('맞음') &&
-      document.documentElement.dataset.luneaJournalValidationUpdate === 'in-place-v4';
+    return card?.querySelector('.lj-badge')?.textContent?.trim() === '맞' &&
+      document.documentElement.dataset.luneaJournalValidationUpdate === 'in-place-v5';
   }, before.id);
   await page.waitForTimeout(120);
 
@@ -167,7 +169,7 @@ try {
   assert.ok(Math.abs(after.scrollTop - before.scrollTop) <= 2, `status change moved archive-modal scroll (${before.scrollTop} -> ${after.scrollTop})`);
   assert.equal(after.reviewOpen, true, 'status change closed the open review panel');
   assert.equal(after.sentinel, 'preserve-me', 'status change replaced the journal card DOM instead of patching it in place');
-  assert.match(after.badge, /맞음/, 'status badge did not update in place');
+  assert.equal(after.badge.trim(), '맞', 'status badge did not update in place');
   assert.match(after.resultDate, /^\d{4}-\d{2}-\d{2}$/, 'first verification must fill actual result date');
   assert.equal(after.statVerified, '1', 'verified statistic did not update in place');
   assert.equal(after.statPending, '17', 'pending statistic did not update in place');
@@ -183,7 +185,7 @@ try {
   const relevantErrors = pageErrors.filter(line => !/onrender\.com\/health|access control checks/i.test(line));
   assert.deepEqual(relevantErrors, [], `browser page errors:\n${relevantErrors.join('\n')}`);
 
-  console.log('Journal mobile compact dates + in-place validation E2E: PASS');
+  console.log('Journal mobile three-state verdict + in-place validation E2E: PASS');
   console.log(JSON.stringify({before, after, dateLayout, persisted}, null, 2));
 } finally {
   await browser.close();
