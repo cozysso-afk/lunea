@@ -84,6 +84,7 @@
   function loadThaiDateCenterV54() { loadBuildScopedScript('luneaThaiDateCenterV54Loader', './lunea-thai-date-center-v54.js', 'iOS Thai period date centering V54'); }
   function loadHorizontalTouchStability() { loadBuildScopedScript('luneaHorizontalTouchStabilityV1Loader', './lunea-horizontal-touch-stability-v1.js', 'horizontal touch stability V1'); }
   function loadJournalHeaderFix() { loadBuildScopedScript('luneaJournalHeaderFixLoader', './lunea-journal-header-fix-v1.js', 'journal header fix'); }
+  function loadJournalVerdictLabelsV1() { loadBuildScopedScript('luneaJournalVerdictLabelsV1Loader', './lunea-journal-verdict-labels-v1.js', 'journal verdict labels V1'); }
   function loadSectorCardBacks() { loadBuildScopedScript('luneaSectorCardBacksV20Loader', './lunea-cardback-sector-v20.js', 'uploaded sector card backs V20'); }
   function loadTimingUploadedArt() { loadBuildScopedScript('luneaTimingUploadedArtV16Loader', './lunea-timing-image-assets-v16.js', 'Timing uploaded artwork V16'); }
   function loadHoraryQuestionModes() { loadBuildScopedScript('luneaHoraryQuestionModesV37Loader', './lunea-horary-question-modes-v37.js', 'Horary question modes V37'); }
@@ -169,6 +170,7 @@
     loadThaiDateCenterV54();
     loadHorizontalTouchStability();
     loadJournalHeaderFix();
+    loadJournalVerdictLabelsV1();
     loadSectorCardBacks();
     loadTimingUploadedArt();
     loadHoraryQuestionModes();
