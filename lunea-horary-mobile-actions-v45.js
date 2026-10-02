@@ -12,6 +12,12 @@
    - Horary full-result copy
    - Horary archive save
 
+   V45.3 also owns the final mobile action row contract:
+   - Horary AI / full copy / archive save stay on one row
+   - the archive-save control is restored if a later DOM pass drops it
+   - Horary foreground waiting is bounded to two minutes instead of inheriting
+     the generic 30-minute resumable Astro-job window
+
    It resolves the intended button both from event.target and from the tap
    coordinates, so a transparent/stale hit-test layer cannot make a visible
    button inert. A short movement threshold prevents activation after scrolling.
@@ -23,6 +29,7 @@
 
   const IDS = ['luneaPrashnaRunV1','astroHoraryAI','astroHoraryCopy','astroHorarySave'];
   const SELECTOR = IDS.map(id => `#${id}`).join(',');
+  const HORARY_WAIT_TIMEOUT_MS = 2 * 60 * 1000;
   const starts = new Map();
   let touchStart = null;
 
@@ -35,6 +42,80 @@
     const style = W.getComputedStyle?.(node);
     return !style || (style.display !== 'none' && style.visibility !== 'hidden' && style.pointerEvents !== 'none');
   };
+
+  function ensureSaveButton(actions) {
+    if (!actions) return null;
+    let button = $('astroHorarySave');
+    if (!button) {
+      button = document.createElement('button');
+      button.id = 'astroHorarySave';
+      button.className = 'mini';
+      button.type = 'button';
+      button.textContent = '💾 기록함 저장';
+      actions.appendChild(button);
+    } else if (!button.disabled && /^(?:💾\s*)?기록$/.test(String(button.textContent || '').trim())) {
+      button.textContent = '💾 기록함 저장';
+    }
+    return button;
+  }
+
+  function installHoraryTimeoutGuard() {
+    const request = W.LUNEA_ASTRO_REQUEST_V1;
+    if (!request || request.__luneaHoraryTimeoutV453 || typeof request.json !== 'function') return false;
+
+    const baseJson = request.json.bind(request);
+    const baseCancelScope = typeof request.cancelScope === 'function' ? request.cancelScope.bind(request) : () => {};
+    const baseGeneration = typeof request.generation === 'function' ? request.generation.bind(request) : () => 0;
+
+    const json = (url, options={}, config={}) => {
+      if (!/\/v1\/horary(?:\?|$)/i.test(String(url || ''))) return baseJson(url,options,config);
+      const scope = String(config?.scope || 'horary');
+      let settled = false;
+      let timer = 0;
+
+      return new Promise((resolve,reject) => {
+        const finish = (error,value) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          error ? reject(error) : resolve(value);
+        };
+
+        timer = setTimeout(() => {
+          const error = new Error('호라리 계산이 2분 안에 완료되지 않아 대기를 중단했어. 다시 계산해줘.');
+          error.name = 'TimeoutError';
+          try { localStorage.removeItem('LUNEA_ASTRO_PENDING_JOB_V1:horary'); } catch {}
+
+          const status = $('astroHoraryStatus');
+          if (status) {
+            status.className = 'horary-status err';
+            status.textContent = '계산이 2분 넘게 완료되지 않아 중단했어. 다시 계산해줘.';
+          }
+          const runButton = $('astroHoraryRun');
+          if (runButton) {
+            runButton.disabled = false;
+            runButton.textContent = '☿ 호라리 차트 계산';
+          }
+
+          finish(error);
+          try { baseCancelScope(scope); } catch {}
+        },HORARY_WAIT_TIMEOUT_MS);
+
+        Promise.resolve(baseJson(url,options,config)).then(
+          value => finish(null,value),
+          error => finish(error)
+        );
+      });
+    };
+
+    W.LUNEA_ASTRO_REQUEST_V1 = Object.freeze({
+      json,
+      cancelScope:baseCancelScope,
+      generation:baseGeneration,
+      __luneaHoraryTimeoutV453:true
+    });
+    return true;
+  }
 
   function candidate(rawTarget,x,y) {
     const direct = rawTarget?.closest?.(SELECTOR);
@@ -49,6 +130,7 @@
 
   function makeInteractive() {
     const actions = $('astroHoraryActions');
+    ensureSaveButton(actions);
     const prashna = $('luneaPrashnaV1Card');
     for (const node of [actions,prashna]) {
       if (!node) continue;
@@ -56,6 +138,11 @@
       node.style.setProperty('z-index','80','important');
       node.style.setProperty('pointer-events','auto','important');
       node.style.setProperty('isolation','isolate','important');
+    }
+    if (actions) {
+      actions.style.setProperty('grid-template-columns','repeat(3,minmax(0,1fr))','important');
+      actions.style.setProperty('gap','6px','important');
+      actions.style.setProperty('flex-wrap','nowrap','important');
     }
     for (const id of IDS) {
       const node = $(id);
@@ -66,6 +153,15 @@
       node.style.setProperty('pointer-events','auto','important');
       node.style.setProperty('touch-action','manipulation','important');
       node.style.setProperty('-webkit-tap-highlight-color','transparent','important');
+      if (id !== 'luneaPrashnaRunV1') {
+        node.style.setProperty('grid-column','auto','important');
+        node.style.setProperty('min-width','0','important');
+        node.style.setProperty('width','auto','important');
+        node.style.setProperty('flex','1 1 0','important');
+        node.style.setProperty('padding','8px 4px','important');
+        node.style.setProperty('font-size','9.4px','important');
+        node.style.setProperty('white-space','nowrap','important');
+      }
     }
   }
 
@@ -181,7 +277,7 @@
       alert('먼저 호라리 차트를 계산해줘.');
       return;
     }
-    const old = button.textContent || '💾 기록';
+    const old = button.textContent || '💾 기록함 저장';
     button.disabled = true;
     button.textContent = '저장 중…';
     try {
@@ -267,6 +363,7 @@
   }
 
   function install() {
+    installHoraryTimeoutGuard();
     makeInteractive();
     document.addEventListener('pointerdown',pointerStart,true);
     document.addEventListener('pointerup',pointerEnd,true);
@@ -279,6 +376,7 @@
     let tries = 0;
     const timer = setInterval(() => {
       tries += 1;
+      installHoraryTimeoutGuard();
       makeInteractive();
       if (tries >= 40) clearInterval(timer);
     },150);
@@ -288,7 +386,7 @@
   else install();
 
   W.LUNEA_HORARY_MOBILE_ACTIONS_V45 = Object.freeze({
-    version:'45.2',activate,candidate,makeInteractive,runPrashna,runAI,copyResult,saveResult
+    version:'45.3',activate,candidate,makeInteractive,runPrashna,runAI,copyResult,saveResult,installHoraryTimeoutGuard
   });
-  console.info('✦ LUNEA Horary + Prashna Mobile Action Owner V45.2 active');
+  console.info('✦ LUNEA Horary + Prashna Mobile Action Owner V45.3 active · one-row actions + 2m Horary wait bound');
 })();

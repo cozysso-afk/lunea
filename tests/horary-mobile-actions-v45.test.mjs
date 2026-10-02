@@ -13,6 +13,11 @@ assert.match(source, /getBoundingClientRect/);
 assert.match(source, /LUNEA_PRASHNA_V1\?\.run/);
 assert.match(source, /LUNEA_HORARY_AI_GUARD_V49\?\.runAI/);
 assert.match(source, /repairLatestHoraryArchive/);
+assert.match(source, /version:'45\.3'/);
+assert.match(source, /repeat\(3,minmax\(0,1fr\)\)/);
+assert.match(source, /💾 기록함 저장/);
+assert.match(source, /HORARY_WAIT_TIMEOUT_MS = 2 \* 60 \* 1000/);
+assert.match(source, /LUNEA_ASTRO_PENDING_JOB_V1:horary/);
 
 const handlers = new Map();
 const calls = {prashna:0, save:0, legacySave:0};
@@ -60,7 +65,7 @@ const context = {
   console,
   document,
   navigator:{clipboard:{writeText:async()=>{}}},
-  localStorage:{getItem(){return null;}},
+  localStorage:{getItem(){return null;},removeItem(){}},
   alert(){},
   setInterval(){return 1;},
   clearInterval(){},
@@ -86,6 +91,7 @@ vm.createContext(context);
 vm.runInContext(source,context);
 
 assert.ok(context.LUNEA_HORARY_MOBILE_ACTIONS_V45, 'V45 API should install');
+assert.equal(context.LUNEA_HORARY_MOBILE_ACTIONS_V45.version,'45.3');
 assert.equal(typeof handlers.get('pointerdown'),'function');
 assert.equal(typeof handlers.get('pointerup'),'function');
 
@@ -123,4 +129,4 @@ handlers.get('pointerup')({...down,clientY:150});
 await Promise.resolve();
 assert.equal(calls.prashna,2,'movement over threshold must be treated as scroll, not tap');
 
-console.log('LUNEA Horary + Prashna mobile action owner V45 runtime tap regression: PASS');
+console.log('LUNEA Horary + Prashna mobile action owner V45.3 runtime tap/layout/timeout regression: PASS');
