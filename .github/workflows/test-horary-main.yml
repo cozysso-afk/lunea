@@ -2,7 +2,7 @@ name: Test Horary Main
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/horary-v2-judgment-structure]
     paths:
       - 'astro-horary-v1.js'
       - 'lunea-horary-balance-v19-5.js'
@@ -12,6 +12,7 @@ on:
       - 'lunea-horary-traditional-core-v40.js'
       - 'lunea-horary-balance-guard-v41.js'
       - 'lunea-horary-future-window-v2.js'
+      - 'lunea-horary-v2-judgment.js'
       - 'lunea-astro-origin-failover-v57.js'
       - 'lunea-horary-post-actions-v44.js'
       - 'lunea-horary-mobile-actions-v45.js'
@@ -50,6 +51,7 @@ jobs:
           node --check lunea-horary-traditional-core-v40.js
           node --check lunea-horary-balance-guard-v41.js
           node --check lunea-horary-future-window-v2.js
+          node --check lunea-horary-v2-judgment.js
           node --check lunea-astro-origin-failover-v57.js
           node --check lunea-horary-post-actions-v44.js
           node --check lunea-horary-mobile-actions-v45.js
@@ -72,6 +74,7 @@ jobs:
           node tests/horary-traditional-core-v40.test.mjs
           node tests/horary-balance-guard-v41.test.mjs
           node tests/horary-future-window-v2.test.mjs
+          node tests/horary-v2-judgment.test.mjs
           node tests/horary-action-buttons-v43.test.mjs
           node tests/horary-post-actions-v44.test.mjs
           node tests/horary-mobile-actions-v45.test.mjs

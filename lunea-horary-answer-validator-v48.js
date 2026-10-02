@@ -13,7 +13,7 @@
   if (W.__LUNEA_HORARY_ANSWER_VALIDATOR_V48__) return;
   W.__LUNEA_HORARY_ANSWER_VALIDATOR_V48__ = true;
 
-  const RELEASE = '48.0';
+  const RELEASE = '48.1';
   const RETRY_TAG = '[HORARY ANSWER VALIDATOR V48 · RETRY]';
   const MARKERS = [
     '[HORARY V1 · 질문시각 점성술 계산 결과]',
@@ -167,12 +167,27 @@
     });
   }
 
+  function futureWindowOrbSupported(engine) {
+    const value = String(engine || '');
+    const currentFalse = /["']?(?:currentWithinOrb|currentlyWithinOrb)["']?\s*[:=]\s*false/i.test(value);
+    const targetTrue = /["']?targetWindowWithinOrb["']?\s*[:=]\s*true/i.test(value)
+      || /["']?withinOrbAtAnyTargetSnapshotOrEntry["']?\s*[:=]\s*true/i.test(value);
+    return currentFalse && targetTrue;
+  }
+
   function outOfOrbPromoted(engine, answer) {
-    if (!/(out[- ]?of[- ]?orb|유효\s*오브\s*밖|성사각\s*미채택)/i.test(engine)) return false;
+    if (!/(out[- ]?of[- ]?orb|유효\s*오브\s*밖|성사각\s*미채택|currentWithinOrb[^\n]{0,20}false|currentlyWithinOrb[^\n]{0,20}false)/i.test(engine)) return false;
+    const futureSupported = futureWindowOrbSupported(engine);
     const rows = String(answer || '').split(/\n|(?<=[.!?。])/).map(compact).filter(Boolean);
     return rows.some(row => {
-      if (!/(유효\s*오브\s*밖|out[- ]?of[- ]?orb|기하학적|nearest)/i.test(row)) return false;
+      if (!/(유효\s*오브\s*밖|out[- ]?of[- ]?orb|기하학적|nearest|오브\s*안|within\s*orb)/i.test(row)) return false;
       if (/(미채택|아니|채택하지\s*않|채택하지\s*못|성사각으로\s*볼\s*수\s*없|근거로\s*쓰지|승격하지)/i.test(row)) return false;
+
+      const futureContext = /(future\s*window|미래|목표\s*기간|목표기간|기간\s*중|오브\s*진입|orb\s*entry|접근\s*중|접근각)/i.test(row);
+      const currentPerfectionClaim = /(?:현재|질문\s*시각|current)[^.!?\n]{0,45}(?:직접\s*성사각|성사각|perfection|성사\s*근거|유효\s*적용각)/i.test(row)
+        && !/(아니|없|미확인|미채택|승격하지)/i.test(row);
+      if (futureSupported && futureContext && !currentPerfectionClaim) return false;
+
       return /(적용각|성사각|perfection|성사\s*근거)/i.test(row);
     });
   }
@@ -207,7 +222,7 @@
       violations.push({code:'invented_obstruction', message:'엔진이 없다고 한 prohibition/frustration/refranation을 새로 만듦'});
     }
     if (outOfOrbPromoted(engine, value)) {
-      violations.push({code:'out_of_orb_promotion', message:'유효 오브 밖 기하학적 각을 성사각/적용각으로 승격함'});
+      violations.push({code:'out_of_orb_promotion', message:'질문 시각 유효 오브 밖 각을 현재 성사각/적용각으로 승격함'});
     }
 
     const promptPercents = new Set(extractPercentTokens(numericEvidence));
@@ -257,7 +272,7 @@
 
   function correctionPrompt(basePrompt, violations) {
     const rows = (violations || []).map(row => `- ${row.code}: ${row.message}`).join('\n') || '- 자동 검증 실패';
-    return `${String(basePrompt || '').trim()}\n\n${RETRY_TAG}\n직전 AI 답변은 아래 이유로 폐기됐다. 같은 계산값만 사용해 전체 답변을 처음부터 다시 작성하라.\n${rows}\n\n[재작성 강제 규칙]\n- 위반 사항을 해명하지 말고 조용히 수정한 최종 해설만 출력한다.\n- deterministic Horary 엔진의 방향을 바꾸지 않는다.\n- 새 날짜·기간·확률·하우스·aspect·방해요소를 발명하지 않는다.\n- 파생 사건 근거는 그 사건 범위 밖으로 확대하지 않는다.\n- 핵심 판단마다 반드시 “근거:”를 붙인다.\n- 이 RETRY 지시문은 사용자에게 출력하지 않는다.`;
+    return `${String(basePrompt || '').trim()}\n\n${RETRY_TAG}\n직전 AI 답변은 아래 이유로 폐기됐다. 같은 계산값만 사용해 전체 답변을 처음부터 다시 작성하라.\n${rows}\n\n[재작성 강제 규칙]\n- 위반 사항을 해명하지 말고 조용히 수정한 최종 해설만 출력한다.\n- deterministic Horary 엔진의 방향을 바꾸지 않는다.\n- 새 날짜·기간·확률·하우스·aspect·방해요소를 발명하지 않는다.\n- 질문 시각의 currentWithinOrb와 목표기간의 targetWindowWithinOrb를 구분한다. 미래 orb 진입은 Future Window 진행으로만 설명하고 현재 perfection으로 승격하지 않는다.\n- 파생 사건 근거는 그 사건 범위 밖으로 확대하지 않는다.\n- 핵심 판단마다 반드시 “근거:”를 붙인다.\n- 이 RETRY 지시문은 사용자에게 출력하지 않는다.`;
   }
 
   function rewriteBody(init, prompt) {
@@ -279,7 +294,7 @@
       verdict_direction:'계산 엔진의 결론 방향과 AI 결론이 충돌함',
       derived_scope:'파생 사건 근거가 질문 본체의 성사로 확대됨',
       invented_obstruction:'계산값에 없는 방해 요소가 추가됨',
-      out_of_orb_promotion:'유효 오브 밖 각이 성사 근거로 승격됨',
+      out_of_orb_promotion:'질문 시각 유효 오브 밖 각이 현재 성사 근거로 승격됨',
       invented_probability:'계산값에 없는 확률 수치가 추가됨',
       invented_timing:'질문·계산값에 없는 시기 수치가 추가됨',
       prashna_averaging:'Horary와 Prashna가 부적절하게 합산·절충됨',
@@ -365,6 +380,7 @@
     correctionPrompt,
     engineBlock,
     familyKey,
+    futureWindowOrbSupported,
     isHoraryPrompt,
     install:installFetchGuard
   });
