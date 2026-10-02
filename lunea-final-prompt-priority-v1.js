@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA FINAL PROMPT PRIORITY V2
+  LUNEA FINAL PROMPT PRIORITY V3
   ==============================
   Last-mile evidence priority + balanced auxiliary-system usage policy.
 
@@ -13,6 +13,8 @@
   - Preserve the conditional Saju policy.
   - Never use the user's natal/profile data as proof of another person's private
     feelings or as a substitute for event/timing calculations.
+  - Keep positive/negative conclusions evidence-proportional without systematic
+    pessimistic or optimistic drift.
 */
 (() => {
   const W = window;
@@ -20,6 +22,7 @@
   W.__LUNEA_FINAL_PROMPT_PRIORITY_V1__ = true;
 
   const MARKER = '[FINAL READING PRIORITY · 최종 근거 우선순위]';
+  const INTERPRETATION_RULE_VERSION = 'v1';
   const FINAL_LINE = '12. 최종 답변에서는 질문의 결론과 카드 근거가 먼저다. 그다음 유효한 점성/프로필 보조를 짧고 구체적으로 붙인다. 계산값이 있는 보조 체계를 단순히 생략하지 않는다.';
 
   function clean(v){ return String(v || '').replace(/\s+/g,' ').trim(); }
@@ -160,7 +163,7 @@
     const saju = sajuPolicy(prompt);
     const message = messagePolicy(prompt);
 
-    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다. 카드명·정역방향·포지션을 근거 문장에 연결한다. 역방향을 무조건 정방향의 반대나 나쁜 결과로 바꾸지 않고, 막힘·내면화·과잉·회복 중 질문과 인접 카드가 지지하는 해석만 선택해 이유를 설명한다. 보조 카드는 연결된 본 카드의 모호함을 좁히며 독립 결론으로 본 카드를 대체하지 않는다.\n3. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n${message}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다. 감정·연락 의도·실제 행동·관계 성립은 서로 다른 축이다. 호감 카드만으로 연락이나 재회를 확정하지 않는다. 근거가 팽팽하면 판단이 갈리는 이유와 확인되지 않은 부분을 말하고, 새로운 사실이나 기한을 덧붙여 결론을 강제로 만들지 않는다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n${FINAL_LINE}`;
+    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다. 카드명·정역방향·포지션을 근거 문장에 연결한다. 역방향을 무조건 정방향의 반대나 나쁜 결과로 바꾸지 않고, 막힘·내면화·과잉·회복 중 질문과 인접 카드가 지지하는 해석만 선택해 이유를 설명한다. 보조 카드는 연결된 본 카드의 모호함을 좁히며 독립 결론으로 본 카드를 대체하지 않는다.\n3. 긍정과 부정 어느 방향도 기본값으로 삼지 않는다. 카드의 포지션 중요도, 신호 강도, 반복성, 서로 독립된 근거의 합치 정도에 비례해 결론의 방향과 강도를 정한다. 애매한 카드를 자동으로 부정 쪽에 배치하지 않는다.\n4. [과대해석 방지] 약한 카드 한 장이나 단일 보조 신호만으로 구체적 사건·상대 행동·시기·관계 성립을 단정하지 않는다. 질문 범위를 넘어 새로운 사건을 확장하지 않고, 보조 신호를 핵심 결론으로 승격하려면 본 카드 또는 다른 독립 근거의 지지가 있어야 한다.\n5. [과소해석 방지] 동일 주제가 여러 포지션에서 반복되거나 강한 메이저 조합·명확한 카드 흐름·서로 독립된 근거가 같은 방향으로 수렴하면 그 강도를 실제 결론에 반영한다. 명확한 긍정 신호를 습관적으로 경고 문구로 희석하거나, 명확한 부정 신호를 막연한 가능성으로 흐리지 않는다.\n6. 혼합 신호는 혼합으로 말한다. 긍정 근거가 더 강하면 긍정 결론을, 부정 근거가 더 강하면 부정 결론을 내되 반대 근거의 제한을 함께 짚는다. 근거가 비슷할 때만 애매함을 유지한다.\n7. interpretation_rule_version=${INTERPRETATION_RULE_VERSION}. 이 버전은 사후검증을 위한 시스템 해석 정책 식별자이며 사용자 취향이나 메모리로 변경하지 않는다.\n8. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n${message}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다. 감정·연락 의도·실제 행동·관계 성립은 서로 다른 축이다. 호감 카드만으로 연락이나 재회를 확정하지 않는다. 근거가 팽팽하면 판단이 갈리는 이유와 확인되지 않은 부분을 말하고, 새로운 사실이나 기한을 덧붙여 결론을 강제로 만들지 않는다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n${FINAL_LINE}`;
   }
 
   function withoutFinalBlocks(prompt){
@@ -199,12 +202,13 @@
     W.promptString = wrapped;
     try { promptString = wrapped; } catch {}
     W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__ = true;
-    console.info('🧭 LUNEA Final Prompt Priority V2 installed');
+    console.info(`🧭 LUNEA Final Prompt Priority V3 installed · interpretation ${INTERPRETATION_RULE_VERSION}`);
     return true;
   }
 
   W.LUNEA_FINAL_PROMPT_PRIORITY_V1 = {
-    version:2,
+    version:3,
+    interpretationRuleVersion:INTERPRETATION_RULE_VERSION,
     ensure:install,
     classify,
     build:finalBlock,

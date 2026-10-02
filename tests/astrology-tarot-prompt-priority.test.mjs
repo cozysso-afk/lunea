@@ -26,7 +26,8 @@ vm.runInNewContext(source, {
 
 const api = window.LUNEA_FINAL_PROMPT_PRIORITY_V1;
 assert.ok(api, 'final prompt priority API missing');
-assert.equal(api.version, 2, 'astrology-aware prompt policy must be V2');
+assert.equal(api.version, 3, 'astrology-aware prompt policy must be V3');
+assert.equal(api.interpretationRuleVersion, 'v1', 'interpretation rule version must be v1');
 
 const natal = `
 [CELESTIAL PROFILE V3 — 서로 다른 체계를 분리해서 참고]
@@ -56,6 +57,10 @@ assert.match(selfPolicy, /서양점성 보조/);
 assert.match(selfPolicy, /최소 1회 실질적으로 반영/);
 assert.match(selfPolicy, /Sun\/Moon\/ASC\/MC\/Mercury\/Venus\/Mars/);
 assert.match(selfPolicy, /카드 결론이나 사건 성립 여부를 대신하지 않는다/);
+assert.match(selfPolicy, /긍정과 부정 어느 방향도 기본값으로 삼지 않는다/);
+assert.match(selfPolicy, /과대해석 방지/);
+assert.match(selfPolicy, /과소해석 방지/);
+assert.match(selfPolicy, /interpretation_rule_version=v1/);
 
 const otherPrompt = `[질문 원문]\n"그 사람은 나를 어떻게 생각해?"\n\n[질문 유형]\nlove\n${natal}\n\n[뽑힌 카드]\n1. [상대의 현재 마음] Two of Swords`;
 const otherPolicy = api.build(otherPrompt);

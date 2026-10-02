@@ -7,10 +7,12 @@
    detached so chunked journal rendering does not rescan the whole archive on
    every appended row.
 
-   V4 adds two iPhone journal safeguards:
+   V5 keeps the V4 iPhone safeguards and simplifies post-reading validation:
    - compact two-column result/due date controls instead of full-width mobile rows
    - in-place validation status updates so the archive list is not rebuilt and the
      actual .archive-modal scroll position/open review panel are preserved
+   - user-facing verdicts are exactly 맞 / 애 / 틀; legacy pending/unverifiable
+     values remain readable but cannot be newly selected
 */
 (() => {
   if (window.__LUNEA_JOURNAL_HEADER_FIX_V1__) return;
@@ -22,13 +24,29 @@
   const DB_VERSION = 1;
   const STORE = 'journal';
   const STATUS = Object.freeze({
-    pending:'○ 미확인',
-    hit:'✓ 맞음',
-    partial:'△ 부분',
-    miss:'× 틀림',
-    unverifiable:'? 판정불가'
+    pending:'미확인',
+    hit:'맞',
+    partial:'애',
+    miss:'틀',
+    unverifiable:'미확인'
   });
-  const STATUS_BY_LABEL = Object.freeze(Object.fromEntries(Object.entries(STATUS).map(([key, label]) => [label, key])));
+  const STATUS_BY_LABEL = Object.freeze({
+    '미확인':'pending',
+    '○ 미확인':'pending',
+    '맞':'hit',
+    '✓ 맞':'hit',
+    '✓ 맞음':'hit',
+    '애':'partial',
+    '△ 애':'partial',
+    '△ 부분':'partial',
+    '부분':'partial',
+    '틀':'miss',
+    '× 틀':'miss',
+    '× 틀림':'miss',
+    '틀림':'miss',
+    '? 판정불가':'unverifiable',
+    '판정불가':'unverifiable'
+  });
   let searchTimer = 0;
   let annotateTimer = 0;
   let journalDbPromise = null;
@@ -67,6 +85,11 @@
     #archiveOverlay #archiveSearchAdvanced,
     #archiveOverlay .archive-search-foot{
       display:none!important;
+    }
+
+    /* Post-reading validation intentionally exposes only three verdicts. */
+    #archiveOverlay .lj-statuses{
+      grid-template-columns:repeat(3,minmax(0,1fr))!important;
     }
 
     /* Keep post-validation dates compact on iPhone. The final mobile regression
@@ -151,6 +174,49 @@
     return true;
   }
 
+  function simplifyVerdictUI(root = document) {
+    const statusSelect = $('ljStatus');
+    if (statusSelect) {
+      if (statusSelect.value === 'pending' || statusSelect.value === 'unverifiable') statusSelect.value = '';
+      [...statusSelect.options].forEach(option => {
+        if (option.value === '') option.textContent = '모든 판정';
+        else if (option.value === 'hit') option.textContent = '맞';
+        else if (option.value === 'partial') option.textContent = '애';
+        else if (option.value === 'miss') option.textContent = '틀';
+        else if (option.value === 'pending' || option.value === 'unverifiable') option.remove();
+      });
+    }
+
+    root.querySelectorAll?.('.lj-statuses').forEach(group => {
+      [...group.querySelectorAll('button')].forEach(button => {
+        const status = button.dataset.luneaVerdictStatus || STATUS_BY_LABEL[normalize(button.textContent)] || '';
+        if (!status) return;
+        if (status === 'pending' || status === 'unverifiable') {
+          button.remove();
+          return;
+        }
+        button.dataset.luneaVerdictStatus = status;
+        button.textContent = STATUS[status];
+      });
+    });
+
+    root.querySelectorAll?.('.lj-badge').forEach(badge => {
+      const status = badge.dataset.s || STATUS_BY_LABEL[normalize(badge.textContent)] || '';
+      if (status && STATUS[status]) badge.textContent = STATUS[status];
+    });
+
+    const note = $('ljNote');
+    if (note?.textContent) {
+      note.textContent = note.textContent
+        .replace(/맞음/g, '맞')
+        .replace(/부분/g, '애')
+        .replace(/틀림/g, '틀')
+        .replace(/ · 판정불가 \d+/g, '')
+        .replace(/점수=\(맞\+애×0\.5\)/g, '점수=(맞+애×0.5)');
+    }
+    return true;
+  }
+
   function detachArchiveSearchObserver() {
     const advanced = $('archiveSearchAdvanced');
     const list = $('archiveList');
@@ -221,9 +287,10 @@
         const row = rows[index];
         if (row?.id) card.dataset.luneaJournalId = String(row.id);
       });
+      simplifyVerdictUI(list);
       return true;
     } catch (error) {
-      console.warn('[LUNEA Journal V4] row annotation skipped', error);
+      console.warn('[LUNEA Journal V5] row annotation skipped', error);
       return false;
     }
   }
@@ -237,7 +304,10 @@
     const list = $('archiveList');
     if (!list || list.dataset.luneaValidationObserverV4 === '1') return false;
     list.dataset.luneaValidationObserverV4 = '1';
-    const observer = new MutationObserver(() => queueAnnotation(0));
+    const observer = new MutationObserver(() => {
+      simplifyVerdictUI(list);
+      queueAnnotation(0);
+    });
     observer.observe(list, {childList:true});
     list.__luneaValidationObserverV4 = observer;
     queueAnnotation(0);
@@ -289,13 +359,13 @@
     });
     const verified = counts.hit + counts.partial + counts.miss;
     const score = verified ? Math.round((counts.hit + counts.partial * 0.5) / verified * 100) : null;
-    const values = [(rows || []).length, verified, score == null ? '—' : `${score}%`, counts.pending];
+    const values = [(rows || []).length, verified, score == null ? '—' : `${score}%`, counts.pending + counts.unverifiable];
     [...document.querySelectorAll('#ljStats .lj-stat b')].forEach((node, index) => {
       if (index < values.length) node.textContent = values[index];
     });
     const note = $('ljNote');
     if (note) {
-      note.textContent = `IndexedDB 장기 보관 · 맞음 ${counts.hit} · 부분 ${counts.partial} · 틀림 ${counts.miss} · 판정불가 ${counts.unverifiable} · 점수=(맞음+부분×0.5)/확인 완료`;
+      note.textContent = `IndexedDB 장기 보관 · 맞 ${counts.hit} · 애 ${counts.partial} · 틀 ${counts.miss} · 점수=(맞+애×0.5)/확인 완료`;
     }
     const count = $('archiveCount');
     if (count) count.textContent = `${(rows || []).length}개`;
@@ -316,7 +386,8 @@
         badge.textContent = STATUS[status];
       }
       card.querySelectorAll('.lj-statuses button').forEach(node => {
-        node.classList.toggle('on', STATUS_BY_LABEL[normalize(node.textContent)] === status);
+        const nodeStatus = node.dataset.luneaVerdictStatus || STATUS_BY_LABEL[normalize(node.textContent)] || '';
+        node.classList.toggle('on', nodeStatus === status);
       });
       const reviewButton = card.querySelector('.archive-actions button');
       if (reviewButton) reviewButton.textContent = status === 'pending' ? '검증하기' : '검증 수정';
@@ -336,9 +407,9 @@
         requestAnimationFrame(() => { modal.scrollTop = scrollTop; });
         setTimeout(() => { modal.scrollTop = scrollTop; }, 60);
       }
-      document.documentElement.dataset.luneaJournalValidationUpdate = 'in-place-v4';
+      document.documentElement.dataset.luneaJournalValidationUpdate = 'in-place-v5';
     } catch (error) {
-      console.error('[LUNEA Journal V4] status update failed', error);
+      console.error('[LUNEA Journal V5] status update failed', error);
       /* Do not invoke the old rerendering onclick after a failed intercepted save.
          Surface the failure and keep the user's current scroll/panel untouched. */
       try { alert('검증 상태 저장에 실패했어. 다시 눌러줘.'); } catch {}
@@ -355,7 +426,7 @@
       if (!button) return;
       const card = button.closest('.archive-item');
       const id = card?.dataset?.luneaJournalId || '';
-      const status = STATUS_BY_LABEL[normalize(button.textContent)] || '';
+      const status = button.dataset.luneaVerdictStatus || STATUS_BY_LABEL[normalize(button.textContent)] || '';
       /* If a just-rendered chunk has not been annotated yet, let Journal V2's
          original handler run rather than risking a write to the wrong record. */
       if (!card || !id || !status) {
@@ -375,8 +446,9 @@
     detachArchiveSearchObserver();
     installListAnnotator();
     bindInPlaceStatusUpdates();
+    simplifyVerdictUI($('archiveOverlay') || document);
     queueAnnotation(20);
-    document.documentElement.dataset.luneaJournalFix = 'v4';
+    document.documentElement.dataset.luneaJournalFix = 'v5';
   }
 
   if (document.readyState === 'loading') {
@@ -393,5 +465,5 @@
     }
   }, true);
 
-  console.info('✧ LUNEA Journal Header/Fast Fix V4 active · compact dates + in-place validation');
+  console.info('✧ LUNEA Journal Header/Fast Fix V5 active · 맞/애/틀 + in-place validation');
 })();
