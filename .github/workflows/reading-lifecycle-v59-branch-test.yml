@@ -3,7 +3,7 @@ name: Reading lifecycle V59 branch checks
 on:
   push:
     branches:
-      - fix/reading-lifecycle-entry-init-audit
+      - qa/pr115-mixed-webkit
   workflow_dispatch:
 
 permissions:
