@@ -11,7 +11,9 @@ assert.match(source, /content\.closest\?\.\('\.lunea-intimacy-category'\)/,
 assert.match(source, /if \(!item && category === 'INTIMACY'\) item = makeIntimacyManual\(content\)/,
   'INTIMACY direct-input row must be repaired deterministically');
 assert.match(source, /item\.dataset\.cat = 'INTIMACY'/);
-assert.match(source, /item\.dataset\.manualSpread = '1'/);
+assert.match(source, /item\.dataset\.luneaIntimacyManual = '1'/);
+assert.ok(!/item\.dataset\.manualSpread = '1'/.test(source),
+  'INTIMACY manual row must not change the four V59 core manual-row count');
 assert.ok(!/MutationObserver/.test(source), 'manual entry repair must not add observer polling');
 assert.ok(!/setInterval\s*\(/.test(source), 'manual entry repair must not poll');
 
