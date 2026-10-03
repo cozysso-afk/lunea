@@ -79,13 +79,12 @@
 
   function makeIntimacyManual(content) {
     if (!content) return null;
-    const existing = content.querySelector('[data-manual-spread="1"],.lunea-manual-anywhere-item');
+    const existing = content.querySelector('[data-lunea-intimacy-manual="1"],[data-manual-spread="1"],.lunea-manual-anywhere-item');
     if (existing) return existing;
 
     const item = document.createElement('div');
     item.className = 'reading-item lunea-manual-anywhere-item';
     item.dataset.cat = 'INTIMACY';
-    item.dataset.manualSpread = '1';
     item.dataset.luneaIntimacyManual = '1';
     item.setAttribute('role', 'button');
     item.setAttribute('tabindex', '0');
@@ -110,7 +109,7 @@
     document.querySelectorAll('.category-content').forEach(content => {
       const category = categoryForContent(content);
       if (!category) return;
-      let item = content.querySelector('[data-manual-spread="1"],.lunea-manual-anywhere-item,#luneaManualReadingItem');
+      let item = content.querySelector('[data-lunea-intimacy-manual="1"],[data-manual-spread="1"],.lunea-manual-anywhere-item,#luneaManualReadingItem');
       if (!item && category === 'INTIMACY') item = makeIntimacyManual(content);
       if (!item) return;
       item.dataset.cat = category;
