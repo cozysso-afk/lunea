@@ -36,6 +36,7 @@ jobs:
           node --check lunea-boot-reveal-v29.js
           node --check lunea-cache-refresh-v1.js
           node --check tests/reading-lifecycle-v59.e2e.mjs
+          node --check tests/intimacy-manual-entry.e2e.mjs
       - name: Source invariant regression test
         run: |
           node tests/reading-lifecycle-v59.test.mjs
@@ -68,6 +69,10 @@ jobs:
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
         run: node tests/reading-lifecycle-v59.e2e.mjs
+      - name: Run INTIMACY direct-input regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/intimacy-manual-entry.e2e.mjs
       - name: Show local server log
         if: always()
         run: cat /tmp/lunea-http.log || true
