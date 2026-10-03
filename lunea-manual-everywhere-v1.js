@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA MANUAL SPREAD EVERYWHERE V1.3
+  LUNEA MANUAL SPREAD EVERYWHERE V1.4
   ===================================
   Hydrates category-scoped Manual Spread entries and repairs the dedicated
   INTIMACY cabinet when its direct-input row is missing.
@@ -98,12 +98,18 @@
     return item;
   }
 
+  function categoryForContent(content) {
+    if (content.closest?.('.lunea-intimacy-category')) return 'INTIMACY';
+    const firstReading = content.querySelector('.reading-item[data-cat]');
+    if (!firstReading) return '';
+    return (String(firstReading.dataset.cat || 'GENERAL').trim() || 'GENERAL').toUpperCase();
+  }
+
   function hydrateCategories() {
     let found = 0;
     document.querySelectorAll('.category-content').forEach(content => {
-      const firstReading = content.querySelector('.reading-item[data-cat]');
-      if (!firstReading) return;
-      const category = (String(firstReading.dataset.cat || 'GENERAL').trim() || 'GENERAL').toUpperCase();
+      const category = categoryForContent(content);
+      if (!category) return;
       let item = content.querySelector('[data-manual-spread="1"],.lunea-manual-anywhere-item,#luneaManualReadingItem');
       if (!item && category === 'INTIMACY') item = makeIntimacyManual(content);
       if (!item) return;
@@ -118,10 +124,10 @@
   function boot() {
     const found = hydrateCategories();
     if (!found) console.warn('[LUNEA Manual Everywhere] deterministic manual rows were not present at boot');
-    console.info(`🌙 LUNEA Manual Spread Everywhere V1.3 hydrated · ${found} categories`);
+    console.info(`🌙 LUNEA Manual Spread Everywhere V1.4 hydrated · ${found} categories`);
   }
 
-  W.LUNEA_MANUAL_EVERYWHERE_V1 = Object.freeze({version:1.3,hydrateCategories,openManualForCategory,makeIntimacyManual});
+  W.LUNEA_MANUAL_EVERYWHERE_V1 = Object.freeze({version:1.4,hydrateCategories,openManualForCategory,makeIntimacyManual});
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
   else boot();
