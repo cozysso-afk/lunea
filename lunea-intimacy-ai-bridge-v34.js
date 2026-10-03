@@ -1,11 +1,12 @@
 'use strict';
 
 /*
-  LUNEA INTIMACY AI BRIDGE V34.4
+  LUNEA INTIMACY AI BRIDGE V34.5
   ===============================
   Integration bridge for the existing V34 78-card intimacy layer.
 
   - adds an AI custom-spread entry to the dedicated INTIMACY cabinet;
+  - restores the category-scoped direct-input row when the late cabinet becomes ready;
   - preserves INTIMACY interpretation after the AI designer replaces the title;
   - recognizes restored AI intimacy readings from their question text;
   - keeps the legacy anatomical 9-card reading hidden;
@@ -20,7 +21,7 @@
   if (W.__LUNEA_INTIMACY_AI_BRIDGE_V34__) return;
   W.__LUNEA_INTIMACY_AI_BRIDGE_V34__ = true;
 
-  const RELEASE = '34.4';
+  const RELEASE = '34.5';
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
   const EXPECTED_ORACLE_VERSION = '36.6';
   const SELF_BUILD = (() => { try { const src=document.currentScript?.src||''; return src ? (new URL(src,location.href).searchParams.get('v')||'') : ''; } catch { return ''; } })();
@@ -86,9 +87,17 @@
     legacy.dataset.luneaLegacyIntimacyHidden = '1';
   }
 
+  function hydrateManualEntry() {
+    try { W.LUNEA_MANUAL_EVERYWHERE_V1?.hydrateCategories?.(); } catch {}
+  }
+
   function installAiEntry() {
     const content = document.querySelector('.lunea-intimacy-category .category-content');
-    if (!content || content.querySelector('[data-intimacy-ai="1"]')) return;
+    if (!content) return;
+    if (content.querySelector('[data-intimacy-ai="1"]')) {
+      hydrateManualEntry();
+      return;
+    }
     const item = document.createElement('div');
     item.className = 'reading-item lunea-intimacy-ai-item';
     item.dataset.cat = 'INTIMACY';
@@ -114,6 +123,7 @@
     item.addEventListener('click', open);
     item.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); open(); } });
     content.prepend(item);
+    hydrateManualEntry();
   }
 
   function installContextTracking() {
