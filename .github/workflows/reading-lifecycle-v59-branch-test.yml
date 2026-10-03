@@ -3,7 +3,7 @@ name: Reading lifecycle V59 branch checks
 on:
   push:
     branches:
-      - fix/reading-lifecycle-entry-init-audit
+      - qa/pr115-intimacy-webkit-v3
   workflow_dispatch:
 
 permissions:
@@ -36,8 +36,11 @@ jobs:
           node --check lunea-boot-reveal-v29.js
           node --check lunea-cache-refresh-v1.js
           node --check tests/reading-lifecycle-v59.e2e.mjs
+          node --check tests/intimacy-manual-entry.e2e.mjs
       - name: Source invariant regression test
-        run: node tests/reading-lifecycle-v59.test.mjs
+        run: |
+          node tests/reading-lifecycle-v59.test.mjs
+          node tests/intimacy-manual-entry-v1.test.mjs
 
   mixed-sector-10-run-webkit:
     needs: lifecycle-source-checks
@@ -66,6 +69,10 @@ jobs:
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
         run: node tests/reading-lifecycle-v59.e2e.mjs
+      - name: Run INTIMACY direct-input regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/intimacy-manual-entry.e2e.mjs
       - name: Show local server log
         if: always()
         run: cat /tmp/lunea-http.log || true
