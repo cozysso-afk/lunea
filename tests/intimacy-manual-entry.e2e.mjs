@@ -20,18 +20,31 @@ page.on('dialog', dialog => dialog.accept());
 await context.route(/https:\/\/fonts\.googleapis\.com\//, route => route.fulfill({status:200,contentType:'text/css',body:''}));
 await context.route(/https:\/\/(?:fonts\.gstatic\.com|commons\.wikimedia\.org)\//, route => route.fulfill({status:204,body:''}));
 await context.route(/lunea-astro-api[^/]*\.onrender\.com\/health/i, route => route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:'{"ok":true}'}));
+await page.addInitScript(() => {
+  try {
+    localStorage.clear();
+    localStorage.setItem('LUNEA_INTIMACY_ADULT_ACK_V1','1');
+  } catch {}
+  try { sessionStorage.clear(); } catch {}
+});
 
 try {
   await page.goto(BASE_URL, {waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => document.documentElement.classList.contains('lunea-ui-ready'));
-  await page.waitForSelector('.lunea-intimacy-category .category-content');
+
+  const intimacyTile = page.locator('#luneaHomePortalV8 .lunea-v8-tile[data-key="intimacy"]');
+  await intimacyTile.waitFor({state:'visible'});
+  await intimacyTile.click();
+
+  const sourceContent = page.locator('.lunea-intimacy-category.lunea-v8-source-active > .category-content');
+  await sourceContent.waitFor({state:'visible'});
   await page.waitForFunction(() => {
-    const content = document.querySelector('.lunea-intimacy-category .category-content');
+    const content = document.querySelector('.lunea-intimacy-category.lunea-v8-source-active > .category-content');
     return !!content?.querySelector('[data-intimacy-ai="1"]') && !!content?.querySelector('[data-manual-spread="1"]');
   });
 
   const order = await page.evaluate(() => {
-    const content = document.querySelector('.lunea-intimacy-category .category-content');
+    const content = document.querySelector('.lunea-intimacy-category.lunea-v8-source-active > .category-content');
     return [...content.querySelectorAll(':scope > .reading-item')]
       .filter(el => !el.hidden && getComputedStyle(el).display !== 'none')
       .slice(0,2)
@@ -39,7 +52,9 @@ try {
   });
   assert.deepEqual(order, ['AI','MANUAL'], 'INTIMACY must expose AI then direct-input rows');
 
-  await page.locator('.lunea-intimacy-category [data-manual-spread="1"]').evaluate(el => el.click());
+  const manual = page.locator('.lunea-intimacy-category.lunea-v8-source-active [data-manual-spread="1"]');
+  await manual.waitFor({state:'visible'});
+  await manual.evaluate(el => el.click());
   await page.waitForSelector('#sheet.open');
   await page.waitForSelector('#luneaManualPanel.show');
 
@@ -60,7 +75,7 @@ try {
   assert.equal(state.positionsVisible, true);
   assert.match(state.label, /직접 배열로 카드 펼치기/);
 
-  console.log('INTIMACY manual entry WebKit E2E: OK');
+  console.log('INTIMACY manual entry WebKit E2E: PASS');
 } finally {
   await browser.close();
 }
