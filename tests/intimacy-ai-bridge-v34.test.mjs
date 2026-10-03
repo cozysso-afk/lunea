@@ -11,7 +11,7 @@ const document={readyState:'loading',documentElement:{dataset:{}},body:{classLis
 vm.runInNewContext(source,{window,document,console,Object,Array,String,Number,Boolean,RegExp,JSON,Promise,setTimeout});
 
 test('AI bridge detector and runtime loader contract',()=>{
-  assert.match(source,/const RELEASE = '34\.4'/);
+  assert.match(source,/const RELEASE = '34\.5'/);
   assert.match(source,/lunea-intimacy-oracle-v35\.js\?v=352/);
   assert.match(source,/lunea-intimacy-oracle-ui-v36\.js\?v=\$\{encodeURIComponent\(SELF_BUILD \|\| '3615'\)\}/);
   assert.match(source,/const SELF_BUILD/);
