@@ -3,7 +3,7 @@ name: Reading lifecycle V59 branch checks
 on:
   push:
     branches:
-      - fix/reading-lifecycle-entry-init-audit
+      - qa/pr115-intimacy-webkit-v2
   workflow_dispatch:
 
 permissions:
@@ -37,7 +37,9 @@ jobs:
           node --check lunea-cache-refresh-v1.js
           node --check tests/reading-lifecycle-v59.e2e.mjs
       - name: Source invariant regression test
-        run: node tests/reading-lifecycle-v59.test.mjs
+        run: |
+          node tests/reading-lifecycle-v59.test.mjs
+          node tests/intimacy-manual-entry-v1.test.mjs
 
   mixed-sector-10-run-webkit:
     needs: lifecycle-source-checks
