@@ -1,12 +1,18 @@
 'use strict';
 
 /*
-  LUNEA LAG GUARD V1.1
-  iPhone Safari / auxiliary cleanup guard.
+  LUNEA LAG GUARD V1.2
+  iPhone Safari / auxiliary cleanup + stale draw-lock guard.
 
-  V1.1 no longer owns startSpread. Reading Lifecycle V59 calls reset() at the
+  V1.2 no longer owns startSpread. Reading Lifecycle V59 calls reset() at the
   beginning of every reading session, so fixed/AI/manual/daily/restore share
   the same auxiliary cleanup without adding another function wrapper.
+
+  AI rendering deliberately keeps #drawBtn disabled through its handoff. If a
+  repeated mixed AI/manual flow abandons that handoff before V60 releases it,
+  the disabled HTML button cannot emit the next click and therefore cannot
+  reach the V59 session boundary. Mode-entry capture only releases that stale
+  UI lock; it does not draw cards, change spread state, or alter calculations.
 */
 (() => {
   const W = window;
@@ -15,6 +21,7 @@
 
   const $ = id => document.getElementById(id);
   const AUX_ENDPOINTS = ['/v1/transits/scan','/v1/returns/context','/v1/thai/taksa'];
+  const READING_MODE_SELECTOR = '.reading-item[data-lunea-universal-ai="1"],.reading-item[data-manual-spread="1"],.lunea-v20-ai-entry,.lunea-manual-anywhere-item';
   const pendingControllers = new Set();
   let cleanupEpoch = 0;
   let lastResetAt = 0;
@@ -85,6 +92,33 @@
       btn.textContent = label;
       btn.removeAttribute('aria-busy');
     });
+  }
+
+  function releaseStaleReadingDrawLock() {
+    const btn = $('drawBtn');
+    if (!btn) return false;
+    const wasLocked = !!btn.disabled || btn.getAttribute?.('aria-busy') === 'true';
+    btn.disabled = false;
+    btn.removeAttribute?.('aria-busy');
+    return wasLocked;
+  }
+
+  function modeEntryFrom(target) {
+    try { return target?.closest?.(READING_MODE_SELECTOR) || null; }
+    catch { return null; }
+  }
+
+  function installReadingModeEntryRepair() {
+    if (W.__LUNEA_LAG_GUARD_MODE_ENTRY_REPAIR__) return;
+    W.__LUNEA_LAG_GUARD_MODE_ENTRY_REPAIR__ = true;
+    const repair = event => {
+      if (!modeEntryFrom(event.target)) return;
+      releaseStaleReadingDrawLock();
+    };
+    // document capture runs before V59's item-level capture owner, so a stale
+    // disabled draw control is usable again before the next sheet mode opens.
+    document.addEventListener('pointerdown', repair, true);
+    document.addEventListener('click', repair, true);
   }
 
   function clearAuxStatusText() {
@@ -167,14 +201,16 @@
   function boot() {
     installPerformanceCSS();
     installFetchAbortGuard();
+    installReadingModeEntryRepair();
     installPageShowRepair();
     W.LUNEA_LAG_GUARD_V1 = Object.freeze({
-      version:1.1,
+      version:1.2,
       reset:hardResetAux,
       abort:abortPendingAuxRequests,
-      repairModalLock
+      repairModalLock,
+      releaseStaleReadingDrawLock
     });
-    console.info('✦ LUNEA LAG GUARD V1.1 loaded · lifecycle hook · no startSpread wrapper');
+    console.info('✦ LUNEA LAG GUARD V1.2 loaded · lifecycle hook · stale draw-lock repair · no startSpread wrapper');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
