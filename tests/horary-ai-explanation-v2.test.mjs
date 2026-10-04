@@ -11,6 +11,8 @@ assert.match(bridgeSource, /“근거:”/, 'evidence link contract missing');
 assert.match(bridgeSource, /“반증:”/, 'counter-evidence contract missing');
 assert.match(bridgeSource, /“불확실성:”/, 'uncertainty contract missing');
 assert.match(bridgeSource, /평균·합산·절충하지 않는다/, 'Prashna independence contract missing');
+assert.match(bridgeSource, /VALIDATOR ALLOWED ALIASES/, 'validator alias contract missing');
+assert.match(bridgeSource, /기하학적으로 접근 중/, 'out-of-orb wording contract missing');
 assert.match(bridgeSource, /lunea-horary-ai-explanation-v2\.js/, 'Explanation V2 loader missing');
 assert.match(uiSource, /never recalculates Horary \/ Prashna \/ Cross facts/, 'presentation-only invariant missing');
 assert.doesNotMatch(uiSource, /fetch\s*\(/, 'presentation layer must not own network requests');
@@ -43,7 +45,7 @@ const bridgeContext = {
 vm.runInNewContext(bridgeSource, bridgeContext, {filename:'lunea-horary-interpretation-bridge-v47.js'});
 const bridge = bridgeWindow.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47;
 assert.ok(bridge, 'bridge API missing');
-assert.equal(bridge.version, '47.3');
+assert.equal(bridge.version, '47.4');
 
 const base = 'LUNEA HORARY INTERPRETATION ENGINE V2\n[HORARY ENGINE RESULT · AUTHORITATIVE]\ndirect perfection: NO';
 const locked = bridge.qualityLockedPrompt(base);
@@ -51,6 +53,18 @@ assert.match(locked, /FINAL VERDICT LOCK · V2 QA/);
 assert.match(locked, /AI EXPLANATION V2 · EVIDENCE-LINKED/);
 assert.equal((locked.match(/AI EXPLANATION V2 · EVIDENCE-LINKED/g) || []).length, 1, 'Explanation lock must be idempotent');
 assert.equal(bridge.qualityLockedPrompt(locked), locked, 'quality lock should not duplicate itself');
+
+const crossBase = `LUNEA HORARY INTERPRETATION ENGINE V2
+[HORARY ENGINE RESULT · AUTHORITATIVE]
+AUTHORITATIVE JUDGMENT: NO · direct perfection: NO
+[HORARY ↔ PRASHNA CROSS INTERPRETATION V2 · AUTHORITATIVE]
+Horary: 7H square · Reception: mutual
+Prashna: subject_lord_dignity`;
+const crossLocked = bridge.qualityLockedPrompt(crossBase);
+assert.match(crossLocked, /aspect: square · 사각 · 스퀘어/);
+assert.match(crossLocked, /Reception: mutual · 상호 리셉션/);
+assert.equal((crossLocked.match(/\[VALIDATOR ALLOWED ALIASES · 출력 금지\]/g) || []).length, 1, 'validator aliases must be emitted once');
+assert.equal(bridge.qualityLockedPrompt(crossLocked), crossLocked, 'validator aliases must be idempotent');
 
 const rewritten = bridge.rewrite({
   method:'POST',

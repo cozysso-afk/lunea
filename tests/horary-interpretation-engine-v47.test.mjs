@@ -22,6 +22,8 @@ assert.match(bridgeSource, /AI EXPLANATION V2 · EVIDENCE-LINKED/);
 assert.match(bridgeSource, /NO\/부정\/근거부족 판정을 reception·dignity·Moon 분위기만으로 YES\/긍정으로 올리지 마라/);
 assert.match(bridgeSource, /derived-event perfection만 유효하면 그 파생 사건만 긍정/);
 assert.match(bridgeSource, /PRIVATE SELF-CHECK · 출력 금지/);
+assert.match(bridgeSource, /VALIDATOR ALLOWED ALIASES · 출력 금지/);
+assert.match(bridgeSource, /currentWithinOrb\/currentlyWithinOrb가 false이면 “적용각”이라는 표현도 쓰지 말고/);
 assert.match(bridgeSource, /lunea-horary-ai-explanation-v2\.js/);
 assert.match(bridgeSource, /lunea-horary-answer-validator-v48\.js/);
 assert.match(bridgeSource, /luneaHoraryAnswerValidatorV48Loader/);
@@ -82,11 +84,17 @@ assert.ok(sent.contents[0].parts[0].text.startsWith('LUNEA HORARY INTERPRETATION
 assert.match(sent.contents[0].parts[0].text, /\[FINAL VERDICT LOCK · V2 QA\]/);
 assert.match(sent.contents[0].parts[0].text, /\[AI EXPLANATION V2 · EVIDENCE-LINKED\]/);
 assert.match(sent.contents[0].parts[0].text, /staged\/authoritative verdict와 최종 한줄 결론의 방향이 같은가/);
-assert.equal(bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.version, '47.3');
+assert.equal(bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.version, '47.4');
 
 const lockedOnce = bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.qualityLockedPrompt(sent.contents[0].parts[0].text);
 assert.equal((lockedOnce.match(/\[FINAL VERDICT LOCK · V2 QA\]/g) || []).length, 1, 'quality lock must not duplicate');
 assert.equal((lockedOnce.match(/\[AI EXPLANATION V2 · EVIDENCE-LINKED\]/g) || []).length, 1, 'Explanation V2 lock must not duplicate');
+
+const crossPrompt = `LUNEA HORARY INTERPRETATION ENGINE V2\n[HORARY ENGINE RESULT · AUTHORITATIVE]\nAUTHORITATIVE JUDGMENT: NO\n[HORARY ↔ PRASHNA CROSS INTERPRETATION V2 · AUTHORITATIVE]\nHorary: 7H trine · Reception: mutual`;
+const crossLocked = bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.qualityLockedPrompt(crossPrompt);
+assert.match(crossLocked, /aspect: trine · 삼합 · 트라인/);
+assert.match(crossLocked, /Reception: mutual · 상호 리셉션/);
+assert.equal((crossLocked.match(/\[VALIDATOR ALLOWED ALIASES · 출력 금지\]/g) || []).length, 1, 'validator aliases must not duplicate');
 
 const canonicalHorary = JSON.stringify({contents:[{parts:[{text:'LUNEA HORARY INTERPRETATION ENGINE V2\nDIRECT CANONICAL'}]}]});
 await bridgeContext.fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini:test:generateContent', {method:'POST', body:canonicalHorary});
