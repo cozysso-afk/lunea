@@ -1,9 +1,9 @@
 name: One-off Horary production smoke
 
 on:
-  push:
+  pull_request:
     branches:
-      - chore/horary-prod-smoke-20261006
+      - main
 
 jobs:
   smoke:
