@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA READING BOUNDARY RESET V31.2
+  LUNEA READING BOUNDARY RESET V31.3
   ===================================
   Synchronous, non-wrapping Timing cleanup for reading boundaries.
 
@@ -12,7 +12,7 @@
   overlay and contribute to the "first reading works, second reading stalls"
   failure.
 
-  V31.2 therefore:
+  V31.3 therefore:
   - never calls the Timing button handler
   - never wraps/replaces startSpread
   - never polls to become the outermost wrapper
@@ -53,10 +53,32 @@
 
   function resetSingleTimingVisuals() {
     $('luneaTimingInline')?.remove();
-    $('timingFlip')?.classList.remove('show');
+    const flip = $('timingFlip');
+    flip?.classList.remove('show');
+    if (flip?.dataset) flip.dataset.luneaTimingFaceReady = '0';
     $('timingInner')?.classList.remove('flipped');
-    $('timingResult')?.classList.remove('show');
+
+    const result = $('timingResult');
+    result?.classList.remove('show');
+    if (result) result.textContent = '';
+
     $('timingActions')?.classList.remove('show');
+
+    const image = $('timingImage');
+    if (image) {
+      image.removeAttribute?.('src');
+      image.removeAttribute?.('alt');
+      if (image.dataset) {
+        delete image.dataset.luneaTimingCardId;
+        delete image.dataset.luneaTimingSemantic;
+        delete image.dataset.luneaTimingArtworkV65;
+        delete image.dataset.luneaTimingAssetV16;
+      }
+    }
+    const ko = $('timingLabelKo');
+    const en = $('timingLabelEn');
+    if (ko) ko.textContent = '';
+    if (en) en.textContent = '';
 
     const ai = $('timingAIText');
     if (ai) {
@@ -86,6 +108,11 @@
   }
 
   function resetTimingBoundary(reason = 'new-reading') {
+    // Invalidate any late artwork repair from the previous reading, then clear
+    // Timing Oracle's private support state through its explicit reset API.
+    try { W.LUNEA_RECOVERY_UI_V65?.cancelPending?.(); } catch {}
+    try { W.LUNEA_TIMING_ORACLE_V1?.resetSupport?.(); } catch {}
+
     // Reuse V27's source-DOM cleanup when available. V27.resetTimingDOM is
     // synchronous and does not open an overlay or draw a card.
     try { W.LUNEA_V27?.resetTimingDOM?.(); } catch {}
@@ -125,6 +152,11 @@
     if (document.__luneaReadingBoundaryV31Capture) return;
     document.__luneaReadingBoundaryV31Capture = true;
     document.addEventListener('click', event => {
+      const readingItem = event.target?.closest?.('.reading-item[data-cat]');
+      if (readingItem) {
+        resetTimingBoundary('reading-item-entry');
+        return;
+      }
       const btn = event.target?.closest?.('button');
       if (!isDirectReadingBoundaryButton(btn)) return;
       resetTimingBoundary('direct-reading-entry');
@@ -134,11 +166,11 @@
   function boot() {
     installCaptureSafetyNet();
     observeSpreadQuestion();
-    console.info('✦ LUNEA Reading Boundary V31.2 loaded · synchronous / no startSpread wrapper');
+    console.info('✦ LUNEA Reading Boundary V31.3 loaded · session-safe Timing cleanup');
   }
 
   W.LUNEA_READING_BOUNDARY_V31 = {
-    version: 31.2,
+    version: 31.3,
     resetTimingBoundary,
     resetSingleTimingVisuals,
     resetABTimingVisuals
