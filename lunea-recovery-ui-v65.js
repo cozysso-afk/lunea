@@ -1,6 +1,6 @@
 'use strict';
 
-/* LUNEA RECOVERY UI V65
+/* LUNEA RECOVERY UI V65.2
    Final deterministic repair for the Vercel recovery branch.
    - Keeps Timing labels authoritative and selects final Timing artwork 1:1 by
      the semantic card number from the canonical LT-### PNG asset set.
@@ -11,25 +11,37 @@
   if (W.__LUNEA_RECOVERY_UI_V65__) return;
   W.__LUNEA_RECOVERY_UI_V65__ = true;
 
-  const RELEASE = '20260911-v65-lt-final60';
+  const RELEASE = '20261006-v65.2-lt-final67';
   const $ = id => document.getElementById(id);
   const norm = value => String(value || '').normalize('NFKC').replace(/\s+/g, ' ').trim().toLowerCase();
 
+  const WEEKDAY_FACE = Object.freeze({
+    61:'assets/timing-oracle/cards/timing_061_monday.jpg',
+    62:'assets/timing-oracle/cards/timing_062_tuesday.jpg',
+    63:'assets/timing-oracle/cards/timing_063_wednesday.jpg',
+    64:'assets/timing-oracle/cards/timing_064_thursday.jpg',
+    65:'assets/timing-oracle/cards/timing_065_friday.jpg',
+    66:'assets/timing-oracle/cards/timing_066_saturday.jpg',
+    67:'assets/timing-oracle/cards/timing_067_sunday.jpg'
+  });
   const FINAL_FACE = Object.freeze(Object.fromEntries(
-    Array.from({length:60}, (_, index) => {
+    Array.from({length:67}, (_, index) => {
       const number = index + 1;
-      return [number, `assets/timing-oracle/cards/LT-${String(number).padStart(3, '0')}.png`];
+      return [number, number <= 60
+        ? `assets/timing-oracle/cards/LT-${String(number).padStart(3, '0')}.png`
+        : WEEKDAY_FACE[number]];
     })
   ));
 
   let cards = [];
   let byLabel = new Map();
   let readyPromise = Promise.resolve(false);
+  let scheduleGeneration = 0;
 
   function cardNumber(card) {
     const match = String(card?.id || card?.filename || '').match(/(?:LT-|timing_)(\d{3})/i);
     const number = Number(match?.[1] || 0);
-    return number >= 1 && number <= 60 ? number : 0;
+    return number >= 1 && number <= 67 ? number : 0;
   }
 
   function absoluteAsset(filename) {
@@ -63,7 +75,17 @@
   }
 
   function cardFromLabels(ko, en, fallback = '') {
-    return byLabel.get(norm(en)) || byLabel.get(norm(ko)) || byLabel.get(norm(fallback)) || null;
+    const pieces = [en, ko]
+      .flatMap(value => String(value || '').split(/\s*[·/]\s*/))
+      .map(norm)
+      .filter(Boolean);
+    for (const piece of pieces) {
+      const card = byLabel.get(piece);
+      if (card) return card;
+    }
+    // Never let a stale dataset override a non-empty current label.
+    if (pieces.length) return null;
+    return byLabel.get(norm(fallback)) || null;
   }
 
   function setArtwork(img, card) {
@@ -104,18 +126,37 @@
     const inline = $('luneaTimingInline');
     if (inline) {
       const img = inline.querySelector('img');
-      const card = cardFromLabels(
+      const explicitId = inline.dataset?.luneaTimingCardId || img?.dataset?.luneaTimingCardId || '';
+      const card = byLabel.get(norm(explicitId)) || cardFromLabels(
         inline.querySelector('.txt b,b')?.textContent,
         '',
-        img?.dataset?.luneaTimingCardId
+        explicitId
       );
       if (card) changed = setArtwork(img, card) || changed;
     }
     return changed;
   }
 
+  function currentSessionId() {
+    try {
+      const id = W.LUNEA_READING_LIFECYCLE_V59?.currentSessionId?.();
+      return Number.isFinite(Number(id)) ? Number(id) : null;
+    } catch { return null; }
+  }
+
+  function cancelPending() {
+    scheduleGeneration += 1;
+  }
+
   function scheduleTiming() {
-    [0, 90, 240, 520, 900].forEach(ms => setTimeout(syncTiming, ms));
+    const generation = ++scheduleGeneration;
+    const sessionId = currentSessionId();
+    [0, 90, 240, 520, 900].forEach(ms => setTimeout(() => {
+      if (generation !== scheduleGeneration) return;
+      const liveSessionId = currentSessionId();
+      if (sessionId !== null && liveSessionId !== sessionId) return;
+      syncTiming();
+    }, ms));
   }
 
   function boot() {
@@ -133,13 +174,15 @@
     }, {passive:true});
 
     W.LUNEA_RECOVERY_UI_V65 = Object.freeze({
-      version:65,
+      version:65.2,
       get ready(){return readyPromise},
       uploadedFace:{...FINAL_FACE},
       artworkForCard:artwork,
-      syncTiming
+      syncTiming,
+      scheduleTiming,
+      cancelPending
     });
-    console.info('✅ LUNEA Recovery UI V65 loaded');
+    console.info('✅ LUNEA Recovery UI V65.2 loaded');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
