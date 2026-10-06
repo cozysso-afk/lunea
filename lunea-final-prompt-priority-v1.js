@@ -1,18 +1,17 @@
 'use strict';
 
 /*
-  LUNEA FINAL PROMPT PRIORITY V3
+  LUNEA FINAL PROMPT PRIORITY V4
   ==============================
-  Last-mile evidence priority + balanced auxiliary-system usage policy.
+  Last-mile RWS evidence priority + optional auxiliary-system boundary policy.
 
   Goals:
-  - Keep question/positions/RWS cards as the primary evidence.
-  - Prevent a valid computed Western natal chart from being silently ignored.
-  - Use Transit / Returns / Thai Taksa only when their real computed blocks are
-    present for the current question.
-  - Preserve the conditional Saju policy.
-  - Never use the user's natal/profile data as proof of another person's private
-    feelings or as a substitute for event/timing calculations.
+  - Keep question/positions/RWS cards as the complete basis of the final conclusion.
+  - Treat Western Natal / Saju / Thai Taksa / Timing / Transit / Returns / Message
+    Oracle as optional auxiliary context, never mandatory evidence.
+  - Allow every auxiliary system to be omitted when it is not directly relevant.
+  - Prevent auxiliary systems from creating events, inferring another person's
+    private state, changing cause/probability ranking, or strengthening certainty.
   - Keep positive/negative conclusions evidence-proportional without systematic
     pessimistic or optimistic drift.
 */
@@ -22,8 +21,8 @@
   W.__LUNEA_FINAL_PROMPT_PRIORITY_V1__ = true;
 
   const MARKER = '[FINAL READING PRIORITY · 최종 근거 우선순위]';
-  const INTERPRETATION_RULE_VERSION = 'v1';
-  const FINAL_LINE = '12. 최종 답변에서는 질문의 결론과 카드 근거가 먼저다. 그다음 유효한 점성/프로필 보조를 짧고 구체적으로 붙인다. 계산값이 있는 보조 체계를 단순히 생략하지 않는다.';
+  const INTERPRETATION_RULE_VERSION = 'v2';
+  const FINAL_LINE = '13. [최종 출력] 최종 결론은 질문 원문·포지션·RWS 카드만으로 완결한다. 보조 체계를 전부 제거해도 결론 방향·원인/가능성 순위·사건 판단·단정 수준이 그대로여야 한다. 관련 없는 보조 체계는 0문장으로 생략한다.';
   const CAUSE_END = '[END CAUSE RWS POLICY v1]';
 
   function isCausePrompt(prompt){
@@ -64,7 +63,7 @@ RWS 메인 배열만으로 최소 두 경쟁 가설의 지지 카드·포지션,
 
 7. 보조 체계 제한
 모든 보조 체계는 현재 리딩에 실제 제공되고 질문과 관련된 범위에서만 사용한다. 이미 RWS에 나타난 주제의 상징적 조응·약한 보강·사용자 본인의 성향·반응·배경만 짧게 설명한다. 새로운 사건, 직접 원인 순위 변경, 결론 뒤집기, 상대의 마음·행동·사건 발생의 독립 확정, RWS보다 강한 단정은 금지한다. 여러 보조 체계의 일치를 사실 증거로 합산하지 않는다.
-- Timing Oracle(시기 오라클): 현재 프롬프트에 실제 제공된 결과가 있을 때 시간 창만 보조한다. 원인·감정·관계 성립·사건 발생 판단에 사용하지 않는다. 카드 명칭에 불발·발생 신호가 있어도 RWS 사건 판단을 덮어쓰지 않는다.
+- Timing Oracle(시기 오라클): 질문이 실제로 시기·시간 흐름을 묻고 현재 프롬프트에 실제 결과가 제공된 경우에만, 이미 RWS에서 확인된 움직임의 시간 창을 보조한다. 시기 질문이 아니면 결과가 있어도 본문에서 생략한다. 원인·감정·관계 성립·사건 발생 판단에 사용하지 않는다. 카드 명칭에 불발·발생 신호가 있어도 RWS 사건 판단을 덮어쓰지 않는다.
 - Western Natal(서양 출생차트): 사용자 본인의 반응·관계 성향·감정 처리·판단 기준만 보조한다. 사용자 차트로 상대 행동을 설명하지 않는다. 상대 출생 정보가 있어도 원인 순위를 바꾸지 않는다.
 - Saju(사주): 제공된 원국 범위의 사용자 성향·부담·선택 기준만 보조한다. 입력되지 않은 대운·세운·합충형파·용희신, 상대 원인, 구체 사건을 생성하지 않는다.
 - Thai Taksa(태국 탁사): 상징적 환경·지원·취약점만 보조한다. 직접 원인·상대 마음·구체 사건·정밀 시기를 확정하지 않는다.
@@ -125,7 +124,7 @@ ${CAUSE_END}`;
     if (!hasMessageOracle(prompt)) {
       return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 결과가 없으면 참고했다고 말하거나 카드·점수·메시지를 만들어내지 않는다. 독립 화면의 마지막 결과를 가져오지 않는다.';
     }
-    return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 실제 결과가 있으므로 최종 답변에 짧은 "메시지 오라클 보조"를 최소 1회 반영한다. 실제 카드명과 질문 의도, 연락 방식·전달 경로·제한 중 관련 근거를 짚고 RWS 카드의 지지·반증과 연결한다. 점수는 카드 상징의 신호 강도이며 실제 연락 확률·합격률·긍정 결과 확률이 아니다. 시기 오라클과 구분하고 날짜나 상대의 실제 행동을 이 점수에서 만들어내지 않는다. RWS와 방향이 다르면 차이를 숨기거나 한쪽 결론으로 덮어쓰지 않는다.';
+    return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 실제 결과가 있어도 질문과 직접 관련 있을 때만 짧게 보조할 수 있다. 관련 없으면 완전히 생략한다. 사용할 경우 실제 카드명과 질문 의도, 연락 방식·전달 경로·제한 중 RWS에서 이미 확인된 주제만 연결한다. 점수는 실제 연락 확률·긍정 결과 확률이 아니며, RWS의 결론·가능성 순위·단정 수준을 강화하거나 뒤집지 않는다. RWS와 충돌하면 절충하지 말고 Message Oracle 보조를 생략한다.';
   }
 
   function assembleEvidence(prompt){
@@ -168,49 +167,46 @@ ${CAUSE_END}`;
 
   function westernPolicy(prompt){
     if (!hasWesternNatal(prompt)) {
-      return `- Western Natal(서양 출생차트): 실제 계산된 Natal 핵심값이 없으면 태양궁 호환값이나 출생정보만으로 상세 출생차트를 지어내지 않는다.`;
+      return '- Western Natal(서양 출생차트): 실제 계산된 Natal 핵심값이 없으면 태양궁 호환값이나 출생정보만으로 상세 출생차트를 지어내지 않는다.';
     }
 
     const mode = classify(questionFromPrompt(prompt));
     if (mode === 'other_focused') {
-      return `- Western Natal(서양 출생차트): 실제 계산된 Natal 값이 있으므로 최종 답변에 짧은 '서양점성 보조' 문장 또는 단락을 최소 1회 실질적으로 반영한다. 단, 이번 질문이 타인의 생각·감정·행동 중심이면 사용자의 Natal을 상대의 속마음·연락 발생·행동 증거로 쓰지 않는다. Sun/Moon/ASC/MC/Mercury/Venus/Mars/Jupiter/Saturn/Vertex 중 현재 질문과 연결되는 실제 계산값 1~2개를 정확히 짚어 사용자의 관계 체감·반응 패턴·경계 또는 선택 기준만 보조한다. 막연히 '점성술상'이라고만 쓰지 않는다.`;
+      return '- Western Natal(서양 출생차트): 데이터가 있어도 자동 반영하지 않는다. 이번 질문이 타인의 생각·감정·행동·향후 행동·사건 발생 중심이면 사용자의 Natal을 그 판단 근거로 쓰지 않는다. 질문 안에 사용자의 반응·관계 판단 기준·선택 방식이 직접 포함된 경우에만 그 사용자 축을 1~2문장 보조할 수 있으며, 관련 없으면 0문장으로 생략한다.';
     }
 
-    return `- Western Natal(서양 출생차트): 실제 계산된 Natal 값이 있으므로 최종 답변에 짧은 '서양점성 보조' 문장 또는 단락을 최소 1회 실질적으로 반영한다. Sun/Moon/ASC/MC/Mercury/Venus/Mars/Jupiter/Saturn/Vertex 중 질문과 직접 관련된 실제 계산값 1~2개를 정확히 짚고 현재 카드/포지션과 어떻게 교차 보조되는지 설명한다. Natal은 사용자의 성향·반응·관계 방식·현실 판단을 보조하며 카드 결론이나 사건 성립 여부를 대신하지 않는다. 막연히 '점성술상'이라고만 쓰지 않는다.`;
+    return '- Western Natal(서양 출생차트): 데이터가 있어도 자동 반영하지 않는다. 질문자의 성향·감정 반응 방식·관계 판단 기준·선택 방식이 현재 질문과 직접 관련될 때만 실제 계산값 1~2개를 짧게 보조할 수 있다. 상대방 속마음·행동 원인·향후 행동·사건 발생·관계 성립 판단에는 사용하지 않는다. RWS 결론의 방향·순위·단정 수준을 바꾸거나 더 강하게 확정하지 않으며, 관련 없으면 0문장으로 생략한다.';
   }
 
   function transitPolicy(prompt){
     if (!hasTransit(prompt)) {
-      return `- Transit Scanner(트랜짓): 현재 질문의 실제 계산 결과 블록이 없으면 트랜짓을 참고했다고 말하거나 현재 천체 위치·시기를 새로 만들지 않는다.`;
+      return '- Transit Scanner(트랜짓): 현재 질문의 실제 계산 결과 블록이 없으면 트랜짓을 참고했다고 말하거나 현재 천체 위치·시기를 새로 만들지 않는다.';
     }
-    return `- Transit Scanner(트랜짓): 현재 질문의 실제 계산 결과가 있으므로 시기·현재 흐름을 다루는 부분에서는 계산된 peak/caution/exact-hit 중 관련 근거를 최소 1개 구체적으로 반영한다. 트랜짓은 활성 구간 보조이며 사건 성립 자체를 확정하거나 RWS 카드 결론을 뒤집지 않는다.`;
+    return '- Transit Scanner(트랜짓): 실제 계산 결과가 있어도 질문이 시기·현재 흐름을 직접 묻고 RWS에서 이미 확인된 주제와 관련될 때만 짧게 보조할 수 있다. 사건 성립 여부·상대 속마음·행동 원인·가능성 순위를 판단하지 않고, RWS보다 강한 확신을 만들지 않는다. 관련 없으면 0문장으로 생략한다.';
   }
 
   function returnPolicy(prompt){
     if (!hasReturns(prompt)) {
-      return `- Planetary Returns(행성 회귀): 실제 계산 결과가 없으면 회귀 시각·하우스·주기를 만들어내지 않는다.`;
+      return '- Planetary Returns(행성 회귀): 실제 계산 결과가 없으면 회귀 시각·하우스·주기를 만들어내지 않는다.';
     }
-    return `- Planetary Returns(행성 회귀): 실제 계산 결과가 있으면 질문과 직접 관련된 회귀 1개를 배경 주기로 짧게 교차참고한다. 회귀 날짜 하나를 연락·재회·합격·주가 움직임의 확정일로 바꾸지 않는다.`;
+    return '- Planetary Returns(행성 회귀): 실제 계산 결과가 있어도 현재 질문과 직접 관련된 사용자 배경 주기 또는 시기 맥락일 때만 짧게 보조할 수 있다. 회귀 날짜를 연락·재회·합격·주가 움직임의 확정일로 바꾸거나 RWS의 사건 판단·가능성 순위·단정 수준을 강화하지 않는다. 관련 없으면 0문장으로 생략한다.';
   }
 
   function thaiPolicy(prompt){
     if (!hasThaiComputed(prompt)) {
-      return `- Thai Taksa(태국 탁사): 현재 질문의 실제 Maha Taksa 계산 결과가 없으면 출생 요일 프로필만으로 정밀 사건·시기 근거를 만들어내지 않는다.`;
+      return '- Thai Taksa(태국 탁사): 현재 질문의 실제 Maha Taksa 계산 결과가 없으면 출생 요일 프로필만으로 정밀 사건·시기 근거를 만들어내지 않는다.';
     }
-    return `- Thai Taksa(태국 탁사): 현재 질문의 실제 Maha Taksa 계산 결과가 있으므로 질문과 연결되는 Taksa 영역/행성 1개를 짧은 '태국점성 보조'로 반영한다. 구조·상징 보조층으로만 쓰고 정밀 날짜나 타인의 속마음 증거로 확대하지 않는다.`;
+    return '- Thai Taksa(태국 탁사): 실제 계산 결과가 있어도 질문과 직접 관련 있을 때만 RWS에서 이미 확인된 환경·지원·취약점 또는 사용자 반응 주제를 짧게 보조할 수 있다. 새로운 사건·상대 속마음·행동 원인·사건 성립·원인/가능성 순위·정밀 시기를 만들지 않는다. 관련 없으면 0문장으로 생략한다.';
   }
 
   function sajuPolicy(prompt){
-    if (!hasSaju(prompt)) return `- Saju(사주명리): 유효한 입력값이 없으면 사용하지 않는다.`;
+    if (!hasSaju(prompt)) return '- Saju(사주명리): 유효한 입력값이 없으면 사용하지 않는다.';
     const mode = classify(questionFromPrompt(prompt));
 
-    if (mode === 'self_relevant') {
-      return `- Saju(사주명리): 이번 질문은 사용자 본인의 선택·경계·소모·행동 방식 또는 현실 판단이 직접 포함된다. 입력된 사주값이 질문과 연결된다면 최종 답변에 짧은 '사주 보조' 문장 또는 단락을 최소 1회 실질적으로 반영한다. 단순 장식 문구가 아니라 실제 입력된 일간/신강·신약/십성/오행/용신·희신·기신 중 관련 있는 1~2개를 정확히 짚고, 그것이 사용자의 반응·부담·결정 기준에 어떤 보조 의미를 주는지 설명한다.`;
-    }
     if (mode === 'other_focused') {
-      return `- Saju(사주명리): 이번 질문은 타인의 생각·감정·행동이 중심이다. 사용자의 사주를 상대의 속마음이나 행동 발생을 추정하는 증거로 쓰지 않는다. 질문 안에 사용자의 경계·대응·선택 축이 실제로 있을 때만 그 사용자 축에 한정해 보조한다.`;
+      return '- Saju(사주명리): 데이터가 있어도 자동 반영하지 않는다. 타인의 생각·감정·행동·직접 원인·향후 사건을 사용자의 사주로 추론하지 않는다. 질문 안에 사용자의 부담·선택 기준·반응 방식이 직접 포함된 경우에만 그 사용자 축을 짧게 보조할 수 있으며, 관련 없으면 0문장으로 생략한다.';
     }
-    return `- Saju(사주명리): 질문과 직접 연결되는 사용자 본인의 성향·부담·선택 기준이 있을 때만 사용한다. 사용할 경우 실제 입력 항목 1~2개를 명시하고, 일반론 나열 대신 현재 카드/포지션과 어떻게 맞물리는지만 짧게 설명한다.`;
+    return '- Saju(사주명리): 데이터가 있어도 자동 반영하지 않는다. 질문자의 기본 성향·부담·선택 기준·반응 방식이 현재 질문과 직접 관련될 때만 실제 입력된 원국 범위에서 짧게 보조할 수 있다. 입력되지 않은 대운·세운·합·충·형·파 등은 새로 생성하지 않는다. 상대 행동 원인·속마음·구체 사건·성립 여부·구체 시기·원인 순위를 판단하지 않으며, RWS보다 강한 단정을 만들지 않는다. 관련 없으면 0문장으로 생략한다.';
   }
 
   function finalBlock(prompt){
@@ -222,7 +218,26 @@ ${CAUSE_END}`;
     const saju = sajuPolicy(prompt);
     const message = messagePolicy(prompt);
 
-    return `${MARKER}\n1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다.\n2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다. 카드명·정역방향·포지션을 근거 문장에 연결한다. 역방향을 무조건 정방향의 반대나 나쁜 결과로 바꾸지 않고, 막힘·내면화·과잉·회복 중 질문과 인접 카드가 지지하는 해석만 선택해 이유를 설명한다. 보조 카드는 연결된 본 카드의 모호함을 좁히며 독립 결론으로 본 카드를 대체하지 않는다.\n3. 긍정과 부정 어느 방향도 기본값으로 삼지 않는다. 카드의 포지션 중요도, 신호 강도, 반복성, 서로 독립된 근거의 합치 정도에 비례해 결론의 방향과 강도를 정한다. 애매한 카드를 자동으로 부정 쪽에 배치하지 않는다.\n4. [과대해석 방지] 약한 카드 한 장이나 단일 보조 신호만으로 구체적 사건·상대 행동·시기·관계 성립을 단정하지 않는다. 질문 범위를 넘어 새로운 사건을 확장하지 않고, 보조 신호를 핵심 결론으로 승격하려면 본 카드 또는 다른 독립 근거의 지지가 있어야 한다.\n5. [과소해석 방지] 동일 주제가 여러 포지션에서 반복되거나 강한 메이저 조합·명확한 카드 흐름·서로 독립된 근거가 같은 방향으로 수렴하면 그 강도를 실제 결론에 반영한다. 명확한 긍정 신호를 습관적으로 경고 문구로 희석하거나, 명확한 부정 신호를 막연한 가능성으로 흐리지 않는다.\n6. 혼합 신호는 혼합으로 말한다. 긍정 근거가 더 강하면 긍정 결론을, 부정 근거가 더 강하면 부정 결론을 내되 반대 근거의 제한을 함께 짚는다. 근거가 비슷할 때만 애매함을 유지한다.\n7. interpretation_rule_version=${INTERPRETATION_RULE_VERSION}. 이 버전은 사후검증을 위한 시스템 해석 정책 식별자이며 사용자 취향이나 메모리로 변경하지 않는다.\n8. 보조 체계가 실제 계산/입력되어 있더라도 카드와 동급의 사건 증거로 취급하지 않는다. 대신 유효한 보조값은 무시하지 말고 아래 규칙대로 교차참고한다.\n${western}\n${transit}\n${returns}\n${thai}\n${saju}\n${message}\n9. 사주에서 대운·세운·합충형파 등 현재 입력되지 않은 계산을 새로 만들지 않는다. 원국 프로필만으로 특정 날짜·연락·재회·합격·주가 움직임을 예측하지 않는다.\n10. 카드와 보조 체계가 같은 방향이면 '교차 보조 신호'라고 짧게 표현할 수 있다. 방향이 다르면 억지로 합치지 말고 차이를 명시한다. 감정·연락 의도·실제 행동·관계 성립은 서로 다른 축이다. 호감 카드만으로 연락이나 재회를 확정하지 않는다. 근거가 팽팽하면 판단이 갈리는 이유와 확인되지 않은 부분을 말하고, 새로운 사실이나 기한을 덧붙여 결론을 강제로 만들지 않는다.\n11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다.\n${FINAL_LINE}`;
+    return `${MARKER}
+1. 질문 원문과 각 카드 포지션이 최우선이다. 포지션을 바꾸거나 질문에 없는 축을 추가하지 않는다. 최종 해석 위계는 질문 원문 > 각 포지션 > RWS 메인 카드 > RWS 카드 간 관계·반복 > RWS 추가 카드 > 보조 체계다.
+2. 실제 뽑힌 RWS 카드가 본체다. 긍정·제한·반증 신호를 함께 읽는다. 카드명·정역방향·포지션을 근거 문장에 연결한다. 역방향을 무조건 정방향의 반대나 나쁜 결과로 바꾸지 않고, 막힘·내면화·과잉·회복 중 질문과 인접 카드가 지지하는 해석만 선택해 이유를 설명한다. 보조 카드는 연결된 본 카드의 모호함을 좁히며 독립 결론으로 본 카드를 대체하지 않는다.
+3. 긍정과 부정 어느 방향도 기본값으로 삼지 않는다. 카드의 포지션 중요도, 신호 강도, 반복성, 서로 독립된 근거의 합치 정도에 비례해 결론의 방향과 강도를 정한다. 애매한 카드를 자동으로 부정 쪽에 배치하지 않는다.
+4. [과대해석 방지] 약한 카드 한 장이나 단일 보조 신호만으로 구체적 사건·상대 행동·시기·관계 성립을 단정하지 않는다. 질문 범위를 넘어 새로운 사건을 확장하지 않는다.
+5. [과소해석 방지] 동일 주제가 여러 포지션에서 반복되거나 강한 메이저 조합·명확한 카드 흐름·서로 독립된 RWS 근거가 같은 방향으로 수렴하면 그 강도를 실제 결론에 반영한다. 명확한 긍정 신호를 습관적으로 경고 문구로 희석하거나, 명확한 부정 신호를 막연한 가능성으로 흐리지 않는다.
+6. 혼합 신호는 혼합으로 말한다. 긍정 근거가 더 강하면 긍정 결론을, 부정 근거가 더 강하면 부정 결론을 내되 반대 RWS 근거의 제한을 함께 짚는다. 근거가 비슷할 때만 애매함을 유지한다.
+7. interpretation_rule_version=${INTERPRETATION_RULE_VERSION}. 이 버전은 사후검증을 위한 시스템 해석 정책 식별자이며 사용자 취향이나 메모리로 변경하지 않는다.
+8. [보조 체계 공통 원칙] Western Natal / Saju / Thai Taksa / Timing Oracle / Transit / Planetary Returns / Message Oracle 등 모든 보조 체계는 자동 반영하지 않는다. 오직 (a) RWS에서 이미 확인된 주제를 짧게 보강하거나 (b) 질문과 직접 관련된 사용자의 반응 성향·판단 기준을 설명하는 데만 사용할 수 있다. 관련 없으면 결과가 제공되어 있어도 0문장으로 완전히 생략한다. 보조 체계 전체 분량은 최종 해석 본문의 최대 20% 이하이며 20%를 채우기 위해 설명을 추가하지 않는다.
+${western}
+${transit}
+${returns}
+${thai}
+${saju}
+${message}
+9. [금지] 보조 체계는 새로운 사건 생성, 상대방 속마음 확정, 행동 원인 변경, 사건/관계 성립 여부 판단, 원인 순위 변경, 가능성 순위 변경, RWS보다 강한 단정, RWS 결론의 강화 또는 뒤집기를 할 수 없다. 여러 보조 체계가 같은 방향이어도 이를 독립 증거처럼 합산하지 않는다.
+10. Timing Oracle을 포함한 시기 보조는 사용자가 언제·어느 시기·시간 흐름을 실제로 묻는 경우에만 사용한다. 역할은 '이미 RWS에서 가능성이 확인된 움직임이 있다면 언제 움직이는가'의 보조에 한정한다. 시기 질문이 아니면 '오늘 안', '늦은 오후', '며칠 내' 같은 시간을 억지로 만들지 않는다.
+11. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)는 서로 독립된 전통이다. 한 체계의 개념을 다른 체계의 개념으로 1:1 치환하지 않는다. 보조 체계가 RWS와 충돌하면 절충하거나 새로운 복합 결론을 만들지 말고 보조 체계를 생략하고 RWS 결론을 유지한다.
+12. [보조 체계 자동 생략 검사] 출력 직전 각 보조 문장에 대해 확인한다. (1) 이 문장을 삭제하면 RWS 결론이 달라지는가? 그렇다면 삭제·약화한다. (2) 현재 질문과 직접 관련 있는가? 아니면 삭제한다. (3) RWS에 없는 사건·상대 심리·행동 원인을 만들었는가? 그러면 삭제한다. (4) 보조 추가 뒤 확신도·단정 수준이 강해졌는가? 그러면 삭제·약화한다. (5) 원인/가능성 순위나 결론 방향이 바뀌었는가? 그러면 보조 투입 전 RWS 기준으로 복원한다.
+${FINAL_LINE}`;
   }
 
   function withoutFinalBlocks(prompt){
@@ -261,12 +276,12 @@ ${CAUSE_END}`;
     W.promptString = wrapped;
     try { promptString = wrapped; } catch {}
     W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__ = true;
-    console.info(`🧭 LUNEA Final Prompt Priority V3 installed · interpretation ${INTERPRETATION_RULE_VERSION}`);
+    console.info(`🧭 LUNEA Final Prompt Priority V4 installed · interpretation ${INTERPRETATION_RULE_VERSION}`);
     return true;
   }
 
   W.LUNEA_FINAL_PROMPT_PRIORITY_V1 = {
-    version:3,
+    version:4,
     interpretationRuleVersion:INTERPRETATION_RULE_VERSION,
     ensure:install,
     classify,
