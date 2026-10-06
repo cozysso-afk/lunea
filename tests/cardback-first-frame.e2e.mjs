@@ -32,9 +32,10 @@ async function verify(label, contextOptions = {}) {
       });
     });
     for (const row of rows) {
-      assert.equal(row.src.replace(/^\.\//,''), row.expected, label + ' ' + row.category + ': wrong first-frame back');
+      const cleanSrc = row.src.split(/[?#]/)[0].replace(/^\.\//,'');
+      assert.equal(cleanSrc, row.expected, label + ' ' + row.category + ': wrong first-frame back');
       assert.equal(row.marker, '1', label + ' ' + row.category + ': first-frame marker missing');
-      assert.doesNotMatch(row.src, /^back_(?:daily|love|stock|career|general)\.PNG$/i, label + ' ' + row.category + ': legacy back flashed first');
+      assert.doesNotMatch(cleanSrc, /^back_(?:daily|love|stock|career|general)\.PNG$/i, label + ' ' + row.category + ': legacy back flashed first');
     }
   } finally {
     await context.close();
