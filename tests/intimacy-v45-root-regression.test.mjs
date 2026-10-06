@@ -14,7 +14,7 @@ test('shared card-back owner recognizes INTIMACY instead of falling back to GENE
   assert.match(restore,/return 'INTIMACY'/);
 });
 test('iOS card factory chooses the INTIMACY back before insertion',()=>{
-  assert.match(ios,/__LUNEA_INTIMACY_ACTIVE__/);
+  assert.match(ios,/deckBackFile/);
   assert.match(ios,/tarot_back_intimacy_final\.png/);
 });
 test('V40 no longer calls shared restore as an intermediate paint',()=>{

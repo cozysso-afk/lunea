@@ -159,8 +159,8 @@ vm.runInNewContext(source, {
   requestAnimationFrame(callback) { callback(); return 1; }
 });
 
-assert.equal(window.LUNEA_CARD_BACK_RESTORE_V19?.version, '19.1', 'V19.1 repair API missing');
-assert.equal(window.LUNEA_CARD_BACK_RESTORE_V19?.assetKey, '1911', 'card-back asset key missing');
+assert.equal(window.LUNEA_CARD_BACK_RESTORE_V19?.version, '19.2', 'V19.2 repair API missing');
+assert.equal(window.LUNEA_CARD_BACK_RESTORE_V19?.assetKey, '20261006-192', 'card-back asset key missing');
 
 // Simulate the real failure mode: a card is created AFTER boot and its old iOS
 // image listener has already hidden the image. The observer receives the WRAPPER
@@ -186,23 +186,23 @@ cardsObserver.callback([{addedNodes:[wrapper]}]);
 const managed = back.querySelector(':scope > img');
 assert.ok(managed, 'managed card-back image missing');
 assert.notEqual(managed, legacyImg, 'legacy image with unknown error listeners must be replaced');
-assert.equal(managed.dataset.luneaCardbackManaged, '1911');
+assert.equal(managed.dataset.luneaCardbackManaged, '20261006-192');
 assert.ok(managed.classList.contains('lunea-category-cardback'));
-assert.match(managed.getAttribute('src') || '', /back_love\.PNG/);
-assert.match(back.style.getPropertyValue('background-image'), /back_love\.PNG/);
-assert.match(back.style.getPropertyValue('background-image'), /lunea_cardback=1911/);
+assert.match(managed.getAttribute('src') || '', /tarot_back_love\.jpeg/);
+assert.match(back.style.getPropertyValue('background-image'), /tarot_back_love\.jpeg/);
+assert.match(back.style.getPropertyValue('background-image'), /lunea_cardback=20261006-192/);
 
 // A transient load error must retry with a fresh URL instead of remaining hidden.
 managed.style.setProperty('display', 'none');
 managed.onerror();
 assert.equal(managed.style.getPropertyValue('display'), '');
-assert.match(managed.getAttribute('src') || '', /lunea_cardback=1911-/);
+assert.match(managed.getAttribute('src') || '', /lunea_cardback=20261006-192-/);
 
 // Reusing/restoring the same card DOM under another category must switch backs.
 state.category = 'STOCK';
 window.LUNEA_CARD_BACK_RESTORE_V19.repairRoot(document);
-assert.match(back.style.getPropertyValue('background-image'), /back_stock\.PNG/);
-assert.match(back.querySelector(':scope > img').getAttribute('src') || '', /back_stock\.PNG/);
+assert.match(back.style.getPropertyValue('background-image'), /tarot_back_stock\.jpeg/);
+assert.match(back.querySelector(':scope > img').getAttribute('src') || '', /tarot_back_stock\.jpeg/);
 
 // Guard against the original subtree-selector regression.
 assert.ok(!source.includes("root.querySelectorAll?.('#cards .tarot-card .back')"), 'broken ancestor-qualified subtree selector returned');
@@ -215,4 +215,4 @@ assert.match(workflow, /if count != 2:/);
 assert.match(workflow, /Could not stamp both nested loader paths for \{asset\}/);
 assert.match(workflow, /lunea-structural-routing-v4\.js/);
 
-console.log('Tarot card-back dynamic restore V19.1 regression tests: PASS');
+console.log('Tarot card-back dynamic restore V19.2 regression tests: PASS');
