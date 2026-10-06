@@ -197,14 +197,14 @@ assert.equal(documentElement.dataset.luneaTimingBoundary, 'question-change');
 const out = window.startSpread('새 질문');
 assert.equal(out, 'started');
 assert.equal(starts, 1, 'canonical startSpread must remain independently callable exactly once');
-assert.equal(supportHandlerCalls, 0, 'canonical start must not be intercepted by V31.2');
+assert.equal(supportHandlerCalls, 0, 'canonical start must not be intercepted by V31.3');
 
 assert.doesNotMatch(executable, /timingSupportBtn[^\n]*onclick|onclick\.call/, 'V31.3 executable code must not use the Timing button as a closure-reset back door');
 assert.doesNotMatch(executable, /W\.startSpread\s*=|setInterval|queueMicrotask|requestAnimationFrame/, 'V31.3 executable code must remain synchronous and non-wrapping');
 
-const matches = loader.match(/lunea-reading-boundary-reset-v31\\.js\\?v=3103/g) || [];
+const matches = loader.match(/lunea-reading-boundary-reset-v31\.js\?v=3103/g) || [];
 assert.equal(matches.length, 2, 'V31.3 boundary reset must load in parsing and sequential loader paths');
-assert.doesNotMatch(loader, /lunea-reading-boundary-reset-v31\\.js\\?v=3102/, 'stale V31 cache key must be inactive');
+assert.doesNotMatch(loader, /lunea-reading-boundary-reset-v31\.js\?v=3102/, 'stale V31 cache key must be inactive');
 assert.match(loader, /lunea-general-order-v30-5\.js\?v=(?:3005|[0-9a-f]{12})/, 'final GENERAL order asset missing');
 assert.match(loader, /lunea-boot-reveal-v29\.js\?v=(?:2902|[0-9a-f]{12})/, 'boot reveal asset missing');
 const lastGeneral = loader.lastIndexOf('lunea-general-order-v30-5.js?v=');
