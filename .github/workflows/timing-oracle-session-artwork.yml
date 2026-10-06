@@ -1,0 +1,75 @@
+name: Timing Oracle Session Artwork
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'timing-oracle-v1.js'
+      - 'lunea-timing-weekday-preload-v1.js'
+      - 'lunea-timing-image-assets-v16.js'
+      - 'lunea-recovery-ui-v65.js'
+      - 'lunea-reading-boundary-reset-v31.js'
+      - 'lunea-structural-routing-v4.js'
+      - 'tests/timing-oracle-reading-boundary.test.mjs'
+      - 'tests/timing-oracle-session-artwork.test.mjs'
+      - 'tests/timing-oracle-session-artwork.e2e.mjs'
+      - '.github/workflows/timing-oracle-session-artwork.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  timing-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax checks
+        run: |
+          node --check timing-oracle-v1.js
+          node --check lunea-timing-weekday-preload-v1.js
+          node --check lunea-timing-image-assets-v16.js
+          node --check lunea-recovery-ui-v65.js
+          node --check lunea-reading-boundary-reset-v31.js
+          node --check lunea-structural-routing-v4.js
+          node --check tests/timing-oracle-reading-boundary.test.mjs
+          node --check tests/timing-oracle-session-artwork.test.mjs
+          node --check tests/timing-oracle-session-artwork.e2e.mjs
+      - name: Timing regression contracts
+        run: |
+          node tests/timing-oracle-reading-boundary.test.mjs
+          node tests/timing-oracle-session-artwork.test.mjs
+
+  timing-webkit:
+    needs: timing-source
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-timing-http.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-timing-http.log
+          exit 1
+      - name: Run INTIMACY to LOVE Timing regression
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/timing-oracle-session-artwork.e2e.mjs
+      - name: Show local server log
+        if: always()
+        run: cat /tmp/lunea-timing-http.log || true
