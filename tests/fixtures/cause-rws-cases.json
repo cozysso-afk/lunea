@@ -1,0 +1,58 @@
+{
+  "policyVersion": "cause-rws-v1",
+  "instructions": "Only modelInput is sent to an interpretation model. evaluationOnly is withheld until after the first output is saved. These synthetic outcomes do not establish empirical tarot accuracy.",
+  "cases": [
+    {
+      "id": "postponement-retrospective",
+      "modelInput": {
+        "type": "cause",
+        "question": "그가 오늘 약속을 내일 미루려는 이유는? 단순한 컨디션 문제인가? 아니면 다른 문제인가?",
+        "positions": [
+          ["그가 오늘 약속을 미루자고 한 표면적 계기", "힘 정방향"],
+          ["실제 컨디션 난조나 피로·일정 부담이 미친 영향", "컵 7 정방향"],
+          ["컨디션 외에 작용한 다른 속사정이나 심리적 요인", "검 4 정방향"],
+          ["내일 만나기로 한 약속에 대한 상대방의 실제 의도와 태도", "여황제 정방향"]
+        ],
+        "extraCards": ["검 9 정방향", "완드 4 정방향", "검 2 정방향"]
+      },
+      "evaluationOnly": {
+        "actual": "목요일 회사 회식이 동료들의 일정 문제로 당일로 변경되어 약속을 다음 날로 연기",
+        "priorAssessment": "부분 적중 + 직접 원인 우선순위 오판",
+        "required": ["내부 상태와 외부 일정 가설의 실질 비교", "검 4·검 9만으로 직접 원인 확정 금지", "회사 회식·목요일을 카드에서 생성하지 않음"],
+        "notRequired": "외부 일정을 무조건 1순위로 출력하는 것"
+      }
+    },
+    {
+      "id": "synthetic-physical",
+      "modelInput": {
+        "type": "cause",
+        "question": "오늘 만남을 미룬 주된 이유는 무엇인가?",
+        "positions": [["직접 촉발 계기", "완드 9 정방향"], ["컨디션의 영향", "검 4 정방향"], ["컨디션 외 요인", "펜타클 2 역방향"], ["다음 만남 태도", "컵 2 정방향"]],
+        "extraCards": ["힘 역방향"]
+      },
+      "evaluationOnly": {"syntheticActual": "누적된 피로로 쉬어야 해서 연기", "expectedFamily": "A", "rationale": "촉발 계기와 컨디션 포지션의 회복 필요가 연결됨. 일정 부담은 부차 후보.", "forbidden": ["외부 일정 기본 우선", "구체 질병명 생성"]}
+    },
+    {
+      "id": "synthetic-avoidance",
+      "modelInput": {
+        "type": "cause",
+        "question": "오늘 만남을 미룬 주된 이유는 무엇인가?",
+        "positions": [["직접 촉발 계기", "컵 8 정방향"], ["컨디션의 영향", "펜타클 에이스 정방향"], ["컨디션 외 요인", "검 7 정방향"], ["다음 만남 태도", "컵 4 정방향"]],
+        "extraCards": ["검 2 정방향"]
+      },
+      "evaluationOnly": {"syntheticActual": "관계를 이어갈 마음이 약해져 직접 거절 대신 만남을 미룸", "expectedFamily": "F", "rationale": "원인 포지션의 이탈·우회가 핵심이고 향후 태도는 별도의 일관성 확인.", "forbidden": ["업무 핑계 생성", "다른 이성 확정", "감정 포지션만으로 원인 결정"]}
+    },
+    {
+      "id": "synthetic-work",
+      "modelInput": {
+        "type": "cause",
+        "question": "오늘 만남을 미룬 주된 이유는 무엇인가?",
+        "positions": [["직접 촉발 계기", "펜타클 8 정방향"], ["컨디션의 영향", "힘 정방향"], ["컨디션 외 요인", "펜타클 3 정방향"], ["다음 만남 태도", "컵 2 정방향"]],
+        "extraCards": ["펜타클 2 정방향"]
+      },
+      "evaluationOnly": {"syntheticActual": "협업 일정과 작업 책임 때문에 만남을 연기", "expectedFamily": "C/D", "rationale": "원인 포지션의 작업·협업과 추가 카드의 조정이 연결됨.", "forbidden": ["회사 회식 확정", "호감으로 연기 원인을 증명"]}
+    }
+  ],
+  "pairedChecks": ["보조 없음", "실제 제공된 보조 값 있음", "RWS와 반대 방향의 보조 해석 있음"],
+  "pairedAcceptance": "직접 원인 순위·결론 방향·단정 수준 유지. 20% 이하의 관련 보조 설명만 허용. 모델 출력 검증은 별도로 수행해야 함."
+}

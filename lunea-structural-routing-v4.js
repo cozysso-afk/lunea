@@ -68,7 +68,7 @@
     document.write('<script src="./lunea-timing-result-copy-v35.js?v=3501"><\/script>');
     document.write('<script src="./lunea-thai-tarot-bridge-v32.js?v=b6a4c650802c"><\/script>');
     document.write('<script src="./lunea-thai-range-v33.js?v=b6a4c650802c"><\/script>');
-    document.write('<script src="./lunea-final-prompt-priority-v1.js?v=b6a4c650802c"><\/script>');
+    document.write('<script src="./lunea-final-prompt-priority-v1.js?v=cause-rws-v1"><\/script>');
     document.write('<script src="./lunea-daily-lock-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-card-motion-timing-v7.js?v=701"><\/script>');
     document.write('<script src="./lunea-home-portal-v8.js?v=801"><\/script>');
@@ -138,7 +138,7 @@
     './lunea-timing-result-copy-v35.js?v=3501',
     './lunea-thai-tarot-bridge-v32.js?v=b6a4c650802c',
     './lunea-thai-range-v33.js?v=b6a4c650802c',
-    './lunea-final-prompt-priority-v1.js?v=b6a4c650802c',
+    './lunea-final-prompt-priority-v1.js?v=cause-rws-v1',
     './lunea-daily-lock-v1.js?v=101',
     './lunea-card-motion-timing-v7.js?v=701',
     './lunea-home-portal-v8.js?v=801',
