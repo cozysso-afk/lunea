@@ -1,0 +1,69 @@
+name: Card Back First Frame
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'lunea-ios-performance-v3.js'
+      - 'lunea-cardback-restore-v19.js'
+      - 'lunea-cardback-sector-v20.js'
+      - 'tests/cardback-restore-v19.test.mjs'
+      - 'tests/cardback-first-frame.test.mjs'
+      - 'tests/cardback-first-frame.e2e.mjs'
+      - '.github/workflows/cardback-first-frame.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: |
+          node --check lunea-ios-performance-v3.js
+          node --check lunea-cardback-restore-v19.js
+          node --check lunea-cardback-sector-v20.js
+          node --check tests/cardback-first-frame.test.mjs
+          node --check tests/cardback-first-frame.e2e.mjs
+      - name: First-frame contracts
+        run: |
+          node tests/cardback-restore-v19.test.mjs
+          node tests/cardback-first-frame.test.mjs
+
+  webkit:
+    needs: source
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install WebKit
+        run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local LUNEA
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-cardback-http.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-cardback-http.log
+          exit 1
+      - name: Verify first frame before V20 repair
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: node tests/cardback-first-frame.e2e.mjs
+      - name: Show server log
+        if: always()
+        run: cat /tmp/lunea-cardback-http.log || true
