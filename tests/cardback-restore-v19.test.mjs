@@ -186,7 +186,7 @@ cardsObserver.callback([{addedNodes:[wrapper]}]);
 const managed = back.querySelector(':scope > img');
 assert.ok(managed, 'managed card-back image missing');
 assert.notEqual(managed, legacyImg, 'legacy image with unknown error listeners must be replaced');
-assert.equal(managed.dataset.luneaCardbackManaged, '1911');
+assert.equal(managed.dataset.luneaCardbackManaged, '20261006-192');
 assert.ok(managed.classList.contains('lunea-category-cardback'));
 assert.match(managed.getAttribute('src') || '', /tarot_back_love\.jpeg/);
 assert.match(back.style.getPropertyValue('background-image'), /tarot_back_love\.jpeg/);
