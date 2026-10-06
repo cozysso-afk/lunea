@@ -336,6 +336,18 @@
     return GROUP_LABELS[c?.group] || 'TIMING ORACLE';
   }
 
+  function canonicalTimingAsset(c) {
+    const match = String(c?.id || '').match(/^LT-(\d{3})$/i);
+    const n = Number(match?.[1] || 0);
+    if (n >= 1 && n <= 60) {
+      return `./assets/timing-oracle/cards/LT-${String(n).padStart(3, '0')}.png`;
+    }
+    if (n >= 61 && n <= 67 && c?.filename) {
+      return `./assets/timing-oracle/cards/${encodeURIComponent(c.filename)}`;
+    }
+    return c?.filename ? `./${encodeURIComponent(c.filename)}` : '';
+  }
+
   function cardImg(c) {
     const resolver = window.LUNEA_RECOVERY_UI_V65?.artworkForCard;
     if (typeof resolver === 'function') {
@@ -344,7 +356,7 @@
         if (authoritative) return authoritative;
       } catch {}
     }
-    return `./${encodeURIComponent(c.filename)}`;
+    return canonicalTimingAsset(c);
   }
 
   function waitForTimingImage(img, expectedSrc) {
@@ -578,12 +590,27 @@
   function resetTimingUI() {
     timingRenderToken += 1;
     byId('timingFlip').classList.remove('show');
+    byId('timingFlip').dataset.luneaTimingFaceReady = '0';
     byId('timingInner').classList.remove('flipped');
     byId('timingResult').classList.remove('show');
+    byId('timingResult').textContent = '';
     byId('timingActions').classList.remove('show');
     byId('timingAIText').classList.remove('show');
     byId('timingAIText').textContent = '';
     byId('timingRefine').style.display = '';
+    const image = byId('timingImage');
+    if (image) {
+      image.removeAttribute('src');
+      image.removeAttribute('alt');
+      delete image.dataset.luneaTimingCardId;
+      delete image.dataset.luneaTimingSemantic;
+      delete image.dataset.luneaTimingArtworkV65;
+      delete image.dataset.luneaTimingAssetV16;
+    }
+    const ko = byId('timingLabelKo');
+    const en = byId('timingLabelEn');
+    if (ko) ko.textContent = '';
+    if (en) en.textContent = '';
   }
 
   function currentQuestionForModal() {
@@ -637,6 +664,9 @@
 
     const finalSrc = cardImg(card);
     const expectedSrc = new URL(finalSrc, document.baseURI).href;
+    image.dataset.luneaTimingCardId = card.id || '';
+    image.dataset.luneaTimingSemantic = String(Number(String(card.id || '').match(/(\d{3})/)?.[1] || 0) || '');
+    delete image.dataset.luneaTimingArtworkV65;
     image.src = finalSrc;
     image.alt = card.label_ko;
     byId('timingLabelKo').textContent = card.label_ko;
@@ -693,8 +723,11 @@
       cardsEl.insertAdjacentElement('afterend', el);
       el.addEventListener('click', () => openTimingModal('support', timingState.question));
     }
+    el.dataset.luneaTimingCardId = timingState.primary.id || '';
+    el.dataset.luneaTimingQuestion = timingState.question || '';
+    try { el.dataset.luneaReadingSessionId = String(window.LUNEA_READING_LIFECYCLE_V59?.currentSessionId?.() || ''); } catch {}
     el.innerHTML = `
-      <img src="${cardImg(timingState.primary)}" alt="">
+      <img src="${cardImg(timingState.primary)}" alt="" data-lunea-timing-card-id="${timingState.primary.id || ''}">
       <div class="txt"><small>LUNEA TIME SIGNAL</small>
         <b>${timingState.primary.label_ko}${timingState.refine ? ' · '+timingState.refine.label_ko : ''}</b>
         <span>${timingState.primary.meaning}${timingState.refine ? '<br>정밀화: '+timingState.refine.meaning : ''}</span>
@@ -712,6 +745,7 @@
     timingState.refine = null;
     timingState.aiText = '';
     timingState.analysis = null;
+    if (byId('timingFlip')) resetTimingUI();
     byId('luneaTimingInline')?.remove();
     const btn = byId('timingSupportBtn');
     if (btn) btn.textContent = '⏳ 시기 카드';
@@ -951,7 +985,13 @@ ${item.timing.refine.meaning}`;
     installPromptIntegration();
     installArchiveIntegration();
     registerAttachment();
-    console.info('✦ LUNEA TIMING ORACLE V1 loaded', {cards:TIMING_CARDS.length});
+    window.LUNEA_TIMING_ORACLE_V1 = Object.freeze({
+      version:'1.1',
+      resetSupport:clearSupportTiming,
+      canonicalTimingAsset,
+      current:() => ({mode:timingState.mode, question:timingState.question, primary:timingState.primary?.id || '', refine:timingState.refine?.id || ''})
+    });
+    console.info('✦ LUNEA TIMING ORACLE V1.1 loaded', {cards:TIMING_CARDS.length});
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});

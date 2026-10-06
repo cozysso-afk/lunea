@@ -3,7 +3,7 @@
 /*
   LUNEA TIMING UPLOADED ART GUARD V16
   ===================================
-  Confirms the uploaded 60-card artwork is the actual Timing Oracle face.
+  Confirms the uploaded 67-card artwork is the actual Timing Oracle face.
   V65 is the final semantic owner and maps all 60 cards to the canonical
   assets/timing-oracle/cards/LT-###.png set restored from the iPhone verify branch.
 */
@@ -12,14 +12,14 @@
   if (W.__LUNEA_TIMING_UPLOADED_ART_V16__) return;
   W.__LUNEA_TIMING_UPLOADED_ART_V16__ = true;
 
-  const RELEASE = '16.1';
-  const ASSET_VERSION = '20260905-2130';
+  const RELEASE = '16.2';
+  const ASSET_VERSION = '20261006-162';
 
   function loadCanonicalV65() {
     if (W.LUNEA_RECOVERY_UI_V65 || document.getElementById('luneaRecoveryUiV65Loader')) return;
     const script = document.createElement('script');
     script.id = 'luneaRecoveryUiV65Loader';
-    let build = '20260911-v65-lt-final60';
+    let build = '20261006-v65.2-lt-final67';
     try {
       const src = document.currentScript?.src || '';
       build = new URL(src, location.href).searchParams.get('v') || build;
@@ -30,58 +30,78 @@
     (document.head || document.documentElement).appendChild(script);
   }
 
+  const WEEKDAY_ASSETS = Object.freeze({
+    61:'timing_061_monday.jpg',
+    62:'timing_062_tuesday.jpg',
+    63:'timing_063_wednesday.jpg',
+    64:'timing_064_thursday.jpg',
+    65:'timing_065_friday.jpg',
+    66:'timing_066_saturday.jpg',
+    67:'timing_067_sunday.jpg'
+  });
+
   function assetPath(index) {
     const n = Number(index);
-    if (!Number.isInteger(n) || n < 1 || n > 60) return null;
-    const stem = `timing_${String(n).padStart(3, '0')}`;
-    const ext = n >= 41 && n <= 50 ? 'PNG' : 'jpg';
-    return `./${stem}.${ext}?v=${ASSET_VERSION}`;
+    if (!Number.isInteger(n) || n < 1 || n > 67) return null;
+    if (n <= 60) return `./assets/timing-oracle/cards/LT-${String(n).padStart(3, '0')}.png?v=${ASSET_VERSION}`;
+    const filename = WEEKDAY_ASSETS[n];
+    return filename ? `./assets/timing-oracle/cards/${filename}?v=${ASSET_VERSION}` : null;
   }
 
   function indexFrom(img) {
     if (!(img instanceof HTMLImageElement)) return null;
     const raw = `${img.getAttribute('src') || ''} ${img.currentSrc || ''} ${img.dataset?.luneaTimingAsset || ''}`;
-    const direct = raw.match(/timing_(\d{3})/i);
+    const direct = raw.match(/(?:LT-|timing_)(\d{3})/i);
     if (direct) {
       const n = Number(direct[1]);
-      if (n >= 1 && n <= 60) return n;
+      if (n >= 1 && n <= 67) return n;
     }
-    const dataN = Number(img.dataset?.luneaTimingAsset || 0);
-    return Number.isInteger(dataN) && dataN >= 1 && dataN <= 60 ? dataN : null;
-  }
-
-  function expectedPathname(n) {
-    const ext = n >= 41 && n <= 50 ? 'PNG' : 'jpg';
-    return `/timing_${String(n).padStart(3, '0')}.${ext}`.toLowerCase();
+    const dataId = String(img.dataset?.luneaTimingCardId || '').match(/LT-(\d{3})/i);
+    if (dataId) {
+      const n = Number(dataId[1]);
+      if (n >= 1 && n <= 67) return n;
+    }
+    const dataN = Number(img.dataset?.luneaTimingAsset || img.dataset?.luneaTimingAssetV16 || 0);
+    return Number.isInteger(dataN) && dataN >= 1 && dataN <= 67 ? dataN : null;
   }
 
   function hasCorrectAssetPath(img, n) {
     try {
       const raw = img.getAttribute('src') || '';
-      if (!raw) return false;
-      const url = new URL(raw, document.baseURI);
-      return url.pathname.toLowerCase().endsWith(expectedPathname(n));
+      const wanted = assetPath(n);
+      if (!raw || !wanted) return false;
+      const currentUrl = new URL(raw, document.baseURI);
+      const wantedUrl = new URL(wanted, document.baseURI);
+      return currentUrl.pathname.toLowerCase() === wantedUrl.pathname.toLowerCase();
     } catch { return false; }
   }
 
   function upgradeImage(img) {
-    // Once V65 has claimed a face, never send it back to the legacy root asset.
-    if (img?.dataset?.luneaTimingArtworkV65 === '1' || /\/assets\/timing-oracle\/cards\/LT-\d{3}\.png/i.test(img?.getAttribute?.('src') || '')) return true;
     const n = indexFrom(img);
     if (!n) return false;
     img.dataset.luneaTimingAssetV16 = String(n);
-    if (!hasCorrectAssetPath(img, n)) img.setAttribute('src', assetPath(n));
-    return true;
+    img.dataset.luneaTimingCardId = `LT-${String(n).padStart(3, '0')}`;
+    if (hasCorrectAssetPath(img, n)) return true;
+
+    // The modal reuses one <img>. A V65 marker from the previous card must not
+    // freeze a newly assigned legacy src on the old face.
+    if (img.dataset?.luneaTimingArtworkV65 === '1') {
+      delete img.dataset.luneaTimingArtworkV65;
+      delete img.dataset.luneaTimingSemantic;
+    }
+    const wanted = assetPath(n);
+    if (wanted) img.setAttribute('src', wanted);
+    return !!wanted;
   }
 
   function upgradeNode(node) {
     if (!(node instanceof Element)) return;
     if (node instanceof HTMLImageElement) upgradeImage(node);
-    node.querySelectorAll?.('img[src*="timing_" i],img[data-lunea-timing-asset]').forEach(upgradeImage);
+    node.querySelectorAll?.('img[src*="timing_" i],img[src*="/LT-" i],img[data-lunea-timing-asset],img[data-lunea-timing-card-id]').forEach(upgradeImage);
   }
 
   function upgradeAll() {
-    document.querySelectorAll('img[src*="timing_" i],img[data-lunea-timing-asset]').forEach(upgradeImage);
+    document.querySelectorAll('img[src*="timing_" i],img[src*="/LT-" i],img[data-lunea-timing-asset],img[data-lunea-timing-card-id]').forEach(upgradeImage);
   }
 
   function addStyle() {

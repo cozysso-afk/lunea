@@ -18,8 +18,10 @@ assert.match(backs, /DAILY:\s*'tarot_back_general\.jpeg'/);
 assert.match(backs, /GENERAL:\s*'tarot_back_general\.jpeg'/);
 assert.doesNotMatch(backs, /back_daily\.PNG|back_love\.PNG|back_stock\.PNG|back_career\.PNG/);
 
-assert.match(timing, /n >= 41 && n <= 50 \? 'PNG' : 'jpg'/);
-assert.match(timing, /n < 1 \|\| n > 60/);
+assert.match(timing, /n < 1 \|\| n > 67/);
+assert.match(timing, /assets\/timing-oracle\/cards\/LT-/);
+assert.match(timing, /WEEKDAY_ASSETS/);
+assert.match(timing, /delete img\.dataset\.luneaTimingArtworkV65/);
 assert.match(timing, /hasCorrectAssetPath/);
 assert.match(timing, /timing-card-label\{display:none!important\}/);
 
