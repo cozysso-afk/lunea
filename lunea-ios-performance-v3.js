@@ -173,9 +173,17 @@
       wrapper.dataset.index = String(i);
       wrapper.style.animationDelay = (i * 0.07) + 's';
 
-      let prefix = 'back_general';
+      let backSrc = 'tarot_back_general.jpeg';
       try {
-        if (typeof W.deckBackPrefix === 'function') prefix = W.deckBackPrefix();
+        if (typeof W.deckBackFile === 'function') {
+          backSrc = W.deckBackFile();
+        } else {
+          const category = String(state?.category || 'GENERAL').toUpperCase();
+          if (category === 'INTIMACY') backSrc = 'assets/intimacy-oracle/tarot_back_intimacy_final.png';
+          else if (category === 'LOVE') backSrc = 'tarot_back_love.jpeg';
+          else if (category === 'STOCK') backSrc = 'tarot_back_stock.jpeg';
+          else if (category === 'CAREER' || category === 'STUDY' || category === 'CAREER_STUDY' || category === 'CAREER&STUDY' || category === 'CAREER-STUDY') backSrc = 'tarot_back_career_study.jpeg';
+        }
       } catch {}
 
       const tarot = document.createElement('div');
@@ -186,11 +194,8 @@
       back.className = 'back';
 
       const backImg = document.createElement('img');
-      let backSrc = prefix + '.PNG';
-      try {
-        if (W.__LUNEA_INTIMACY_ACTIVE__ || document.body?.classList?.contains('lunea-intimacy-reading') || String(state?.category || '').toUpperCase() === 'INTIMACY') backSrc = './assets/intimacy-oracle/tarot_back_intimacy_final.png';
-      } catch {}
       backImg.src = backSrc;
+      backImg.dataset.luneaCardbackFirstFrame = '1';
       backImg.alt = '';
       tuneImg(backImg);
       backImg.addEventListener('error', () => {
