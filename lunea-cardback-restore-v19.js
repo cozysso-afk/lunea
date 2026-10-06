@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA CARD BACK RESTORE V19.1
+  LUNEA CARD BACK RESTORE V19.2
   =============================
   Keeps category-specific tarot backs visible on dynamically created/restored
   cards, especially on iOS/PWA where an image request can fail transiently.
@@ -24,14 +24,16 @@
   // Keep the old guard too so a stale V19 copy cannot install a second observer.
   W.__LUNEA_CARD_BACK_RESTORE_V19__ = true;
 
-  const RELEASE = '19.1';
-  const ASSET_KEY = '1911';
+  const RELEASE = '19.2';
+  const ASSET_KEY = '20261006-192';
   const FILES = {
-    DAILY: 'back_daily.PNG',
-    LOVE: 'back_love.PNG',
-    STOCK: 'back_stock.PNG',
-    CAREER: 'back_career.PNG',
-    GENERAL: 'back_general.PNG',
+    DAILY: 'tarot_back_general.jpeg',
+    GENERAL: 'tarot_back_general.jpeg',
+    LOVE: 'tarot_back_love.jpeg',
+    STOCK: 'tarot_back_stock.jpeg',
+    CAREER: 'tarot_back_career_study.jpeg',
+    STUDY: 'tarot_back_career_study.jpeg',
+    CAREER_STUDY: 'tarot_back_career_study.jpeg',
     INTIMACY: 'assets/intimacy-oracle/tarot_back_intimacy_final.png'
   };
 
@@ -226,7 +228,7 @@
       files: {...FILES}
     };
 
-    console.info('🌙 LUNEA category card backs restored (V19.1)');
+    console.info('🌙 LUNEA category card backs restored (V19.2)');
   }
 
   if (document.readyState === 'loading') {
