@@ -34,13 +34,13 @@ jobs:
           grep -Fq "Horary stays on the direct /v1/horary fast path" /tmp/lunea-astro-request-v1.js
           echo "Published request owner: Horary direct fast path confirmed"
 
-      - name: Call production V2 Horary once in isolation
+      - name: Call production V2 Horary three times
         shell: bash
         run: |
           set -euo pipefail
           cat >/tmp/horary-payload.json <<'JSON'
           {
-            "question_text": "운영 Horary isolated latency smoke",
+            "question_text": "운영 Horary repeated latency smoke",
             "question_iso": "2026-10-06T19:30:00+09:00",
             "topic": "general",
             "timezone": "Asia/Seoul",
@@ -48,18 +48,25 @@ jobs:
           }
           JSON
 
-          METRICS="$(curl -sS             -o /tmp/horary-response.json             -w '%{http_code} %{time_namelookup} %{time_connect} %{time_appconnect} %{time_starttransfer} %{time_total}'             -X POST 'https://lunea-astro-api-v2.onrender.com/v1/horary'             -H 'Content-Type: application/json'             -H 'Accept: application/json'             --data-binary @/tmp/horary-payload.json)"
+          for N in 1 2 3; do
+            METRICS="$(curl -sS \
+              -o "/tmp/horary-response-$N.json" \
+              -w '%{http_code} %{time_namelookup} %{time_connect} %{time_appconnect} %{time_starttransfer} %{time_total}' \
+              -X POST 'https://lunea-astro-api-v2.onrender.com/v1/horary' \
+              -H 'Content-Type: application/json' \
+              -H 'Accept: application/json' \
+              --data-binary @/tmp/horary-payload.json)"
 
-          read -r CODE DNS CONNECT TLS TTFB TOTAL <<<"$METRICS"
-          echo "isolated_v2 http=$CODE dns=$DNS connect=$CONNECT tls=$TLS ttfb=$TTFB total=$TOTAL"
-          test "$CODE" = "200"
+            read -r CODE DNS CONNECT TLS TTFB TOTAL <<<"$METRICS"
+            echo "repeat_v2 run=$N http=$CODE dns=$DNS connect=$CONNECT tls=$TLS ttfb=$TTFB total=$TOTAL"
+            test "$CODE" = "200"
 
-          python - <<'PY'
-          import json
-          with open("/tmp/horary-response.json", encoding="utf-8") as f:
+            FILE="/tmp/horary-response-$N.json" python - <<'PY'
+          import json, os
+          with open(os.environ["FILE"], encoding="utf-8") as f:
               data=json.load(f)
-          print("schema=", data.get("schema"))
-          print("horary_engine=", (data.get("meta") or {}).get("horary_engine"))
           assert data.get("schema") == "LUNEA_HORARY_V1"
           assert (data.get("meta") or {}).get("horary_engine") == "LUNEA_HORARY_ENGINE_V5_MOIETY_SECT"
+          print("schema=", data.get("schema"), "horary_engine=", (data.get("meta") or {}).get("horary_engine"))
           PY
+          done
