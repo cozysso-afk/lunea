@@ -3,7 +3,7 @@
 /*
   LUNEA TIMING UPLOADED ART GUARD V16
   ===================================
-  Confirms the uploaded 60-card artwork is the actual Timing Oracle face.
+  Confirms the uploaded 67-card artwork is the actual Timing Oracle face.
   V65 is the final semantic owner and maps all 60 cards to the canonical
   assets/timing-oracle/cards/LT-###.png set restored from the iPhone verify branch.
 */
@@ -19,7 +19,7 @@
     if (W.LUNEA_RECOVERY_UI_V65 || document.getElementById('luneaRecoveryUiV65Loader')) return;
     const script = document.createElement('script');
     script.id = 'luneaRecoveryUiV65Loader';
-    let build = '20260911-v65-lt-final60';
+    let build = '20261006-v65.2-lt-final67';
     try {
       const src = document.currentScript?.src || '';
       build = new URL(src, location.href).searchParams.get('v') || build;
