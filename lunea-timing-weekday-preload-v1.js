@@ -6,7 +6,7 @@
   if (W.__LUNEA_TIMING_WEEKDAYS_PRELOAD_V1__) return;
   W.__LUNEA_TIMING_WEEKDAYS_PRELOAD_V1__ = true;
 
-  const RELEASE = '20260922-weekday-v1';
+  const RELEASE = '20261006-weekday-v2';
   const WEEKDAY_CARDS = Object.freeze([
     {id:'LT-061',group:'weekday',label_ko:'월요일',label_en:'Monday',meaning:'현재 시점에서 가장 가까운 월요일 전후의 시기 창구',filename:'timing_061_monday.jpg',weight:1.0,visual_motif:'초승달과 새로 떠오르는 작은 별',relative_type:'weekday',weekday:1,refine_group:'weekday'},
     {id:'LT-062',group:'weekday',label_ko:'화요일',label_en:'Tuesday',meaning:'현재 시점에서 가장 가까운 화요일 전후의 시기 창구',filename:'timing_062_tuesday.jpg',weight:1.0,visual_motif:'앞으로 뻗는 밝은 별빛의 궤적',relative_type:'weekday',weekday:2,refine_group:'weekday'},
