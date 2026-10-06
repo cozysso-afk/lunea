@@ -9,7 +9,7 @@ try {
   await page.goto(url, {waitUntil:'domcontentloaded'});
   await page.waitForFunction(() =>
     !!window.LUNEA_TIMING_ORACLE_V1 &&
-    !!window.LUNEA_TIMING_IMAGE_ASSETS_V16 &&
+    !!window.LUNEA_TIMING_UPLOADED_ART_V16 &&
     !!window.LUNEA_RECOVERY_UI_V65 &&
     !!window.LUNEA_READING_BOUNDARY_V31,
     null,
