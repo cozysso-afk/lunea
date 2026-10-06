@@ -34,7 +34,7 @@ jobs:
           grep -Fq "Horary stays on the direct /v1/horary fast path" /tmp/lunea-astro-request-v1.js
           echo "Published request owner: Horary direct fast path confirmed"
 
-      - name: Call production V2 Horary directly and measure latency
+      - name: Call production V2 Horary directly three times
         shell: bash
         run: |
           set -euo pipefail
@@ -48,21 +48,25 @@ jobs:
           }
           JSON
 
-          METRICS="$(curl -sS --retry 2 --retry-delay 2             -o /tmp/horary-response.json             -w '%{http_code} %{time_total}'             -X POST 'https://lunea-astro-api-v2.onrender.com/v1/horary'             -H 'Content-Type: application/json'             -H 'Accept: application/json'             --data-binary @/tmp/horary-payload.json)"
+          for N in 1 2 3; do
+            METRICS="$(curl -sS --retry 2 --retry-delay 2 \
+              -o "/tmp/horary-response-$N.json" \
+              -w '%{http_code} %{time_namelookup} %{time_connect} %{time_appconnect} %{time_starttransfer} %{time_total}' \
+              -X POST 'https://lunea-astro-api-v2.onrender.com/v1/horary' \
+              -H 'Content-Type: application/json' \
+              -H 'Accept: application/json' \
+              --data-binary @/tmp/horary-payload.json)"
 
-          CODE="${METRICS%% *}"
-          SECONDS="${METRICS##* }"
-          echo "horary_http_code=$CODE"
-          echo "horary_time_total_seconds=$SECONDS"
+            read -r CODE DNS CONNECT TLS TTFB TOTAL <<<"$METRICS"
+            echo "run=$N http=$CODE dns=$DNS connect=$CONNECT tls=$TLS ttfb=$TTFB total=$TOTAL"
+            test "$CODE" = "200"
 
-          test "$CODE" = "200"
-
-          python - <<'PY'
-          import json
-          with open('/tmp/horary-response.json', encoding='utf-8') as f:
+            FILE="/tmp/horary-response-$N.json" python - <<'PY'
+          import json, os
+          with open(os.environ["FILE"], encoding="utf-8") as f:
               data=json.load(f)
-          print("schema=", data.get("schema"))
-          print("horary_engine=", (data.get("meta") or {}).get("horary_engine"))
           assert data.get("schema") == "LUNEA_HORARY_V1", data.get("schema")
           assert (data.get("meta") or {}).get("horary_engine") == "LUNEA_HORARY_ENGINE_V5_MOIETY_SECT", (data.get("meta") or {}).get("horary_engine")
+          print("schema=", data.get("schema"), "horary_engine=", (data.get("meta") or {}).get("horary_engine"))
           PY
+          done
