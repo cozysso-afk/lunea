@@ -4,13 +4,14 @@ import fs from 'node:fs';
 
 const source = fs.readFileSync(new URL('../lunea-astro-request-v1.js', import.meta.url), 'utf8');
 
-test('long Astro calculations use resumable server jobs', () => {
+test('long Astro calculations use resumable jobs while Horary stays direct', () => {
   assert.match(source, /\/v1\/jobs\/astro/);
   assert.match(source, /LUNEA_ASTRO_PENDING_JOB_V1/);
   assert.match(source, /endpointKind/);
-  assert.match(source, /horary/);
-  assert.match(source, /transit/);
-  assert.match(source, /return/);
+  assert.doesNotMatch(source, /return 'horary'/);
+  assert.match(source, /return 'transit'/);
+  assert.match(source, /return 'return'/);
+  assert.match(source, /Horary stays on the direct \/v1\/horary fast path/);
 });
 
 test('pending jobs survive iOS suspension and are polled after resume', () => {
