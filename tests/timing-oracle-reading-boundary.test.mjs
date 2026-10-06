@@ -32,10 +32,12 @@ function node(id) {
     children: [1, 2],
     classList: classList(['show', 'flipped']),
     attrs: {},
+    dataset: {},
     onclick: null,
     remove() { this.removed = true; },
     replaceChildren() { this.children = []; },
     setAttribute(k, v) { this.attrs[k] = v; },
+    removeAttribute(k) { delete this.attrs[k]; },
     closest(selector) { return selector === 'button' ? this : null; }
   };
 }
@@ -44,7 +46,7 @@ const ids = new Map();
 for (const id of [
   'luneaTimingInline', 'luneaTimingABInline', 'luneaTimingABCards',
   'luneaTimingABPanel', 'luneaTimingABAI', 'timingFlip', 'timingInner',
-  'timingResult', 'timingActions', 'timingAIText', 'spreadQuestion',
+  'timingResult', 'timingActions', 'timingAIText', 'timingImage', 'timingLabelKo', 'timingLabelEn', 'spreadQuestion',
   'timingSupportBtn', 'timingOverlay', 'drawBtn', 'dailyBtn',
   'luneaDraftRestore', 'retry'
 ]) ids.set(id, node(id));
@@ -93,9 +95,13 @@ const document = {
 };
 
 let starts = 0;
+let coreResetCalls = 0;
+let artworkCancelCalls = 0;
 const originalStartSpread = function startSpread() { starts += 1; return 'started'; };
 const window = {
   LUNEA_TIMING_AB_LAST: {A:{id:'LT-001'}, B:{id:'LT-002'}},
+  LUNEA_TIMING_ORACLE_V1: {resetSupport(){ coreResetCalls += 1; }},
+  LUNEA_RECOVERY_UI_V65: {cancelPending(){ artworkCancelCalls += 1; }},
   startSpread: originalStartSpread
 };
 window.window = window;
@@ -114,10 +120,10 @@ vm.runInNewContext(source, {
 });
 
 const api = window.LUNEA_READING_BOUNDARY_V31;
-assert.equal(api?.version, 31.2, 'V31.2 reset API missing');
-assert.equal(window.startSpread, originalStartSpread, 'V31.2 must never wrap or replace startSpread');
+assert.equal(api?.version, 31.3, 'V31.3 reset API missing');
+assert.equal(window.startSpread, originalStartSpread, 'V31.3 must never wrap or replace startSpread');
 assert.equal(starts, 0, 'loading boundary cleanup must not start a reading');
-assert.equal(supportHandlerCalls, 0, 'V31.2 must never call the Timing support onclick handler');
+assert.equal(supportHandlerCalls, 0, 'V31.3 must never call the Timing support onclick handler');
 
 function seedStaleTiming(label='⌛ 오늘 밤') {
   ids.get('luneaTimingInline').removed = false;
@@ -128,6 +134,11 @@ function seedStaleTiming(label='⌛ 오늘 밤') {
   ids.get('timingActions').classList.add('show');
   ids.get('timingAIText').textContent = '이전 질문 AI 시기 해석';
   ids.get('luneaTimingABAI').textContent = '이전 A/B 시기 해석';
+  ids.get('timingImage').attrs.src = './timing_004_tonight.png';
+  ids.get('timingImage').dataset.luneaTimingCardId = 'LT-004';
+  ids.get('timingImage').dataset.luneaTimingArtworkV65 = '1';
+  ids.get('timingLabelKo').textContent = '오늘 밤';
+  ids.get('timingLabelEn').textContent = 'Tonight';
   ids.get('timingSupportBtn').textContent = label;
   ids.get('timingOverlay').classList.add('show');
   body.classList.add('modal-open');
@@ -144,6 +155,11 @@ function assertVisualReset(reason) {
   assert.equal(ids.get('timingActions').classList.contains('show'), false, `${reason}: old Timing actions must be hidden`);
   assert.equal(ids.get('timingAIText').textContent, '', `${reason}: old Timing AI text must be cleared`);
   assert.equal(ids.get('luneaTimingABAI').textContent, '', `${reason}: old A/B Timing AI text must be cleared`);
+  assert.equal(ids.get('timingImage').attrs.src, undefined, `${reason}: old Timing image src must be cleared`);
+  assert.equal(ids.get('timingImage').dataset.luneaTimingCardId, undefined, `${reason}: old Timing card id must be cleared`);
+  assert.equal(ids.get('timingImage').dataset.luneaTimingArtworkV65, undefined, `${reason}: stale V65 artwork marker must be cleared`);
+  assert.equal(ids.get('timingLabelKo').textContent, '', `${reason}: old Korean Timing label must be cleared`);
+  assert.equal(ids.get('timingLabelEn').textContent, '', `${reason}: old English Timing label must be cleared`);
   assert.equal(ids.get('timingSupportBtn').textContent, '⏳ 시기 카드', `${reason}: support label must be reset`);
   assert.equal(ids.get('timingOverlay').classList.contains('show'), false, `${reason}: Timing overlay must be closed`);
   assert.equal(supportHandlerCalls, 0, `${reason}: cleanup must not invoke Timing draw/open handler`);
@@ -153,6 +169,8 @@ api.resetTimingBoundary('unit-test');
 assertVisualReset('direct API');
 assert.equal(documentElement.dataset.luneaTimingBoundary, 'unit-test');
 assert.equal(body.classList.contains('modal-open'), false, 'modal lock must clear when no overlay remains visible');
+assert.equal(coreResetCalls, 1, 'direct reset must clear Timing core private support state');
+assert.equal(artworkCancelCalls, 1, 'direct reset must cancel previous-reading artwork sync');
 
 assert.equal(typeof captureClick, 'function', 'capture click safety net missing');
 for (const id of ['drawBtn','dailyBtn','luneaDraftRestore','retry']) {
@@ -161,6 +179,13 @@ for (const id of ['drawBtn','dailyBtn','luneaDraftRestore','retry']) {
   assertVisualReset(id);
   assert.equal(documentElement.dataset.luneaTimingBoundary, 'direct-reading-entry');
 }
+
+const loveReadingItem = node('loveReadingItem');
+loveReadingItem.closest = selector => selector === '.reading-item[data-cat]' ? loveReadingItem : null;
+seedStaleTiming();
+captureClick({target: loveReadingItem});
+assertVisualReset('INTIMACY -> LOVE reading item');
+assert.equal(documentElement.dataset.luneaTimingBoundary, 'reading-item-entry');
 
 seedStaleTiming();
 ids.get('spreadQuestion').textContent = '“완전히 다른 새 질문”';
@@ -174,18 +199,18 @@ assert.equal(out, 'started');
 assert.equal(starts, 1, 'canonical startSpread must remain independently callable exactly once');
 assert.equal(supportHandlerCalls, 0, 'canonical start must not be intercepted by V31.2');
 
-assert.doesNotMatch(executable, /timingSupportBtn[^\n]*onclick|onclick\.call/, 'V31.2 executable code must not use the Timing button as a closure-reset back door');
-assert.doesNotMatch(executable, /W\.startSpread\s*=|setInterval|queueMicrotask|requestAnimationFrame/, 'V31.2 executable code must remain synchronous and non-wrapping');
+assert.doesNotMatch(executable, /timingSupportBtn[^\n]*onclick|onclick\.call/, 'V31.3 executable code must not use the Timing button as a closure-reset back door');
+assert.doesNotMatch(executable, /W\.startSpread\s*=|setInterval|queueMicrotask|requestAnimationFrame/, 'V31.3 executable code must remain synchronous and non-wrapping');
 
-const matches = loader.match(/lunea-reading-boundary-reset-v31\.js\?v=3102/g) || [];
-assert.equal(matches.length, 2, 'V31.2 boundary reset must load in parsing and sequential loader paths');
-assert.doesNotMatch(loader, /lunea-reading-boundary-reset-v31\.js\?v=3101/, 'stale V31 cache key must be inactive');
+const matches = loader.match(/lunea-reading-boundary-reset-v31\\.js\\?v=3103/g) || [];
+assert.equal(matches.length, 2, 'V31.3 boundary reset must load in parsing and sequential loader paths');
+assert.doesNotMatch(loader, /lunea-reading-boundary-reset-v31\\.js\\?v=3102/, 'stale V31 cache key must be inactive');
 assert.match(loader, /lunea-general-order-v30-5\.js\?v=(?:3005|[0-9a-f]{12})/, 'final GENERAL order asset missing');
 assert.match(loader, /lunea-boot-reveal-v29\.js\?v=(?:2902|[0-9a-f]{12})/, 'boot reveal asset missing');
 const lastGeneral = loader.lastIndexOf('lunea-general-order-v30-5.js?v=');
-const lastBoundary = loader.lastIndexOf('lunea-reading-boundary-reset-v31.js?v=3102');
+const lastBoundary = loader.lastIndexOf('lunea-reading-boundary-reset-v31.js?v=3103');
 const lastReveal = loader.lastIndexOf('lunea-boot-reveal-v29.js?v=');
-assert.ok(lastBoundary > lastGeneral, 'V31.2 boundary reset must load after final spread/order patches');
-assert.ok(lastReveal > lastBoundary, 'V31.2 boundary reset must load before boot reveal');
+assert.ok(lastBoundary > lastGeneral, 'V31.3 boundary reset must load after final spread/order patches');
+assert.ok(lastReveal > lastBoundary, 'V31.3 boundary reset must load before boot reveal');
 
-console.log('Timing Oracle reading-boundary V31.2 synchronous regression tests: PASS');
+console.log('Timing Oracle reading-boundary V31.3 session-safe regression tests: PASS');
