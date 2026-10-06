@@ -143,6 +143,39 @@
     return found.slice(0,7);
   }
 
+  // Extract the explained event, not the vocabulary of a proposed cause.
+  // Deliberately conservative: unknown sentence structures retain legacy routing.
+  function causeQuestionFrame(input, explicitKind){
+    const q=normalizeQuestion(input);
+    const causal=explicitKind ? explicitKind==='cause' : /왜|이유|원인|때문|탓|문제인가|문제일까|(?:피곤|아파|바빠|싫어).{0,3}서/.test(q);
+    const clauses=q.split(/[?!。;；]/).map(s=>s.trim()).filter(Boolean);
+    const patterns=[
+      {domain:'social', re:/(?:약속|만남|데이트).{0,25}?(미루|미룬|미뤘|연기|취소|거절)/},
+      {domain:'love', re:/(?:연락|답장|카톡).{0,18}?(안\s*하|안\s*오|없|늦|끊|피하|미루|미룬)/},
+      {domain:'career', re:/(?:업무|작업|납기|보고|회의|면접).{0,20}?(늦|미루|미룬|미뤘|연기|취소|중단|막히|지연)/},
+      {domain:'project', re:/(?:프로젝트|서비스|출시|사업).{0,20}?(늦|미루|미룬|미뤘|연기|취소|중단|막히|지연)/}
+    ];
+    let event=null;
+    if(causal) for(const clause of clauses){
+      for(const item of patterns){
+        const m=clause.match(item.re);
+        // A conditional candidate ("약속을 미뤄서 몸이 피곤한가") is not the target.
+        if(m && !/^(?:서|서인지|서 그런지|서 그런가)/.test(clause.slice(m.index+m[0].length))){
+          event={event:m[0],verb:m[1],domain:item.domain}; break;
+        }
+      }
+      if(event)break;
+    }
+    const symptomTarget=/(?:몸|컨디션|건강|수면|피로).{0,12}(?:왜|이유|원인)|왜.{0,12}(?:피곤|아프|잠이|피로)|(?:몸이|컨디션이).{0,10}(?:피곤|나쁘|안\s*좋)/.test(q);
+    // When both are independently asked, keep both axes instead of hiding health.
+    const separateHealth=event && clauses.some(c=>!patterns.some(p=>p.re.test(c)) && /왜|이유|원인/.test(c) && /몸|피곤|아프|컨디션|수면/.test(c));
+    return {question:q,kind:explicitKind||(causal?'cause':null),event:event?.event||null,
+      verb:event?.verb||null,domain:event?.domain||null,
+      healthRole:event&&!separateHealth?'candidate':symptomTarget?'target':'unresolved',
+      compound:!!separateHealth};
+  }
+  W.LUNEA_CAUSE_QUESTION_V1={analyze:causeQuestionFrame};
+
   function detectDomains(q){
     const d=[];
     const add=(x)=>{if(!d.includes(x))d.push(x)};
@@ -159,8 +192,15 @@
     if(/이사|주거|전세|월세|아파트|집\s*옮|집\s*계약|주택\s*계약|부동산|매물/i.test(q))add('move');
     if(/여행|휴가|출장|출국|해외/i.test(q))add('travel');
     if(/살까|구매|결제|사도|바꿀까/i.test(q))add('purchase');
-    if(/건강|컨디션|피로|수면|회복|몸상태|스트레스/i.test(q))add('wellbeing');
+    if(/건강|컨디션|피로|수면|회복|몸상태|스트레스|몸이.{0,10}(?:피곤|아프)|왜.{0,12}피곤/i.test(q))add('wellbeing');
     if(/내\s*(심리|마음|무의식)|나는\s*왜|내가\s*왜|자존감|내가.{0,12}(방향|집중|만족|원하는\s*삶)/i.test(q))add('self');
+    const frame=causeQuestionFrame(q);
+    if(frame.domain && frame.healthRole==='candidate'){
+      const health=d.indexOf('wellbeing'); if(health>=0)d.splice(health,1);
+      // Retain other topics as context, but route by the event being explained.
+      const existing=d.indexOf(frame.domain); if(existing>=0)d.splice(existing,1);
+      d.unshift(frame.domain);
+    }
     if(!d.length)add('general');
     return d;
   }
@@ -179,7 +219,8 @@
     const timeWindow=/(이번\s*(주|달)|오늘|내일|올해|내년|이번달|이번\s*달|\d+\s*(일|주|개월)\s*(안|내))/i.test(q);
     const choice=/(할까\s*말까|하는\s*게\s*(나을|좋을)|나을까|낫나|어느\s*쪽|둘\s*중|vs\b|A\s*\/\s*B|선택|비교|남을까|옮길까|살까\s*말까|살까.{0,14}기다릴까|지금\s*살까|계약해도\s*(괜찮|될)|계약할까|유지해야\s*할까|유지할까|끊을까|계속.{0,8}유지)/i.test(q);
     const contactDecision=/(내가|제가).{0,12}(먼저\s*)?연락.{0,8}(해도|할까|하는\s*게|보내도|해볼)/i.test(q);
-    const cause=/(왜|이유|원인|의도|무슨\s*뜻|왜\s*그랬)/i.test(q);
+    const causeFrame=causeQuestionFrame(q);
+    const cause=causeFrame.kind==='cause'||/(왜|이유|원인|의도|무슨\s*뜻|왜\s*그랬|때문|탓)/i.test(q);
     const outcome=/(결과|어떻게\s*될|앞으로|성공할|합격할|가능성|전망|반응.{0,6}(어떨|어떤)|만족도|잘\s*될까)/i.test(q);
     const advice=/(어떻게\s*해야|뭘\s*해야|조언|주의|유의|대응|전략)/i.test(q);
     const conditionalReaction=/(봤다면|보았다면|들었다면|읽었다면|확인했다면|그렇다면).*(생각|느낌|감정|반응|인상)/i.test(q);
@@ -216,6 +257,7 @@
     else if(thirdParty)kind='third_party';
     else if(thoughtFrequency)kind='thought_frequency';
     else if(feelingActionGap)kind='feeling_action_gap';
+    else if(causeFrame.event && !causeFrame.compound && !choice)kind='cause';
     else if(choice)kind='choice';
     else if(reunion&&timing)kind='reunion_timing';
     else if(action&&timing)kind='action_timing';
@@ -230,7 +272,7 @@
     const compound = /[\/；;]/.test(q) && new Set(intentTags).size>=2;
     if(compound && !['observation','signal_intent','new_connection','perception'].includes(kind)) kind='compound';
 
-    return {question:q,kind,intentTags,domains,targets,slots,relation:relationContext(q),conditionalReaction,
+    return {question:q,kind,intentTags,domains,targets,slots,causeFrame,relation:relationContext(q),conditionalReaction,
       observation,perception,choice,contactDecision,reunion,action,timing,timeWindow,feeling,cause,outcome,advice,conditionalReaction,feelingActionGap,thirdParty,thoughtFrequency,signalIntent,newConnection};
   }
 
