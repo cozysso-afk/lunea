@@ -1,7 +1,9 @@
 'use strict';
 // Resumable Astro request owner.
-// Transit / Return / Horary are submitted as server jobs and then polled so iOS can
-// suspend the PWA without killing calculations during Render cold starts.
+// Transit / Return are submitted as server jobs and then polled so iOS can
+// suspend the PWA without killing long calculations during Render cold starts.
+// Horary stays on the direct /v1/horary fast path so interactive results are not
+// delayed by job creation, FULL-service routing, and polling.
 (() => {
   const W = window;
   if (W.LUNEA_ASTRO_REQUEST_V1) return;
@@ -19,7 +21,6 @@
 
   function endpointKind(url) {
     const value = String(url || '');
-    if (/\/v1\/horary(?:\?|$)/.test(value)) return 'horary';
     if (/\/v1\/transits\/scan(?:\?|$)/.test(value)) return 'transit';
     if (/\/v1\/returns\/context(?:\?|$)/.test(value)) return 'return';
     return '';
