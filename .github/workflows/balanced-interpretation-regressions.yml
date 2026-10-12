@@ -33,8 +33,8 @@ jobs:
           node-version: '22'
       - name: Install validated mobile browser
         run: |
-          npm install --no-save playwright@1.64.0
-          npx playwright install --with-deps webkit
+          timeout 180 npm install --no-save --no-audit --no-fund --fetch-retries=1 --fetch-timeout=60000 playwright@1.64.0
+          timeout 240 npx playwright install --with-deps webkit
       - name: Start branch-local server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-balanced-http.log 2>&1 &
