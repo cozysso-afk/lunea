@@ -80,8 +80,9 @@ try {
   await page.evaluate(async () => {
     const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
     const tiles = ['meihua','thai','lenormand','horary'].map(key =>
-      key === 'thai' ? grid.querySelector('.lunea-thai-home-tile') : grid.querySelector(`[data-key="${key}"]`)
+      grid.querySelector(`[data-key="${key}"]`)
     );
+    if (tiles.some(tile => !tile)) throw new Error('Expected secondary tile missing before scramble');
     tiles.forEach(tile => tile.remove());
     window.LUNEA_HOME_LAYOUT_V36.requestLayout();
     for (const tile of tiles) {
