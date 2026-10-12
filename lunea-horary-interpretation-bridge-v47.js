@@ -1,26 +1,23 @@
 'use strict';
 
 /* LUNEA HORARY INTERPRETATION BRIDGE V47
-   Rewrites only Gemini requests that are already Horary interpretation calls.
-   Tarot / Daily / other AI requests are untouched. */
+   Rewrites only Gemini requests carrying the dedicated Horary action provenance.
+   Tarot / Daily / other AI requests (including Tarot+Horary support text) are untouched. */
 (() => {
   const W = window;
   if (W.__LUNEA_HORARY_INTERPRETATION_BRIDGE_V47__ || typeof W.fetch !== 'function') return;
   W.__LUNEA_HORARY_INTERPRETATION_BRIDGE_V47__ = true;
 
   const priorFetch = W.fetch.bind(W);
-  const HORARY_MARKERS = [
-    '[HORARY V1 · 질문시각 점성술 계산 결과]',
-    '[HORARY V1 · 계산 결과]',
-    '[HORARY ENGINE RESULT · AUTHORITATIVE]',
-    'LUNEA의 전통 Horary',
-    'LUNEA HORARY INTERPRETATION ENGINE V2'
-  ];
+  // V44 (and V49 via V44.aiPrompt()) puts this provenance only on the
+  // dedicated Horary action. Legacy [HORARY V1] is also valid Tarot support
+  // text, so it must never be used to take ownership of a request.
+  const HORARY_AI_REQUEST_MARKER = '[LUNEA HORARY AI REQUEST V47]';
 
   const QUALITY_LOCK = `
 
 [FINAL VERDICT LOCK · V2 QA]
-- 엔진에 authoritative/staged verdict가 있으면 최종 결론의 방향을 고정한다. NO/부정/근거부족 판정을 reception·dignity·Moon 분위기만으로 YES/긍정으로 올리지 마라.
+- 엔진의 authoritative/staged verdict가 명시적으로 YES/긍정 또는 NO/부정이면 최종 한줄 결론을 반대 방향의 강한 단정으로 뒤집지 마라. YES/긍정 판정을 경고·Moon 분위기만으로 NO/불성사로 내리지 말고, NO/부정/근거부족 판정을 reception·dignity·Moon 분위기만으로 YES/긍정으로 올리지 마라. D/NONE/CONDITIONAL/MIXED 같은 비방향 또는 조건부 판정은 자동 YES/NO로 고정하지 말고 실제 제한과 불확실성을 함께 쓴다.
 - direct perfection이 없고 derived-event perfection만 유효하면 그 파생 사건만 긍정할 수 있다. 예: 연락 사건 근거를 재회·관계 성사 근거로 확대하지 마라.
 - 엔진에 confirmed obstruction: none 또는 동등한 무방해 판정이 있으면 방해 행성·prohibition·frustration을 새로 만들지 마라.
 - out-of-orb / geometric-only / nearest aspect는 applying perfection이나 사건 성사 근거로 호칭하지 마라. currentWithinOrb/currentlyWithinOrb가 false이면 “적용각”이라는 표현도 쓰지 말고 “기하학적으로 접근 중”으로만 설명한다.
@@ -59,8 +56,13 @@
   }
 
   function isHoraryPrompt(text) {
-    const value = String(text || '');
-    return HORARY_MARKERS.some(marker => value.includes(marker));
+    return /^\[LUNEA HORARY AI REQUEST V47\](?:\r?\n|$)/.test(String(text || '').trimStart());
+  }
+
+  function withHoraryProvenance(prompt) {
+    const value = String(prompt || '').trim();
+    if (!value || isHoraryPrompt(value)) return value;
+    return `${HORARY_AI_REQUEST_MARKER}\n${value}`;
   }
 
   function validatorAliasBlock(prompt) {
@@ -109,7 +111,7 @@
       const canonical = original.includes('LUNEA HORARY INTERPRETATION ENGINE V2')
         ? original
         : String(W.LUNEA_HORARY_INTERPRETATION_V47?.aiPrompt?.() || '').trim();
-      const prompt = qualityLockedPrompt(canonical);
+      const prompt = withHoraryProvenance(qualityLockedPrompt(canonical));
       if (!prompt || prompt === original) return init;
 
       const next = typeof structuredClone === 'function'
@@ -173,16 +175,18 @@
   }
 
   W.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47 = Object.freeze({
-    version:'47.4',
+    version:'47.5',
     rewrite,
     isHoraryPrompt,
+    withHoraryProvenance,
     qualityLockedPrompt,
     validatorAliasBlock,
     qualityLock:QUALITY_LOCK,
     explanationLock:EXPLANATION_LOCK,
     loadAiExplanationV2,
     loadAnswerValidatorV48,
-    markers:HORARY_MARKERS.slice()
+    provenanceMarker:HORARY_AI_REQUEST_MARKER,
+    markers:[HORARY_AI_REQUEST_MARKER]
   });
 
   if (typeof document !== 'undefined') {
@@ -192,5 +196,5 @@
       setTimeout(loadExplanationLayers, 0);
     }
   }
-  console.info('✦ LUNEA Horary Interpretation Bridge V47.4 active · AI Explanation V2 contract ON');
+  console.info('✦ LUNEA Horary Interpretation Bridge V47.5 active · provenance-scoped AI contract ON');
 })();

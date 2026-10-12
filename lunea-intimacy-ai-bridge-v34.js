@@ -9,12 +9,13 @@
   - restores the category-scoped direct-input row when the late cabinet becomes ready;
   - preserves INTIMACY interpretation after the AI designer replaces the title;
   - recognizes restored AI intimacy readings from their question text;
-  - keeps the legacy anatomical 9-card reading hidden;
+  - hides the stale LOVE-menu duplicate while the compatible 9-card legacy item
+    is restored inside the INTIMACY cabinet;
   - clears INTIMACY-only Oracle UI immediately when another sector opens;
   - loads the canonical V35.2 Oracle data + V36 runtime only after the late
-    reading-action wrappers are installed, preserving final wrapper order;
+  - reading-action wrappers are installed, preserving final wrapper order;
   - immediately synchronizes V36 to an already-open INTIMACY reading when the
-    Oracle runtime finishes loading late.
+    Oracle runtime finishes loading late, then re-attaches final policy once.
 */
 (() => {
   const W = window;
@@ -201,6 +202,19 @@
     }
   }
 
+  // Oracle UI patches promptString while its dynamically inserted script executes.
+  // The final policy installer is idempotent; calling it only after that script is
+  // ready makes the policy the outer wrapper without bridge-side self-wrapping.
+  function ensureFinalPromptPriority() {
+    try {
+      const finalPriority=W.LUNEA_FINAL_PROMPT_PRIORITY_V1;
+      return typeof finalPriority?.ensure==='function' ? finalPriority.ensure()===true : false;
+    } catch (err) {
+      console.warn('[LUNEA INTIMACY] Final prompt priority re-attach skipped', err);
+      return false;
+    }
+  }
+
   function ensureOracleRuntime() {
     if (W.LUNEA_INTIMACY_ORACLE_UI_V36 && !oracleRuntimeReady()) {
       requestFreshDocument(`oracle-${W.LUNEA_INTIMACY_ORACLE_UI_V36?.version||'unknown'}-expected-${EXPECTED_ORACLE_VERSION}`);
@@ -208,12 +222,13 @@
     }
     if (oracleRuntimeReady()) {
       syncOracleRuntimeToCurrentReading();
+      ensureFinalPromptPriority();
       return Promise.resolve(true);
     }
     if (oracleLoadPromise) return oracleLoadPromise;
     oracleLoadPromise = ORACLE_SOURCES
       .reduce((promise, src) => promise.then(() => loadScriptOnce(src)), Promise.resolve())
-      .then(() => { if(!oracleRuntimeReady()){requestFreshDocument('oracle-runtime-version-mismatch');return false}syncOracleRuntimeToCurrentReading();return true; })
+      .then(() => { if(!oracleRuntimeReady()){requestFreshDocument('oracle-runtime-version-mismatch');return false}syncOracleRuntimeToCurrentReading();ensureFinalPromptPriority();return true; })
       .catch(err => {
         oracleLoadPromise = null;
         console.error('[LUNEA INTIMACY] Oracle runtime load failed', err);
@@ -242,7 +257,7 @@
     patchPrompt();
     scheduleOracleRuntimeLoad();
     if(W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__){pendingOracleRestore=cloneSnapshot(W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__);delete W.__LUNEA_PENDING_INTIMACY_ORACLE_DRAFT_V2__;}
-    W.LUNEA_INTIMACY_AI_BRIDGE_V34 = Object.freeze({ version: RELEASE, expectedOracleVersion:EXPECTED_ORACLE_VERSION, isIntimacyQuestion, isActiveContext, installAiEntry, ensureOracleRuntime, serializeOracleDraft, restoreOracleDraft, restoreOracleDraftExact, oracleSources:[...ORACLE_SOURCES] });
+    W.LUNEA_INTIMACY_AI_BRIDGE_V34 = Object.freeze({ version: RELEASE, expectedOracleVersion:EXPECTED_ORACLE_VERSION, isIntimacyQuestion, isActiveContext, installAiEntry, ensureOracleRuntime, ensureFinalPromptPriority, serializeOracleDraft, restoreOracleDraft, restoreOracleDraftExact, oracleSources:[...ORACLE_SOURCES] });
     console.info(`🌹 LUNEA INTIMACY AI bridge V${RELEASE} ready`);
   }
 

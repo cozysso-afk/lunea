@@ -45,7 +45,7 @@ const bridgeContext = {
 vm.runInNewContext(bridgeSource, bridgeContext, {filename:'lunea-horary-interpretation-bridge-v47.js'});
 const bridge = bridgeWindow.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47;
 assert.ok(bridge, 'bridge API missing');
-assert.equal(bridge.version, '47.4');
+assert.equal(bridge.version, '47.5');
 
 const base = 'LUNEA HORARY INTERPRETATION ENGINE V2\n[HORARY ENGINE RESULT · AUTHORITATIVE]\ndirect perfection: NO';
 const locked = bridge.qualityLockedPrompt(base);
@@ -68,9 +68,10 @@ assert.equal(bridge.qualityLockedPrompt(crossLocked), crossLocked, 'validator al
 
 const rewritten = bridge.rewrite({
   method:'POST',
-  body:JSON.stringify({contents:[{parts:[{text:base}]}]})
+  body:JSON.stringify({contents:[{parts:[{text:`[LUNEA HORARY AI REQUEST V47]\n${base}`}]}]})
 });
 const rewrittenPrompt = JSON.parse(rewritten.body).contents[0].parts[0].text;
+assert.match(rewrittenPrompt, /^\[LUNEA HORARY AI REQUEST V47\]/);
 assert.match(rewrittenPrompt, /FINAL VERDICT LOCK · V2 QA/);
 assert.match(rewrittenPrompt, /AI EXPLANATION V2 · EVIDENCE-LINKED/);
 

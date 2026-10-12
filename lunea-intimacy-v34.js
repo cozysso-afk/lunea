@@ -215,24 +215,37 @@
     try { return String(state?.category || '').toUpperCase() === 'INTIMACY' || isIntimacyTitle(state?.title); }
     catch { return false; }
   }
+  const FOCUS_LABELS = Object.freeze({
+    attraction:'끌림', desire:'욕구', initiative:'주도성', receptivity:'수용성',
+    emotionalSafety:'정서적 안전감', communication:'소통', mutuality:'상호성',
+    satisfaction:'만족', attachment:'유대', obsession:'집착', boundary:'경계',
+    avoidance:'회피', instability:'불안정성'
+  });
   function cardLayerLine(drawnCard, positionMeta) {
     const meta=getCard(drawnCard?.code); if(!meta)return '';
-    const meaning=drawnCard?.isReversed?meta.shadow:meta.core;
-    const axes=(positionMeta?.focusAxes?.length?positionMeta.focusAxes:AXES).map(key=>`${key}:${meta.axes[key]}`).join(', ');
-    const risks=(positionMeta?.focusRisks?.length?positionMeta.focusRisks:RISKS).map(key=>`${key}:${meta.risks[key]}`).join(', ');
-    return `- ${drawnCard.code} / ${drawnCard?.isReversed?'shadow':'core'} / pace:${meta.pace}\n  meaning: ${meaning}\n  focus axes: ${axes}\n  focus risks: ${risks}\n  tags: ${meta.tags.join(', ')}`;
+    const reversed=!!drawnCard?.isReversed;
+    const selectedMeaning=reversed?meta.shadow:meta.core;
+    const pairedMeaning=reversed?meta.core:meta.shadow;
+    const selectedLabel=reversed?'역방향 shadow의 주근거':'정방향 core의 주근거';
+    const pairedLabel=reversed?'유지·회복 가능성 또는 대안으로 검토할 core':'제한·반증으로 함께 검토할 shadow';
+    const position=String(positionMeta?.label||drawnCard?.position||'').trim();
+    const focus=[...(positionMeta?.focusAxes||[]),...(positionMeta?.focusRisks||[])]
+      .map(key=>FOCUS_LABELS[key]||key).join(', ');
+    return `- ${drawnCard.code} / ${reversed?'reversed':'upright'}${position?` / position: ${position}`:''}\n  ${selectedLabel}: ${selectedMeaning}\n  ${pairedLabel}: ${pairedMeaning}${focus?`\n  이 포지션에서 함께 살필 주제: ${focus}`:''}`;
   }
   function buildPromptLayer(drawn=[], title='', question='') {
     const selected=getSpread(title);
     const lines=drawn.map((item,index)=>cardLayerLine(item,selected?.positions?.[index])).filter(Boolean);
     return `[LUNEA INTIMACY 18+ INTERPRETATION LAYER · V${RELEASE}]
 - 성인 간 친밀감 질문에만 사용한다. 미성년자가 포함된 성적/신체적 질문은 해석하지 않는다.
-- 이 레이어의 내부 축 값은 해석 강도 조절용이다. 사용자에게 임의의 퍼센트·궁합 점수로 변환하지 않는다.
+- 내부 axes/risks 수치와 합계는 카드 데이터 정규화용일 뿐 해설 근거로 그대로 인용·합산·점수화하지 않는다. 아래 카드의 direction별 core/shadow 문장을 포지션에 연결한 근거로 쓴다.
 - attraction/desire는 끌림과 욕구의 상징이지 실제 동의(consent)의 증거가 아니다. 실제 의사와 동의는 현실의 명확한 표현으로만 확인된다.
 - 카드로 실제 신체 크기, 해부학적 특성, 성기능, 질환, 임신 가능성, 성병 여부를 단정하거나 추정하지 않는다.
 - 속궁합은 끌림만으로 판정하지 않는다. mutuality, satisfaction, emotionalSafety, communication과 boundary/avoidance/instability 위험을 함께 비교한다.
 - Devil/Tower/Knight of Wands처럼 강한 열기를 보여도 obsession·boundary·instability가 높으면 "강렬함 ≠ 좋은 궁합"을 명시한다.
-- 역방향은 무조건 반대 의미가 아니라 억압·내면화·과잉·왜곡 가능성을 shadow 설명과 포지션 맥락으로 판단한다.
+- 각 카드의 주근거와 짝 근거를 모두 검토한다. 정방향도 core만으로 결론내리지 말고 shadow의 제한·반증을 포지션에 맞게 짚는다. 역방향도 자동 부정이 아니며 shadow를 주근거로 읽되 core의 유지·회복·대안 가능성을 함께 검토한다.
+- 축을 기계적으로 반전하거나 긍정/제한 문장을 50:50으로 맞추지 않는다. 실제 core/shadow 문장, 포지션, 카드 간 반복·충돌이 뒷받침하는 경우에만 결론 강도를 정한다.
+- 상대의 욕구·속마음·동의·행동 계획을 카드 사실로 단정하지 않는다. 상대 관련 포지션은 카드상 가설로만 쓰고, 실제 의사·동의는 확인되지 않았음을 밝히며 대안 설명 또는 당사자 간 확인할 대화 포인트를 하나 제시한다.
 - 결론은 선정적 묘사보다 욕구 방식, 리듬, 편안함, 경계, 상호성, 만족, 관계 후 감정 변화를 중심으로 쓴다.
 - 질문: ${String(question || '').trim() || '(없음)'}
 - 고정 배열: ${selected?.title || String(title || '') || '(AI/기타)'}

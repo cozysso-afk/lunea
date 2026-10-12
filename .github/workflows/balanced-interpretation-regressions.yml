@@ -1,0 +1,52 @@
+name: Balanced interpretation evidence regressions
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '*.js'
+      - 'index.html'
+      - 'tests/**'
+      - '.github/workflows/bump-lunea-loader-413.yml'
+      - '.github/workflows/balanced-interpretation-regressions.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: All source contracts
+        run: node --test tests/*.test.mjs
+  mobile-webkit:
+    needs: source-contracts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install validated mobile browser
+        run: |
+          npm install --no-save playwright@1.64.0
+          npx playwright install --with-deps webkit
+      - name: Start branch-local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/lunea-balanced-http.log 2>&1 &
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:4173/index.html >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/lunea-balanced-http.log
+          exit 1
+      - name: Validate actual mobile prompt assembly and prior oracle fixes
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: |
+          node tests/balanced-interpretation.e2e.mjs
+          node tests/oracle-ui-regressions.e2e.mjs

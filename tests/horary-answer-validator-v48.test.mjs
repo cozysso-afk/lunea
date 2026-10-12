@@ -8,6 +8,8 @@ const bridgeSource = fs.readFileSync(new URL('../lunea-horary-interpretation-bri
 assert.match(source, /HORARY ANSWER VALIDATOR V48/);
 assert.match(source, /retry-once guard ON/);
 assert.match(source, /verdict_direction/);
+assert.match(source, /strongNegative/);
+assert.match(source, /HORARY AI REQUEST V47/);
 assert.match(source, /derived_scope/);
 assert.match(source, /invented_obstruction/);
 assert.match(source, /out_of_orb_promotion/);
@@ -56,7 +58,7 @@ function makeContext(fetchImpl, prompt = basePrompt) {
 const staticContext = makeContext(async () => new Response('{}', {status:200}));
 const api = staticContext.LUNEA_HORARY_ANSWER_VALIDATOR_V48;
 assert.ok(api);
-assert.equal(api.version, '48.1');
+assert.equal(api.version, '48.2');
 
 const bad = `### 한줄 결론
 재회 가능성이 높고 결국 성사될 가능성이 큽니다.
@@ -87,6 +89,42 @@ const safe = `### 한줄 결론
 ### 신뢰도와 불확실성
 유효 오브 밖의 nearest aspect는 성사각으로 채택하지 않아. 근거: out-of-orb`;
 assert.equal(api.validate(safe, basePrompt).ok, true);
+
+// Direction protection is symmetric: an authoritative YES cannot be turned
+// into a categorical NO any more than an authoritative NO can be turned into
+// a categorical YES.
+const positivePrompt = `LUNEA HORARY INTERPRETATION ENGINE V2
+[질문 원문]
+이 계약은 성사될까?
+
+[질문 분류]
+- family: general
+
+[HORARY ENGINE RESULT · AUTHORITATIVE]
+AUTHORITATIVE JUDGMENT: YES · direct perfection: YES · confirmed obstruction: none
+
+[절대 금지]
+- 엔진 밖 사실을 만들지 마라.`;
+const strongNo = `### 한줄 결론
+이 계약은 성사되기 어렵고 불성사야. 근거: AUTHORITATIVE JUDGMENT: YES`;
+const strongNoCheck = api.validate(strongNo, positivePrompt);
+assert.ok(strongNoCheck.violations.some(row => row.code === 'verdict_direction'), 'authoritative YES → strong NO must be rejected');
+
+const koreanNoPrompt = positivePrompt.replace('AUTHORITATIVE JUDGMENT: YES · direct perfection: YES · confirmed obstruction: none', '최종 판정: 불성사 · 직접 성사: 없음');
+assert.equal(api.validate('### 한줄 결론\n불성사야. 근거: 최종 판정: 불성사', koreanNoPrompt).violations.filter(row => row.code === 'verdict_direction').length, 0, '불성사 must not match the positive 성사 token');
+assert.ok(api.validate('### 한줄 결론\n성사될 가능성이 높아. 근거: 최종 판정', koreanNoPrompt).violations.some(row => row.code === 'verdict_direction'));
+const positiveWithBackground = positivePrompt.replace('confirmed obstruction: none', 'confirmed obstruction: none\n배경 설명: 성사 근거 부족이라는 예전 판정은 사용하지 않는다.');
+assert.equal(api.validate('### 한줄 결론\n성사될 가능성이 높아. 근거: AUTHORITATIVE JUDGMENT: YES', positiveWithBackground).violations.filter(row => row.code === 'verdict_direction').length, 0, 'explicit YES wins over unrelated background language');
+
+// D/NONE and explicitly conditional data are non-directional: the validator
+// must not manufacture either YES or NO from those states.
+const dPrompt = positivePrompt.replace('AUTHORITATIVE JUDGMENT: YES · direct perfection: YES · confirmed obstruction: none', 'AUTHORITATIVE JUDGMENT: D · direct perfection: NONE · confirmed obstruction: none');
+const nonePrompt = positivePrompt.replace('AUTHORITATIVE JUDGMENT: YES · direct perfection: YES · confirmed obstruction: none', 'AUTHORITATIVE JUDGMENT: NONE · direct perfection: NONE · confirmed obstruction: none');
+const conditionalPrompt = positivePrompt.replace('AUTHORITATIVE JUDGMENT: YES · direct perfection: YES · confirmed obstruction: none', 'AUTHORITATIVE JUDGMENT: YES · direct perfection: YES · confirmed obstruction: YES · 조건부 진행');
+const directionCodes = check => check.violations.filter(row => row.code === 'verdict_direction');
+assert.equal(directionCodes(api.validate('### 한줄 결론\n성사될 가능성이 높아. 근거: 판단 보류', dPrompt)).length, 0, 'D must not force NO');
+assert.equal(directionCodes(api.validate('### 한줄 결론\n성사되기 어렵고 불성사야. 근거: 판단 보류', nonePrompt)).length, 0, 'NONE must not force YES');
+assert.equal(directionCodes(api.validate('### 한줄 결론\n성사되기 어렵고 불성사야. 근거: confirmed obstruction: YES', conditionalPrompt)).length, 0, 'conditional YES plus confirmed obstruction must allow stated limits');
 
 // Future Window evidence may legitimately describe an out-of-orb pair entering
 // orb later, but it must not be promoted to the radical/current perfection.
@@ -141,7 +179,7 @@ const runtime = makeContext(async (input, init) => {
   const payload = calls.length === 1 ? badPayload : safePayload;
   return new Response(JSON.stringify(payload), {status:200, headers:{'content-type':'application/json'}});
 });
-const requestBody = JSON.stringify({contents:[{parts:[{text:'[HORARY V1 · 질문시각 점성술 계산 결과]\nlegacy prompt'}]}]});
+const requestBody = JSON.stringify({contents:[{parts:[{text:'[LUNEA HORARY AI REQUEST V47]\n[HORARY V1 · 질문시각 점성술 계산 결과]\nlegacy prompt'}]}]});
 const response = await runtime.fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini:test:generateContent', {method:'POST', body:requestBody});
 const returned = await response.json();
 assert.equal(calls.length, 2, 'invalid first answer should retry exactly once');
