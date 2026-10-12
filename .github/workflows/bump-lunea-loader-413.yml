@@ -62,6 +62,7 @@ jobs:
               'lunea-cardback-restore-v19.js',
               'lunea-final-prompt-priority-v1.js',
               'lunea-message-oracle-support-v1.js',
+              'lunea-reading-journal-v2.js',
               'lunea-timing-prompt-repair-v1.js',
               'lunea-thai-tarot-bridge-v32.js',
               'lunea-thai-range-v33.js',
