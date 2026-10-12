@@ -274,8 +274,8 @@ async function testHoraryPrashna(browser) {
     });
     try {
       return await new Promise((resolve,reject) => {
-        const request = db.transaction('journal','readonly').objectStore('journal').get(id);
-        request.onsuccess = () => resolve(request.result?.reading);
+        const request = db.transaction('journal','readonly').objectStore('journal').getAll();
+        request.onsuccess = () => resolve(request.result.find(row => row.sourceArchiveId === id)?.reading);
         request.onerror = () => reject(request.error);
       });
     } finally { db.close(); }
