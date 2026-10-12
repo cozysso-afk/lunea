@@ -74,6 +74,7 @@
         box-shadow:inset 0 1px 0 rgba(255,255,255,.035);
       }
       .lunea-tabi-target{color:#cdbde9;font:700 9px 'Cinzel',serif;letter-spacing:1px;margin-bottom:8px}
+      #luneaTimingABInline .lunea-tabi-face{display:block;width:min(100%,132px);height:auto;aspect-ratio:3/5;margin:0 auto 9px;object-fit:contain!important;border-radius:12px;border:1px solid rgba(229,232,245,.22);box-shadow:0 9px 21px rgba(0,0,0,.28)}
       .lunea-tabi-dial{
         position:relative;width:84px;height:112px;margin:0 auto 9px;border-radius:16px;overflow:hidden;
         display:flex;align-items:center;justify-content:center;
@@ -136,7 +137,11 @@
     const meaning = clean(node.querySelector('p')?.textContent || '');
     if (!ko && !en) return null;
     const cfg = classify(ko, en);
-    return {small, ko, en, meaning, cfg};
+    const img = node.querySelector('img');
+    const src = img?.getAttribute('src') || '';
+    const match = String(img?.dataset.luneaTimingCardId || src).match(/(?:LT-|timing_)(\d{3})/i);
+    const cardId = match ? `LT-${match[1]}` : '';
+    return {small, ko, en, meaning, cfg, src, cardId};
   }
 
   function makeCard(data, label) {
@@ -151,6 +156,14 @@
       <div class="lunea-tabi-ko"></div>
       <div class="lunea-tabi-en"></div>
       <div class="lunea-tabi-meaning"></div>`;
+    if (data.src) {
+      const img = document.createElement('img');
+      img.className = 'lunea-tabi-face';
+      img.alt = data.ko;
+      img.src = data.src;
+      if (data.cardId) img.dataset.luneaTimingCardId = data.cardId;
+      div.querySelector('.lunea-tabi-dial').replaceWith(img);
+    }
     div.querySelector('.lunea-tabi-ko').textContent = data.ko;
     div.querySelector('.lunea-tabi-en').textContent = data.en;
     div.querySelector('.lunea-tabi-meaning').textContent = data.meaning;
@@ -177,6 +190,8 @@
   }
 
   function mirrorAB() {
+    const last = W.LUNEA_TIMING_AB_LAST;
+    if (!last || last.mode !== 'support' || clean(last.question) !== currentQuestion()) return false;
     const source = $('luneaTimingABCards');
     if (!source) return false;
     const nodes = [...source.querySelectorAll('.tab-card')];
@@ -190,7 +205,7 @@
     const grid = block.querySelector('.lunea-tabi-grid');
     if (!grid) return false;
 
-    const sig = `${A.ko}|${A.en}|${B.ko}|${B.en}`;
+    const sig = JSON.stringify([A.ko, A.en, A.meaning, A.src, A.cardId, B.ko, B.en, B.meaning, B.src, B.cardId]);
     if (block.dataset.sig === sig && grid.children.length === 2) return true;
     block.dataset.sig = sig;
     block.dataset.question = currentQuestion();
@@ -218,7 +233,7 @@
       requestAnimationFrame(mirrorAB);
       setTimeout(mirrorAB, 80);
     });
-    observer.observe(source, {childList:true, subtree:true, characterData:true});
+    observer.observe(source, {childList:true, subtree:true, characterData:true, attributes:true, attributeFilter:['src','data-lunea-timing-card-id']});
     mirrorAB();
     return true;
   }

@@ -97,7 +97,7 @@ for (const topic of ['friend', 'contract', 'exam', 'career', 'stock', 'money', '
 assert.ok(inferBlock.indexOf("return 'reconciliation'") < contactIdx, 'reconciliation must route before contact');
 assert.ok(inferBlock.indexOf("return 'communication'") < contactIdx, 'document/news route must win before generic contact');
 
-assert.match(loader, /lunea-horary-balance-v19-5\.js\?v=1905/, 'V19.5 cache URL missing');
+assert.match(loader, /lunea-horary-balance-v19-5\.js\?v=(?:1905|[0-9a-f]{12})/, 'V19.5 cache URL missing');
 assert.doesNotMatch(loader, /lunea-horary-balance-v19-4\.js\?v=1904/, 'legacy V19.4 bridge must be inactive');
 assert.doesNotMatch(loader, /lunea-horary-balance-v18\.js\?v=1803/, 'legacy V18 bridge must be inactive');
 assert.doesNotMatch(loader, /lunea-horary-balance-v19\.js\?v=1903/, 'legacy V19.3 bridge must be inactive');

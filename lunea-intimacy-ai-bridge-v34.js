@@ -79,6 +79,14 @@
     if (tools) tools.style.display = 'none';
   }
 
+  function leaveIntimacy() {
+    setActive(false);
+    pendingOracleRestore = null;
+    try { W.LUNEA_INTIMACY_ORACLE_UI_V36?.clear?.(); } catch {}
+    clearOracleVisualResidue();
+    try { delete state.__luneaIntimacyReading; } catch {}
+  }
+
   function hideLegacy() {
     const legacy = document.querySelector('.reading-item[data-title="속궁합 · 19+"]');
     if (!legacy) return;
@@ -131,11 +139,14 @@
     document.documentElement.dataset.luneaIntimacyContextV34 = '1';
     document.addEventListener('click', event => {
       const item = event.target?.closest?.('.reading-item');
-      if (!item) return;
+      if (!item) {
+        if (event.target?.closest?.('#dailyBtn')) leaveIntimacy();
+        return;
+      }
       const isIntimacy = String(item.dataset.cat || '').toUpperCase() === 'INTIMACY';
-      setActive(isIntimacy);
-      if (!isIntimacy) clearOracleVisualResidue();
+      if (!isIntimacy) leaveIntimacy();
       if (isIntimacy) {
+        setActive(true);
         try { state.category = 'INTIMACY'; } catch {}
       }
     }, true);

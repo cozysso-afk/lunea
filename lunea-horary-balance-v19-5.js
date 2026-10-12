@@ -32,23 +32,31 @@
   }[ch]));
 
   function inferTopic(question) {
-    const q = String(question || '');
+    const q = String(question || '').normalize('NFKC').trim();
     if (/법률|소송|재판|판결|고소|계약\s*분쟁/.test(q)) return 'legal';
-    if (/재회|다시\s*만나|관계\s*회복|구남친|구여친/.test(q)) return 'reconciliation';
+    if (/재회|다시\s*만나|관계\s*회복|구남친|구여친|전남친|전여친|전애인|헤어진/.test(q)) return 'reconciliation';
     if (EXTRA_TOPICS.contract[1].test(q)) return 'contract';
     if (EXTRA_TOPICS.friend[1].test(q)) return 'friend';
     if (EXTRA_TOPICS.travel[1].test(q)) return 'travel';
     if (EXTRA_TOPICS.purchase[1].test(q)) return 'purchase';
-    if (/시험|합격|불합격|면접|성적|점수/.test(q)) return 'exam';
-    if (/이직|퇴사|직장|회사|승진|커리어|업무/.test(q)) return 'career';
+    if (/시험|합격|불합격|면접|성적(?!\s*(?:끌림|매력|욕구|궁합))|점수|공부|학업|학습/.test(q)) return 'exam';
+    if (/이직|퇴사|직장|회사|승진|커리어|업무|취업|직업|프로젝트/.test(q)) return 'career';
     if (/주식|코인|매수|매도|익절|손절|종목|투자/.test(q)) return 'stock';
     if (/돈|금전|재물|수입|지출|대출|재정/.test(q)) return 'money';
     if (/집|이사|부동산|토지|가족/.test(q)) return 'home';
     if (/건강|회복|질병|병원|치료|수술/.test(q)) return 'health';
     if (EXTRA_TOPICS.communication[1].test(q)) return 'communication';
-    if (/연락|카톡|메시지|답장|전화|DM|디엠/.test(q)) return 'contact';
-    if (/연애|호감|썸|사귀|데이트|상대방/.test(q)) return 'relationship';
-    return 'general';
+    if (/연락|카톡|메시지|답장|전화|DM|디엠/i.test(q)) return 'contact';
+    if (/연애|호감|썸|사귀|데이트|상대방|속궁합|친밀|스킨십|성관계|성적\s*(?:끌림|매력|욕구|궁합)|남친|여친|남자친구|여자친구|연인|결혼|배우자/.test(q)) return 'relationship';
+
+    // Only a support question may inherit its matching tarot sector; an
+    // independent Horary question must not pick up a previous reading's state.
+    if (!q || !document.getElementById('astroHoraryQuestion')?.readOnly) return 'general';
+    let reading = W.state;
+    if (!reading) { try { reading = state; } catch {} }
+    if (String(reading?.question || '').normalize('NFKC').trim() !== q) return 'general';
+    return ({LOVE:'relationship', INTIMACY:'relationship', STOCK:'stock',
+      CAREER:'career', STUDY:'exam', CAREER_STUDY:'career'})[String(reading?.category || '').toUpperCase()] || 'general';
   }
 
   function ensureOptions() {
