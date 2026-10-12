@@ -12,6 +12,7 @@ async function setup() {
   const context = await browser.newContext({viewport:{width:393,height:852}, isMobile:true, hasTouch:true, locale:'ko-KR', serviceWorkers:'block'});
   const page = await context.newPage();
   page.setDefaultTimeout(20000);
+  page.on('crash', () => console.error('WebKit/Chromium renderer crashed:', page.url()));
   page.on('dialog', dialog => dialog.accept());
   await page.route('**/*', route => {
     const requestUrl = new URL(route.request().url());
@@ -49,9 +50,10 @@ async function draw(page, category, question) {
 
 async function check(name, fn) {
   if (process.env.LUNEA_E2E_CASE && !name.startsWith(process.env.LUNEA_E2E_CASE)) return;
+  console.log('RUN:', name);
   const {context, page} = await setup();
   try { await fn(page); console.log('PASS:', name); }
-  catch (error) { failures.push(name + ': ' + error.message); console.error('FAIL:', name, error.message); }
+  catch (error) { failures.push(name + ': ' + error.message); console.error('FAIL:', name, error.stack || error.message); }
   finally { await context.close(); }
 }
 

@@ -16,7 +16,7 @@ permissions:
   contents: read
 jobs:
   source-contracts:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
           node --test tests/*.test.mjs
   mobile-webkit:
     needs: source-contracts
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
           node-version: '22'
       - name: Install mobile browser
         run: |
-          npm install --no-save playwright@1.55.0
+          npm install --no-save playwright@1.64.0
           npx playwright install --with-deps webkit
       - name: Start branch-local server
         run: |
@@ -57,4 +57,5 @@ jobs:
       - name: Verify Oracle artwork, topic payloads, manual overrides and sector exits
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+          DEBUG: pw:browser
         run: node tests/oracle-ui-regressions.e2e.mjs
