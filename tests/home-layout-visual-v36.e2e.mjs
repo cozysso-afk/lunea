@@ -80,8 +80,9 @@ try {
   await page.evaluate(async () => {
     const grid = document.querySelector('#luneaHomePortalV8 .lunea-v8-grid');
     const tiles = ['meihua','thai','lenormand','horary'].map(key =>
-      key === 'thai' ? grid.querySelector('.lunea-thai-home-tile') : grid.querySelector(`[data-key="${key}"]`)
+      grid.querySelector(`[data-key="${key}"]`)
     );
+    if (tiles.some(tile => !tile)) throw new Error('Expected secondary tile missing before scramble');
     tiles.forEach(tile => tile.remove());
     window.LUNEA_HOME_LAYOUT_V36.requestLayout();
     for (const tile of tiles) {
@@ -133,6 +134,7 @@ try {
       signalAfterContent:signalAfter?.content || '',
       thaiTitleWhiteSpace:thaiTitleStyle?.whiteSpace || '',
       thaiTitleOverflow:thaiTitleStyle?.overflow || '',
+      thaiTitleTextOverflow:thaiTitleStyle?.textOverflow || '',
       thaiSubWhiteSpace:thaiSubStyle?.whiteSpace || '',
       thaiSubOverflow:thaiSubStyle?.overflow || '',
       thaiTitleContained:!!(thaiRect && thaiTitleRect && thaiTitleRect.right <= thaiRect.right + .5),
@@ -157,7 +159,8 @@ try {
   assert.equal(diagnostics.signalText, 'SIGNAL · MESSAGE', 'SIGNAL must render one canonical title');
   assert.ok(diagnostics.signalAfterContent === 'none' || diagnostics.signalAfterContent === 'normal', 'SIGNAL pseudo title must be removed');
   assert.equal(diagnostics.thaiTitleWhiteSpace, 'nowrap', 'Thai title must not wrap into its description');
-  assert.equal(diagnostics.thaiTitleOverflow, 'hidden', 'Thai title must stay inside the card');
+  assert.equal(diagnostics.thaiTitleOverflow, 'visible', 'existing mobile hotfix keeps the Thai title unclipped');
+  assert.equal(diagnostics.thaiTitleTextOverflow, 'clip', 'Thai title must not ellipsize the canonical label');
   assert.equal(diagnostics.thaiSubWhiteSpace, 'nowrap', 'Thai description must remain one contained line');
   assert.equal(diagnostics.thaiSubOverflow, 'hidden', 'Thai description must stay inside the card');
   assert.equal(diagnostics.thaiTitleContained, true, 'Thai title must not escape the tile');

@@ -89,13 +89,20 @@ test('adult/minor and interpretation safety contract is explicit', () => {
 
   const prompt = api.buildPromptLayer([
     {code:'Devil', isReversed:false},
-    {code:'Temperance', isReversed:false}
+    {code:'Temperance', isReversed:true}
   ], '신체적 속궁합 · CORE 5', '성인 커플의 속궁합');
   assert.match(prompt, /미성년자가 포함된/);
   assert.match(prompt, /실제 동의\(consent\)/);
   assert.match(prompt, /신체 크기/);
   assert.match(prompt, /강렬함 ≠ 좋은 궁합/);
-  assert.match(prompt, /obsession:3/);
+  assert.match(prompt, /정방향 core의 주근거: 강렬한 육체적 끌림/);
+  assert.match(prompt, /제한·반증으로 함께 검토할 shadow: 집착·소유·권력 불균형/);
+  assert.match(prompt, /역방향 shadow의 주근거: 지나친 양보/);
+  assert.match(prompt, /유지·회복 가능성 또는 대안으로 검토할 core: 서로 다른 욕구와 템포/);
+  assert.match(prompt, /정방향도 core만으로 결론내리지 말고 shadow의 제한·반증/);
+  assert.match(prompt, /역방향도 자동 부정이 아니며/);
+  assert.match(prompt, /상대의 욕구·속마음·동의·행동 계획을 카드 사실로 단정하지 않는다/);
+  assert.doesNotMatch(prompt, /focus axes:|focus risks:|attraction:2|obsession:3/);
   assert.equal(api.getCard('Temperance').axes.mutuality, 2);
 });
 

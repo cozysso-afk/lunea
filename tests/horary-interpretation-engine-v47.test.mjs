@@ -19,7 +19,8 @@ assert.match(engineSource, /근거:/);
 assert.match(engineSource, /체계 간 충돌/);
 assert.match(bridgeSource, /FINAL VERDICT LOCK · V2 QA/);
 assert.match(bridgeSource, /AI EXPLANATION V2 · EVIDENCE-LINKED/);
-assert.match(bridgeSource, /NO\/부정\/근거부족 판정을 reception·dignity·Moon 분위기만으로 YES\/긍정으로 올리지 마라/);
+assert.match(bridgeSource, /YES\/긍정 판정을 경고·Moon 분위기만으로 NO\/불성사로 내리지 말고/);
+assert.match(bridgeSource, /HORARY AI REQUEST V47/);
 assert.match(bridgeSource, /derived-event perfection만 유효하면 그 파생 사건만 긍정/);
 assert.match(bridgeSource, /PRIVATE SELF-CHECK · 출력 금지/);
 assert.match(bridgeSource, /VALIDATOR ALLOWED ALIASES · 출력 금지/);
@@ -77,14 +78,15 @@ bridgeContext.window = bridgeContext;
 vm.createContext(bridgeContext);
 vm.runInContext(bridgeSource, bridgeContext);
 
-const oldHorary = JSON.stringify({contents:[{parts:[{text:'[HORARY V1 · 질문시각 점성술 계산 결과]\nOLD'}]}]});
+const oldHorary = JSON.stringify({contents:[{parts:[{text:'[LUNEA HORARY AI REQUEST V47]\n[HORARY V1 · 질문시각 점성술 계산 결과]\nOLD'}]}]});
 await bridgeContext.fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini:test:generateContent', {method:'POST', body:oldHorary});
 let sent = JSON.parse(captured.init.body);
-assert.ok(sent.contents[0].parts[0].text.startsWith('LUNEA HORARY INTERPRETATION ENGINE V2\nNEW STRICT PROMPT'));
+assert.match(sent.contents[0].parts[0].text, /^\[LUNEA HORARY AI REQUEST V47\]/);
+assert.match(sent.contents[0].parts[0].text, /^\[LUNEA HORARY AI REQUEST V47\]\nLUNEA HORARY INTERPRETATION ENGINE V2\nNEW STRICT PROMPT/);
 assert.match(sent.contents[0].parts[0].text, /\[FINAL VERDICT LOCK · V2 QA\]/);
 assert.match(sent.contents[0].parts[0].text, /\[AI EXPLANATION V2 · EVIDENCE-LINKED\]/);
 assert.match(sent.contents[0].parts[0].text, /staged\/authoritative verdict와 최종 한줄 결론의 방향이 같은가/);
-assert.equal(bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.version, '47.4');
+assert.equal(bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.version, '47.5');
 
 const lockedOnce = bridgeContext.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47.qualityLockedPrompt(sent.contents[0].parts[0].text);
 assert.equal((lockedOnce.match(/\[FINAL VERDICT LOCK · V2 QA\]/g) || []).length, 1, 'quality lock must not duplicate');
@@ -96,14 +98,19 @@ assert.match(crossLocked, /aspect: trine · 삼합 · 트라인/);
 assert.match(crossLocked, /Reception: mutual · 상호 리셉션/);
 assert.equal((crossLocked.match(/\[VALIDATOR ALLOWED ALIASES · 출력 금지\]/g) || []).length, 1, 'validator aliases must not duplicate');
 
-const canonicalHorary = JSON.stringify({contents:[{parts:[{text:'LUNEA HORARY INTERPRETATION ENGINE V2\nDIRECT CANONICAL'}]}]});
+const canonicalHorary = JSON.stringify({contents:[{parts:[{text:'[LUNEA HORARY AI REQUEST V47]\nLUNEA HORARY INTERPRETATION ENGINE V2\nDIRECT CANONICAL'}]}]});
 await bridgeContext.fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini:test:generateContent', {method:'POST', body:canonicalHorary});
 sent = JSON.parse(captured.init.body);
 assert.match(sent.contents[0].parts[0].text, /\[AI EXPLANATION V2 · EVIDENCE-LINKED\]/, 'canonical V47 prompts must also receive Explanation V2 lock');
 
-const tarotBody = JSON.stringify({contents:[{parts:[{text:'TAROT READING ONLY'}]}]});
+const tarotBody = JSON.stringify({contents:[{parts:[{text:'[뽑힌 카드]\n연인\n[포지션]\n현재\n[HORARY V1 · 질문시각 점성술 계산 결과]\n타로 보조 근거'}]}]});
 await bridgeContext.fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini:test:generateContent', {method:'POST', body:tarotBody});
 sent = JSON.parse(captured.init.body);
-assert.equal(sent.contents[0].parts[0].text, 'TAROT READING ONLY', 'non-Horary Gemini prompts must stay untouched');
+assert.equal(sent.contents[0].parts[0].text, JSON.parse(tarotBody).contents[0].parts[0].text, 'Tarot cards/positions with a legacy Horary support marker must stay untouched');
+
+const unprovenancedCanonical = JSON.stringify({contents:[{parts:[{text:'LUNEA HORARY INTERPRETATION ENGINE V2\nNOT AN ACTION'}]}]});
+await bridgeContext.fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini:test:generateContent', {method:'POST', body:unprovenancedCanonical});
+sent = JSON.parse(captured.init.body);
+assert.equal(sent.contents[0].parts[0].text, 'LUNEA HORARY INTERPRETATION ENGINE V2\nNOT AN ACTION', 'canonical/locks must not claim unprovenanced requests');
 
 console.log('LUNEA Horary Interpretation Engine V47 · V2 regression: PASS');

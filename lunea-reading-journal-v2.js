@@ -63,6 +63,14 @@
     ].join('|');
   }
 
+  function mergedReading(existing, incoming) {
+    // The compatibility list must not downgrade a same-reading full Journal payload.
+    if (incoming?.horary?.lightweight && existing?.horary && !existing.horary.lightweight) {
+      return clone(existing);
+    }
+    return clone(incoming) || existing;
+  }
+
   function clean(entry) {
     if (!entry || typeof entry !== 'object') return null;
     const reading = clone(entry.reading || entry.source || {});
@@ -184,7 +192,7 @@
       );
     }
     if (existing) {
-      existing.reading = incoming.reading;
+      existing.reading = mergedReading(existing.reading, incoming.reading);
       existing.sourceArchiveId = incoming.sourceArchiveId || existing.sourceArchiveId;
       existing.category = explicitCategory || existing.category;
       existing.signature = incoming.signature;
@@ -225,7 +233,7 @@
       const sig = signature(reading);
       const found = (id && byId.get(id)) || bySig.get(sig);
       if (found) {
-        found.reading = clone(reading) || found.reading;
+        found.reading = mergedReading(found.reading, reading);
         found.updatedAt = Date.now();
         await put(found);
       } else {

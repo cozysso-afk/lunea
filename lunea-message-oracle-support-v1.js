@@ -39,10 +39,10 @@
       '맥락: ' + result.contextLabel,
       '질문 의도: ' + (engine().INTENTS[result.intent] || result.intent),
       '카드: ' + names(value.cardCode) + ' · 정방향',
-      '카드 기반 연락·소식 전달 신호: ' + result.score + '%',
+      '카드 기반 연락·소식 도착·전달 신호: ' + result.score + '%',
       result.fullMessage || result.shortMessage,
       ...(result.details || []).map(item => item.label + ': ' + item.value),
-      '※ 이 점수는 실제 통계 확률이나 합격·승인·긍정 결과 확률이 아니다.',
+      '※ 이 점수는 실제 통계 확률이나 합격·승인·긍정 결과 확률이 아니다. 연락·소식의 도착·전달 신호일 뿐, 좋은 결과·성공 확률도 아니다.',
       '※ RWS 포지션을 바꾸지 말고 연락·소식 관점의 보조로만 참고한다. 다른 체계와 상충하면 차이를 명시한다.'
     ].join('\n');
   }
@@ -82,11 +82,11 @@
     const heading = document.createElement('small');
     heading.textContent = 'LUNEA MESSAGE SIGNAL';
     const title = document.createElement('b');
-    title.textContent = names(value.cardCode) + ' · 연락·소식 신호 ' + result.score + '%';
+    title.textContent = names(value.cardCode) + ' · 연락·소식 도착·전달 신호 ' + result.score + '%';
     const message = document.createElement('span');
     message.textContent = result.shortMessage;
     const context = document.createElement('small');
-    context.textContent = result.contextLabel + ' · ' + engine().INTENTS[result.intent] + ' · 결과 성공 확률 아님';
+    context.textContent = result.contextLabel + ' · ' + engine().INTENTS[result.intent] + ' · 도착·전달 신호(좋은 결과·성공 확률 아님)';
     text.appendChild(heading); text.appendChild(title); text.appendChild(message); text.appendChild(context);
     node.replaceChildren(logo, text);
     W.LUNEA_READING_ACTION_ORDER_V33?.reorder?.();

@@ -539,22 +539,52 @@
     return rows;
   }
 
+  // The range API may be deployed ahead of a summary-field addition. Keep an
+  // absent count distinct from zero so prompt evidence does not invent a
+  // neutral (or total) denominator for older saved/API payloads.
+  function summarySegmentCount(summary, key) {
+    const raw = summary?.[key];
+    const value = (typeof raw === 'number' || typeof raw === 'string') ? Number(raw) : NaN;
+    return Number.isFinite(value) && value >= 0 ? value : null;
+  }
+
+  function promptSegmentContext(summary) {
+    const supportive = summarySegmentCount(summary, 'supportive_segments');
+    const neutral = summarySegmentCount(summary, 'neutral_segments');
+    const caution = summarySegmentCount(summary, 'caution_segments');
+    const counts = [supportive, neutral, caution];
+    return {
+      supportive,
+      neutral,
+      caution,
+      total:counts.every(count => count !== null) ? counts.reduce((sum, count) => sum + count, 0) : null
+    };
+  }
+
+  function promptSegmentLabel(count) {
+    return count === null ? '응답에 없음' : count;
+  }
+
   function tarotPromptBlock() {
     const data = tarotState.result;
     if (!data || tarotState.question !== currentQuestion()) return '';
     const summary = data.summary || {};
+    const segments = promptSegmentContext(summary);
     const rows = promptRows(data);
     return `[THAI ASTROLOGY · MAHA TAKSA 계산 결과]
 - 연결 모드: 현재 타로 질문의 기간 Taksa 캘린더
 - 연결 질문: ${tarotState.question}
 - 질문 분류: ${tarotState.topic}
 - 기간: ${data.start_date}부터 ${data.days}일
-- 지원 세그먼트: ${summary.supportive_segments || 0}
-- 주의 세그먼트: ${summary.caution_segments || 0}
+- 지원 세그먼트: ${promptSegmentLabel(segments.supportive)}
+- 중립 세그먼트: ${promptSegmentLabel(segments.neutral)}
+- 주의 세그먼트: ${promptSegmentLabel(segments.caution)}
+- 지원/중립/주의 분류 세그먼트 전체: ${promptSegmentLabel(segments.total)}
 - 질문 초점 일치 세그먼트: ${summary.focus_match_segments || 0}
 - 지원 날짜(요약): ${(summary.supportive_dates || []).join(', ') || '없음'}
 - 주의 날짜(요약): ${(summary.caution_dates || []).join(', ') || '없음'}
 - 질문 초점 날짜(요약): ${(summary.focus_match_dates || []).join(', ') || '없음'}
+- 핵심 기간 행의 맥락: 아래 행은 지원·주의 또는 질문 초점 행을 우선 전달한 압축본이다. 중립 구간을 모두 열거한 목록이 아니므로, 위 중립/전체 수와 함께 읽고 개별 지원·주의 행을 기간 전체의 지배적 흐름으로 확대하지 않는다. 중립/전체 수가 '응답에 없음'이면 0으로 가정하지 않는다.
 - 핵심 기간 행:
 ${rows.map(row => `  · ${row}`).join('\n')}
 
@@ -600,9 +630,9 @@ ${rows.map(row => `  · ${row}`).join('\n')}
       end_date:data.end_date,
       days:Number(data.days || 0),
       summary:{
-        supportive_segments:Number(summary.supportive_segments || 0),
-        neutral_segments:Number(summary.neutral_segments || 0),
-        caution_segments:Number(summary.caution_segments || 0),
+        supportive_segments:summarySegmentCount(summary, 'supportive_segments'),
+        neutral_segments:summarySegmentCount(summary, 'neutral_segments'),
+        caution_segments:summarySegmentCount(summary, 'caution_segments'),
         focus_match_segments:Number(summary.focus_match_segments || 0),
         supportive_dates:(summary.supportive_dates || []).slice(0,90),
         caution_dates:(summary.caution_dates || []).slice(0,90),

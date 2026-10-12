@@ -726,12 +726,12 @@
     el.dataset.luneaTimingCardId = timingState.primary.id || '';
     el.dataset.luneaTimingQuestion = timingState.question || '';
     try { el.dataset.luneaReadingSessionId = String(window.LUNEA_READING_LIFECYCLE_V59?.currentSessionId?.() || ''); } catch {}
-    el.innerHTML = `
-      <img src="${cardImg(timingState.primary)}" alt="" data-lunea-timing-card-id="${timingState.primary.id || ''}">
-      <div class="txt"><small>LUNEA TIME SIGNAL</small>
-        <b>${timingState.primary.label_ko}${timingState.refine ? ' · '+timingState.refine.label_ko : ''}</b>
-        <span>${timingState.primary.meaning}${timingState.refine ? '<br>정밀화: '+timingState.refine.meaning : ''}</span>
-      </div>`;
+      el.innerHTML = `
+        <img src="${cardImg(timingState.primary)}" alt="" data-lunea-timing-card-id="${timingState.primary.id || ''}">
+        <div class="txt"><small>LUNEA TIME SIGNAL</small>
+          <b>${timingState.primary.label_ko}${timingState.refine ? ' · '+timingState.refine.label_ko : ''}</b>
+          <span>사건 성립을 보장하지 않으며, 성립한다면 이 시기 창으로 봐. ${timingState.primary.meaning}${timingState.refine ? '<br>정밀화: '+timingState.refine.meaning : ''}</span>
+        </div>`;
     const btn = byId('timingSupportBtn');
     if (btn) btn.textContent = `⏳ ${timingState.primary.label_ko}`;
     notifyAttachmentChanged();
@@ -803,11 +803,12 @@ ${timingState.refine ? `- 정밀화 카드: ${timingState.refine.label_ko} / ${t
 [타이밍 통합 해석 규칙]
 1. Timing Oracle은 RWS와 별도의 시기 전용 덱이다. RWS 카드 이름이나 의미로 취급하지 않는다.
 2. 메인 RWS 배열이 사건 발생 가능성 자체를 약하게 보이면, 타이밍 카드가 나왔다고 사건 발생을 확정하지 않는다.
-3. 이 경우 해당 시기는 사건 자체보다 생각·감정·간접 신호·조건 변화가 움직이는 구간일 수 있음을 구분한다.
-4. 지연/불발 카드라면 억지 날짜를 만들어내지 않는다.
-5. 사용자가 질문에 기간을 지정했다면 그 범위를 우선하며, 그 기간 밖이라는 카드가 나오면 기간 내 성립이 약하다고 명확히 말한다.
-6. 첫 결론 이후 '⏳ 시기 결론'을 별도 소제목으로 짧고 명확하게 정리한다.
-7. 타로를 객관적 사실 확인이나 확정적 미래 예언으로 표현하지 않는다.`;
+3. 비지연 카드의 시간 창도 사건 성립을 보장하지 않으며, 사건이 성립한다면 그 시간 창으로만 읽는다.
+4. 이 경우 해당 시기는 사건 자체보다 생각·감정·간접 신호·조건 변화가 움직이는 구간일 수 있음을 구분한다.
+5. 지연/불발 카드라면 억지 날짜를 만들어내지 않는다.
+6. 사용자가 질문에 기간을 지정했다면 그 범위를 우선하며, 그 기간 밖이라는 카드가 나오면 기간 내 성립이 약하다고 명확히 말한다.
+7. 첫 결론 이후 '⏳ 시기 결론'을 별도 소제목으로 짧고 명확하게 정리한다.
+8. 타로를 객관적 사실 확인이나 확정적 미래 예언으로 표현하지 않는다.`;
 
         return p;
       };
@@ -839,7 +840,7 @@ ${timingState.refine ? `정밀화: ${timingState.refine.label_ko} (${timingState
 
 [규칙]
 - 이 카드는 별도의 시기 전용 오라클 결과이며 RWS 카드가 아니다.
-- 첫 문장에서 예상 시기를 가장 간단히 말한다.
+- 첫 문장은 반드시 "이 카드는 사건 성립을 보장하지 않으며, 성립한다면 이 시간 창으로 읽힌다"는 취지로 조건부 시간 창을 먼저 말한다. 지연/불발/불명 카드에서는 시간 창 대신 그 상태를 먼저 말한다.
 - 그다음 이 시기를 어떻게 이해해야 하는지 2~4문단으로 설명한다.
 - 지연/불발/불명 카드면 날짜를 억지로 만들지 않는다.
 - 사건 발생 자체를 객관적 사실처럼 확정하지 않는다.

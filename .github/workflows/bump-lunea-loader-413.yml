@@ -8,12 +8,18 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: lunea-build-cache
+  cancel-in-progress: false
+
 jobs:
   refresh-build-cache:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Gate one-time scheduled recovery
         id: gate
@@ -42,6 +48,7 @@ jobs:
               'lunea-structural-routing-v4.js',
               'lunea-astro-stability-v2.js',
               'lunea-ios-performance-v3.js',
+              'timing-oracle-v1.js',
           ):
               pattern = re.escape(asset) + r'\?v=[^"\']+'
               replacement = f'{asset}?v={build}'
@@ -54,6 +61,9 @@ jobs:
           for asset in (
               'lunea-cardback-restore-v19.js',
               'lunea-final-prompt-priority-v1.js',
+              'lunea-message-oracle-support-v1.js',
+              'lunea-reading-journal-v2.js',
+              'lunea-timing-prompt-repair-v1.js',
               'lunea-thai-tarot-bridge-v32.js',
               'lunea-thai-range-v33.js',
               'lunea-timing-ab-inline-v16.js',
@@ -79,6 +89,22 @@ jobs:
               if count != 2:
                   raise SystemExit(f'Could not stamp both nested loader paths for {asset}: {count}')
           loader_path.write_text(loader, encoding='utf-8')
+
+          for owner, assets in {
+              'lunea-boot-reveal-v29.js': ('lunea-daily-interpretation-contract-v2.js',),
+              'lunea-astro-origin-failover-v57.js': (
+                  'lunea-horary-post-actions-v44.js',
+                  'lunea-horary-ai-guard-v49.js',
+              ),
+          }.items():
+              owner_path = Path(owner)
+              owner_source = owner_path.read_text(encoding='utf-8')
+              for asset in assets:
+                  pattern = re.escape(asset) + r'\?v=[^"\']+'
+                  owner_source, count = re.subn(pattern, f'{asset}?v={build}', owner_source)
+                  if count != 1:
+                      raise SystemExit(f'Could not stamp nested prompt loader {owner}/{asset}: {count}')
+              owner_path.write_text(owner_source, encoding='utf-8')
 
           icon_tag = '<link rel="apple-touch-icon" sizes="180x180" href="./lunea-icon-opal-card-v11.png">'
           if re.search(r'<link[^>]+rel=["\']apple-touch-icon["\'][^>]*>', s, flags=re.I):
@@ -137,13 +163,13 @@ jobs:
           if [ "${{ github.event_name }}" = "schedule" ]; then
             rm -f .github/PAGES_REPAIR_ONCE
           fi
-          if git diff --quiet -- index.html lunea-build.json lunea-structural-routing-v4.js .github/PAGES_REPAIR_ONCE; then
+          if git diff --quiet -- index.html lunea-build.json lunea-structural-routing-v4.js lunea-boot-reveal-v29.js lunea-astro-origin-failover-v57.js .github/PAGES_REPAIR_ONCE; then
             echo 'No cache/icon stamp change needed'
             exit 0
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add index.html lunea-build.json lunea-structural-routing-v4.js
+          git add index.html lunea-build.json lunea-structural-routing-v4.js lunea-boot-reveal-v29.js lunea-astro-origin-failover-v57.js
           git add -A .github/PAGES_REPAIR_ONCE
           git commit -m "Stamp LUNEA Pages build and canonical Home Screen icon"
           git push

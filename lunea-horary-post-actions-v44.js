@@ -18,6 +18,9 @@
   const DB_NAME = 'LUNEA_READING_DB';
   const DB_VERSION = 1;
   const STORE = 'journal';
+  // This marks only the dedicated Horary AI action.  It is deliberately not
+  // reused by Tarot+Horary support text, which may contain legacy HORARY V1.
+  const HORARY_AI_REQUEST_MARKER = '[LUNEA HORARY AI REQUEST V47]';
   const $ = id => document.getElementById(id);
   const clean = value => String(value ?? '').normalize('NFKC').replace(/\s+/g, ' ').trim();
   const uid = () => {
@@ -141,7 +144,8 @@
     const result = resultText();
     if (!result) return '';
     const prashna = crossPromptBlock() || prashnaText();
-    return `당신은 LUNEA의 전통 Horary(호라리·질문시각 점성술) 해석자다.
+    return `${HORARY_AI_REQUEST_MARKER}
+당신은 LUNEA의 전통 Horary(호라리·질문시각 점성술) 해석자다.
 아래 화면에 표시된 계산값은 엔진이 이미 확정했다. 계산값을 수정하거나 새 행성 위치·하우스·각·날짜를 만들지 마라.
 
 [질문 원문]
