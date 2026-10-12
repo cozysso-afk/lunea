@@ -61,20 +61,28 @@
   }
 
   function inferTopic(question) {
-    const q = String(question || '');
+    const q = String(question || '').normalize('NFKC').trim();
     // Subject/situation first; generic contact/news last so
     // "시험 결과 연락" does not collapse into a generic contact topic.
-    if (/재회|다시\s*만나|구남친|구여친|전남친|전여친|전애인/.test(q)) return '재회';
-    if (/시험|합격|불합격|면접|점수|발표/.test(q)) return '시험';
-    if (/공부|학업|복습|강의|암기|회독/.test(q)) return '학업';
+    if (/재회|다시\s*만나|관계\s*회복|구남친|구여친|전남친|전여친|전애인|헤어진/.test(q)) return '재회';
+    if (/시험|합격|불합격|면접|점수|성적(?!\s*(?:끌림|매력|욕구|궁합))|발표/.test(q)) return '시험';
+    if (/공부|학업|복습|강의|암기|회독|학습|수업/.test(q)) return '학업';
     if (/이직|퇴사|커리어\s*전환|옮길/.test(q)) return '이직';
-    if (/직장|회사|업무|승진|평판/.test(q)) return '직장';
-    if (/주식|코인|투자|매수|매도|익절|손절/.test(q)) return '투자심리';
-    if (/금전|돈|재물|수입|지출|재정/.test(q)) return '금전';
-    if (/연애|소개팅|호감|썸|데이트|사귀|좋아하/.test(q)) return '연애';
+    if (/직장|회사|업무|승진|평판|취업|직업|커리어|프로젝트/.test(q)) return '직장';
+    if (/주식|코인|투자|매수|매도|익절|손절|종목/.test(q)) return '투자심리';
+    if (/금전|돈|재물|수입|지출|재정|대출/.test(q)) return '금전';
+    if (/연애|소개팅|호감|썸|데이트|사귀|좋아하|속궁합|인터미[씨시]|친밀|성관계|성적\s*(?:끌림|매력)|스킨십|남친|여친|남자친구|여자친구|연인|결혼|배우자/.test(q)) return '연애';
     if (/소식|문서|메일|통보/.test(q)) return '소식';
-    if (/연락|카톡|답장|메시지|전화|DM|디엠/.test(q)) return '연락';
-    return 'general';
+    if (/연락|카톡|답장|메시지|전화|DM|디엠/i.test(q)) return '연락';
+
+    // Pronoun-only questions ("그는 나를 어떻게 생각할까?") still belong to
+    // their active reading sector. Never borrow a sector for an unrelated question.
+    if (!q || q !== currentQuestion().normalize('NFKC')) return 'general';
+    let category = '';
+    try { category = W.state?.category || ''; } catch {}
+    if (!category) { try { category = state?.category || ''; } catch {} }
+    return ({LOVE:'연애', INTIMACY:'연애', STOCK:'투자심리', CAREER:'직장',
+      STUDY:'학업', CAREER_STUDY:'직장'})[String(category).toUpperCase()] || 'general';
   }
 
   function esc(value) {

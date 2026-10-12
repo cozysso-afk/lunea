@@ -56,6 +56,8 @@ jobs:
               'lunea-final-prompt-priority-v1.js',
               'lunea-thai-tarot-bridge-v32.js',
               'lunea-thai-range-v33.js',
+              'lunea-timing-ab-inline-v16.js',
+              'lunea-horary-balance-v19-5.js',
               'lunea-reading-action-order-v33.js',
               'lunea-astro-job-queue-v1.js',
               'lunea-astro-resume-v23.js',

@@ -38,9 +38,7 @@
     try {
       const s = currentState();
       return String(s?.category || '').toUpperCase() === 'INTIMACY' ||
-        !!W.__LUNEA_INTIMACY_ACTIVE__ ||
-        document.body?.classList?.contains('lunea-intimacy-reading') ||
-        !!W.LUNEA_INTIMACY_V34?.getSpread?.(s?.title);
+        !!W.__LUNEA_INTIMACY_ACTIVE__;
     } catch {
       return !!W.__LUNEA_INTIMACY_ACTIVE__;
     }
@@ -239,14 +237,7 @@
       return false;
     }
     panel.dataset.luneaIntimacyTheme = RELEASE;
-    document.body?.classList?.add('lunea-intimacy-reading');
-    try {
-      const s = currentState();
-      if (s) {
-        s.category = 'INTIMACY';
-        s.__luneaIntimacyReading = true;
-      }
-    } catch {}
+    // Presentation only: the entry/restore owner determines the reading sector.
     return true;
   }
 
@@ -256,7 +247,6 @@
       clearManualContext();
       return false;
     }
-    document.body?.classList?.add('lunea-intimacy-reading');
     markManualContext();
     simplifyOracleTools();
     patchOracleCards();
