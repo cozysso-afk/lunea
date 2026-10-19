@@ -75,7 +75,7 @@ async function check(name, fn) {
   console.log('RUN:',name);
   const instance = await setup();
   try { await fn(instance); console.log('PASS:',name); }
-  catch (error) { failures.push(name+': '+error.message); console.error(error.stack); console.error('STATE', JSON.stringify(await instance.page.evaluate(() => ({category:state.category,title:state.title,drawn:state.drawn.map(c=>({code:c.code,position:c.position})),meanings:!!window.LUNEA_CARD_MEANINGS_V1,notes:document.querySelectorAll('.lunea-card-meaning').length,infos:document.querySelectorAll('#results .info').length,flipped:document.querySelectorAll('#cards .flipped').length,flipDisabled:document.getElementById('flipAll')?.disabled}))))); }
+  catch (error) { failures.push(name+': '+error.message); console.error(error.stack); console.error('STATE', JSON.stringify(await instance.page.evaluate(() => ({category:state.category,title:state.title,drawn:state.drawn.map(c=>({code:c.code,position:c.position})),meanings:!!window.LUNEA_CARD_MEANINGS_V1,notes:document.querySelectorAll('.lunea-card-meaning').length,infos:document.querySelectorAll('#results .info').length,flipped:document.querySelectorAll('#cards .flipped').length,flipDisabled:document.getElementById('flipAll')?.disabled})))); }
   finally { await instance.context.close(); }
 }
 
