@@ -75,7 +75,7 @@ async function check(name, fn) {
   console.log('RUN:',name);
   const instance = await setup();
   try { await fn(instance); console.log('PASS:',name); }
-  catch (error) { failures.push(name+': '+error.message); console.error(error.stack); }
+  catch (error) { failures.push(name+': '+error.message); console.error(error.stack); console.error('STATE', JSON.stringify(await instance.page.evaluate(() => ({category:state.category,title:state.title,drawn:state.drawn.map(c=>({code:c.code,position:c.position})),meanings:!!window.LUNEA_CARD_MEANINGS_V1,notes:document.querySelectorAll('.lunea-card-meaning').length,infos:document.querySelectorAll('#results .info').length,flipped:document.querySelectorAll('#cards .flipped').length,flipDisabled:document.getElementById('flipAll')?.disabled}))))); }
   finally { await instance.context.close(); }
 }
 
@@ -146,7 +146,7 @@ try {
       await draw(page, category, '현재 이 선택을 어떻게 봐야 할까?');
       assert.equal(await page.locator('.lunea-card-meaning').count(),0,'face-down cards disclose no description');
       await page.locator('#flipAll').dispatchEvent('click');
-      await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
+      await page.waitForFunction(() => [...document.querySelectorAll('#cards .tarot-card-wrapper')].every(node => document.querySelector('#info-'+node.dataset.index+' .lunea-card-meaning')));
       const rows = await page.evaluate(() => state.drawn.map((card,i) => ({actual:document.querySelector('#info-'+i+' .lunea-card-meaning')?.textContent,expected:window.LUNEA_CARD_MEANINGS_V1.meaning(card)})));
       assert.ok(rows.every(row => row.actual === row.expected));
       await page.evaluate(() => document.querySelector('[data-close="spread"]').click());
@@ -154,7 +154,7 @@ try {
     await page.locator('#dailyBtn').dispatchEvent('click');
     await page.waitForFunction(() => state.category === 'DAILY' && state.drawn.length > 0);
     await page.locator('#flipAll').dispatchEvent('click');
-    await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
+    await page.waitForFunction(() => [...document.querySelectorAll('#cards .tarot-card-wrapper')].every(node => document.querySelector('#info-'+node.dataset.index+' .lunea-card-meaning')));
     assert.equal(requests.length,0,'local card descriptions need no Gemini requests');
   });
   await check('actual Tarot AI button preserves cards after calculating Horary support', async ({page,requests}) => {
@@ -171,7 +171,7 @@ try {
       };
       localStorage.setItem('LUNEA_API_KEY','mock-key');
     }, HORARY_FIXTURE);
-    await page.locator('#horarySupportBtn').dispatchEvent('click');
+    await page.locator('#astroHoraryBtn').dispatchEvent('click');
     await page.waitForSelector('#astroHoraryOverlay.show');
     await page.locator('#astroHoraryPlace').fill('Seoul');
     await page.locator('#astroHoraryRun').dispatchEvent('click');
