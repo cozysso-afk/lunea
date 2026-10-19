@@ -49,6 +49,8 @@ jobs:
               'lunea-astro-stability-v2.js',
               'lunea-ios-performance-v3.js',
               'timing-oracle-v1.js',
+              'lunea-card-meanings-v1.js',
+              'astro-horary-v1.js',
           ):
               pattern = re.escape(asset) + r'\?v=[^"\']+'
               replacement = f'{asset}?v={build}'
