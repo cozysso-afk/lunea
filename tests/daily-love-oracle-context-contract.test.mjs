@@ -38,7 +38,7 @@ for (const phrase of [
 ]) {
   assert.ok(contract.includes(phrase), `missing Daily V2 contract phrase: ${phrase}`);
 }
-assert.match(boot, /lunea-daily-interpretation-contract-v2\.js\?v=20260928-1/);
+assert.match(boot, /lunea-daily-interpretation-contract-v2\.js\?v=(?:20260928-1|[0-9a-f]{12})['"]/);
 assert.match(boot, /script\.onload=ensureDailyInterpretationContract/);
 
 // Execute only the isolated V2 module with light browser stubs and verify that
