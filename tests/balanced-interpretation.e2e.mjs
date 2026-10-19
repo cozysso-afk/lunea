@@ -8,6 +8,29 @@ const browser = process.env.LUNEA_E2E_BROWSER === 'chromium'
   : await webkit.launch({headless:true});
 const finalMarker = '[FINAL READING PRIORITY · 최종 근거 우선순위]';
 const failures = [];
+const HORARY_FIXTURE = {
+  schema:'LUNEA_HORARY_V1',
+  question:{text:'그 사람이 나에게 먼저 연락할까요?',topic:'contact',topic_label_ko:'연락·메시지'},
+  moment:{local_iso:'2026-09-26T18:30:00+09:00',place_resolved:'Seoul',latitude:37.5665,longitude:126.978},
+  zodiac:'Tropical',house_system:'Regiomontanus',
+  angles:{ASC:{sign:'Libra',degree:12.2},MC:{sign:'Cancer',degree:8.4}},
+  cusps:[12,42,72,102,132,162,192,222,252,282,312,342],
+  planets:{},points:{},
+  significators:{
+    querent:{house:1,ruler:'Venus',ruler_ko:'금성',planet:{name_ko:'금성',sign:'Libra',degree:14.2,house:1,direction:'Direct',dignity_ko:'도머사일'}},
+    quesited:{house:7,ruler:'Mars',ruler_ko:'화성',planet:{name_ko:'화성',sign:'Gemini',degree:15.1,house:9,direction:'Direct',dignity_ko:'중립'}},
+    event:{house:9,ruler:'Mercury',ruler_ko:'수성',planet:{name_ko:'수성',sign:'Libra',degree:18.1,house:1,direction:'Direct',dignity_ko:'중립'}},
+    moon:{name_ko:'달',sign:'Aquarius',degree:9.1,house:5,direction:'Direct',dignity_ko:'중립'}
+  },
+  judgment_support:{
+    primary_connection:{aspect_ko:'Trine(삼합)',orb:0.9,phase_ko:'Applying(적용)'},
+    perfection:{perfects:true,reason_ko:'유효 오브 안 적용각이 완성됨',exact_local:'2026-09-27T03:00:00+09:00'},
+    reception:{has_reception:true,mutual_reception:false,same_significator:false},
+    moon_course:{void_of_course:false,next_aspects:[{body_ko:'화성',aspect_ko:'Trine(삼합)'}],hours_to_sign_exit:11.2},
+    potential_prohibition:[]
+  },
+  meta:{engine:'E2E fixture'}
+};
 
 async function setup() {
   const context = await browser.newContext({viewport:{width:393,height:852}, isMobile:true, hasTouch:true, locale:'ko-KR', serviceWorkers:'block'});
@@ -117,6 +140,60 @@ try {
     assert.match(meihua,/경쟁|제한/);
     assert.match(meihua,/기계|50:50|허위/);
     assert.doesNotMatch(meihua,/FINAL READING PRIORITY/);
+  });
+  await check('all main sectors reveal local direction-aware descriptions', async ({page,requests}) => {
+    for (const category of ['GENERAL','LOVE','CAREER','STOCK']) {
+      await draw(page, category, '현재 이 선택을 어떻게 봐야 할까?');
+      assert.equal(await page.locator('.lunea-card-meaning').count(),0,'face-down cards disclose no description');
+      await page.locator('#flipAll').dispatchEvent('click');
+      await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
+      const rows = await page.evaluate(() => state.drawn.map((card,i) => ({actual:document.querySelector('#info-'+i+' .lunea-card-meaning')?.textContent,expected:window.LUNEA_CARD_MEANINGS_V1.meaning(card)})));
+      assert.ok(rows.every(row => row.actual === row.expected));
+      await page.evaluate(() => document.querySelector('[data-close="spread"]').click());
+    }
+    await page.locator('#dailyBtn').dispatchEvent('click');
+    await page.waitForFunction(() => state.category === 'DAILY' && state.drawn.length > 0);
+    await page.locator('#flipAll').dispatchEvent('click');
+    await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
+    assert.equal(requests.length,0,'local card descriptions need no Gemini requests');
+  });
+  await check('actual Tarot AI button preserves cards after calculating Horary support', async ({page,requests}) => {
+    const question = '그 사람이 나에게 먼저 연락할까요?';
+    await draw(page, 'LOVE', question);
+    await page.evaluate(fixture => {
+      const prior = window.fetch.bind(window);
+      window.fetch = (input,init) => {
+        const url = typeof input === 'string' ? input : input.url;
+        const path = new URL(url,location.href).pathname;
+        if (/\/health\/?$/.test(path)) return Promise.resolve(new Response(JSON.stringify({ok:true}),{headers:{'Content-Type':'application/json'}}));
+        if (path === '/v1/horary') return Promise.resolve(new Response(JSON.stringify(fixture),{headers:{'Content-Type':'application/json'}}));
+        return prior(input,init);
+      };
+      localStorage.setItem('LUNEA_API_KEY','mock-key');
+    }, HORARY_FIXTURE);
+    await page.locator('#horarySupportBtn').dispatchEvent('click');
+    await page.waitForSelector('#astroHoraryOverlay.show');
+    await page.locator('#astroHoraryPlace').fill('Seoul');
+    await page.locator('#astroHoraryRun').dispatchEvent('click');
+    await page.waitForFunction(() => window.LUNEA_ASTRO_HORARY_V1.getCurrent()?.schema === 'LUNEA_HORARY_V1');
+    await page.locator('#astroHoraryClose').dispatchEvent('click');
+    const drawn = await page.evaluate(() => state.drawn.map(card => ({name:card.name,position:card.position,isReversed:card.isReversed})));
+    await page.locator('#aiRead').dispatchEvent('click');
+    await page.waitForFunction(() => document.getElementById('aiText')?.textContent?.includes('모의 응답입니다.'));
+    assert.equal(requests.length,1,'Tarot output never enters Horary retry/hold');
+    const actual = requests[0].contents[0].parts[0].text;
+    assert.match(actual,/^\[LUNEA TAROT READING · HORARY SUPPORT\]/);
+    assert.match(actual,/\[LUNEA TAROT HORARY SUPPORT · 계산 결과\]/);
+    assert.doesNotMatch(actual,/\[HORARY V1 · 질문시각 점성술 계산 결과\]|FINAL VERDICT LOCK|HORARY ANSWER VALIDATOR/);
+    for (const card of drawn) {
+      assert.ok(actual.includes(card.name),'actual card name retained');
+      assert.ok(actual.includes(card.position),'actual position retained');
+    }
+    assert.match(actual,/먼저 실제로 뽑힌 타로 카드/);
+    assert.match(actual,/그 사람이 나에게 먼저 연락할까요/);
+    await page.evaluate(() => document.querySelector('[data-close="spread"]').click());
+    await draw(page,'GENERAL','다음 선택은 어떨까?');
+    assert.doesNotMatch(await page.evaluate(() => promptString()),/LUNEA TAROT HORARY SUPPORT/,'previous support cannot leak into the next reading');
   });
   assert.deepEqual(failures,[],'Mobile balanced interpretation regressions failed');
 } finally { await browser.close(); }
