@@ -2,7 +2,7 @@
 
 /* LUNEA HORARY ANSWER VALIDATOR V48
    ---------------------------------------------------------------
-   Runtime guard for Horary AI prose only.
+   Runtime guard for dedicated Horary AI prose only.
    - validates the generated answer against the deterministic Horary prompt/result
    - retries once with explicit correction instructions when a hard contradiction is found
    - returns a safe verification-hold answer if the retry still violates the contract
@@ -13,15 +13,11 @@
   if (W.__LUNEA_HORARY_ANSWER_VALIDATOR_V48__) return;
   W.__LUNEA_HORARY_ANSWER_VALIDATOR_V48__ = true;
 
-  const RELEASE = '48.1';
+  const RELEASE = '48.2';
   const RETRY_TAG = '[HORARY ANSWER VALIDATOR V48 · RETRY]';
-  const MARKERS = [
-    '[HORARY V1 · 질문시각 점성술 계산 결과]',
-    '[HORARY V1 · 계산 결과]',
-    '[HORARY ENGINE RESULT · AUTHORITATIVE]',
-    'LUNEA HORARY INTERPRETATION ENGINE V2',
-    'LUNEA의 전통 Horary'
-  ];
+  // Legacy [HORARY V1] also appears in Tarot support prompts.  Only V44's
+  // dedicated action (and its V49 lifecycle) sends this provenance marker.
+  const HORARY_AI_REQUEST_MARKER = '[LUNEA HORARY AI REQUEST V47]';
 
   const clean = value => String(value ?? '').replace(/\r/g, '').trim();
   const compact = value => clean(value).replace(/\s+/g, ' ');
@@ -47,8 +43,17 @@
   }
 
   function isHoraryPrompt(prompt) {
-    const value = String(prompt || '');
-    return MARKERS.some(marker => value.includes(marker));
+    return /^\[LUNEA HORARY AI REQUEST V47\](?:\r?\n|$)/.test(String(prompt || '').trimStart());
+  }
+
+  function withHoraryProvenance(prompt) {
+    const value = String(prompt || '').trim();
+    if (!value || isHoraryPrompt(value)) return value;
+    try {
+      const bridge = W.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47?.withHoraryProvenance;
+      if (typeof bridge === 'function') return String(bridge(value) || value);
+    } catch {}
+    return `${HORARY_AI_REQUEST_MARKER}\n${value}`;
   }
 
   function canonicalPrompt(requestText = '') {
@@ -59,7 +64,7 @@
       const lock = W.LUNEA_HORARY_INTERPRETATION_BRIDGE_V47?.qualityLockedPrompt;
       if (typeof lock === 'function') prompt = String(lock(prompt) || prompt);
     } catch {}
-    return prompt;
+    return withHoraryProvenance(prompt);
   }
 
   function section(text, marker, endings = []) {
@@ -112,6 +117,55 @@
     const positive = /(?:성사\s*(?:된다|될\s*가능성이\s*(?:높|크)|가능성이\s*(?:높|크))|재회\s*(?:한다|할\s*수\s*있|가능성이\s*(?:높|크))|관계\s*회복\s*(?:이\s*된다|된다|가능성이\s*(?:높|크))|연락\s*(?:이\s*온다|이\s*올\s*가능성이\s*(?:높|크)|할\s*가능성이\s*(?:높|크))|답장\s*(?:이\s*온다|이\s*올\s*가능성이\s*(?:높|크))|합격\s*(?:한다|할\s*가능성이\s*(?:높|크))|채용\s*(?:된다|될\s*가능성이\s*(?:높|크))|계약\s*(?:이\s*성사된다|성사\s*가능성이\s*(?:높|크)))/i;
     const hedge = /(높지\s*않|크지\s*않|어렵|낮|부족|불확실|단정(?:할\s*수)?\s*없|아니|못\s*한|보류|근거가\s*약)/i;
     return sentences.some(sentence => positive.test(sentence) && !hedge.test(sentence));
+  }
+
+  function strongNegative(text) {
+    const sentences = String(text || '').split(/(?<=[.!?。]|\n)/).map(compact).filter(Boolean);
+    const negative = /(?:성사(?:되기)?\s*(?:어렵|불가능)|성사(?:되지|될)\s*않|불성사|재회(?:는|가)?\s*(?:어렵|불가능|되지\s*않|안\s*(?:된다|될))|관계\s*회복(?:은|이)?\s*(?:어렵|불가능|되지\s*않|안\s*(?:된다|될))|연락(?:은|이)?\s*(?:오지\s*않|안\s*(?:온|올)|어렵)|답장(?:은|이)?\s*(?:오지\s*않|안\s*(?:온|올)|어렵)|(?:합격|채용|계약)(?:은|이)?\s*(?:어렵|불가능|되지\s*않|안\s*(?:된다|될)))/i;
+    const hedge = /(단정(?:할\s*수)?\s*없|보류|불확실|근거가\s*약|조건부|가능성(?:도)?\s*있|제한(?:적)?(?:으로)?\s*(?:가능|있))/i;
+    return sentences.some(sentence => negative.test(sentence) && !hedge.test(sentence));
+  }
+
+  // D/NONE and explicitly conditional/mixed staged results are not a hidden
+  // positive or negative verdict.  A direct perfection with a confirmed
+  // obstruction is likewise conditional even if a legacy line says YES.
+  function nonDirectionalVerdict(engine) {
+    const value = String(engine || '');
+    return /(?:AUTHORITATIVE|STAGED|OVERALL)\s*(?:JUDGMENT|VERDICT)?\s*:\s*(?:D|NONE|CONDITIONAL|MIXED|UNCLEAR|AMBIVALENT)\b/i.test(value)
+      || /(?:권위(?:적)?|단계(?:별)?|전체)?\s*(?:판정|결론)\s*:\s*(?:D|NONE|조건부|혼합|애매|불명)/i.test(value);
+  }
+
+  function confirmedObstruction(engine) {
+    const values = [...String(engine || '').matchAll(/confirmed\s+obstruction\s*:\s*([^\n]+)/ig)].map(match => match[1]);
+    return values.some(value => !/^(?:none|no|false|없음|해당\s*없음)\b/i.test(String(value || '').trim()));
+  }
+
+  function conditionalDirection(engine) {
+    const value = String(engine || '');
+    const directPositive = /direct\s+perfection\s*:\s*(?:YES|TRUE)|직접\s*성사[^\n]{0,25}(?:있음|성립)/i.test(value);
+    return nonDirectionalVerdict(value)
+      || /(?:\bconditional\b|\bmixed\b|조건부|엇갈|혼합)/i.test(value)
+      || (directPositive && confirmedObstruction(value));
+  }
+
+  function explicitVerdict(engine) {
+    const value = String(engine || '');
+    const authoritative = value.match(/AUTHORITATIVE\s+JUDGMENT\s*:\s*([^\n]+)/i);
+    const staged = value.match(/(?:staged|overall)\s+(?:judgment|verdict)\s*:\s*([^\n]+)/i);
+    const korean = value.match(/(?:최종|전체|단계별|권위적)?\s*(?:판정|결론)\s*[:：]\s*([^\n]+)/);
+    return String((authoritative || staged || korean)?.[1] || '').trim();
+  }
+
+  function authoritativePositive(engine) {
+    const value = String(engine || '');
+    if (conditionalDirection(value)) return false;
+    return /^(?:YES|POSITIVE|AFFIRMATIVE)\b|^(?:긍정|성사(?:됨|가능|쪽)?)(?=[\s·,:]|$)/i.test(explicitVerdict(value));
+  }
+
+  function authoritativeNegative(engine) {
+    const value = String(engine || '');
+    if (conditionalDirection(value)) return false;
+    return /^(?:NO|NEGATIVE|INSUFFICIENT)\b|^(?:부정|근거\s*부족|성사\s*어려움|불성사)(?=[\s·,:]|$)/i.test(explicitVerdict(value));
   }
 
   function positiveReconciliation(text) {
@@ -207,9 +261,11 @@
       violations.push({code:'private_instruction_leak', message:'내부 검증 지시문이 사용자 답변에 노출됨'});
     }
 
-    const authoritativeNegative = /(AUTHORITATIVE\s+JUDGMENT\s*:\s*(?:NO|NEGATIVE|INSUFFICIENT)|(?:staged|overall)[^\n]{0,50}(?:NO|부정|근거\s*부족|성사\s*어려움|불성사)|(?:결론|성사)[^\n]{0,45}(?:근거\s*부족|어려움|불성사))/i.test(engine);
-    if (authoritativeNegative && strongPositive(conclusion)) {
+    if (authoritativeNegative(engine) && strongPositive(conclusion)) {
       violations.push({code:'verdict_direction', message:'엔진의 부정/근거부족 판정을 강한 긍정 결론으로 뒤집음'});
+    }
+    if (authoritativePositive(engine) && strongNegative(conclusion)) {
+      violations.push({code:'verdict_direction', message:'엔진의 긍정 판정을 강한 부정 결론으로 뒤집음'});
     }
 
     const directAbsent = /(direct\s+perfection\s*:\s*(?:NO|NONE|FALSE)|직접\s*성사[^\n]{0,25}(?:없음|미성립)|성사각\s*미채택)/i.test(engine);
@@ -382,6 +438,7 @@
     familyKey,
     futureWindowOrbSupported,
     isHoraryPrompt,
+    withHoraryProvenance,
     install:installFetchGuard
   });
 

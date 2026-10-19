@@ -262,7 +262,27 @@ async function testHoraryPrashna(browser) {
   const archive = await page.evaluate(() => JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3') || '[]'));
   assert.equal(archive[0].title,'HORARY · 질문시각 점성술');
   assert.equal(archive[0].q,'그 사람이 나에게 먼저 연락할까요?');
-  assert.equal(archive[0].horary?.cross_interpretation_v2?.schema,'LUNEA_HORARY_PRASHNA_CROSS_V2');
+  // V44 deliberately stores a lightweight compatibility row in localStorage.
+  // Full Horary / Cross fidelity belongs to the canonical IndexedDB journal.
+  assert.equal(archive[0].horary?.lightweight, true);
+  assert.equal(archive[0].horary?.screenSnapshot?.cross_interpretation_v2?.schema,'LUNEA_HORARY_PRASHNA_CROSS_V2');
+  const fullReading = await page.evaluate(async id => {
+    const db = await new Promise((resolve,reject) => {
+      const request = indexedDB.open('LUNEA_READING_DB',1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+    try {
+      return await new Promise((resolve,reject) => {
+        const request = db.transaction('journal','readonly').objectStore('journal').getAll();
+        request.onsuccess = () => resolve(request.result.find(row => row.sourceArchiveId === id)?.reading);
+        request.onerror = () => reject(request.error);
+      });
+    } finally { db.close(); }
+  }, archive[0].id);
+  assert.equal(fullReading?.horary?.schema,'LUNEA_HORARY_V1');
+  assert.equal(fullReading?.horary?.cross_interpretation_v2?.schema,'LUNEA_HORARY_PRASHNA_CROSS_V2');
+  assert.equal(fullReading?.horary?.cross_interpretation_v2?.horary?.conclusion?.grade,'A');
 
   await page.locator('#astroHoraryClose').click();
   await page.locator('#archiveBtn').click({force:true});

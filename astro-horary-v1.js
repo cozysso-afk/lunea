@@ -890,12 +890,19 @@ ${horaryPromptBlock(stateHorary.result)}
         let prompt = old.apply(this, arguments);
         const q = currentQuestion();
         if (!stateHorary.result || stateHorary.mode !== 'support' || stateHorary.question !== q) return prompt;
-        prompt += '\n\n' + horaryPromptBlock(stateHorary.result);
+        // A support result is not a dedicated Horary AI request. Legacy fetch
+        // enrichers own HORARY V1 and may append standalone output rules.
+        const support = horaryPromptBlock(stateHorary.result).replace(
+          '[HORARY V1 · 질문시각 점성술 계산 결과]',
+          '[LUNEA TAROT HORARY SUPPORT · 계산 결과]'
+        );
+        prompt = '[LUNEA TAROT READING · HORARY SUPPORT]\n' + prompt + '\n\n' + support;
         prompt += `\n\n[타로·호라리 통합 경계]
 1. RWS 타로와 Horary(호라리)는 서로 다른 체계다.
 2. 각 체계의 결론을 먼저 독립적으로 제시한 뒤, 같은 방향이면 교차 보조 신호로만 말한다.
 3. 서로 다르면 차이를 숨기지 말고 어떤 근거가 충돌하는지 설명한다.
-4. 호라리가 타로 카드 포지션을 덮어쓰거나, 타로가 호라리 행성 계산을 바꾸게 하지 않는다.`;
+4. 호라리가 타로 카드 포지션을 덮어쓰거나, 타로가 호라리 행성 계산을 바꾸게 하지 않는다.
+5. 이것은 타로 AI 해석 요청이다. 먼저 실제로 뽑힌 타로 카드의 이름·정역방향·포지션별 해석과 타로 결론을 제시한다. 그다음 호라리 보조 결과를 별도 문단으로 설명한다. 호라리 전용 해설이나 판정 검증 보류문으로 타로 해석 전체를 대체하지 않는다.`;
         return prompt;
       };
     } catch (error) {

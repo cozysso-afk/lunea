@@ -118,8 +118,8 @@ try{
   assert.equal(pre.savedOracle?.cards?.[0]?.code,'O01','old 120ms save window must preserve O01 while runtime is late');
 
   await page.evaluate(()=>window.__LUNEA_E2E_HELD_ORACLE_RUNTIME__?.release?.());
-  await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.6',{timeout:15000});
-  await page.waitForFunction(()=>window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__!==true,{timeout:15000});
+  await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.6',null,{timeout:20000,polling:100});
+  await page.waitForFunction(()=>window.__LUNEA_DRAFT_RESTORING_INTIMACY_ORACLE__!==true,null,{timeout:20000,polling:100});
   await page.waitForTimeout(180);
 
   const post=await page.evaluate(()=>{

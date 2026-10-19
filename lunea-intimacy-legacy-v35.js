@@ -8,13 +8,13 @@
 
   const RELEASE = '35.2';
   const TITLE = '속궁합 · 19+';
-  const DESC = '기존 9장 신체적 속궁합 배열 · 욕구와 리드, 물리적 압박감과 밀착감, 템포, 지속성, 판타지, 만족도와 행위 후 교감까지 세밀하게 봅니다.';
+  const DESC = '기존 9장 친밀감 배열 · 욕구와 리드, 크기·형태의 상징과 주관적 접촉감, 선호의 상호 확인, 템포, 지속성, 판타지, 만족과 여운을 세밀하게 봅니다.';
   const ACK_KEY = 'LUNEA_INTIMACY_ADULT_ACK_V1';
   const POSITIONS = Object.freeze([
     '상대의 본능적 욕구 & 리드 성향',
     '나의 신체적 감각 & 수용 상태',
-    '상대방의 성기 굵기 & 물리적 압박감',
-    '내 성기의 타이트함(밀도) & 나와의 밀착감',
+    '상대 신체 크기·형태가 연상시키는 상징과 접촉감 (실측 아님)',
+    '나의 밀착·압박감 선호와 상호 확인',
     '속도감 & 완급 조절(템포)',
     '체력 & 지구력(지속성)',
     '숨겨진 성적 판타지 & 페티시',
@@ -272,7 +272,7 @@
     item.setAttribute('role', 'button');
     item.setAttribute('tabindex', '0');
     item.setAttribute('aria-label', `${TITLE} 9장 배열`);
-    item.innerHTML = `<div><h4>${TITLE}<span class="lunea-intimacy-legacy-badge">ORIGINAL · 9</span></h4><p>욕구·리드 · 굵기/압박감 · 타이트함/밀착감 · 템포 · 지속성 · 판타지 · 만족 · 여운</p></div><div class="count">9</div>`;
+    item.innerHTML = `<div><h4>${TITLE}<span class="lunea-intimacy-legacy-badge">ORIGINAL · 9</span></h4><p>욕구·리드 · 크기·접촉감 상징 · 템포 · 지속성 · 판타지 · 만족 · 여운</p></div><div class="count">9</div>`;
     item.addEventListener('click', openLegacy);
     item.addEventListener('keydown', event => {
       if (event.key === 'Enter' || event.key === ' ') {

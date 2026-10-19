@@ -9,8 +9,8 @@ const workflow = fs.readFileSync(new URL('../.github/workflows/bump-lunea-loader
 const positions = [
   '상대의 본능적 욕구 & 리드 성향',
   '나의 신체적 감각 & 수용 상태',
-  '상대방의 성기 굵기 & 물리적 압박감',
-  '내 성기의 타이트함(밀도) & 나와의 밀착감',
+  '상대 신체 크기·형태가 연상시키는 상징과 접촉감 (실측 아님)',
+  '나의 밀착·압박감 선호와 상호 확인',
   '속도감 & 완급 조절(템포)',
   '체력 & 지구력(지속성)',
   '숨겨진 성적 판타지 & 페티시',
@@ -22,6 +22,8 @@ test('restores the original 9-card intimacy spread verbatim', () => {
   assert.match(source, /const RELEASE = '35\.2'/);
   assert.match(source, /const TITLE = '속궁합 · 19\+'/);
   for (const position of positions) assert.ok(source.includes(position), `missing legacy position: ${position}`);
+  assert.doesNotMatch(source, /성기 굵기|타이트함\(밀도\)/);
+  assert.match(source, /dataset\.intimacyId = 'legacy_intimacy_9'/);
   assert.match(source, /dataset\.count = '9'/);
   assert.match(source, /ORIGINAL · 9/);
 });

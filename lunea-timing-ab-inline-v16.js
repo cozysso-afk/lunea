@@ -35,10 +35,14 @@
     return {phase:'crescent', angle:28, label:'NEAR ORBIT'};
   }
 
-  function currentQuestion() {
-    const raw = clean($('spreadQuestion')?.textContent || '');
-    return raw.replace(/^[“\"']+|[”\"']+$/g, '').trim();
-  }
+    function currentQuestion() {
+      const raw = clean($('spreadQuestion')?.textContent || '');
+      return raw.replace(/^[“\"']+|[”\"']+$/g, '').trim();
+    }
+
+    function currentSessionId() {
+      try { return clean(W.LUNEA_READING_LIFECYCLE_V59?.currentSessionId?.()); } catch { return ''; }
+    }
 
   function addStyles() {
     if ($('luneaTimingABInlineV16Style')) return;
@@ -113,10 +117,11 @@
         background:linear-gradient(180deg,rgba(241,243,250,.92),rgba(190,175,232,.08));box-shadow:0 0 6px rgba(225,215,251,.30);
       }
       .lunea-tabi-orbit{color:#a8a5b8;font:700 7px 'Cinzel',serif;letter-spacing:1.05px;margin-bottom:4px}
-      .lunea-tabi-ko{color:#f5f2fa;font:650 15px/1.34 'Noto Serif KR',serif;word-break:keep-all}
-      .lunea-tabi-en{margin-top:3px;color:#bca6d3;font-size:9.5px;line-height:1.35}
-      .lunea-tabi-meaning{margin-top:5px;color:#9291a4;font-size:10px;line-height:1.45;word-break:keep-all}
-      .lunea-tabi-note{position:relative;z-index:1;margin-top:10px;padding-top:10px;border-top:1px solid rgba(221,224,238,.08);color:#858698;font-size:10px;line-height:1.55}
+        .lunea-tabi-ko{color:#f5f2fa;font:650 15px/1.34 'Noto Serif KR',serif;word-break:keep-all}
+        .lunea-tabi-en{margin-top:3px;color:#bca6d3;font-size:9.5px;line-height:1.35}
+        .lunea-tabi-meaning{margin-top:5px;color:#9291a4;font-size:10px;line-height:1.45;word-break:keep-all}
+        .lunea-tabi-conditional{margin-top:6px;color:#b3a9c5;font-size:9.3px;line-height:1.45;word-break:keep-all}
+        .lunea-tabi-note{position:relative;z-index:1;margin-top:10px;padding-top:10px;border-top:1px solid rgba(221,224,238,.08);color:#858698;font-size:10px;line-height:1.55}
       @media(max-width:390px){
         #luneaTimingABInline{padding:13px 12px 14px;margin:12px 0 14px}
         .lunea-tabi-grid{gap:8px}
@@ -153,9 +158,10 @@
       <div class="lunea-tabi-target">대상 ${label} · TIMING</div>
       <div class="lunea-tabi-dial"><div class="lunea-tabi-moon"></div><i class="lunea-tabi-hand"></i></div>
       <div class="lunea-tabi-orbit">${data.cfg.label}</div>
-      <div class="lunea-tabi-ko"></div>
-      <div class="lunea-tabi-en"></div>
-      <div class="lunea-tabi-meaning"></div>`;
+        <div class="lunea-tabi-ko"></div>
+        <div class="lunea-tabi-en"></div>
+        <div class="lunea-tabi-meaning"></div>
+        <div class="lunea-tabi-conditional">사건 성립을 보장하지 않으며, 성립한다면 이 시간 창으로 봐.</div>`;
     if (data.src) {
       const img = document.createElement('img');
       img.className = 'lunea-tabi-face';
@@ -184,7 +190,7 @@
         <div class="lunea-tabi-sub">두 대상의 시기 카드를 메인 리딩에 함께 보관해.</div>
       </div>
       <div class="lunea-tabi-grid"></div>
-      <div class="lunea-tabi-note">시기 카드는 사건 발생 자체를 확정하는 카드가 아니라, 메인 타로 흐름이 성립할 때의 시간 창을 보조해.</div>`;
+      <div class="lunea-tabi-note">각 시간 창은 사건 발생을 보장하지 않아. 각 사건이 성립한다면 이 창으로 보조하며, 메인 타로 흐름을 뒤집지 않아.</div>`;
     cards.insertAdjacentElement('afterend', block);
     return block;
   }
@@ -206,10 +212,12 @@
     if (!grid) return false;
 
     const sig = JSON.stringify([A.ko, A.en, A.meaning, A.src, A.cardId, B.ko, B.en, B.meaning, B.src, B.cardId]);
-    if (block.dataset.sig === sig && grid.children.length === 2) return true;
-    block.dataset.sig = sig;
-    block.dataset.question = currentQuestion();
-    grid.replaceChildren(makeCard(A, 'A'), makeCard(B, 'B'));
+      if (block.dataset.sig === sig && grid.children.length === 2) return true;
+      block.dataset.sig = sig;
+      block.dataset.question = currentQuestion();
+      block.dataset.luneaTimingQuestion = currentQuestion();
+      block.dataset.luneaReadingSessionId = currentSessionId();
+      grid.replaceChildren(makeCard(A, 'A'), makeCard(B, 'B'));
 
     // A/B result supersedes any accidental single-target inline Timing result.
     const single = $('luneaTimingInline');

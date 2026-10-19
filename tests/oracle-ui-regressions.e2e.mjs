@@ -98,7 +98,19 @@ try {
     await page.waitForFunction(() => !!window.LUNEA_THAI_TAROT_BRIDGE_V32.getResult());
     await page.evaluate(() => window.LUNEA_THAI_RANGE_V33.openTarot());
     await page.locator('#luneaThaiTarotRangeRun').dispatchEvent('click');
-    await page.waitForFunction(() => !!window.LUNEA_THAI_RANGE_V33.getTarotResult());
+    try { await page.waitForFunction(() => !!window.LUNEA_THAI_RANGE_V33.getTarotResult(), null, {polling:100}); }
+    catch (error) {
+      console.error('Thai range diagnostic:', requests, await page.evaluate(() => ({
+        status:document.getElementById('luneaThaiTarotRangeStatus')?.textContent,
+        start:document.getElementById('luneaThaiTarotRangeStart')?.value,
+        end:document.getElementById('luneaThaiTarotRangeEnd')?.value,
+        result:window.LUNEA_THAI_RANGE_V33.getTarotResult(),
+        inline:document.getElementById('luneaThaiRangeInline')?.textContent,
+        capture:window.LUNEA_READING_ATTACHMENTS_V1.captureDraft(),
+        question:state.question
+      })));
+      throw error;
+    }
     assert.equal(requests.length, 2);
     assert.ok(requests.every(request => request.body.topic === '연애'), JSON.stringify(requests));
     await page.evaluate(() => document.getElementById('luneaThaiRangeClose').click());
