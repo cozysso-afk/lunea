@@ -146,9 +146,10 @@ try {
       await draw(page, category, '현재 이 선택을 어떻게 봐야 할까?');
       assert.equal(await page.locator('.lunea-card-meaning').count(),0,'face-down cards disclose no description');
       await page.locator('#flipAll').dispatchEvent('click');
-      await page.waitForFunction(() => [...document.querySelectorAll('#cards .tarot-card-wrapper')].every(node => document.querySelector('#info-'+node.dataset.index+' .lunea-card-meaning')));
+      await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
       const rows = await page.evaluate(() => state.drawn.map((card,i) => ({actual:document.querySelector('#info-'+i+' .lunea-card-meaning')?.textContent,expected:window.LUNEA_CARD_MEANINGS_V1.meaning(card)})));
       assert.ok(rows.every(row => row.actual === row.expected));
+      console.log('PASS card descriptions:',category,rows.length);
       // Notes appear before the reveal sweep releases its short animation lock.
       await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
       await page.evaluate(() => document.querySelector('[data-close="spread"]').click());
@@ -156,7 +157,7 @@ try {
     await page.locator('#dailyBtn').dispatchEvent('click');
     await page.waitForFunction(() => state.category === 'DAILY' && state.drawn.length > 0);
     await page.locator('#flipAll').dispatchEvent('click');
-    await page.waitForFunction(() => [...document.querySelectorAll('#cards .tarot-card-wrapper')].every(node => document.querySelector('#info-'+node.dataset.index+' .lunea-card-meaning')));
+    await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
     assert.equal(requests.length,0,'local card descriptions need no Gemini requests');
   });
   await check('actual Tarot AI button preserves cards after calculating Horary support', async ({page,requests}) => {
