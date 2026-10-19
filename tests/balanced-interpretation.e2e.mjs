@@ -149,6 +149,8 @@ try {
       await page.waitForFunction(() => [...document.querySelectorAll('#cards .tarot-card-wrapper')].every(node => document.querySelector('#info-'+node.dataset.index+' .lunea-card-meaning')));
       const rows = await page.evaluate(() => state.drawn.map((card,i) => ({actual:document.querySelector('#info-'+i+' .lunea-card-meaning')?.textContent,expected:window.LUNEA_CARD_MEANINGS_V1.meaning(card)})));
       assert.ok(rows.every(row => row.actual === row.expected));
+      // Notes appear before the reveal sweep releases its short animation lock.
+      await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
       await page.evaluate(() => document.querySelector('[data-close="spread"]').click());
     }
     await page.locator('#dailyBtn').dispatchEvent('click');
