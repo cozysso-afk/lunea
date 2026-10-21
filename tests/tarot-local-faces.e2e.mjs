@@ -3,15 +3,23 @@ import { webkit } from 'playwright';
 
 const url = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
 const browser = await webkit.launch({headless: true});
+const TINY_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+ZKCZAAAAAElFTkSuQmCC', 'base64');
 
 async function verify(label, options = {}) {
-  const ctx = await browser.newContext(options);
+  const ctx = await browser.newContext({...options, reducedMotion:'reduce', serviceWorkers:'block', locale:'ko-KR'});
+  // Keep the seven actual tarot faces local and unmocked. Isolate heavy
+  // decorative card backs and third-party fonts from headless WebKit's
+  // compositor-memory limit (same pattern as the lifecycle soak test).
+  await ctx.route(/\/tarot_back_[^/?]+\.jpe?g(?:\?|$)/i, route =>
+    route.fulfill({status:200, contentType:'image/png', body:TINY_PNG}));
+  await ctx.route(/https:\/\/fonts\.googleapis\.com\//, route =>
+    route.fulfill({status:200, contentType:'text/css', body:''}));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
   try {
     await page.goto(url, {waitUntil: 'domcontentloaded', timeout: 30_000});
-    await page.waitForFunction(() => typeof startSpread === 'function' && TAROT_DECK?.length === 78);
+    await page.waitForFunction(() => typeof startSpread === 'function' && TAROT_DECK?.length === 78 && document.documentElement.classList.contains('lunea-ui-ready'), null, {timeout: 15_000});
     await page.evaluate(() => {
       state.category = 'LOVE';
       state.allowReversed = false;
@@ -26,14 +34,27 @@ async function verify(label, options = {}) {
     const backs = await page.locator('#cards .back > img').count();
     assert.equal(backs, 7, label + ': card backs not present');
 
-    // Exercise the revealed face render state without depending on unrelated
-    // boot-time action button/overlay visibility (covered by separate tests).
-    const faceCount = await page.evaluate(() => {
-      const cards = [...document.querySelectorAll('#cards .tarot-card')];
-      cards.forEach(card => card.classList.add('flipped'));
-      return document.querySelectorAll('#cards .tarot-card.flipped .front > img').length;
-    });
-    assert.equal(faceCount, 7, label + ': missing rendered face after reveal');
+    // The real UI button must reveal all cards once the app's boot gate is ready.
+    await page.waitForFunction(() => document.querySelector('#spreadOverlay')?.classList.contains('show'));
+    await page.locator('#flipAll').click({timeout: 15_000});
+    try {
+      await page.waitForFunction(() => document.querySelectorAll('#cards .tarot-card.flipped').length === 7, null, {timeout: 15_000});
+    } catch (error) {
+      const snapshot = await page.evaluate(() => ({
+        overlay: document.querySelector('#spreadOverlay')?.className,
+        button: document.querySelector('#flipAll')?.outerHTML,
+        count: state?.drawn?.length,
+        cardCount: document.querySelectorAll('#cards .tarot-card').length,
+        wrappers: [...document.querySelectorAll('#cards .tarot-card-wrapper')].map(e => ({index:e.dataset.index,html:e.className})),
+        flipped: [...document.querySelectorAll('#cards .tarot-card.flipped')].map(e => e.id),
+        results: document.querySelectorAll('#results .info').length,
+        currentCategory: state?.category,
+        moduleReady: !!window.__LUNEA_FLIP_ALL_FIX_V2__
+      }));
+      throw new Error(label + ': flip-all timeout: ' + JSON.stringify(snapshot) + ' / ' + error.message);
+    }
+    const faceCount = await page.evaluate(() => [...document.querySelectorAll('#cards .tarot-card.flipped .front > img')].filter(img => img.complete && img.naturalWidth > 0).length);
+    assert.equal(faceCount, 7, label + ': missing loaded front image after actual button click');
 
     // An impossible image URL must show the card name, not a blank white card.
     const img = page.locator('#cards .front > img').first();
@@ -43,7 +64,7 @@ async function verify(label, options = {}) {
     assert.ok((await fallback.textContent()).trim().length > 2, label + ': empty fallback');
 
     assert.ok(!errors.some(s => /tarot|card|flip/i.test(s)), label + ': unexpected runtime error: ' + errors.join('; '));
-    console.log(label + ': PASS (seven local face images, revealed front, readable fallback)');
+    console.log(label + ': PASS (seven local face images, real flip-all button, readable fallback)');
   } finally {
     await ctx.close();
   }
