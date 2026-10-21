@@ -7,11 +7,14 @@ const load = name => fs.readFileSync(new URL(name, root), 'utf8');
 const index = load('index.html');
 const ios = load('lunea-ios-performance-v3.js');
 
-assert.match(index, /img:'assets\/rws\/'\+file\.replace\(\/\^RWS_Tarot_\//, 'majors should use local RWS art');
-assert.match(index, /img:`assets\/rws\/\$\{suit\}/, 'minors should use local RWS art');
+assert.match(index, /img:'https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/'\+file/, 'major faces must retain original Wikimedia primary');
+assert.match(index, /img:`https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\/\$\{suit\}/, 'minor faces must retain original Wikimedia primary');
+assert.match(index, /localImg:'assets\/rws\/'\+file\.replace/, 'major backup image must be available');
+assert.match(index, /localImg:`assets\/rws\/\$\{suit\}/, 'minor backup must be available');
+assert.match(index, /function attachRwsImageFallback/, 'local backup must only be used on remote failures');
+assert.match(index, /if\(img\.complete&&img\.naturalWidth>0\)return;/, 'successful remote image must not trigger local loading');
 const deckPart = index.slice(index.indexOf('const MAJORS='), index.indexOf('const TAROT_DECK='));
-assert.doesNotMatch(deckPart, /https?:\/\//, 'no remote tarot face URLs in card model');
-
+assert.match(deckPart,/Special:FilePath/, 'primary delivery should stay remote');
 const majors = [
   'Fool', 'Magician', 'High_Priestess', 'Empress', 'Emperor', 'Hierophant',
   'Lovers', 'Chariot', 'Strength', 'Hermit', 'Wheel_of_Fortune', 'Justice',
@@ -37,5 +40,5 @@ for (const name of expected) {
 assert.match(index, /lunea-card-art-fallback/, 'HTML fallback present');
 assert.match(index, /lunea-card-art-missing/, 'CSS fallback present');
 assert.match(ios, /lunea-card-art-fallback/, 'iOS constructor fallback present');
-assert.match(ios, /front\.classList\.add\('lunea-card-art-missing'\)/);
-console.log('LUNEA tarot local artwork contract: PASS (78/78 images)');
+assert.match(ios, /attachRwsImageFallback\(frontImg, card\)/, 'iPhone uses same remote-first fallback logic');
+console.log('LUNEA tarot remote-first/local-backup contract: PASS (78/78 fallback assets, Wikimedia primary retained)');
