@@ -100,7 +100,7 @@ try {
   await target.locator('.lj-review.open').waitFor();
   await page.waitForTimeout(90);
   const verdictLabels = await target.locator('.lj-statuses button').allTextContents();
-  assert.deepEqual(verdictLabels.map(x => x.trim()), ['맞', '애', '틀'], 'review must expose exactly 맞 / 애 / 틀');
+  assert.deepEqual(verdictLabels.map(x => x.trim()), ['맞음', '애매', '틀림'], 'review must expose the current verdict labels');
   const openAfter = await target.evaluate(() => {
     const modal = document.querySelector('#archiveOverlay .archive-modal');
     return modal?.scrollTop || 0;
@@ -156,6 +156,7 @@ try {
   assert.equal(draft.badge, '미확인', 'draft selection must not change saved status badge');
   await target.locator('.lj-field textarea').nth(0).fill('연락이 실제로 왔음');
   await target.locator('.lj-field textarea').nth(1).fill('검증 근거 확인');
+  await target.locator('.lj-save').scrollIntoViewIfNeeded();
   const saveScrollBefore = await target.evaluate(() => document.querySelector('#archiveOverlay .archive-modal')?.scrollTop || 0);
   await target.locator('.lj-save').click();
   await page.waitForFunction(id => {
@@ -182,7 +183,7 @@ try {
   assert.ok(Math.abs(after.scrollTop - saveScrollBefore) <= 2, `saving verification moved archive-modal scroll (${saveScrollBefore} -> ${after.scrollTop})`);
   assert.equal(after.reviewOpen, true, 'saving verification closed the open review panel');
   assert.equal(after.sentinel, 'preserve-me', 'saving verification replaced the journal card DOM instead of patching it in place');
-  assert.equal(after.badge.trim(), '맞', 'saved status badge did not update in place');
+  assert.equal(after.badge.trim(), '맞음', 'saved status badge did not update in place');
   assert.match(after.resultDate, /^\d{4}-\d{2}-\d{2}$/, 'first verification must fill actual result date');
   assert.equal(after.statVerified, '1', 'verified statistic did not update in place');
   assert.equal(after.statPending, '17', 'pending statistic did not update in place');
@@ -196,7 +197,7 @@ try {
   assert.match(persisted?.resultDate || '', /^\d{4}-\d{2}-\d{2}$/, 'persisted result date missing');
 
   const filterOptions = (await page.locator('#ljStatus option').allTextContents()).map(text => text.trim());
-  assert.deepEqual(filterOptions, ['모든 판정', '미확인', '맞', '애', '틀'], 'journal status filter must expose unverified records');
+  assert.deepEqual(filterOptions, ['모든 판정', '미확인', '맞음', '애매', '틀림'], 'journal status filter must expose unverified records');
   await page.selectOption('#ljStatus', 'pending');
   await page.waitForFunction(() => document.querySelectorAll('#archiveList > .archive-item').length === 17);
   const pendingBadges = (await page.locator('#archiveList > .archive-item .lj-badge').allTextContents()).map(text => text.trim());
