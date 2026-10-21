@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'lunea-journal-header-fix-v1.js'
+      - 'lunea-reading-journal-v2.js'
       - 'tests/journal-validation-mobile-v4.e2e.mjs'
       - '.github/workflows/test-journal-mobile-validation.yml'
   workflow_dispatch:
