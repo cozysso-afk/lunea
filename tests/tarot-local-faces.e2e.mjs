@@ -3,9 +3,17 @@ import { webkit } from 'playwright';
 
 const url = process.env.LUNEA_E2E_URL || 'http://127.0.0.1:4173/index.html';
 const browser = await webkit.launch({headless: true});
+const TINY_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+ZKCZAAAAAElFTkSuQmCC', 'base64');
 
 async function verify(label, options = {}) {
-  const ctx = await browser.newContext(options);
+  const ctx = await browser.newContext({...options, reducedMotion:'reduce', serviceWorkers:'block', locale:'ko-KR'});
+  // Keep the seven actual tarot faces local and unmocked. Isolate heavy
+  // decorative card backs and third-party fonts from headless WebKit's
+  // compositor-memory limit (same pattern as the lifecycle soak test).
+  await ctx.route(/\\/tarot_back_[^/?]+\\.jpe?g(?:\\?|$)/i, route =>
+    route.fulfill({status:200, contentType:'image/png', body:TINY_PNG}));
+  await ctx.route(/https:\\/\\/fonts\\.googleapis\\.com\\//, route =>
+    route.fulfill({status:200, contentType:'text/css', body:''}));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
