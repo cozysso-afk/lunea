@@ -1,0 +1,41 @@
+name: Vendor local RWS tarot faces
+
+on:
+  push:
+    branches: [fix/rws-card-art-local-20261022]
+    paths:
+      - 'scripts/vendor-rws-tarot.py'
+      - '.github/workflows/vendor-rws-tarot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/rws-card-art-local-20261022
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image converter
+        run: python -m pip install 'Pillow==11.3.0'
+      - name: Download and resize 78 public-domain RWS cards
+        run: python scripts/vendor-rws-tarot.py
+      - name: Commit verified local images to fix branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/rws/
+          if git diff --cached --quiet; then
+            echo 'Artwork already present, nothing to commit.'
+            exit 0
+          fi
+          git commit -m 'Vendor 78 locally hosted RWS card faces'
+          git pull --rebase origin fix/rws-card-art-local-20261022
+          git push origin HEAD:fix/rws-card-art-local-20261022
