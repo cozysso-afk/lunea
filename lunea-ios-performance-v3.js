@@ -211,9 +211,14 @@
       frontImg.alt = String(card?.name || '');
       tuneImg(frontImg);
       frontImg.addEventListener('error', () => {
-        frontImg.style.opacity = '.15';
+        frontImg.style.display = 'none';
+        front.classList.add('lunea-card-art-missing');
       }, {once:true});
       front.appendChild(frontImg);
+      const fallbackText = document.createElement('span');
+      fallbackText.className = 'lunea-card-art-fallback';
+      fallbackText.textContent = String(card?.name || 'Tarot card');
+      front.appendChild(fallbackText);
 
       tarot.appendChild(back);
       tarot.appendChild(front);
