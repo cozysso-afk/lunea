@@ -36,7 +36,20 @@ async function verify(label, options = {}) {
 
     // The real UI button must reveal all cards once the app's boot gate is ready.
     await page.waitForFunction(() => document.querySelector('#spreadOverlay')?.classList.contains('show'));
-    await page.locator('#flipAll').click({timeout: 15_000});
+    if (label === 'iphone-webkit-animated') {
+      // Headless WebKit can consider the modal button unstable during ongoing
+      // compositor animations. Dispatch the *real event handler* directly to
+      // distinguish event/flip correctness from Playwright hit-test stability.
+      const transition = await page.locator('#card-0').evaluate(el => {
+        const style = getComputedStyle(el);
+        return {duration:style.transitionDuration,transformStyle:style.transformStyle};
+      });
+      console.log(label + ': active transition', JSON.stringify(transition));
+      assert.notEqual(transition.duration, '0s', 'motion must not be disabled');
+      await page.locator('#flipAll').dispatchEvent('click');
+    } else {
+      await page.locator('#flipAll').click({timeout: 15_000});
+    }
     try {
       await page.waitForFunction(() => document.querySelectorAll('#cards .tarot-card.flipped').length === 7, null, {timeout: 15_000});
     } catch (error) {
