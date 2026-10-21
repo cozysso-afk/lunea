@@ -210,10 +210,16 @@
       frontImg.src = thumbURL(card?.img, 360);
       frontImg.alt = String(card?.name || '');
       tuneImg(frontImg);
-      frontImg.addEventListener('error', () => {
-        frontImg.style.display = 'none';
-        front.classList.add('lunea-card-art-missing');
-      }, {once:true});
+      // Share the desktop image failover policy: remote first, local on error.
+      // No local request is made when the Wikimedia thumbnail succeeds.
+      if (typeof W.attachRwsImageFallback === 'function') {
+        W.attachRwsImageFallback(frontImg, card);
+      } else {
+        frontImg.addEventListener('error', () => {
+          frontImg.style.display = 'none';
+          front.classList.add('lunea-card-art-missing');
+        }, {once:true});
+      }
       front.appendChild(frontImg);
       const fallbackText = document.createElement('span');
       fallbackText.className = 'lunea-card-art-fallback';
