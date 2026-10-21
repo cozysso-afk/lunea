@@ -6,7 +6,7 @@ const browser = await webkit.launch({headless: true});
 const TINY_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gL+ZKCZAAAAAElFTkSuQmCC', 'base64');
 
 async function verify(label, options = {}) {
-  const ctx = await browser.newContext({...options, reducedMotion:'reduce', serviceWorkers:'block', locale:'ko-KR'});
+  const ctx = await browser.newContext({...options, reducedMotion:options.reducedMotion || 'reduce', serviceWorkers:'block', locale:'ko-KR'});
   // Keep the seven actual tarot faces local and unmocked. Isolate heavy
   // decorative card backs and third-party fonts from headless WebKit's
   // compositor-memory limit (same pattern as the lifecycle soak test).
@@ -75,6 +75,11 @@ try {
   await verify('iphone-webkit', {
     userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1',
     viewport: {width: 390,height: 844}, deviceScaleFactor: 3, isMobile: true, hasTouch: true
+  });
+  await verify('iphone-webkit-animated', {
+    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1',
+    viewport: {width: 390,height: 844}, deviceScaleFactor: 3, isMobile: true, hasTouch: true,
+    reducedMotion: 'no-preference'
   });
 } finally {
   await browser.close();
