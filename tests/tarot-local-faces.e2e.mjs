@@ -10,9 +10,9 @@ async function verify(label, options = {}) {
   // Keep the seven actual tarot faces local and unmocked. Isolate heavy
   // decorative card backs and third-party fonts from headless WebKit's
   // compositor-memory limit (same pattern as the lifecycle soak test).
-  await ctx.route(/\\/tarot_back_[^/?]+\\.jpe?g(?:\\?|$)/i, route =>
+  await ctx.route(/\/tarot_back_[^/?]+\.jpe?g(?:\?|$)/i, route =>
     route.fulfill({status:200, contentType:'image/png', body:TINY_PNG}));
-  await ctx.route(/https:\\/\\/fonts\\.googleapis\\.com\\//, route =>
+  await ctx.route(/https:\/\/fonts\.googleapis\.com\//, route =>
     route.fulfill({status:200, contentType:'text/css', body:''}));
   const page = await ctx.newPage();
   const errors = [];
