@@ -29,7 +29,22 @@ async function verify(label, options = {}) {
     // The real UI button must reveal all cards once the app's boot gate is ready.
     await page.waitForFunction(() => document.querySelector('#spreadOverlay')?.classList.contains('show'));
     await page.locator('#flipAll').click({timeout: 15_000});
-    await page.waitForFunction(() => document.querySelectorAll('#cards .tarot-card.flipped').length === 7, null, {timeout: 15_000});
+    try {
+      await page.waitForFunction(() => document.querySelectorAll('#cards .tarot-card.flipped').length === 7, null, {timeout: 15_000});
+    } catch (error) {
+      const snapshot = await page.evaluate(() => ({
+        overlay: document.querySelector('#spreadOverlay')?.className,
+        button: document.querySelector('#flipAll')?.outerHTML,
+        count: state?.drawn?.length,
+        cardCount: document.querySelectorAll('#cards .tarot-card').length,
+        wrappers: [...document.querySelectorAll('#cards .tarot-card-wrapper')].map(e => ({index:e.dataset.index,html:e.className})),
+        flipped: [...document.querySelectorAll('#cards .tarot-card.flipped')].map(e => e.id),
+        results: document.querySelectorAll('#results .info').length,
+        currentCategory: state?.category,
+        moduleReady: !!window.__LUNEA_FLIP_ALL_FIX_V2__
+      }));
+      throw new Error(label + ': flip-all timeout: ' + JSON.stringify(snapshot) + ' / ' + error.message);
+    }
     const faceCount = await page.evaluate(() => [...document.querySelectorAll('#cards .tarot-card.flipped .front > img')].filter(img => img.complete && img.naturalWidth > 0).length);
     assert.equal(faceCount, 7, label + ': missing loaded front image after actual button click');
 
