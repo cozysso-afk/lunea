@@ -455,7 +455,7 @@
   async function patchEntry(id, patch) {
     const rows = await getAll();
     const row = rows.find(x => x.id === id);
-    if (!row) return;
+    if (!row) throw new Error('검증할 기록을 찾지 못했습니다.');
     Object.assign(row, patch, { updatedAt: Date.now() });
     await put(row);
   }
@@ -568,6 +568,10 @@
         document.querySelectorAll('#ljStats .lj-stat b').forEach((node, index) => {
           if (index < values.length) node.textContent = values[index];
         });
+        const summaryNote = $('ljNote');
+        if (summaryNote) {
+          summaryNote.textContent = `IndexedDB 장기 보관 · 맞음 ${summary.counts.hit} · 애매 ${summary.counts.partial} · 틀림 ${summary.counts.miss} · 점수=(맞음+애매×0.5)/확인 완료`;
+        }
         const activeStatus = $('ljStatus')?.value || '';
         if (card && activeStatus && activeStatus !== draftStatus) {
           // Disappear only AFTER the user explicitly saves the verdict and notes.
