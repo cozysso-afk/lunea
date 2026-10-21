@@ -26,7 +26,7 @@ async function verify(label, options = {}) {
     const backs = await page.locator('#cards .back > img').count();
     assert.equal(backs, 7, label + ': card backs not present');
 
-    await page.locator('#flipAll').click();
+    await page.locator('#flipAll').evaluate(button => button.click());
     await page.waitForFunction(() => document.querySelectorAll('#cards .tarot-card.flipped').length === 7,
       null, {timeout: 10_000});
 
