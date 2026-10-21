@@ -11,6 +11,9 @@ on:
       - 'tests/cardback-restore-v19.test.mjs'
       - 'tests/cardback-first-frame.test.mjs'
       - 'tests/cardback-first-frame.e2e.mjs'
+      - 'tests/tarot-local-faces.test.mjs'
+      - 'tests/tarot-local-faces.e2e.mjs'
+      - 'assets/rws/**'
       - '.github/workflows/cardback-first-frame.yml'
   workflow_dispatch:
 
@@ -33,10 +36,13 @@ jobs:
           node --check lunea-cardback-sector-v20.js
           node --check tests/cardback-first-frame.test.mjs
           node --check tests/cardback-first-frame.e2e.mjs
+          node --check tests/tarot-local-faces.test.mjs
+          node --check tests/tarot-local-faces.e2e.mjs
       - name: First-frame contracts
         run: |
           node tests/cardback-restore-v19.test.mjs
           node tests/cardback-first-frame.test.mjs
+          node tests/tarot-local-faces.test.mjs
 
   webkit:
     needs: source
@@ -63,7 +69,9 @@ jobs:
       - name: Verify first frame before V20 repair
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
-        run: node tests/cardback-first-frame.e2e.mjs
+        run: |
+          node tests/cardback-first-frame.e2e.mjs
+          node tests/tarot-local-faces.e2e.mjs
       - name: Show server log
         if: always()
         run: cat /tmp/lunea-cardback-http.log || true
