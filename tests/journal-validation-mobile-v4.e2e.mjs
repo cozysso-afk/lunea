@@ -100,7 +100,7 @@ try {
   await target.locator('.lj-review.open').waitFor();
   await page.waitForTimeout(90);
   const verdictLabels = await target.locator('.lj-statuses button').allTextContents();
-  assert.deepEqual(verdictLabels.map(x => x.trim()), ['맞', '애', '틀'], 'review must expose exactly 맞 / 애 / 틀');
+  assert.deepEqual(verdictLabels.map(x => x.trim()), ['맞음', '애매', '틀림'], 'review must expose the current verdict labels');
   const openAfter = await target.evaluate(() => {
     const modal = document.querySelector('#archiveOverlay .archive-modal');
     return modal?.scrollTop || 0;
@@ -145,10 +145,24 @@ try {
   assert.equal(before.reviewOpen, true, 'review panel must be open before status change');
 
   await target.locator('.lj-statuses button', {hasText:'맞'}).click();
+  await page.waitForTimeout(100);
+  const draft = await page.evaluate(async id => {
+    const entry = (await window.LUNEA_READING_JOURNAL.getAll()).find(x => x.id === id);
+    const card = [...document.querySelectorAll('#archiveList > .archive-item')].find(x => x.dataset.luneaJournalId === id);
+    return {persistedStatus:entry?.status,cardStillVisible:!!card,badge:card?.querySelector('.lj-badge')?.textContent?.trim()};
+  }, before.id);
+  assert.equal(draft.persistedStatus, 'pending', 'choosing verdict before Save must not persist');
+  assert.equal(draft.cardStillVisible, true, 'choosing verdict before Save must not remove the journal row');
+  assert.equal(draft.badge, '미확인', 'draft selection must not change saved status badge');
+  await target.locator('.lj-field textarea').nth(0).fill('연락이 실제로 왔음');
+  await target.locator('.lj-field textarea').nth(1).fill('검증 근거 확인');
+  await target.locator('.lj-save').scrollIntoViewIfNeeded();
+  const saveScrollBefore = await target.evaluate(() => document.querySelector('#archiveOverlay .archive-modal')?.scrollTop || 0);
+  await target.locator('.lj-save').click();
   await page.waitForFunction(id => {
     const card = [...document.querySelectorAll('#archiveList > .archive-item')].find(node => node.dataset.luneaJournalId === id);
-    return card?.querySelector('.lj-badge')?.textContent?.trim() === '맞' &&
-      document.documentElement.dataset.luneaJournalValidationUpdate === 'in-place-v5';
+    return card?.querySelector('.lj-badge')?.dataset.s === 'hit' &&
+      document.documentElement.dataset.luneaJournalValidationUpdate === 'in-place-v6';
   }, before.id);
   await page.waitForTimeout(120);
 
@@ -166,10 +180,10 @@ try {
     };
   });
 
-  assert.ok(Math.abs(after.scrollTop - before.scrollTop) <= 2, `status change moved archive-modal scroll (${before.scrollTop} -> ${after.scrollTop})`);
-  assert.equal(after.reviewOpen, true, 'status change closed the open review panel');
-  assert.equal(after.sentinel, 'preserve-me', 'status change replaced the journal card DOM instead of patching it in place');
-  assert.equal(after.badge.trim(), '맞', 'status badge did not update in place');
+  assert.ok(Math.abs(after.scrollTop - saveScrollBefore) <= 2, `saving verification moved archive-modal scroll (${saveScrollBefore} -> ${after.scrollTop})`);
+  assert.equal(after.reviewOpen, true, 'saving verification closed the open review panel');
+  assert.equal(after.sentinel, 'preserve-me', 'saving verification replaced the journal card DOM instead of patching it in place');
+  assert.equal(after.badge.trim(), '맞음', 'saved status badge did not update in place');
   assert.match(after.resultDate, /^\d{4}-\d{2}-\d{2}$/, 'first verification must fill actual result date');
   assert.equal(after.statVerified, '1', 'verified statistic did not update in place');
   assert.equal(after.statPending, '17', 'pending statistic did not update in place');
@@ -179,16 +193,47 @@ try {
     const row = rows.find(item => item.id === id);
     return row ? {status:row.status,resultDate:row.resultDate} : null;
   }, before.id);
-  assert.equal(persisted?.status, 'hit', 'in-place status update was not persisted to IndexedDB');
+  assert.equal(persisted?.status, 'hit', 'explicit save did not persist verdict in IndexedDB');
   assert.match(persisted?.resultDate || '', /^\d{4}-\d{2}-\d{2}$/, 'persisted result date missing');
 
   const filterOptions = (await page.locator('#ljStatus option').allTextContents()).map(text => text.trim());
-  assert.deepEqual(filterOptions, ['모든 판정', '미확인', '맞', '애', '틀'], 'journal status filter must expose unverified records');
+  assert.deepEqual(filterOptions, ['모든 판정', '미확인', '맞음', '애매', '틀림'], 'journal status filter must expose unverified records');
   await page.selectOption('#ljStatus', 'pending');
   await page.waitForFunction(() => document.querySelectorAll('#archiveList > .archive-item').length === 17);
   const pendingBadges = (await page.locator('#archiveList > .archive-item .lj-badge').allTextContents()).map(text => text.trim());
   assert.equal(pendingBadges.length, 17, 'unverified-only filter returned the wrong number of records');
   assert.ok(pendingBadges.every(text => text === '미확인'), 'unverified-only filter leaked verified records');
+
+  // Regression: while viewing only unverified items, opening and choosing a
+  // verdict must not remove the item or discard the actual outcome / notes.
+  const pendingCard = page.locator('#archiveList > .archive-item').first();
+  const pendingId = await pendingCard.getAttribute('data-lunea-journal-id');
+  await pendingCard.locator('.archive-actions button').first().click();
+  await pendingCard.locator('.lj-review.open').waitFor();
+  assert.equal(await page.locator('#archiveList > .archive-item').count(), 17,
+    'tapping 검증하기 must not make the unverified card disappear');
+  assert.equal(await pendingCard.locator('.lj-field textarea').count(), 2,
+    'verification form must be editable while filtered to unverified');
+  await pendingCard.locator('.lj-statuses button', {hasText:'틀'}).click();
+  assert.equal(await page.locator('#archiveList > .archive-item').count(), 17,
+    'choosing a draft verdict must not make the unverified card disappear');
+  const uncommitted = (await page.evaluate(async id =>
+    (await window.LUNEA_READING_JOURNAL.getAll()).find(x => x.id === id)?.status, pendingId));
+  assert.equal(uncommitted, 'pending', 'draft verdict unexpectedly persisted before Save');
+  await pendingCard.locator('.lj-field textarea').first().fill('예측과 다른 현실 결과');
+  await pendingCard.locator('.lj-field textarea').nth(1).fill('실제 확인한 근거');
+  await pendingCard.locator('.lj-save').click();
+  await page.waitForFunction(id => ![...document.querySelectorAll('#archiveList > .archive-item')]
+    .some(card => card.dataset.luneaJournalId === id), pendingId);
+  assert.equal(await page.locator('#archiveList > .archive-item').count(), 16,
+    'saved, no-longer-pending card should leave the unverified filter');
+  const savedAfterFilter = await page.evaluate(async id => {
+    const row = (await window.LUNEA_READING_JOURNAL.getAll()).find(x => x.id === id);
+    return {status:row?.status,outcome:row?.outcome,note:row?.note};
+  }, pendingId);
+  assert.deepEqual(savedAfterFilter,
+    {status:'miss',outcome:'예측과 다른 현실 결과',note:'실제 확인한 근거'},
+    'filter transition lost the verification status or entered details');
 
   const relevantErrors = pageErrors.filter(line => !/onrender\.com\/health|access control checks/i.test(line));
   assert.deepEqual(relevantErrors, [], `browser page errors:\n${relevantErrors.join('\n')}`);

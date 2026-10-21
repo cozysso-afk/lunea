@@ -446,7 +446,8 @@
     bindDebouncedSearch();
     detachArchiveSearchObserver();
     installListAnnotator();
-    bindInPlaceStatusUpdates();
+    // Journal V2 owns draft selection and saves verdict + details together.
+    // Do NOT attach V5's capture handler: it persisted verdicts on button tap.
     simplifyVerdictUI($('archiveOverlay') || document);
     queueAnnotation(20);
     document.documentElement.dataset.luneaJournalFix = 'v5';

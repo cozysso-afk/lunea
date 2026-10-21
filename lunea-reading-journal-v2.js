@@ -455,7 +455,7 @@
   async function patchEntry(id, patch) {
     const rows = await getAll();
     const row = rows.find(x => x.id === id);
-    if (!row) return;
+    if (!row) throw new Error('검증할 기록을 찾지 못했습니다.');
     Object.assign(row, patch, { updatedAt: Date.now() });
     await put(row);
   }
@@ -466,17 +466,20 @@
 
     const statuses = document.createElement('div');
     statuses.className = 'lj-statuses';
+    // Choosing a verdict is a draft, not a database write. In the '미확인'
+    // filter, an early write would remove the card before notes can be entered.
+    let draftStatus = entry.status;
     for (const [key, label] of Object.entries(STATUS)) {
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'mini' + (entry.status === key ? ' on' : '');
+      btn.dataset.luneaVerdictStatus = key;
       btn.textContent = label;
-      btn.onclick = async () => {
-        await patchEntry(entry.id, {
-          status: key,
-          resultDate: key !== 'pending' && !entry.resultDate ? today() : entry.resultDate
+      btn.onclick = () => {
+        draftStatus = key;
+        statuses.querySelectorAll('button').forEach(node => {
+          node.classList.toggle('on', node.dataset.luneaVerdictStatus === draftStatus);
         });
-        rerender(entry.id);
       };
       statuses.append(btn);
     }
@@ -532,17 +535,64 @@
     saveBtn.className = 'mini lj-save';
     saveBtn.textContent = '✓ 검증 내용 저장';
     saveBtn.onclick = async () => {
-      await patchEntry(entry.id, {
-        resultDate: resultDate.value,
+      if (saveBtn.disabled) return;
+      saveBtn.disabled = true;
+      const modal = $('archiveOverlay')?.querySelector('.archive-modal');
+      const scrollTop = modal?.scrollTop || 0;
+      const patch = {
+        status: draftStatus,
+        resultDate: resultDate.value || (draftStatus !== 'pending' && draftStatus !== 'unverifiable' ? today() : ''),
         dueDate: dueDate.value,
         outcome: outcome.value,
         note: note.value,
         tags: [...new Set(tags.value.split(',').map(norm).filter(Boolean))].slice(0, 30)
-      });
-      saveBtn.textContent = '✓ 저장됨';
-      setTimeout(() => {
-        if (saveBtn.isConnected) saveBtn.textContent = '✓ 검증 내용 저장';
-      }, 900);
+      };
+      try {
+        // One atomic record update: verdict AND the written verification details.
+        await patchEntry(entry.id, patch);
+        Object.assign(entry, patch);
+        resultDate.value = patch.resultDate;
+        const card = panel.closest('.archive-item');
+        const badge = card?.querySelector('.lj-badge');
+        if (badge) {
+          badge.dataset.s = draftStatus;
+          badge.textContent = {pending:'미확인',hit:'맞',partial:'애',miss:'틀',unverifiable:'미확인'}[draftStatus] || STATUS[draftStatus];
+        }
+        const reviewButton = card?.querySelector('.archive-actions button');
+        if (reviewButton) reviewButton.textContent = draftStatus === 'pending' ? '검증하기' : '검증 수정';
+
+        const all = await getAll();
+        const summary = stats(all);
+        const values = [all.length, summary.verified, summary.score == null ? '—' : summary.score + '%',
+          summary.counts.pending + summary.counts.unverifiable];
+        document.querySelectorAll('#ljStats .lj-stat b').forEach((node, index) => {
+          if (index < values.length) node.textContent = values[index];
+        });
+        const summaryNote = $('ljNote');
+        if (summaryNote) {
+          summaryNote.textContent = `IndexedDB 장기 보관 · 맞음 ${summary.counts.hit} · 애매 ${summary.counts.partial} · 틀림 ${summary.counts.miss} · 점수=(맞음+애매×0.5)/확인 완료`;
+        }
+        const activeStatus = $('ljStatus')?.value || '';
+        if (card && activeStatus && activeStatus !== draftStatus) {
+          // Disappear only AFTER the user explicitly saves the verdict and notes.
+          card.remove();
+        } else {
+          saveBtn.textContent = '✓ 저장됨';
+          setTimeout(() => {
+            if (saveBtn.isConnected) saveBtn.textContent = '✓ 검증 내용 저장';
+          }, 900);
+          if (modal) {
+            modal.scrollTop = scrollTop;
+            requestAnimationFrame(() => { if (modal.isConnected) modal.scrollTop = scrollTop; });
+          }
+        }
+        document.documentElement.dataset.luneaJournalValidationUpdate = 'in-place-v6';
+      } catch (error) {
+        console.error('[LUNEA Journal] verification save failed', error);
+        saveBtn.textContent = '저장 실패 · 다시 시도';
+      } finally {
+        saveBtn.disabled = false;
+      }
     };
     panel.append(saveBtn);
     return panel;
