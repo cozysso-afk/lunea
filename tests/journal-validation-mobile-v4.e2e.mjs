@@ -182,6 +182,14 @@ try {
   assert.equal(persisted?.status, 'hit', 'in-place status update was not persisted to IndexedDB');
   assert.match(persisted?.resultDate || '', /^\d{4}-\d{2}-\d{2}$/, 'persisted result date missing');
 
+  const filterOptions = (await page.locator('#ljStatus option').allTextContents()).map(text => text.trim());
+  assert.deepEqual(filterOptions, ['모든 판정', '미확인', '맞', '애', '틀'], 'journal status filter must expose unverified records');
+  await page.selectOption('#ljStatus', 'pending');
+  await page.waitForFunction(() => document.querySelectorAll('#archiveList > .archive-item').length === 17);
+  const pendingBadges = (await page.locator('#archiveList > .archive-item .lj-badge').allTextContents()).map(text => text.trim());
+  assert.equal(pendingBadges.length, 17, 'unverified-only filter returned the wrong number of records');
+  assert.ok(pendingBadges.every(text => text === '미확인'), 'unverified-only filter leaked verified records');
+
   const relevantErrors = pageErrors.filter(line => !/onrender\.com\/health|access control checks/i.test(line));
   assert.deepEqual(relevantErrors, [], `browser page errors:\n${relevantErrors.join('\n')}`);
 
