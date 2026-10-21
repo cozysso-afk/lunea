@@ -177,13 +177,14 @@
   function simplifyVerdictUI(root = document) {
     const statusSelect = $('ljStatus');
     if (statusSelect) {
-      if (statusSelect.value === 'pending' || statusSelect.value === 'unverifiable') statusSelect.value = '';
+      if (statusSelect.value === 'unverifiable') statusSelect.value = '';
       [...statusSelect.options].forEach(option => {
         if (option.value === '') option.textContent = '모든 판정';
+        else if (option.value === 'pending') option.textContent = '미확인';
         else if (option.value === 'hit') option.textContent = '맞';
         else if (option.value === 'partial') option.textContent = '애';
         else if (option.value === 'miss') option.textContent = '틀';
-        else if (option.value === 'pending' || option.value === 'unverifiable') option.remove();
+        else if (option.value === 'unverifiable') option.remove();
       });
     }
 
