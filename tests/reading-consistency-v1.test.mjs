@@ -44,6 +44,9 @@ assert.equal(engine.validate('[LUNEA_VERDICT:YES]\n'+narrative+'\n결론: NO\n[L
 assert.equal(engine.validate('[LUNEA_VERDICT:NON_BINARY]\n'+narrative+'\n[LUNEA_END:NON_BINARY]').ok,true);
 assert.match(engine.readingPrompt('BASE RWS'),/감정\/의향\/실제 행동\/현실 결과를 혼동하지 않는다/);
 assert.match(engine.readingPrompt('BASE RWS'),/LUNEA_VERDICT/);
+assert.match(engine.readingPrompt('BASE RWS'),/끌림의 존재·강도, 그 끌림에 따른 긴장·부담·자기통제, 실제 표현·연락 행동을 서로 독립된 축/);
+assert.match(engine.readingPrompt('BASE RWS'),/부담 카드\(예: 완드 10\)가 나와도 끌림의 부재로 자동 판정하지 않고/);
+assert.match(engine.readingPrompt('BASE RWS'),/강한 성적 끌림을 확정하지 않는다/);
 const saved=engine.save(signature,accepted);
 assert.ok(saved);
 assert.equal(engine.get(signature).text,narrative);
@@ -57,6 +60,8 @@ assert.equal(engine.save(signature,{verdict:'YES',text:''}),null);
 const exported=engine.exportPrompt('RWS CARDS',signature,saved);
 const id=engine.readingId(signature);
 assert.match(exported,/RWS CARDS/);
+assert.match(exported,/끌림의 존재·강도, 그 끌림에 따른 긴장·부담·자기통제, 실제 표현·연락 행동을 서로 독립된 축/);
+assert.match(exported,/부담 카드\(예: 완드 10\)가 나와도 끌림의 부재로 자동 판정하지 않고/);
 assert.ok(exported.includes('[LUNEA_READING_ID:'+id+']'));
 assert.ok(exported.includes('기존 판정 코드: UNCERTAIN'));
 assert.ok(exported.includes(narrative));
