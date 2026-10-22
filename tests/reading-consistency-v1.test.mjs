@@ -53,11 +53,39 @@ assert.equal(engine.get(engine.fingerprint({...reading,question:'새 질문'},pr
 assert.equal(engine.save('',accepted),null);
 assert.equal(engine.save(signature,{verdict:'YES',text:''}),null);
 
+
+const exported=engine.exportPrompt('RWS CARDS',signature,saved);
+const id=engine.readingId(signature);
+assert.match(exported,/RWS CARDS/);
+assert.ok(exported.includes('[LUNEA_READING_ID:'+id+']'));
+assert.ok(exported.includes('기존 판정 코드: UNCERTAIN'));
+assert.ok(exported.includes(narrative));
+assert.doesNotMatch(exported,/첫 줄은 반드시 \[LUNEA_VERDICT:코드\] 하나만 출력한다/);
+const distinctKey=engine.fingerprint({...reading,question:'다른 질문, 2027-01-31까지?'},profile);
+const distinctId=engine.readingId(distinctKey);
+assert.notEqual(distinctId,id);
+const importBody='타로 카드의 질문 자리와 결과 자리를 각각 나눠서 살펴보면 현재 상황에서는 한 방향만으로 결론을 확정하기 어렵습니다. 보류의 근거가 더 중요합니다.';
+const external='[LUNEA_READING_ID:'+distinctId+']\n[LUNEA_VERDICT:UNCERTAIN]\n'+importBody+'\n[LUNEA_END:UNCERTAIN]';
+const checkedExternal=engine.parseExternal(external,distinctKey);
+assert.equal(checkedExternal.ok,true);
+assert.equal(checkedExternal.source,'chatgpt');
+assert.equal(engine.parseExternal(external,signature).ok,false,'cross-reading import must be rejected');
+assert.equal(engine.parseExternal(external.replace('[LUNEA_END:UNCERTAIN]','[LUNEA_END:YES]'),distinctKey).ok,false);
+assert.equal(engine.parseExternal('[LUNEA_VERDICT:UNCERTAIN]\n'+importBody+'\n[LUNEA_END:UNCERTAIN]',distinctKey).ok,false,'missing ID must be rejected');
+assert.equal(engine.get(distinctKey),null);
+const acceptedExternal=engine.save(distinctKey,checkedExternal);
+assert.equal(acceptedExternal.source,'chatgpt');
+assert.equal(engine.get(distinctKey).text,importBody);
+const rewritten=engine.save(distinctKey,{verdict:'YES',text:'다른 모델의 새 결론이 기존 내용을 덮어써서는 안 됩니다. 이것은 동일한 사건에 대한 별도 판정입니다.'});
+assert.equal(rewritten.verdict,'UNCERTAIN','first imported conclusion must not be overwritten');
+const noFirst=engine.exportPrompt('RAW RWS',engine.fingerprint({...reading,question:'빈 리딩'},profile),null);
+assert.ok(noFirst.includes('저장된 최초 결론이 없습니다.'));
+
 // Do not change real-world card draws or the old journal persistence contract.
 const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
 const journal=fs.readFileSync(new URL('../lunea-reading-journal-v2.js',import.meta.url),'utf8');
 assert.match(html,/lunea-reading-consistency-v1\.js/);
-assert.match(html,/consistency\.get\(readingKey\)/);
+assert.match(html,/getLuneaAcceptedReading\(readingKey\)/);
 assert.match(html,/consistency\.validate\(response\)/);
 assert.match(html,/readingFingerprint:/);
 assert.match(html,/temperature:\.2,topP:\.95/);
