@@ -44,7 +44,7 @@ async function setup() {
     const target = new URL(request.url());
     if (target.hostname === 'generativelanguage.googleapis.com') {
       requests.push(request.postDataJSON());
-      return route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({candidates:[{content:{parts:[{text:'### 한줄 결론\n모의 응답입니다.\n근거: 입력 검증용.'}]},finishReason:'STOP'}]})});
+      return route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({candidates:[{content:{parts:[{text:'[LUNEA_VERDICT:UNCERTAIN]\n모의 응답입니다. 이 결과는 실제 사람의 의도나 행동을 단정하지 않는 테스트용 응답으로, 뽑힌 카드와 질문 위치를 기반으로 판단을 보류합니다.\n[LUNEA_END:UNCERTAIN]'}]},finishReason:'STOP'}]})});
     }
     if (target.origin === origin) return route.continue();
     return route.fulfill({status:200, contentType:target.pathname.endsWith('.css') ? 'text/css' : 'application/json', body:target.hostname.includes('fonts') ? '' : '{}'});
@@ -145,8 +145,11 @@ try {
     for (const category of ['GENERAL','LOVE','CAREER','STOCK']) {
       await draw(page, category, '현재 이 선택을 어떻게 봐야 할까?');
       assert.equal(await page.locator('.lunea-card-meaning').count(),0,'face-down cards disclose no description');
+      await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
       await page.locator('#flipAll').dispatchEvent('click');
-      await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
+      await page.waitForFunction(() => document.getElementById('flipAll')?.getAttribute('aria-busy') === 'false',null,{timeout:30000});
+      const noteCount = await page.evaluate(() => ({actual:document.querySelectorAll('#results .lunea-card-meaning').length, expected:state.drawn.length}));
+      assert.equal(noteCount.actual,noteCount.expected,'reveal must synchronously append one local meaning per drawn card');
       const rows = await page.evaluate(() => state.drawn.map((card,i) => ({actual:document.querySelector('#info-'+i+' .lunea-card-meaning')?.textContent,expected:window.LUNEA_CARD_MEANINGS_V1.meaning(card)})));
       assert.ok(rows.every(row => row.actual === row.expected));
       console.log('PASS card descriptions:',category,rows.length);
@@ -156,8 +159,11 @@ try {
     }
     await page.locator('#dailyBtn').dispatchEvent('click');
     await page.waitForFunction(() => state.category === 'DAILY' && state.drawn.length > 0);
-    await page.locator('#flipAll').dispatchEvent('click');
-    await page.waitForFunction(() => document.querySelectorAll('#results .lunea-card-meaning').length === state.drawn.length);
+    await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
+      await page.locator('#flipAll').dispatchEvent('click');
+      await page.waitForFunction(() => document.getElementById('flipAll')?.getAttribute('aria-busy') === 'false',null,{timeout:30000});
+    const dailyNotes = await page.evaluate(() => ({actual:document.querySelectorAll('#results .lunea-card-meaning').length, expected:state.drawn.length}));
+    assert.equal(dailyNotes.actual,dailyNotes.expected,'DAILY reveal must synchronously append one local meaning per card');
     assert.equal(requests.length,0,'local card descriptions need no Gemini requests');
   });
   await check('actual Tarot AI button preserves cards after calculating Horary support', async ({page,requests}) => {

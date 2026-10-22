@@ -76,4 +76,29 @@ assert.match(intimacy,/정방향 core의 주근거/);
 assert.match(intimacy,/제한·반증으로 함께 검토할 shadow/);
 assert.ok(!intimacy.includes('- 질문: 1년 만의 통화'),'question should not be duplicated');
 
+
+// Integration contract: both Gemini and copied ChatGPT prompts share the
+// already de-duplicated card/position/Timing source. No new interpretation
+// evidence or independent tarot verdict is introduced by route selection.
+const consistencySrc=read('lunea-reading-consistency-v1.js');
+const sharedWindow={};
+vm.runInNewContext(consistencySrc,{
+  window:sharedWindow,Date,JSON,Map,String,Array,Object,RegExp
+});
+const consistency=sharedWindow.LUNEA_READING_CONSISTENCY_V1;
+const key=JSON.stringify({question:'통화 후 연락을 이어가지 않는 이유?',cards:['Chariot','Wands10'],version:1});
+const geminiPrompt=consistency.readingPrompt(output);
+const chatgptPrompt=consistency.exportPrompt(output,key,null);
+for(const [route,prompt] of [['Gemini',geminiPrompt],['ChatGPT',chatgptPrompt]]) {
+  assert.equal(count(prompt,'[TIMING ORACLE · 질문 섹터]'),1,route+' must contain one matching timing context');
+  assert.equal(count(prompt,'[FINAL READING PRIORITY · 최종 근거 우선순위]'),1,route+' must retain one RWS priority contract');
+  assert.ok(prompt.includes(cards),route+' must retain original RWS cards and positions');
+  assert.ok(prompt.includes('해석 섹터: 재회'),route+' must retain chosen timing sector');
+  assert.ok(prompt.includes('끌림의 존재·강도'),route+' must distinguish attraction from burden');
+  assert.ok(!prompt.includes('[SELF-CHECK · 최종 출력 전 내부 검수]'),route+' must not reintroduce the verbose checklist');
+}
+assert.ok(geminiPrompt.includes('첫 줄은 반드시 [LUNEA_VERDICT:코드]'));
+assert.ok(chatgptPrompt.includes('[LUNEA_READING_ID:'+consistency.readingId(key)+']'));
+assert.ok(!chatgptPrompt.includes('첫 줄은 반드시 [LUNEA_VERDICT:코드]'));
+
 console.log('Lean shared RWS/Timing/Intimacy prompt contracts: PASS');
