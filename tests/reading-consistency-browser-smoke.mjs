@@ -152,5 +152,8 @@ try{
   await Promise.race([new Promise(resolve=>browser.once('exit',resolve)),delay(1200)]);
   await new Promise(resolve=>server.close(resolve));
   // Chrome can write its last profile files during shutdown; retry cleanup.
-  fs.rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:150});
+  // Runner teardown clears /tmp. A Chrome child can still write during exit;
+  // never turn successful browser assertions into a failed check for temp cleanup.
+  try{fs.rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:150});}
+  catch(err){console.warn('Chrome temp cleanup skipped:',err.code||err.message);}
 }
