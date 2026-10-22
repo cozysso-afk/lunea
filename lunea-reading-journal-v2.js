@@ -68,7 +68,14 @@
     if (incoming?.horary?.lightweight && existing?.horary && !existing.horary.lightweight) {
       return clone(existing);
     }
-    return clone(incoming) || existing;
+    const merged = clone(incoming) || existing;
+    // Preserve the first recorded conclusion for an identical saved reading.
+    if (existing?.conclusion?.version && merged) {
+      merged.conclusion = clone(existing.conclusion);
+      merged.readingFingerprint = existing.readingFingerprint || merged.readingFingerprint;
+      if (existing.ai && existing.conclusion?.verdict) merged.ai = existing.ai;
+    }
+    return merged;
   }
 
   function clean(entry) {
@@ -260,6 +267,7 @@
       reading?.title || '',
       `질문: ${reading?.q || ''}`,
       cards,
+      reading?.conclusion?.verdict ? `[최초 판정 · ${reading.conclusion.version}] ${reading.conclusion.verdict}` : '',
       reading?.ai ? `[AI 해석]\n${reading.ai}` : ''
     ].filter(Boolean).join('\n\n');
   }
