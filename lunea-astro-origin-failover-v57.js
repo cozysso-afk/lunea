@@ -223,7 +223,7 @@
     if(document.getElementById('luneaHoraryPostActionsV44Loader'))return;
     const script=document.createElement('script');
     script.id='luneaHoraryPostActionsV44Loader';
-    script.src='./lunea-horary-post-actions-v44.js?v=58a1e00512de';
+    script.src='./lunea-horary-post-actions-v44.js?v=4accb4057903';
     script.async=false;
     script.onerror=()=>console.error('[LUNEA] Horary Post Actions V44 failed to load');
     (document.head||document.documentElement).appendChild(script);
@@ -244,7 +244,7 @@
     if(document.getElementById('luneaHoraryAiGuardV49Loader'))return;
     const script=document.createElement('script');
     script.id='luneaHoraryAiGuardV49Loader';
-    script.src='./lunea-horary-ai-guard-v49.js?v=58a1e00512de';
+    script.src='./lunea-horary-ai-guard-v49.js?v=4accb4057903';
     script.async=false;
     script.onerror=()=>console.error('[LUNEA] Horary AI Guard V49 failed to load');
     (document.head||document.documentElement).appendChild(script);
