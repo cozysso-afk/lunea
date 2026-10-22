@@ -113,7 +113,12 @@
   }
   function exportPrompt(base,key,accepted) {
     const id=readingId(key);
-    let out=readingPrompt(base);
+    // External route requires an ID before the verdict, overriding only
+    // the output-marker order of the Gemini-facing reading prompt.
+    let out=readingPrompt(base).replace(
+      '첫 줄은 반드시 [LUNEA_VERDICT:코드] 하나만 출력한다.',
+      '첫 줄은 [LUNEA_READING_ID:식별번호], 둘째 줄은 [LUNEA_VERDICT:코드]로 출력한다.'
+    );
     out+='\n\n[ChatGPT ↔ 루니아 해석 공유 규칙]\n'+
       '이 리딩의 식별번호는 '+id+' 입니다. 서로 다른 질문/카드의 해석을 혼동하면 안 됩니다.\n';
     if(accepted && CODES.includes(accepted.verdict) && typeof accepted.text==='string'){
