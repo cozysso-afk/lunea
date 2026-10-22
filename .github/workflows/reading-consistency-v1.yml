@@ -7,11 +7,13 @@ on:
       - 'lunea-reading-consistency-v1.js'
       - 'lunea-reading-journal-v2.js'
       - 'tests/reading-consistency-v1.test.mjs'
+      - 'tests/reading-consistency-browser-smoke.mjs'
       - '.github/workflows/reading-consistency-v1.yml'
   push:
     paths:
       - 'lunea-reading-consistency-v1.js'
       - 'tests/reading-consistency-v1.test.mjs'
+      - 'tests/reading-consistency-browser-smoke.mjs'
 
 jobs:
   consistency:
@@ -24,3 +26,5 @@ jobs:
       - run: node --check lunea-reading-consistency-v1.js
       - run: node --check lunea-reading-journal-v2.js
       - run: node tests/reading-consistency-v1.test.mjs
+      - name: Browser UI smoke with runner's Chrome
+        run: node tests/reading-consistency-browser-smoke.mjs
