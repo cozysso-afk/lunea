@@ -83,7 +83,7 @@
     document.write('<script src="./lunea-horary-balance-v19-5.js?v=f51d76379fd5"><\/script>');
     document.write('<script src="./lunea-cardback-restore-v19.js?v=f51d76379fd5"><\/script>');
     document.write('<script src="./lunea-universal-ai-opal-v20.js?v=f51d76379fd5"><\/script>');
-    document.write('<script src="./lunea-intimacy-v34.js?v=f51d76379fd5"><\/script>');
+    document.write('<script src="./lunea-intimacy-v34.js?v=af599fafeac8"><\/script>');
     document.write('<script src="./lunea-intimacy-ai-bridge-v34.js?v=f51d76379fd5"><\/script>');
     document.write('<script src="./lunea-intimacy-legacy-v35.js?v=f51d76379fd5"><\/script>');
     document.write('<script src="./lunea-intimacy-readability-v36.js?v=f51d76379fd5"><\/script>');
@@ -153,7 +153,7 @@
     './lunea-horary-balance-v19-5.js?v=f51d76379fd5',
     './lunea-cardback-restore-v19.js?v=f51d76379fd5',
     './lunea-universal-ai-opal-v20.js?v=f51d76379fd5',
-    './lunea-intimacy-v34.js?v=f51d76379fd5',
+    './lunea-intimacy-v34.js?v=af599fafeac8',
     './lunea-intimacy-ai-bridge-v34.js?v=f51d76379fd5',
     './lunea-intimacy-legacy-v35.js?v=f51d76379fd5',
     './lunea-intimacy-readability-v36.js?v=f51d76379fd5',

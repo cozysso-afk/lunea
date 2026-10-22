@@ -236,15 +236,19 @@
   function buildPromptLayer(drawn=[], title='', question='') {
     const selected=getSpread(title);
     const lines=drawn.map((item,index)=>cardLayerLine(item,selected?.positions?.[index])).filter(Boolean);
+    const questionText=String(question||'').trim();
+    const measurementQuestion=/크기|굵기|길이|치수|형태|cm|센티/i.test(questionText);
+    const promptQuestion=measurementQuestion ? `- 질문: ${questionText}\n` : '';
     return `[LUNEA INTIMACY 18+ INTERPRETATION LAYER · V${RELEASE}]
 - 성인 간 친밀감 질문에만 사용한다. 미성년자가 포함된 성적/신체적 질문은 해석하지 않는다.
 - 카드의 core/shadow 문장과 각 포지션을 주근거로 사용한다. 내부 axes/risks 숫자를 확률·점수로 해석하지 않는다.
-- 끌림·욕구, 부담·긴장, 실제 행동·동의를 분리한다. 강한 열기만으로 좋은 속궁합이나 실제 동의를 확정하지 않는다.
-- 신체 치수·해부학·질환·임신·성병 여부는 카드로 판정할 수 없다. 관련 질문은 포지션을 유지하면서 상징적 이미지로만 한정해 답한다.
-- 속궁합은 상호성·편안함·소통·경계를 함께 본다. 각 카드의 주근거와 제한을 포지션에 맞춰 검토한다.
+- 끌림·욕구, 부담·긴장, 실제 행동·동의를 분리한다. 카드상 욕구는 실제 동의(consent)의 증거가 아니며 강한 열기만으로 관계 성립을 확정하지 않는다.
+- 크기·굵기·길이·형태를 묻는 질문이나 포지션을 삭제하거나 다른 질문으로 바꾸지 않는다. 실제 신체 크기는 카드로 확인할 수 없으며 cm 수치, 치수 범위, 평균 이상/이하 등을 만들어내지 않는다. 그 포지션의 상징만 설명한다.
+- 해부학·질환·성기능·임신·성병 여부도 카드로 확인할 수 없다.
+- 속궁합은 상호성·편안함·소통·경계를 함께 본다. 강렬함 ≠ 좋은 궁합. 정방향도 core만으로 결론내리지 말고 shadow의 제한·반증을, 역방향도 자동 부정이 아니며 core의 대안을 살핀다.
 - 축을 기계적으로 반전하거나 긍정/제한 문장을 50:50으로 맞추지 않는다. 강한 결론은 독립된 카드 근거가 뒷받침할 때만 낸다.
-- 상대 관련 포지션은 카드상 가설로만 쓰고 실제 의사·동의는 확인되지 않았음을 분명히 한다. 감정의 존재와 실제 행동을 혼동하지 않는다.
-${lines.join('\n')}`;
+- 상대의 욕구·속마음·동의·행동 계획을 카드 사실로 단정하지 않는다. 상대 관련 포지션은 카드상 가설로만 쓰고 실제 의사·동의는 확인되지 않았음을 분명히 한다. 감정과 행동을 혼동하지 않는다.
+${promptQuestion}${lines.join('\n')}`;
   }
 
   W.LUNEA_INTIMACY_V34 = Object.freeze({
