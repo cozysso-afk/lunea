@@ -92,6 +92,22 @@
     return '- Message Oracle(연락·소식 메시지 오라클): 현재 리딩에 연결된 실제 결과가 있어도 질문과 직접 관련 있을 때만 짧게 보조할 수 있다. 관련 없으면 완전히 생략한다. 사용할 경우 실제 카드명과 질문 의도, 연락 방식·전달 경로·제한 중 RWS에서 이미 확인된 주제만 연결한다. 점수는 실제 연락 확률·긍정 결과 확률이 아니며, RWS의 결론·가능성 순위·단정 수준을 강화하거나 뒤집지 않는다. RWS와 충돌하면 절충하지 말고 Message Oracle 보조를 생략한다.';
   }
 
+  function collapseRepeatedTimingSector(prompt){
+    // Earlier wrappers can append an identical Timing sector block repeatedly.
+    // Only delete byte-for-byte repeated blocks; preserve different selections
+    // and all raw oracle results rather than guessing which sector is correct.
+    const seen=new Set();
+    return String(prompt||'').replace(
+      /\[TIMING ORACLE · 질문 섹터\][\s\S]*?(?=\n\s*\n\[|$)/g,
+      (block)=>{
+        const key=block.trim();
+        if(seen.has(key))return '';
+        seen.add(key);
+        return block;
+      }
+    ).replace(/\n{3,}/g,'\n\n');
+  }
+
   function assembleEvidence(prompt){
     const reference=W.LUNEA_TAROT_REFERENCE_V1;
     let text = reference ? reference.strip(prompt) : String(prompt || '');
@@ -101,7 +117,7 @@
     // evidence if a later feature replaced the earlier Message prompt wrapper.
     const message = W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.promptBlock?.() || '';
     if (message && !hasMessageOracle(text)) text += `\n\n${message}`;
-    return W.LUNEA_INTERPRETATION_GLOSS_V2?.refreshEngineLedger?.(text) || text;
+    return collapseRepeatedTimingSector(W.LUNEA_INTERPRETATION_GLOSS_V2?.refreshEngineLedger?.(text) || text);
   }
 
   function sajuBlock(prompt){
@@ -183,7 +199,7 @@
       '3. [과대해석 방지] 타인의 내면은 카드상 가설로만 표현하고, 확인된 관찰·표현·행동과 구분한다. 가장 강한 경쟁 해석은 실제 RWS 근거가 있을 때만 검토하며, 반증이나 50:50 균형을 위해 없는 대안을 생성하지 않는다.',
       '4. [과소해석 방지] 여러 포지션의 독립 근거가 같은 방향을 지지하면 그 강도를 반영한다. 긍정 신호를 무조건 희석하거나 약한 카드 하나를 극단적인 확정으로 키우지 않는다.',
       '5. 감정·의도·행동·결과와 원인·배경을 분리한다. 부담은 끌림 부재의 증거가 아니며, 끌림은 행동의 증거가 아니다. 근거가 부족하면 불확실하다고 답한다.',
-      '6. interpretation_rule_version=${INTERPRETATION_RULE_VERSION}. 보조 체계는 RWS 결론을 변경하는 독립 근거가 아니다. 관련 없으면 0문장으로 생략한다. 보조 체계 전체 분량은 최종 해석 본문의 최대 20% 이하로 한다.',
+      '6. interpretation_rule_version='+INTERPRETATION_RULE_VERSION+'. 보조 체계는 RWS 결론을 변경하는 독립 근거가 아니다. 관련 없으면 0문장으로 생략한다. 보조 체계 전체 분량은 최종 해석 본문의 최대 20% 이하로 한다.',
       westernPolicy(prompt),transitPolicy(prompt),returnPolicy(prompt),thaiPolicy(prompt),sajuPolicy(prompt),messagePolicy(prompt),
       '10. Timing Oracle을 포함한 시기 보조는 사용자가 언제·어느 시기·시간 흐름을 실제로 묻는 경우에만 사용한다. 제공된 시간 창을 벗어난 정밀 날짜를 만들지 않고 사건 성립도 보장하지 않는다.',
       '11. 서양점성술·사주·태국점성술은 서로 다른 체계다. 보조 체계가 RWS와 충돌하면 절충하거나 새로운 복합 결론을 만들지 말고 보조 체계를 생략하고 RWS 결론을 유지한다.',
