@@ -68,7 +68,7 @@
     document.write('<script src="./lunea-timing-result-copy-v35.js?v=3501"><\/script>');
     document.write('<script src="./lunea-thai-tarot-bridge-v32.js?v=ae3d8fb487db"><\/script>');
     document.write('<script src="./lunea-thai-range-v33.js?v=ae3d8fb487db"><\/script>');
-    document.write('<script src="./lunea-final-prompt-priority-v1.js?v=ae3d8fb487db"><\/script>');
+    document.write('<script src="./lunea-final-prompt-priority-v1.js?v=lean-prompt-20261022"><\/script>');
     document.write('<script src="./lunea-daily-lock-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-card-motion-timing-v7.js?v=701"><\/script>');
     document.write('<script src="./lunea-home-portal-v8.js?v=801"><\/script>');
@@ -83,7 +83,7 @@
     document.write('<script src="./lunea-horary-balance-v19-5.js?v=ae3d8fb487db"><\/script>');
     document.write('<script src="./lunea-cardback-restore-v19.js?v=ae3d8fb487db"><\/script>');
     document.write('<script src="./lunea-universal-ai-opal-v20.js?v=ae3d8fb487db"><\/script>');
-    document.write('<script src="./lunea-intimacy-v34.js?v=ae3d8fb487db"><\/script>');
+    document.write('<script src="./lunea-intimacy-v34.js?v=lean-prompt-20261022"><\/script>');
     document.write('<script src="./lunea-intimacy-ai-bridge-v34.js?v=ae3d8fb487db"><\/script>');
     document.write('<script src="./lunea-intimacy-legacy-v35.js?v=ae3d8fb487db"><\/script>');
     document.write('<script src="./lunea-intimacy-readability-v36.js?v=ae3d8fb487db"><\/script>');
@@ -138,7 +138,7 @@
     './lunea-timing-result-copy-v35.js?v=3501',
     './lunea-thai-tarot-bridge-v32.js?v=ae3d8fb487db',
     './lunea-thai-range-v33.js?v=ae3d8fb487db',
-    './lunea-final-prompt-priority-v1.js?v=ae3d8fb487db',
+    './lunea-final-prompt-priority-v1.js?v=lean-prompt-20261022',
     './lunea-daily-lock-v1.js?v=101',
     './lunea-card-motion-timing-v7.js?v=701',
     './lunea-home-portal-v8.js?v=801',
@@ -153,7 +153,7 @@
     './lunea-horary-balance-v19-5.js?v=ae3d8fb487db',
     './lunea-cardback-restore-v19.js?v=ae3d8fb487db',
     './lunea-universal-ai-opal-v20.js?v=ae3d8fb487db',
-    './lunea-intimacy-v34.js?v=ae3d8fb487db',
+    './lunea-intimacy-v34.js?v=lean-prompt-20261022',
     './lunea-intimacy-ai-bridge-v34.js?v=ae3d8fb487db',
     './lunea-intimacy-legacy-v35.js?v=ae3d8fb487db',
     './lunea-intimacy-readability-v36.js?v=ae3d8fb487db',
