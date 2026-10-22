@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+
+const source=fs.readFileSync(new URL('../lunea-reading-consistency-v1.js',import.meta.url),'utf8');
+const database=new Map();
+function boot(){
+  const localStorage={
+    getItem:k=>database.has(k)?database.get(k):null,
+    setItem:(k,v)=>database.set(k,String(v))
+  };
+  const window={localStorage};
+  vm.runInNewContext(source,{window,Date,JSON,Map,String,Array,Object,RegExp});
+  return window.LUNEA_READING_CONSISTENCY_V1;
+}
+const engine=boot();
+assert.equal(engine.version,'reading-consistency-v1');
+const reading={
+  category:'LOVE',title:'연락운',question:'2026-12-31까지 새 화제로 선톡할까?',
+  rationale:'행동을 보는 3장 배열',positions:['현재','행동','결과'],
+  drawn:[
+    {code:'Swords02',name:'Two of Swords',position:'결과',isReversed:false,subCards:[{code:'Cups11',name:'Page of Cups',isReversed:false}]},
+    {code:'Sun',name:'The Sun',position:'행동',isReversed:false,subCards:[]}
+  ]
+};
+const profile={thaiDay:'화요일',thaiRuler:'Mars',saju:'계수',zodiac:'Scorpio'};
+const signature=engine.fingerprint(reading,profile);
+assert.ok(signature.includes('2026-12-31'));
+assert.equal(signature,engine.fingerprint(structuredClone(reading),structuredClone(profile)));
+assert.notEqual(signature,engine.fingerprint({...reading,question:'2026-11-30까지 새 화제로 선톡할까?'},profile));
+assert.notEqual(signature,engine.fingerprint({...reading,drawn:[{...reading.drawn[0],isReversed:true},reading.drawn[1]]},profile));
+assert.notEqual(signature,engine.fingerprint({...reading,drawn:[{...reading.drawn[0],position:'현재'},reading.drawn[1]]},profile));
+assert.notEqual(signature,engine.fingerprint({...reading,drawn:[{...reading.drawn[0],subCards:[]},reading.drawn[1]]},profile));
+assert.notEqual(signature,engine.fingerprint({...reading,drawn:reading.drawn.slice().reverse()},profile));
+assert.equal(engine.fingerprint({...reading,drawn:[]},profile),'');
+const narrative='질문에 대한 핵심 결론은 불확실입니다. 검 2는 결정 유보를 상징합니다. 컵 시종은 감정적 메시지의 성향을 설명하지만 실제 발신을 증명하지 않습니다.';
+const accepted=engine.validate('[LUNEA_VERDICT:UNCERTAIN]\n'+narrative+'\n[LUNEA_END:UNCERTAIN]');
+assert.equal(accepted.ok,true);
+assert.equal(accepted.verdict,'UNCERTAIN');
+assert.equal(accepted.text,narrative);
+assert.equal(engine.validate('[LUNEA_VERDICT:YES]\n'+narrative+'\n[LUNEA_END:NO]').ok,false);
+assert.equal(engine.validate('[LUNEA_VERDICT:YES]\n'+narrative).ok,false);
+assert.equal(engine.validate('[LUNEA_VERDICT:YES]\n'+narrative+'\n결론: NO\n[LUNEA_END:YES]').ok,false);
+assert.equal(engine.validate('[LUNEA_VERDICT:NON_BINARY]\n'+narrative+'\n[LUNEA_END:NON_BINARY]').ok,true);
+assert.match(engine.readingPrompt('BASE RWS'),/감정\/의향\/실제 행동\/현실 결과를 혼동하지 않는다/);
+assert.match(engine.readingPrompt('BASE RWS'),/LUNEA_VERDICT/);
+const saved=engine.save(signature,accepted);
+assert.ok(saved);
+assert.equal(engine.get(signature).text,narrative);
+assert.equal(engine.get(signature).verdict,'UNCERTAIN');
+assert.equal(boot().get(signature).text,narrative,'browser reload should reuse first accepted reading');
+assert.equal(engine.get(engine.fingerprint({...reading,question:'새 질문'},profile)),null);
+assert.equal(engine.save('',accepted),null);
+assert.equal(engine.save(signature,{verdict:'YES',text:''}),null);
+
+// Do not change real-world card draws or the old journal persistence contract.
+const html=fs.readFileSync(new URL('../index.html',import.meta.url),'utf8');
+const journal=fs.readFileSync(new URL('../lunea-reading-journal-v2.js',import.meta.url),'utf8');
+assert.match(html,/lunea-reading-consistency-v1\.js/);
+assert.match(html,/consistency\.get\(readingKey\)/);
+assert.match(html,/consistency\.validate\(response\)/);
+assert.match(html,/readingFingerprint:/);
+assert.match(html,/temperature:\.2,topP:\.95/);
+assert.match(journal,/existing\?\.conclusion\?\.version/);
+assert.match(journal,/최초 판정/);
+console.log('LUNEA reading consistency V1: PASS');
