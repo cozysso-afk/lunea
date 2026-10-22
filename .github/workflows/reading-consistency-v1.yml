@@ -1,0 +1,26 @@
+name: Reading Consistency V1
+
+on:
+  pull_request:
+    paths:
+      - 'index.html'
+      - 'lunea-reading-consistency-v1.js'
+      - 'lunea-reading-journal-v2.js'
+      - 'tests/reading-consistency-v1.test.mjs'
+      - '.github/workflows/reading-consistency-v1.yml'
+  push:
+    paths:
+      - 'lunea-reading-consistency-v1.js'
+      - 'tests/reading-consistency-v1.test.mjs'
+
+jobs:
+  consistency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check lunea-reading-consistency-v1.js
+      - run: node --check lunea-reading-journal-v2.js
+      - run: node tests/reading-consistency-v1.test.mjs
