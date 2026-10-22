@@ -147,6 +147,7 @@ try {
       assert.equal(await page.locator('.lunea-card-meaning').count(),0,'face-down cards disclose no description');
       await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
       await page.locator('#flipAll').dispatchEvent('click');
+      await page.waitForFunction(() => document.getElementById('flipAll')?.getAttribute('aria-busy') === 'false',null,{timeout:30000});
       const noteCount = await page.evaluate(() => ({actual:document.querySelectorAll('#results .lunea-card-meaning').length, expected:state.drawn.length}));
       assert.equal(noteCount.actual,noteCount.expected,'reveal must synchronously append one local meaning per drawn card');
       const rows = await page.evaluate(() => state.drawn.map((card,i) => ({actual:document.querySelector('#info-'+i+' .lunea-card-meaning')?.textContent,expected:window.LUNEA_CARD_MEANINGS_V1.meaning(card)})));
@@ -160,6 +161,7 @@ try {
     await page.waitForFunction(() => state.category === 'DAILY' && state.drawn.length > 0);
     await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
       await page.locator('#flipAll').dispatchEvent('click');
+      await page.waitForFunction(() => document.getElementById('flipAll')?.getAttribute('aria-busy') === 'false',null,{timeout:30000});
     const dailyNotes = await page.evaluate(() => ({actual:document.querySelectorAll('#results .lunea-card-meaning').length, expected:state.drawn.length}));
     assert.equal(dailyNotes.actual,dailyNotes.expected,'DAILY reveal must synchronously append one local meaning per card');
     assert.equal(requests.length,0,'local card descriptions need no Gemini requests');
