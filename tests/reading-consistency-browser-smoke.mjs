@@ -149,6 +149,8 @@ try{
 }finally{
   if(socket)socket.close();
   browser.kill('SIGTERM');
+  await Promise.race([new Promise(resolve=>browser.once('exit',resolve)),delay(1200)]);
   await new Promise(resolve=>server.close(resolve));
-  fs.rmSync(dir,{recursive:true,force:true});
+  // Chrome can write its last profile files during shutdown; retry cleanup.
+  fs.rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:150});
 }
