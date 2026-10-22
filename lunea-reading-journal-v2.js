@@ -68,7 +68,11 @@
     if (incoming?.horary?.lightweight && existing?.horary && !existing.horary.lightweight) {
       return clone(existing);
     }
-    return clone(incoming) || existing;
+    const merged = clone(incoming) || existing;
+    // A recorded pre-outcome forecast cannot be silently replaced during
+    // archive enrichment/re-import. Outcome/status remain independently editable.
+    if (existing?.prediction?.version) merged.prediction = clone(existing.prediction);
+    return merged;
   }
 
   function clean(entry) {
@@ -265,7 +269,9 @@
   }
 
   function entryText(entry) {
-    return `${readingText(entry.reading)}\n\n[검증]\n판정: ${STATUS[entry.status]}` +
+    const p=entry.reading?.prediction;
+    const forecast=p?.eligible ? '\n[최초 연락 행동 예측]\n엔진: '+p.version+'\n사건: '+p.eventLabel+'\n사전 판정: '+p.verdict+'\n기한: '+(p.deadline?.date||p.deadline?.instant||'미기록') : '';
+    return `${readingText(entry.reading)}${forecast}\n\n[검증]\n판정: ${STATUS[entry.status]}` +
       (entry.resultDate ? `\n실제 결과 날짜: ${entry.resultDate}` : '') +
       (entry.dueDate ? `\n확인 예정일: ${entry.dueDate}` : '') +
       (entry.outcome ? `\n실제 결과: ${entry.outcome}` : '') +
