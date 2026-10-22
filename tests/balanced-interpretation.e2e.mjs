@@ -44,7 +44,7 @@ async function setup() {
     const target = new URL(request.url());
     if (target.hostname === 'generativelanguage.googleapis.com') {
       requests.push(request.postDataJSON());
-      return route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({candidates:[{content:{parts:[{text:'### 한줄 결론\n모의 응답입니다.\n근거: 입력 검증용.'}]},finishReason:'STOP'}]})});
+      return route.fulfill({status:200, contentType:'application/json', body:JSON.stringify({candidates:[{content:{parts:[{text:'[LUNEA_VERDICT:UNCERTAIN]\n모의 응답입니다. 이 결과는 실제 사람의 의도나 행동을 단정하지 않는 테스트용 응답으로, 뽑힌 카드와 질문 위치를 기반으로 판단을 보류합니다.\n[LUNEA_END:UNCERTAIN]'}]},finishReason:'STOP'}]})});
     }
     if (target.origin === origin) return route.continue();
     return route.fulfill({status:200, contentType:target.pathname.endsWith('.css') ? 'text/css' : 'application/json', body:target.hostname.includes('fonts') ? '' : '{}'});
