@@ -158,6 +158,10 @@
   function validationText(entry) {
     if (!entry) return '';
     const lines = [`판정: ${STATUS[entry.status] || entry.status || STATUS.pending}`];
+    const p = entry.reading?.prediction;
+    if (p?.eligible) {
+      lines.unshift('최초 연락 예측: '+p.verdict+' · '+p.eventLabel+' · '+(p.deadline?.date||p.deadline?.instant||'기한 미기록')+' · '+p.version);
+    }
     if (entry.resultDate) lines.push(`실제 결과 날짜: ${entry.resultDate}`);
     if (entry.dueDate) lines.push(`확인 예정일: ${entry.dueDate}`);
     if (entry.outcome) lines.push(`실제 결과: ${entry.outcome}`);
