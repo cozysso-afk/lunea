@@ -116,7 +116,7 @@
     if(W.LUNEA_DAILY_INTERPRETATION_CONTRACT_V2||document.getElementById('luneaDailyInterpretationContractV2Loader'))return true;
     const script=document.createElement('script');
     script.id='luneaDailyInterpretationContractV2Loader';
-    script.src='./lunea-daily-interpretation-contract-v2.js?v=f51d76379fd5';
+    script.src='./lunea-daily-interpretation-contract-v2.js?v=32ca27e0d256';
     script.async=false;
     script.onerror=()=>console.error('[LUNEA V29] daily interpretation contract V2 failed to load');
     document.head.appendChild(script);
