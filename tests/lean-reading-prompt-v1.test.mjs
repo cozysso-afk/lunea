@@ -68,7 +68,8 @@ const intimacy=itx.window.LUNEA_INTIMACY_V34.buildPromptLayer(
 );
 assert.match(intimacy,/성인 간 친밀감/);
 assert.match(intimacy,/상대 관련 포지션은 카드상 가설로만 쓰고/);
-assert.match(intimacy,/강한 열기만으로 좋은 속궁합이나 실제 동의를 확정하지 않는다/);
+assert.match(intimacy,/강렬함 ≠ 좋은 궁합/);
+assert.match(intimacy,/실제 동의\(consent\)의 증거가 아니며/);
 assert.match(intimacy,/Chariot \/ upright \/ position: 목소리 반응/);
 assert.match(intimacy,/Wands10 \/ upright \/ position: 성적 끌림/);
 assert.match(intimacy,/정방향 core의 주근거/);
