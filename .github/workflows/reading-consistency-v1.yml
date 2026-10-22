@@ -6,6 +6,11 @@ on:
       - 'index.html'
       - 'lunea-reading-consistency-v1.js'
       - 'lunea-reading-journal-v2.js'
+      - 'lunea-final-prompt-priority-v1.js'
+      - 'interpretation-gloss-v1.js'
+      - 'lunea-intimacy-v34.js'
+      - 'lunea-structural-routing-v4.js'
+      - 'tests/lean-reading-prompt-v1.test.mjs'
       - 'tests/reading-consistency-v1.test.mjs'
       - 'tests/reading-consistency-browser-smoke.mjs'
       - '.github/workflows/reading-consistency-v1.yml'
@@ -26,5 +31,10 @@ jobs:
       - run: node --check lunea-reading-consistency-v1.js
       - run: node --check lunea-reading-journal-v2.js
       - run: node tests/reading-consistency-v1.test.mjs
+      - run: node tests/lean-reading-prompt-v1.test.mjs
+      - run: node tests/astrology-tarot-prompt-priority.test.mjs
+      - run: node tests/prompt-balanced-common.test.mjs
+      - run: node tests/cause-rws-priority.test.mjs
+      - run: node --test tests/intimacy-evidence-policy-v1.test.mjs
       - name: Browser UI smoke with runner's Chrome
         run: node tests/reading-consistency-browser-smoke.mjs
