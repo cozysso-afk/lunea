@@ -120,7 +120,7 @@ header{display:flex;align-items:center;justify-content:space-between;gap:8px;mar
 <div class="sheet" id="sheet"><div class="sub">✦ SELECTED · <span id="sheetCat">GENERAL</span></div><h2 class="sheet-title" id="sheetTitle"></h2><p class="desc" id="sheetDesc"></p><div class="field"><label>구체적인 질문</label><textarea id="question" placeholder="예: 전남친이 아직 미련이 있다면 어떤 조건에서 실제 연락 행동으로 넘어갈까?"></textarea></div><div class="field"><label>방향성</label><div class="radio-box selected" data-rev="0"><h5>정방향만</h5><p>명확한 상징 흐름 위주.</p></div><div class="radio-box" data-rev="1"><h5>역방향 포함</h5><p>지연·내면화·막힘까지 포함.</p></div></div><button class="primary full-btn" id="drawBtn">✦ <span id="drawLabel">카드 펼치기</span></button></div>
 
 <!-- Spread modal -->
-<div class="overlay" id="spreadOverlay" aria-hidden="true"><div class="modal"><button class="close" data-close="spread">×</button><div class="sub" id="spreadType">SPREAD</div><h3 class="modal-h" id="spreadQuestion"></h3><div class="spread-rationale" id="spreadRationale" style="display:none"></div><div class="actionbar"><button class="mini" id="flipAll">✦ 일괄 뒤집기</button><button class="mini" id="extraCard">+ 추가 카드</button><button class="mini" id="aiRead">🔮 AI 해석</button><button class="mini" id="retry">↺ 다시 뽑기</button><button class="mini" id="saveReading">💾 저장</button></div><div class="cards" id="cards"></div><div id="aiBox"></div><div id="results"></div><div class="copybox"><button class="primary full-btn" id="copyPrompt">📋 마스터 리딩 프롬프트 복사</button></div></div></div>
+<div class="overlay" id="spreadOverlay" aria-hidden="true"><div class="modal"><button class="close" data-close="spread">×</button><div class="sub" id="spreadType">SPREAD</div><h3 class="modal-h" id="spreadQuestion"></h3><div class="spread-rationale" id="spreadRationale" style="display:none"></div><div class="actionbar"><button class="mini" id="flipAll">✦ 일괄 뒤집기</button><button class="mini" id="extraCard">+ 추가 카드</button><button class="mini" id="aiRead">🔮 AI 해석</button><button class="mini" id="retry">↺ 다시 뽑기</button><button class="mini" id="saveReading">💾 저장</button></div><div class="cards" id="cards"></div><div id="aiBox"></div><div id="results"></div><div class="copybox"><button class="primary full-btn" id="copyPrompt">📋 마스터 리딩 프롬프트 복사</button><button class="mini" id="importChatgptReading" type="button" style="margin-top:10px;width:100%">💬 ChatGPT 해석 붙여넣기</button></div></div></div>
 
 <!-- API modal -->
 <div class="overlay profile-modal" id="apiOverlay" aria-hidden="true"><div class="modal"><button class="close" data-close="api">×</button><div class="sub">AI CONNECTION</div><h3 class="modal-h">Gemini API 설정</h3><div class="field"><label>API Key</label><input type="password" id="apiKey" placeholder="AIzaSy..."></div><div class="field"><label>모델 ID</label><input id="modelId" value="gemini-2.5-flash" placeholder="gemini-2.5-flash"></div><button class="primary full-btn" id="saveApi">설정 저장</button><p class="footnote">키는 이 기기의 브라우저 localStorage에만 저장합니다. 자동 스프레드 설계와 AI 해석에 사용합니다.</p></div></div>
@@ -575,10 +575,7 @@ $('aiRead').onclick=async()=>{
   const readingKey=consistency.fingerprint(state,profile);
   if(!readingKey){alert('먼저 카드를 뽑아줘.');return}
   // Prefer the exact first accepted answer; saving an archive is optional.
-  const cached=consistency.get(readingKey) ||
-    getArchive().find(r=>r.readingFingerprint===readingKey &&
-      r.conclusion?.version===consistency.version && r.conclusion?.verdict &&
-      typeof r.ai==='string' && r.ai.trim());
+  const cached=getLuneaAcceptedReading(readingKey);
   if(cached){
     const verdict=cached.verdict||cached.conclusion?.verdict||'';
     $('aiBox').innerHTML='<div class="ai-card"><h4>🔮 AI 심층 리딩 · 기존 해석</h4><div class="ai-body" id="aiText"></div></div>';
@@ -617,7 +614,79 @@ $('aiRead').onclick=async()=>{
       $('aiText').textContent='[해석 오류] '+err.message;
   }finally{btn.disabled=false;btn.textContent='🔮 AI 해석'}
 };
-$('copyPrompt').onclick=()=>navigator.clipboard.writeText(window.LUNEA_READING_CONSISTENCY_V1?.readingPrompt(promptString())||promptString()).then(()=>alert('✨ 프롬프트 복사 완료')).catch(()=>alert('복사 권한을 확인해줘.'));
+function getLuneaAcceptedReading(readingKey){
+  const engine=window.LUNEA_READING_CONSISTENCY_V1;
+  if(!engine||!readingKey)return null;
+  const first=engine.get(readingKey);
+  if(first)return first;
+  const archive=getArchive().find(r=>r.readingFingerprint===readingKey &&
+    r.conclusion?.version===engine.version && r.conclusion?.verdict &&
+    typeof r.ai==='string' && r.ai.trim());
+  return archive?{verdict:archive.conclusion.verdict,text:archive.ai,
+    version:archive.conclusion.version,source:archive.conclusion.source||'archive'}:null;
+}
+$('copyPrompt').onclick=async()=>{
+  const engine=window.LUNEA_READING_CONSISTENCY_V1;
+  if(!engine){alert('일관성 모듈을 다시 불러와줘.');return}
+  const readingKey=engine.fingerprint(state,profile);
+  const original=promptString();
+  const first=getLuneaAcceptedReading(readingKey);
+  const exported=readingKey?engine.exportPrompt(original,readingKey,first):engine.readingPrompt(original);
+  try{await navigator.clipboard.writeText(exported);alert(first?
+    '✨ 최초 해석과 판정까지 포함해서 복사했어. ChatGPT에 붙여넣어줘.':
+    '✨ ChatGPT용 프롬프트 복사 완료. 받은 해석은 아래 버튼으로 붙여넣을 수 있어.')}
+  catch{alert('클립보드 권한을 확인해줘.')}
+};
+$('importChatgptReading').onclick=()=>{
+  const engine=window.LUNEA_READING_CONSISTENCY_V1;
+  const readingKey=engine?.fingerprint(state,profile);
+  if(!engine||!readingKey){alert('먼저 카드를 뽑아줘.');return}
+  if(getLuneaAcceptedReading(readingKey)){
+    alert('이 리딩에는 이미 최초 해석이 저장돼 있어. 기존 결론은 덮어쓰지 않을게.');
+    return;
+  }
+  const outer=document.createElement('div');
+  outer.id='luneaChatgptImportModal';
+  outer.setAttribute('role','dialog');
+  outer.setAttribute('aria-label','ChatGPT 해석 붙여넣기');
+  outer.style.cssText='position:fixed;inset:0;z-index:2147483500;background:rgba(3,5,13,.88);display:flex;align-items:center;justify-content:center;padding:16px';
+  const panel=document.createElement('div');
+  panel.style.cssText='background:#171829;color:#f5f1ff;border:1px solid #7f96a6;border-radius:14px;padding:18px;max-width:560px;width:100%;max-height:85vh;overflow:auto';
+  const title=document.createElement('h3');title.textContent='💬 ChatGPT 해석 붙여넣기';
+  const hint=document.createElement('p');
+  hint.textContent='ChatGPT가 답한 전체 내용을 붙여넣어줘. 식별번호와 앞뒤 판정을 확인하고, 최초 해석으로 저장할게.';
+  hint.style.cssText='font-size:13px;line-height:1.55;opacity:.8';
+  const area=document.createElement('textarea');
+  area.id='luneaChatgptPasteText';area.rows=11;
+  area.placeholder='[LUNEA_READING_ID:...]\n[LUNEA_VERDICT:...]\n해석 내용\n[LUNEA_END:...]';
+  area.style.cssText='box-sizing:border-box;width:100%;min-height:180px;border:1px solid #697487;border-radius:8px;background:#0e1321;color:white;padding:10px;font:13px/1.5 sans-serif';
+  const controls=document.createElement('div');
+  controls.style.cssText='display:flex;gap:8px;margin-top:12px;justify-content:flex-end';
+  const cancel=document.createElement('button');
+  cancel.id='luneaChatgptPasteCancel';cancel.textContent='취소';cancel.className='mini';
+  const accept=document.createElement('button');
+  accept.id='luneaChatgptPasteAccept';accept.textContent='해석 반영';accept.className='mini';
+  controls.append(cancel,accept);panel.append(title,hint,area,controls);outer.append(panel);document.body.append(outer);
+  const close=()=>outer.remove();
+  cancel.onclick=close;
+  outer.addEventListener('click',e=>{if(e.target===outer)close()});
+  accept.onclick=()=>{
+    if(engine.fingerprint(state,profile)!==readingKey){
+      alert('카드나 질문이 바뀌었어. 현재 리딩의 프롬프트를 다시 복사해줘.');return;
+    }
+    if(getLuneaAcceptedReading(readingKey)){
+      alert('이미 최초 해석이 있어서 덮어쓰지 않았어.');close();return;
+    }
+    const checked=engine.parseExternal(area.value,readingKey);
+    if(!checked.ok){alert('가져오지 못했어: '+checked.reason);return}
+    const accepted=engine.save(readingKey,checked);
+    if(!accepted){alert('해석 저장에 실패했어.');return}
+    $('aiBox').innerHTML='<div class="ai-card"><h4>🔮 AI 심층 리딩 · ChatGPT 최초 해석</h4><div class="ai-body" id="aiText"></div></div>';
+    $('aiText').textContent=accepted.text;
+    close();alert('✨ ChatGPT 해석을 최초 판정으로 반영했어. 기록함에 남기려면 저장을 눌러줘.');
+  };
+  area.focus();
+};
 
 // ============================================================
 // Archive — card UI, searchable, AI text included
@@ -626,7 +695,7 @@ function getArchive(){return safeJSON('LUNEA_ARCHIVE_V3',[])}
 function setArchive(a){localStorage.setItem('LUNEA_ARCHIVE_V3',JSON.stringify(a.slice(0,100)))}
 function migrateOldArchive(){if(localStorage.getItem('LUNEA_ARCHIVE_V3'))return;const old=safeJSON('LUNEA_ARCHIVE',[]);if(!old.length)return;setArchive(old.map(x=>({id:String(x.id||secureId()),createdAt:Date.now(),date:x.date||'',title:x.title||'이전 기록',q:x.q||'',cards:(x.cards||[]).map(s=>({text:s})),ai:''})))}
 migrateOldArchive();
-$('saveReading').onclick=()=>{const a=getArchive();const ai=$('aiText')?.textContent||'';const item={id:secureId(),createdAt:Date.now(),date:new Date().toLocaleString('ko-KR'),title:state.title,q:state.question,rationale:state.rationale,cards:state.drawn.map(c=>({position:c.position,name:c.name,isReversed:c.isReversed,gd:c.gdAttribution,keyword:c.keyword,subCards:c.subCards.map(s=>({name:s.name,isReversed:s.isReversed}))})),ai,readingFingerprint:window.LUNEA_READING_CONSISTENCY_V1?.fingerprint(state,profile)||'',conclusion:(()=>{const engine=window.LUNEA_READING_CONSISTENCY_V1;const record=engine?.get(engine.fingerprint(state,profile));return record?{version:record.version,verdict:record.verdict,recordedAt:record.recordedAt}:null})()};a.unshift(item);setArchive(a);alert('✨ 기록함에 저장했어.')};
+$('saveReading').onclick=()=>{const a=getArchive();const ai=$('aiText')?.textContent||'';const item={id:secureId(),createdAt:Date.now(),date:new Date().toLocaleString('ko-KR'),title:state.title,q:state.question,rationale:state.rationale,cards:state.drawn.map(c=>({position:c.position,name:c.name,isReversed:c.isReversed,gd:c.gdAttribution,keyword:c.keyword,subCards:c.subCards.map(s=>({name:s.name,isReversed:s.isReversed}))})),ai,readingFingerprint:window.LUNEA_READING_CONSISTENCY_V1?.fingerprint(state,profile)||'',conclusion:(()=>{const engine=window.LUNEA_READING_CONSISTENCY_V1;const record=engine?.get(engine.fingerprint(state,profile));return record?{version:record.version,verdict:record.verdict,source:record.source||'gemini',recordedAt:record.recordedAt}:null})()};a.unshift(item);setArchive(a);alert('✨ 기록함에 저장했어.')};
 function archiveText(item){return `${item.date}\n${item.title}\n질문: ${item.q}\n\n${(item.cards||[]).map(c=>c.text||`${c.position}: ${c.name} (${c.isReversed?'역':'정'})${c.subCards?.length?' / 보조 '+c.subCards.map(s=>s.name).join(', '):''}`).join('\n')}\n\n${item.conclusion?.verdict?'[최초 판정 · '+item.conclusion.version+'] '+item.conclusion.verdict+'\n\n':''}${item.ai?'[AI 해석]\n'+item.ai:''}`}
 function renderArchive(){const q=$('archiveSearch').value.trim().toLowerCase();const a=getArchive();$('archiveCount').textContent=`${a.length}개`;$('archiveList').innerHTML='';const rows=a.filter(x=>!q||[x.title,x.q,x.ai].join(' ').toLowerCase().includes(q));if(!rows.length){$('archiveList').innerHTML='<div class="empty">저장된 리딩이 없거나 검색 결과가 없어.</div>';return}rows.forEach(item=>{const el=document.createElement('div');el.className='archive-item';el.innerHTML=`<div class="archive-meta">${esc(item.date||new Date(item.createdAt).toLocaleString('ko-KR'))}</div><div class="archive-title">${esc(item.title)}</div><div class="archive-q">${esc(item.q)}</div><div class="archive-actions"><button class="mini" data-a="detail">카드/해석 펼치기</button><button class="mini" data-a="copy">복사</button><button class="mini danger" data-a="delete">삭제</button></div><div class="archive-detail"></div>`;const det=el.querySelector('.archive-detail');det.textContent=archiveText(item);el.addEventListener('click',async e=>{const b=e.target.closest?.('[data-a]');if(!b)return;if(b.dataset.a==='detail')det.classList.toggle('open');if(b.dataset.a==='copy'){try{await navigator.clipboard.writeText(archiveText(item));alert('복사했어.')}catch{alert('복사 권한을 확인해줘.')}}if(b.dataset.a==='delete'){if(confirm('이 기록을 삭제할까?')){setArchive(getArchive().filter(x=>x.id!==item.id));renderArchive()}}});$('archiveList').appendChild(el)})}
 $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{const t=getArchive().map(archiveText).join('\n\n────────────\n\n');if(!t)return alert('기록이 없어.');try{await navigator.clipboard.writeText(t);alert('전체 기록 복사 완료')}catch{alert('복사 권한을 확인해줘.')}};$('clearArchive').onclick=()=>{if(confirm('기록함 전체를 비울까? 되돌릴 수 없어.')){setArchive([]);renderArchive()}};
@@ -634,7 +703,7 @@ $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{c
 // Initial memory + iOS resume robustness
 window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.setAttribute('aria-hidden','true'));syncProfile()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
-</script><script src="./lunea-reading-consistency-v1.js?v=20261022-v1"></script><script src="./lunea-cache-refresh-v1.js?v=4accb4057903"></script>
+</script><script src="./lunea-reading-consistency-v1.js?v=20261022-chatgpt-sync1"></script><script src="./lunea-cache-refresh-v1.js?v=4accb4057903"></script>
   <script src="./spread-engine-v7.4.js?v=76-cause-rws-v1"></script>
   <script src="./lunea-card-meanings-v1.js?v=4accb4057903"></script>
   <script src="./lunea-structural-routing-v4.js?v=4accb4057903"></script>
