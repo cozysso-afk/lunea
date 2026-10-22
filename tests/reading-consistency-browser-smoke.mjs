@@ -99,10 +99,61 @@ try{
   assert.equal(result.saved,'UNCERTAIN','original verdict saved');
   assert.equal(result.fingerprint,true,'original fingerprint saved');
   assert.equal(result.cached,true,'cache present');
+
+  const shared=await js([
+    '(async()=>{',
+    "  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__lastPrompt=text;}}});",
+    "  await document.getElementById('copyPrompt').onclick();",
+    "  const firstCopy=window.__lastPrompt||'';",
+    "  state.question='2027-01-31까지 새 화제로 먼저 선톡할까?';",
+    "  await document.getElementById('copyPrompt').onclick();",
+    "  const secondCopy=window.__lastPrompt||'';",
+    "  const api=window.LUNEA_READING_CONSISTENCY_V1;",
+    "  const target=api.readingId(api.fingerprint(state,profile));",
+    "  document.getElementById('importChatgptReading').onclick();",
+    "  const field=document.getElementById('luneaChatgptPasteText');",
+    "  const answer='이 질문은 감정과 행동 근거가 상반되어 실제로 상대가 먼저 선톡할지 명확히 확정할 수 없습니다. 결과 카드는 여전히 판단 유보로 보는 것이 합리적입니다.';",
+    "  const bad='[LUNEA_READING_ID:wrong]\\n[LUNEA_VERDICT:UNCERTAIN]\\n'+answer+'\\n[LUNEA_END:UNCERTAIN]';",
+    "  field.value=bad;document.getElementById('luneaChatgptPasteAccept').onclick();",
+    "  const rejected=!!document.getElementById('luneaChatgptImportModal');",
+    "  field.value='[LUNEA_READING_ID:'+target+']\\n[LUNEA_VERDICT:UNCERTAIN]\\n'+answer+'\\n[LUNEA_END:UNCERTAIN]';",
+    "  document.getElementById('luneaChatgptPasteAccept').onclick();",
+    "  const afterImport=window.__testFetchCount;",
+    "  await document.getElementById('aiRead').onclick();",
+    "  const afterAI=window.__testFetchCount;",
+    "  document.getElementById('saveReading').onclick();",
+    "  const archive=JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3')||'[]');",
+    "  return {",
+    "    firstPinned:firstCopy.includes('기존 판정 코드: UNCERTAIN'),",
+    "    firstHasBody:firstCopy.includes('카드의 연락 신호는 확정되지 않았습니다.'),",
+    "    secondEmpty:secondCopy.includes('저장된 최초 결론이 없습니다.'),",
+    "    idInSecond:secondCopy.includes('[LUNEA_READING_ID:'+target+']'),",
+    "    rejected,afterImport,afterAI,",
+    "    source:archive[0]?.conclusion?.source,",
+    "    verdict:archive[0]?.conclusion?.verdict,",
+    "    sameAnswer:document.getElementById('aiText')?.textContent===answer",
+    "  };",
+    '})()'
+  ].join('\n'));
+  assert.equal(shared.firstPinned,true,'Gemini-first prompt must include original verdict');
+  assert.equal(shared.firstHasBody,true,'Gemini-first prompt must include original text');
+  assert.equal(shared.secondEmpty,true,'ChatGPT-first prompt needs no existing conclusion');
+  assert.equal(shared.idInSecond,true,'prompt must give a matching reading ID');
+  assert.equal(shared.rejected,true,'mismatched reading ID must be blocked');
+  assert.equal(shared.afterAI,shared.afterImport,'ChatGPT-first reading should not call Gemini');
+  assert.equal(shared.source,'chatgpt','archive must preserve external provider');
+  assert.equal(shared.verdict,'UNCERTAIN');
+  assert.equal(shared.sameAnswer,true,'copied answer must be reused verbatim');
+
   console.log('LUNEA real browser UI smoke PASS');
 }finally{
   if(socket)socket.close();
   browser.kill('SIGTERM');
+  await Promise.race([new Promise(resolve=>browser.once('exit',resolve)),delay(1200)]);
   await new Promise(resolve=>server.close(resolve));
-  fs.rmSync(dir,{recursive:true,force:true});
+  // Chrome can write its last profile files during shutdown; retry cleanup.
+  // Runner teardown clears /tmp. A Chrome child can still write during exit;
+  // never turn successful browser assertions into a failed check for temp cleanup.
+  try{fs.rmSync(dir,{recursive:true,force:true,maxRetries:5,retryDelay:150});}
+  catch(err){console.warn('Chrome temp cleanup skipped:',err.code||err.message);}
 }
