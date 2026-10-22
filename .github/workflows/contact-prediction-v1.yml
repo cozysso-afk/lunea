@@ -1,0 +1,32 @@
+name: Contact Prediction V1 regression
+
+on:
+  push:
+    paths:
+      - 'lunea-prediction-engine-v1.js'
+      - 'index.html'
+      - 'lunea-reading-journal-v2.js'
+      - 'lunea-journal-detail-v51.js'
+      - 'tests/contact-prediction-v1.test.mjs'
+      - '.github/workflows/contact-prediction-v1.yml'
+  pull_request:
+    paths:
+      - 'lunea-prediction-engine-v1.js'
+      - 'index.html'
+      - 'lunea-reading-journal-v2.js'
+      - 'lunea-journal-detail-v51.js'
+      - 'tests/contact-prediction-v1.test.mjs'
+      - '.github/workflows/contact-prediction-v1.yml'
+
+jobs:
+  deterministic-contact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check JS syntax
+        run: node --check lunea-prediction-engine-v1.js
+      - name: Run deterministic contact prediction tests
+        run: node tests/contact-prediction-v1.test.mjs
