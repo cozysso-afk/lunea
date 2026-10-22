@@ -73,6 +73,7 @@ try{
   const script=[
     '(async()=>{',
     "  const answer='[LUNEA_VERDICT:UNCERTAIN]\\n카드의 연락 신호는 확정되지 않았습니다. 감정적 가능성과 실제 연락 행동을 나누어 검토하며, 반대 근거도 함께 확인합니다. 최종적으로 이 배열은 판단 보류입니다.\\n[LUNEA_END:UNCERTAIN]';",
+    '  window.alert=()=>{};window.confirm=()=>true;',
     '  window.__testFetchCount=0;',
     '  window.fetch=async()=>{window.__testFetchCount++;return {ok:true,json:async()=>({candidates:[{content:{parts:[{text:answer}]}}]})};};',
     "  localStorage.setItem('LUNEA_API_KEY','smoke-key');",
