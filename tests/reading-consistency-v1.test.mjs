@@ -79,6 +79,30 @@ assert.equal(engine.parseExternal(external.replace('[LUNEA_END:UNCERTAIN]','[LUN
 assert.equal(engine.parseExternal('[LUNEA_VERDICT:UNCERTAIN]\n'+importBody+'\n[LUNEA_END:UNCERTAIN]',distinctKey).ok,false,'missing ID must be rejected');
 assert.equal(engine.get(distinctKey),null);
 
+const screenshotLike='**LUNEA_READING_ID: '+distinctId+'**\n**LUNEA_VERDICT:NON_BINARY**\n'+
+  '컵 3은 우정과 주변 인연을 나타내지만, 이 내용만으로 연락을 예단하지 않습니다. 차트의 신호는 상징적인 가능성으로만 해석합니다.\n'+
+  'LUNEA_END:NON_BINARY';
+const screenshotParsed=engine.parseExternal(screenshotLike,distinctKey,{allowPlainText:true});
+assert.equal(screenshotParsed.ok,true,'iPhone screenshot-style unbracketed markers should save');
+assert.equal(screenshotParsed.verified,true,'matching ID is recognized even without brackets');
+assert.equal(screenshotParsed.verdict,null,'malformed verdict may not become an automatic final verdict');
+assert.match(screenshotParsed.text,/LUNEA_END:NON_BINARY/);
+assert.equal(engine.get(distinctKey),null,'nonstandard paste may not pin a first verdict');
+
+const misplacedId='GPT 설명을 먼저 적습니다.\n[LUNEA_READING_ID:'+distinctId+']\n'+importBody;
+assert.equal(engine.parseExternal(misplacedId,distinctKey,{allowPlainText:true}).ok,true,'preamble should not block paste');
+assert.equal(engine.parseExternal(misplacedId,distinctKey,{allowPlainText:true}).verified,true);
+const placeholderId='LUNEA_READING_ID: 식별번호\n'+importBody+'\nLUNEA_END:NON_BINARY';
+assert.equal(engine.parseExternal(placeholderId,distinctKey,{allowPlainText:true}).ok,true,'unrecognized placeholder must fall back to manual paste');
+assert.equal(engine.parseExternal(placeholderId,distinctKey,{allowPlainText:true}).verified,false);
+const screenshotFull='LUNEA_READING_ID: '+distinctId+'\nLUNEA_VERDICT:NON_BINARY\n'+importBody+'\nLUNEA_END:NON_BINARY';
+assert.equal(engine.parseExternal(screenshotFull,distinctKey,{allowPlainText:true}).ok,true,'plain marker lines must be accepted');
+assert.equal(engine.parseExternal(screenshotFull,distinctKey,{allowPlainText:true}).verdict,null,'strict pinning remains unchanged');
+const conflict='LUNEA_READING_ID: '+distinctId+'\nLUNEA_VERDICT:YES\n'+importBody+'\nLUNEA_END:NO';
+assert.equal(engine.parseExternal(conflict,distinctKey,{allowPlainText:true}).ok,false,'opposing explicit verdicts must still fail');
+const other='GPT 도입부\nLUNEA_READING_ID:'+id+'\n'+importBody;
+assert.equal(engine.parseExternal(other,distinctKey,{allowPlainText:true}).ok,false,'wrong ID in preface must be blocked');
+
 const supplementary=engine.parseExternal('ChatGPT가 별도로 작성한 해설입니다. 카드 간 충돌과 연락을 실제로 확인할 수 없다는 점을 구분해 분석했습니다.',signature,{allowPlainText:true});
 assert.equal(supplementary.ok,true);
 assert.equal(supplementary.verified,false,'unmarked paste is an explicitly unverified supplement');
