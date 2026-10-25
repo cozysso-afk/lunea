@@ -50,6 +50,7 @@ jobs:
         run: |
           node tests/balanced-interpretation.e2e.mjs
           node tests/oracle-ui-regressions.e2e.mjs
+          node tests/ab24-mobile-preview.e2e.mjs
 
   # Dedicated mobile-viewport coverage without the slow WebKit apt mirror.
   # Keep mobile-webkit separate: Chromium passing does NOT imply WebKit passed.
@@ -80,3 +81,4 @@ jobs:
         run: |
           node tests/balanced-interpretation.e2e.mjs
           node tests/oracle-ui-regressions.e2e.mjs
+          node tests/ab24-mobile-preview.e2e.mjs
