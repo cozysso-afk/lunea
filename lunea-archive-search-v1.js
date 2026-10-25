@@ -28,7 +28,7 @@
     if (window.__LUNEA_JOURNAL_DETAIL_V51__) return true;
     if (document.querySelector('script[data-lunea-journal-detail-v51="1"]')) return true;
     const script = document.createElement('script');
-    script.src = './lunea-journal-detail-v51.js?v=20260915-golden-1';
+    script.src = './lunea-journal-detail-v51.js?v=20261026-gpt-dual1';
     script.async = false;
     script.dataset.luneaJournalDetailV51 = '1';
     script.onerror = () => {
