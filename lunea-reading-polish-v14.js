@@ -270,29 +270,79 @@
     return explicitPair && peopleCue;
   }
 
-  function pair24FromSpread(spread) {
-    const raw = Array.isArray(spread?.positions) ? spread.positions.map(stripNum).filter(Boolean) : [];
-    if (!raw.length) return null;
 
-    let a = raw.filter(x => /^A\s*(?:·|\.|:|-)/i.test(x));
-    let b = raw.filter(x => /^B\s*(?:·|\.|:|-)/i.test(x));
-    if (a.length < 12 || b.length < 12) {
-      const half = Math.floor(raw.length / 2);
-      if (raw.length >= 24 && half >= 12) { a = raw.slice(0, half); b = raw.slice(half); }
+  // Older routers return at most 22 cards, but this UI requires 12+12.
+  // Complete the A/B axes before any cards are drawn.
+  const AB_DEFAULT_AXES = Object.freeze([
+    '현재 관계의 상태와 거리감', '나에 대한 현재 생각과 인식',
+    '현재 남아 있는 감정', '호감과 감정의 진정성',
+    '현재 연락을 떠올리는 이유', '먼저 연락하려는 의향',
+    '실제로 연락할 행동 가능성', '연락할 경우 예상되는 방식',
+    '행동을 망설이게 하는 요인', '연락에 영향을 주는 외부 상황',
+    '질문 기간 안의 흐름', '연락 이후 관계 전개 가능성'
+  ]);
+  const AB_RELATION_AXES = Object.freeze([
+    '현재 관계의 상태와 거리감', '나에 대한 생각과 인식',
+    '감정의 진심과 무게', '과거 관계의 맥락',
+    '정서적 거리와 장애', '교류와 관계 회복 의향',
+    '다가오려는 동기', '실제 행동 가능성',
+    '예상되는 행동 방식', '외부 상황의 영향',
+    '질문 기간 안의 변화', '향후 관계 지속 가능성'
+  ]);
+  function pairAxisLabel(value) {
+    return stripNum(value)
+      .replace(/^[AB]\s*(?:·|\.|:|-|—|–|\))\s*/i, '')
+      .replace(/^축\s*\d+\s*(?:·|\.|:|-|—|–)\s*/i, '')
+      .trim();
+  }
+  function pair24FromSpread(spread, question = '') {
+    const raw = Array.isArray(spread?.positions)
+      ? spread.positions.map(stripNum).filter(Boolean) : [];
+    const a = raw.filter(x => /^A\s*(?:·|\.|:|-|—|–|\))/i.test(x));
+    const b = raw.filter(x => /^B\s*(?:·|\.|:|-|—|–|\))/i.test(x));
+    let source = [];
+    if (a.length && b.length) {
+      source = a.map(pairAxisLabel);
+    } else if (raw.length >= 4 && raw.length % 2 === 0 &&
+      /(?:대칭|compare|comparison|A\/B|dual)/i.test(
+        String(spread?.spreadTitle || '') + ' ' +
+        String(spread?.layoutType || '') + ' ' + String(spread?.designRationale || '')
+      )) {
+      source = raw.slice(0, raw.length / 2).map(pairAxisLabel);
     }
-    if (a.length < 12 || b.length < 12) return null;
-
-    a = a.slice(0, 12);
-    b = b.slice(0, 12);
-    const positions = [...a, ...b].map((x, i) => `${i + 1}. ${x}`);
-    const axes = a.map(x => x.replace(/^A\s*(?:·|\.|:|-)\s*/i, '').replace(/^축\s*\d+\s*(?:·|\.|:|-)\s*/i, '').trim());
-    let title = String(spread?.spreadTitle || 'A/B 대칭 비교');
-    title = title.replace(/\d+\s*축\s*대칭\s*비교\s*·\s*\d+\s*카드/i, '12축 대칭 비교 · 24카드');
-    if (!/24\s*카드/.test(title)) title = `${title} · 12축 대칭 비교 · 24카드`;
-    let rationale = String(spread?.designRationale || 'A/B 대칭 비교');
-    rationale = rationale.replace(/requested_axes=.*?(?=\s*·\s*comparison\s*!=\s*choice)/i, `requested_axes=${axes.join(' / ')}`);
-    rationale += ' · pair_axis_count=12 · main_card_count=24 · A/B=12+12 · overall_extra_max=3';
-    return {...spread, positions, spreadTitle:title, designRationale:rationale, __luneaAB24:true, __luneaABAxes:axes};
+    const axes = [];
+    const add = label => {
+      const value = clean(label);
+      if (value && axes.length < 12 && !axes.includes(value)) axes.push(value);
+    };
+    source.forEach(add);
+    (/(연락|카톡|문자|메시지|선톡|전화|답장|DM|디엠)/i.test(question) ? AB_DEFAULT_AXES : AB_RELATION_AXES).forEach(add);
+    if (axes.length !== 12) return null;
+    const positions = [
+      ...axes.map((axis,i) => (i+1) + '. A · 축 ' + (i+1) + ' · ' + axis),
+      ...axes.map((axis,i) => (i+13) + '. B · 축 ' + (i+1) + ' · ' + axis)
+    ];
+    const rationale = [
+      String(spread?.designRationale || 'A/B 대칭 비교'),
+      '동일 12축 A/B 배정', '원본 축 ' + source.length + '개',
+      'pair_axis_count=12', 'main_card_count=24', 'A/B=12+12',
+      'overall_extra_max=3', 'user_question_preserved=true'
+    ].join(' · ');
+    return {
+      ...(spread || {}), positions,
+      spreadTitle:'A/B 대칭 비교 · 12축 × 2 · 24카드',
+      designRationale:rationale, __luneaAB24:true, __luneaABAxes:axes,
+      __luneaABLocalFallback:!spread || !raw.length
+    };
+  }
+  async function preparePair24(question) {
+    try {
+      if (typeof W.designSpread !== 'function') throw new Error('designSpread unavailable');
+      return pair24FromSpread(await W.designSpread(question), question);
+    } catch (error) {
+      console.warn('[LUNEA V14] A/B router failed; use local preview', error);
+      return pair24FromSpread(null, question);
+    }
   }
 
   function previewLines() {
@@ -356,7 +406,7 @@
       regenerate.onclick = async () => {
         regenerate.disabled = true;
         try {
-          const next = pair24FromSpread(await W.designSpread(question));
+          const next = await preparePair24(question);
           if (!isCurrent(mySession)) return;
           if (!next) throw new Error('A/B 24-card spread unavailable');
           fillPairPreview(next, question, mySession);
@@ -400,30 +450,26 @@
     const cards = $('cards');
     if (!s?.__luneaAB24 || !cards || !Array.isArray(s.positions) || s.positions.length !== 24) return;
     cards.classList.add('lunea-ab24-grid');
-    cards.querySelectorAll('.lunea-ab-group-label').forEach(el => el.remove());
-
-    const wrap0 = cards.querySelector('.tarot-card-wrapper[data-index="0"]');
-    const wrap12 = cards.querySelector('.tarot-card-wrapper[data-index="12"]');
-    const wrap24 = cards.querySelector('.tarot-card-wrapper[data-index="24"]');
-    if (wrap0) {
-      const label = document.createElement('div');
-      label.className = 'lunea-ab-group-label a';
-      label.innerHTML = '<span>대상 A · 본카드 12장</span><small>같은 12축 · A</small>';
-      cards.insertBefore(label, wrap0);
-    }
-    if (wrap12) {
-      const label = document.createElement('div');
-      label.className = 'lunea-ab-group-label b';
-      label.innerHTML = '<span>대상 B · 본카드 12장</span><small>같은 12축 · B</small>';
-      cards.insertBefore(label, wrap12);
-    }
-    if (wrap24) {
-      const n = Math.max(0, (s.drawn?.length || 0) - 24);
-      const label = document.createElement('div');
-      label.className = 'lunea-ab-group-label extra';
-      label.innerHTML = `<span>전체 보정 · 추가 카드 ${n}/3</span><small>A/B 어느 한쪽에도 귀속되지 않음</small>`;
-      cards.insertBefore(label, wrap24);
-    }
+    // This is observed with MutationObserver(childList:true). Removing and
+    // reinserting labels on each callback causes an endless mutation loop on
+    // iPhone. Only insert a label if it is missing or genuinely out of place.
+    const ensureLabel=(type,index,html)=>{
+      const wrap=cards.querySelector('.tarot-card-wrapper[data-index="' + index + '"]');
+      if(!wrap) return;
+      let label=cards.querySelector('.lunea-ab-group-label.' + type);
+      if(!label){
+        label=document.createElement('div');
+        label.className='lunea-ab-group-label ' + type;
+        label.innerHTML=html;
+        cards.insertBefore(label,wrap);
+      } else if(label.nextElementSibling!==wrap){
+        cards.insertBefore(label,wrap);
+      }
+    };
+    ensureLabel('a',0,'<span>대상 A · 본카드 12장</span><small>같은 12축 · A</small>');
+    ensureLabel('b',12,'<span>대상 B · 본카드 12장</span><small>같은 12축 · B</small>');
+    const n=Math.max(0,(s.drawn?.length||0)-24);
+    ensureLabel('extra',24,'<span>전체 보정 · 추가 카드 '+n+'/3</span><small>A/B 어느 한쪽에도 귀속되지 않음</small>');
   }
 
   function syncABControls() {
@@ -471,9 +517,8 @@
       if (label) label.textContent = 'A/B 24장 대칭 배열 검수 중…';
 
       try {
-        const spread = await W.designSpread(q);
+        const pair = await preparePair24(q);
         if (!isCurrent(mySession)) return;
-        const pair = pair24FromSpread(spread);
         if (!pair) throw new Error('A/B structural pair spread not found');
         if (!fillPairPreview(pair, q, mySession)) {
           setABState(true);
