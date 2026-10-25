@@ -88,7 +88,7 @@ assert.equal(engine.get(signature).verdict,'UNCERTAIN','Gemini-first verdict mus
 assert.equal(engine.getChatgpt(signature).text,supplementary.text);
 assert.equal(boot().getChatgpt(signature).text,supplementary.text,'GPT supplement must survive browser reload');
 assert.equal(engine.parseExternal('[LUNEA_READING_ID:wrong]\\nwrong answer',signature,{allowPlainText:true}).ok,false,'wrong reading ID must never silently import');
-assert.ok(engine.parseExternal('[LUNEA_READING_ID:'+id+']\\n'+supplementary.text,signature).ok,'matching ID with ordinary prose should be accepted');
+assert.ok(engine.parseExternal('[LUNEA_READING_ID:'+id+']\n'+supplementary.text,signature).ok,'matching ID with ordinary prose should be accepted');
 
 const acceptedExternal=engine.save(distinctKey,checkedExternal);
 assert.equal(acceptedExternal.source,'chatgpt');
