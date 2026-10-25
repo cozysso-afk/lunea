@@ -56,13 +56,17 @@ async function scenario(designerFails) {
     const actual=await page.evaluate(()=>({
       question:state.question,positions:state.positions.length,drawn:state.drawn.length,
       unique:new Set(state.drawn.map(c=>c.code)).size,
-      wrappers:document.querySelectorAll('#cards .tarot-card-wrapper').length
+      wrappers:document.querySelectorAll('#cards .tarot-card-wrapper').length,
+      groupLabels:document.querySelectorAll('#cards .lunea-ab-group-label').length
     }));
     assert.equal(actual.question,question);
     assert.equal(actual.positions,24);
     assert.equal(actual.drawn,24,'24 genuine card draws must be committed');
     assert.equal(actual.unique,24,'a physical card must not be duplicated');
     assert.equal(actual.wrappers,24);
+    assert.equal(actual.groupLabels,2,'A and B group labels must appear exactly once');
+    await page.waitForTimeout(300);
+    assert.equal(await page.locator('#cards .lunea-ab-group-label').count(),2,'group-label observer must not continuously mutate');
     assert.deepEqual(unexpected,[]);
   } finally {await context.close();}
 }
