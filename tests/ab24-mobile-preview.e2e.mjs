@@ -25,10 +25,16 @@ async function scenario(designerFails) {
   try {
     await page.goto(base,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.LUNEA_READING_POLISH_V14 !== undefined || document.documentElement.classList.contains('lunea-reading-polish-v14'));
-    await page.waitForFunction(()=>typeof window.designSpread==='function' && !!document.getElementById('drawBtn') && document.getElementById('drawBtn').__luneaAB24Capture===true);
-    await page.evaluate(({q,fails})=>{
-      state.isAi=true; state.category='LOVE';
-      const input=document.getElementById('question');input.value=q;input.dispatchEvent(new Event('input',{bubbles:true}));
+    await page.waitForFunction(()=>typeof window.designSpread==='function' &&
+      !!document.getElementById('luneaSpreadPreviewOverlay') &&
+      !!document.getElementById('drawBtn')?.__luneaAB24Capture &&
+      !!document.querySelector('.reading-item[data-cat="LOVE"][data-lunea-universal-ai="1"]'));
+    await page.evaluate(()=>{
+      document.querySelector('.reading-item[data-cat="LOVE"][data-lunea-universal-ai="1"]').click();
+    });
+    await page.waitForFunction(()=>state.isAi && document.getElementById('sheet')?.classList.contains('open'));
+    await page.locator('#question').fill(question);
+    await page.evaluate(({fails})=>{
       const old22={spreadTitle:'A/B 완전 대칭 비교 · 11축 × 2',layoutType:'dual-compare',
         positions:[
           ...Array.from({length:11},(_,i)=>(i+1)+'. A · 축 '+(i+1)+' · 비교축 '+(i+1)),
@@ -36,8 +42,23 @@ async function scenario(designerFails) {
         ]};
       window.designSpread=async()=>{if(fails)throw new Error('simulated upstream failure');return old22;};
       document.getElementById('drawBtn').click();
-    },{q:question,fails:designerFails});
-    await page.waitForFunction(()=>document.getElementById('luneaSpreadPreviewOverlay')?.classList.contains('show'));
+    },{fails:designerFails});
+    await page.locator('#drawBtn').dispatchEvent('click');
+    try {
+      await page.waitForFunction(()=>document.getElementById('luneaSpreadPreviewOverlay')?.classList.contains('show'),null,{timeout:15000});
+    } catch(error) {
+      const detail=await page.evaluate(()=>({
+        isAi:state.isAi,
+        question:document.getElementById('question')?.value,
+        disabled:document.getElementById('drawBtn')?.disabled,
+        sheet:document.getElementById('sheet')?.classList.contains('open'),
+        legacyPreview:document.getElementById('luneaSpreadPreviewOverlay')?.classList.contains('show'),
+        otherPreview:document.getElementById('luneaV20PreviewOverlay')?.classList.contains('show'),
+        cards:state.drawn?.length,
+        session:window.LUNEA_READING_LIFECYCLE_V59?.currentSessionId?.()
+      }));
+      throw new Error('A/B preflight did not open: '+JSON.stringify(detail)+'; alerts='+unexpected.join('; ')+'; '+error.message);
+    }
     const preview=await page.evaluate(()=>{
       const input=document.getElementById('luneaSpreadPreviewPositions');
       const lines=input.value.split('\n').filter(Boolean);
