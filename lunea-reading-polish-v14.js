@@ -442,30 +442,26 @@
     const cards = $('cards');
     if (!s?.__luneaAB24 || !cards || !Array.isArray(s.positions) || s.positions.length !== 24) return;
     cards.classList.add('lunea-ab24-grid');
-    cards.querySelectorAll('.lunea-ab-group-label').forEach(el => el.remove());
-
-    const wrap0 = cards.querySelector('.tarot-card-wrapper[data-index="0"]');
-    const wrap12 = cards.querySelector('.tarot-card-wrapper[data-index="12"]');
-    const wrap24 = cards.querySelector('.tarot-card-wrapper[data-index="24"]');
-    if (wrap0) {
-      const label = document.createElement('div');
-      label.className = 'lunea-ab-group-label a';
-      label.innerHTML = '<span>대상 A · 본카드 12장</span><small>같은 12축 · A</small>';
-      cards.insertBefore(label, wrap0);
-    }
-    if (wrap12) {
-      const label = document.createElement('div');
-      label.className = 'lunea-ab-group-label b';
-      label.innerHTML = '<span>대상 B · 본카드 12장</span><small>같은 12축 · B</small>';
-      cards.insertBefore(label, wrap12);
-    }
-    if (wrap24) {
-      const n = Math.max(0, (s.drawn?.length || 0) - 24);
-      const label = document.createElement('div');
-      label.className = 'lunea-ab-group-label extra';
-      label.innerHTML = `<span>전체 보정 · 추가 카드 ${n}/3</span><small>A/B 어느 한쪽에도 귀속되지 않음</small>`;
-      cards.insertBefore(label, wrap24);
-    }
+    // This is observed with MutationObserver(childList:true). Removing and
+    // reinserting labels on each callback causes an endless mutation loop on
+    // iPhone. Only insert a label if it is missing or genuinely out of place.
+    const ensureLabel=(type,index,html)=>{
+      const wrap=cards.querySelector('.tarot-card-wrapper[data-index="' + index + '"]');
+      if(!wrap) return;
+      let label=cards.querySelector('.lunea-ab-group-label.' + type);
+      if(!label){
+        label=document.createElement('div');
+        label.className='lunea-ab-group-label ' + type;
+        label.innerHTML=html;
+        cards.insertBefore(label,wrap);
+      } else if(label.nextElementSibling!==wrap){
+        cards.insertBefore(label,wrap);
+      }
+    };
+    ensureLabel('a',0,'<span>대상 A · 본카드 12장</span><small>같은 12축 · A</small>');
+    ensureLabel('b',12,'<span>대상 B · 본카드 12장</span><small>같은 12축 · B</small>');
+    const n=Math.max(0,(s.drawn?.length||0)-24);
+    ensureLabel('extra',24,'<span>전체 보정 · 추가 카드 '+n+'/3</span><small>A/B 어느 한쪽에도 귀속되지 않음</small>');
   }
 
   function syncABControls() {
