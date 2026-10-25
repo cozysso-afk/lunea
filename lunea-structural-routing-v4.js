@@ -48,7 +48,7 @@
     document.write('<script src="./lunea-reading-attachments-v1.js?v=20260915-golden-1"><\/script>');
     document.write('<script src="./lunea-message-oracle-support-v1.js?v=719a6f12638a"><\/script>');
     document.write('<script src="./lunea-journal-performance-v1.js?v=101"><\/script>');
-    document.write('<script src="./lunea-reading-journal-v2.js?v=719a6f12638a"><\/script>');
+    document.write('<script src="./lunea-reading-journal-v2.js?v=a1b210261026"><\/script>');
     document.write('<script src="./lunea-archive-search-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-flip-all-fix-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-question-casebook-v1.js?v=101"><\/script>');
@@ -62,7 +62,7 @@
     document.write('<script src="./lunea-transit-long-run-v1.js?v=719a6f12638a"><\/script>');
     document.write('<script src="./lunea-astro-job-queue-v1.js?v=719a6f12638a"><\/script>');
     document.write('<script src="./lunea-sheet-scroll-fix-v1.js?v=106"><\/script>');
-    document.write('<script src="./lunea-horary-ab-v1.js?v=104"><\/script>');
+    document.write('<script src="./lunea-horary-ab-v1.js?v=a1b210261026"><\/script>');
     document.write('<script src="./lunea-timing-ab-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-timing-prompt-repair-v1.js?v=719a6f12638a"><\/script>');
     document.write('<script src="./lunea-timing-result-copy-v35.js?v=3501"><\/script>');
@@ -118,7 +118,7 @@
     './lunea-reading-attachments-v1.js?v=20260915-golden-1',
     './lunea-message-oracle-support-v1.js?v=719a6f12638a',
     './lunea-journal-performance-v1.js?v=101',
-    './lunea-reading-journal-v2.js?v=719a6f12638a',
+    './lunea-reading-journal-v2.js?v=a1b210261026',
     './lunea-archive-search-v1.js?v=101',
     './lunea-flip-all-fix-v1.js?v=102',
     './lunea-question-casebook-v1.js?v=101',
@@ -132,7 +132,7 @@
     './lunea-transit-long-run-v1.js?v=719a6f12638a',
     './lunea-astro-job-queue-v1.js?v=719a6f12638a',
     './lunea-sheet-scroll-fix-v1.js?v=106',
-    './lunea-horary-ab-v1.js?v=104',
+    './lunea-horary-ab-v1.js?v=a1b210261026',
     './lunea-timing-ab-v1.js?v=102',
     './lunea-timing-prompt-repair-v1.js?v=719a6f12638a',
     './lunea-timing-result-copy-v35.js?v=3501',
