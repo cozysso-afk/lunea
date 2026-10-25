@@ -11,7 +11,7 @@
   - Descriptive/perception questions prioritize condition/reception, not perfection.
   - Non-person option comparisons compare one chart against the listed alternatives.
   - Timing questions keep perfection/Moon timing logic.
-  - Genuine multi-person comparisons remain blocked by the existing non-arbitrary guard.
+  - Multi-person comparisons keep timing/type classification; per-person judgments require explicit house-role evidence.
   - External/AI prompt gets the full traditional 7-planet placements, Regiomontanus cusps,
     and all currently in-orb Ptolemaic planet aspects so the model is not trapped by a
     narrow summary sentence.
@@ -67,7 +67,11 @@
   function classifyQuestion(question) {
     const q = clean(question);
     if (!q) return {key:'outcome', label:'성사·결과', subject:'event', forceTopic:null};
-    if (isMultiPerson(q)) return {key:'multi_person', label:'다중 인물 비교', subject:'people', forceTopic:null};
+    if (isMultiPerson(q)) {
+      const timing=/(언제|시기|타이밍|몇\s*시|시간대|날짜|며칠|몇\s*주|몇\s*달|이번\s*주|이번\s*달)/i.test(q);
+      return {key:timing?'timing':'comparison',
+        label:timing?'시기·전개':'A/B 인물 비교', subject:'people',forceTopic:null,multiPerson:true};
+    }
 
     const locationIntent = /(어디(?:에|서|쯤)?|위치|행방|분실|잃어(?:버|버렸|버린|버렸던)?|못\s*찾|찾(?:을|는|아|고\s*있)|수납|서랍|베란다|창고|보관|어느\s*(?:곳|장소|범주)|집\s*안|방\s*안)/i.test(q);
     const objectIntent = /(물건|소지품|소유물|분실물|카메라|디카|쿨픽스|휴대폰|핸드폰|스마트폰|폰\b|지갑|열쇠|키\b|가방|반지|목걸이|귀걸이|시계|서류|전자기기|기기|충전기|이어폰|에어팟|책\b|옷\b|신발|안경|카드|USB|메모리|사진기)/i.test(q);
@@ -105,6 +109,7 @@
   }
 
   function modeHelp(mode) {
+    if (mode.multiPerson) return 'A/B 대상 비교 · 질문형 유지 · 비임의적 역할 배정 가능할 때만 개별 근거 표시';
     if (mode.key === 'location' && mode.subject === 'object') return '2H 소유물 주인행성 · 별자리/원소 · 하우스 배치 · 주변 환경 단서 우선';
     if (mode.key === 'location') return '대상 주인행성의 별자리·하우스·환경 단서 우선';
     if (mode.key === 'descriptive') return '행성 상태·하우스·존귀/손상·리셉션을 우선하고 성사각은 보조로만 사용';
@@ -158,7 +163,7 @@
       chip.className = 'horary-mode-v37';
       field.insertAdjacentElement('afterend', chip);
     }
-    chip.innerHTML = `<small>AUTO QUESTION MODE · V37</small><b>${esc(modeState.label)}</b><span>${esc(modeHelp(modeState))}</span>`;
+    chip.innerHTML = `<small>AUTO QUESTION MODE · V37</small><b>${esc(modeState.label)}${modeState.multiPerson?' · A/B 대상':''}</b><span>${esc(modeHelp(modeState))}</span>`;
     return true;
   }
 
@@ -177,7 +182,8 @@
       #astroHoraryOverlay[data-horary-mode="comparison"] .horary-summary h4{display:none!important}
       #astroHoraryOverlay[data-horary-mode="location"] #${MODE_HEAD_ID},
       #astroHoraryOverlay[data-horary-mode="descriptive"] #${MODE_HEAD_ID},
-      #astroHoraryOverlay[data-horary-mode="comparison"] #${MODE_HEAD_ID}{display:block}
+      #astroHoraryOverlay[data-horary-mode="comparison"] #${MODE_HEAD_ID},
+      #astroHoraryOverlay[data-horary-mode="timing"] #${MODE_HEAD_ID}{display:block}
       #astroHoraryOverlay[data-horary-mode="location"] #luneaHoraryBalanceEvidenceV195,
       #astroHoraryOverlay[data-horary-mode="descriptive"] #luneaHoraryBalanceEvidenceV195,
       #astroHoraryOverlay[data-horary-mode="comparison"] #luneaHoraryBalanceEvidenceV195{display:none!important}
@@ -254,6 +260,7 @@
   }
 
   function modeHeadline(mode) {
+    if (mode.multiPerson) return 'A/B 비교 · 한 차트의 공통 근거와 개별 대상 배정 여부를 구별';
     if (mode.key === 'location') return '위치·환경 단서를 읽는 질문 · 성사각 부재는 위치 판정의 부정 근거가 아님';
     if (mode.key === 'descriptive') return '상태·인식·감정 묘사형 질문 · 행성 상태와 수용 관계를 우선';
     if (mode.key === 'comparison') return '선택지 비교형 질문 · 같은 차트 근거로 후보를 나란히 비교';
@@ -298,7 +305,12 @@
     }
 
     let boxHtml = '';
-    if (mode.key === 'location') {
+    if (mode.multiPerson) {
+      const roles=W.LUNEA_HORARY_MULTI_GUARD?.resolveTargets?.(q);
+      boxHtml=roles?.assignable
+        ? `<small>HORARY MODE · A/B</small><b>명시된 역할을 기준으로 개별 하우스 비교</b><p>A: ${esc(roles.A.role)} · ${roles.A.house}H / B: ${esc(roles.B.role)} · ${roles.B.house}H. 각 하우스의 주인성 근거는 상단 A/B 패널을 확인해. 이 근거 자체가 연락의 확정/승패는 아니야.</p>`
+        : '<small>HORARY MODE · A/B</small><b>차트 공통 근거만 계산 · 개별 인물 판정 불가</b><p>동일 관계 범주의 A/B는 이름 순서로 하우스를 갈라놓을 수 없어. 시기·전개형 분류를 유지하더라도 개인별 연락 시기·우열은 산출하지 않아.</p>';
+    } else if (mode.key === 'location') {
       const d = locationDetails(data);
       const subjectLabel = mode.subject === 'object' ? '물건 시그니피케이터' : '대상 시그니피케이터';
       boxHtml = `<small>HORARY MODE · LOCATION</small><b>${esc(subjectLabel)} · ${esc(d.ruler)}(${esc(d.rulerKo)}) · ${esc(d.sign)} ${d.degree ?? '—'}° · ${d.house || '—'}H</b><p>원소/양상: ${esc(d.element)} · ${esc(d.modality)} · 상태 ${esc(d.dignity)}</p><p>하우스 환경 단서: ${esc(d.houseClue)}</p><p>원소 환경 단서: ${esc(d.elementClue)}</p><p>전통 디스포지터: ${esc(d.dispositor)}(${esc(PLANET_KO[d.dispositor] || d.dispositor)}) · 후보 장소가 여러 개면 AI 해석에서 각 후보와 이 단서를 하나씩 대조해 순위를 낸다.</p>`;
@@ -387,6 +399,13 @@
 
   function modePromptRules(data) {
     const mode = classifyQuestion(data?.question?.text || currentQuestion());
+    if (mode.multiPerson) {
+      const roles=W.LUNEA_HORARY_MULTI_GUARD?.resolveTargets?.(data?.question?.text || currentQuestion());
+      const houseRule=roles?.assignable
+        ? `명시적인 인물 역할로 A=${roles.A.house}H(${roles.A.role}), B=${roles.B.house}H(${roles.B.role})를 비교할 수 있다. 각 하우스 실제 주인행성/상태/달의 연결은 아래 원차트에서만 확인한다. 근거 부족이면 판단 보류.`
+        : 'A와 B의 독립 주인행성은 구별되지 않았다. 한 대상에 대한 성사각을 A/B 두 사람의 결과로 복제하거나 상대 우세/연락 시기를 제시하지 않는다.';
+      return `[HORARY QUESTION MODE V37 · MULTI TARGET / ${mode.key.toUpperCase()}]\n- 질문 시각의 단일 차트만 계산한다.\n- ${houseRule}\n- 시기·전개형 분류를 유지하지만 개별 주인성이 미확정이면 개인별 시기와 승패는 미판정으로 명시한다.\n- 추정/임의의 A=7H, B=5H 또는 몇 분 차이의 차트 분리 금지.\n\n${rawChartBlock(data)}`;
+    }
     if (mode.key === 'location') {
       const object = mode.subject === 'object';
       return `[HORARY QUESTION MODE V37 · ${object ? 'LOST OBJECT / LOCATION' : 'PERSON LOCATION'}]\n- 이 질문은 현재 위치·환경·후보 장소를 묻는 위치형 질문이다. 사건 성사 여부를 묻는 질문으로 바꾸지 않는다.\n- ${object ? '질문자 소유의 이동 가능한 물건은 2하우스와 그 주인행성을 핵심 시그니피케이터로 사용한다.' : '사람의 위치를 묻는 경우 현재 선택된 관계 주제의 대상 하우스/주인행성을 유지한다.'}\n- 대상 주인행성의 별자리, 원소, 양상, 실제 하우스 위치, 본질적 존귀/손상, 전통 디스포지터와 Moon(달)을 위치 단서로 읽는다. 집 안이라는 조건이 질문에 있으면 4하우스/IC는 집 내부 맥락 보조로만 본다.\n- "직접 성사각 없음", "Balance weak evidence", "리셉션 없음"을 물건이 없다는 뜻이나 특정 장소가 아니라는 뜻으로 사용하지 않는다. Perfection(성사각)은 사용자가 '찾을 수 있는가/회수되는가'까지 물었을 때만 회수 가능성의 보조 근거다.\n- 질문에 후보 장소/범주가 여러 개 있으면 각 후보를 하나씩 대조해 1순위 → 2순위 → 가장 약한 후보 순으로 답한다. 후보마다 임의의 새 하우스나 별도 차트를 만들지 않는다.\n- 최종 답은 '가장 강한 범주', '그다음', '약한 범주', '차트상 위치 단서', '불확실성' 순서로 직접 답한다.\n\n${rawChartBlock(data)}`;
@@ -457,7 +476,7 @@
   function injectModePromptIntoRequest(init) {
     if (!latestHorary || !init?.body) return init;
     const mode = classifyQuestion(latestHorary?.question?.text || currentQuestion());
-    if (mode.key === 'outcome' || mode.key === 'multi_person') return init;
+    if (mode.key === 'outcome' && !mode.multiPerson) return init;
     try {
       const body = JSON.parse(init.body);
       let touched = false;
