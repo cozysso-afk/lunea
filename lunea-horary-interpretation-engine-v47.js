@@ -51,6 +51,9 @@
     } catch {}
     try {
       const row = W.LUNEA_HORARY_QUESTION_MODES_V37?.classifyQuestion?.(question);
+      // V37 question shape (timing/comparison) and target multiplicity are separate.
+      // V47 keeps its legacy multi_person protection for these cases.
+      if (row?.multiPerson) return 'multi_person';
       if (row?.key) return row.key;
     } catch {}
     return 'outcome';
