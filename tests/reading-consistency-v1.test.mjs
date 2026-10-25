@@ -104,7 +104,7 @@ const journal=fs.readFileSync(new URL('../lunea-reading-journal-v2.js',import.me
 assert.match(html,/lunea-reading-consistency-v1\.js/);
 assert.match(html,/getLuneaAcceptedReading\(readingKey\)/);
 assert.match(html,/consistency\.validate\(response\)/);
-assert.match(html,/readingFingerprint:/);
+assert.match(html,/const readingFingerprint=engine\?\.fingerprint\(state,profile\)/);
 assert.match(html,/temperature:\.2,topP:\.95/);
 assert.match(journal,/existing\?\.conclusion\?\.version/);
 assert.match(journal,/최초 판정/);
