@@ -281,6 +281,14 @@
     '행동을 망설이게 하는 요인', '연락에 영향을 주는 외부 상황',
     '질문 기간 안의 흐름', '연락 이후 관계 전개 가능성'
   ]);
+  const AB_RELATION_AXES = Object.freeze([
+    '현재 관계의 상태와 거리감', '나에 대한 생각과 인식',
+    '감정의 진심과 무게', '과거 관계의 맥락',
+    '정서적 거리와 장애', '교류와 관계 회복 의향',
+    '다가오려는 동기', '실제 행동 가능성',
+    '예상되는 행동 방식', '외부 상황의 영향',
+    '질문 기간 안의 변화', '향후 관계 지속 가능성'
+  ]);
   function pairAxisLabel(value) {
     return stripNum(value)
       .replace(/^[AB]\s*(?:·|\.|:|-|—|–|\))\s*/i, '')
@@ -308,7 +316,7 @@
       if (value && axes.length < 12 && !axes.includes(value)) axes.push(value);
     };
     source.forEach(add);
-    AB_DEFAULT_AXES.forEach(add);
+    (/(연락|카톡|문자|메시지|선톡|전화|답장|DM|디엠)/i.test(question) ? AB_DEFAULT_AXES : AB_RELATION_AXES).forEach(add);
     if (axes.length !== 12) return null;
     const positions = [
       ...axes.map((axis,i) => (i+1) + '. A · 축 ' + (i+1) + ' · ' + axis),
