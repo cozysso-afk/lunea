@@ -67,8 +67,8 @@ async function scenario(designerFails) {
     assert.equal(preview.lines.length,24);
     assert.equal(preview.question,question,'question must be preserved');
     for(let i=0;i<12;i++){
-      const a=preview.lines[i].replace(/^\d+\.\s*A · 축 \d+ · /,'');
-      const b=preview.lines[i+12].replace(/^\d+\.\s*B · 축 \d+ · /,'');
+      const a=preview.lines[i].replace(/^(?:\d+\.\s*)?A · 축 \d+ · /,'');
+      const b=preview.lines[i+12].replace(/^(?:\d+\.\s*)?B · 축 \d+ · /,'');
       assert.equal(a,b,'both targets need identical axes');
     }
     if(!designerFails)assert.ok(preview.lines[10].includes('비교축 11'),'existing source axes must survive');
