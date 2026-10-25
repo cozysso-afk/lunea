@@ -46,6 +46,8 @@ jobs:
           node --check astro-horary-v1.js
           node --check lunea-horary-balance-v19-5.js
           node --check lunea-horary-question-modes-v37.js
+          node --check lunea-horary-ab-v1.js
+          node --check lunea-journal-detail-v51.js
           node --check lunea-horary-hardening-v38.js
           node --check lunea-horary-location-button-v39.js
           node --check lunea-horary-traditional-core-v40.js
@@ -69,6 +71,7 @@ jobs:
         run: |
           node tests/v30-spread-horary-contract.test.mjs
           node tests/horary-question-modes-v37.test.mjs
+          node tests/horary-ab-gpt-dual-lane.test.mjs
           node tests/horary-hardening-v38.test.mjs
           node tests/horary-location-button-v39.test.mjs
           node tests/horary-traditional-core-v40.test.mjs
