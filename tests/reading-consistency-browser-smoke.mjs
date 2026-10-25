@@ -116,7 +116,7 @@ try{
     "  sameGemini:row?.ai===primary.text,markedManual:row?.chatgptMeta?.verified===false,",
     "  visible:!!document.getElementById('luneaSavedChatgpt'),count:JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3')||'[]').filter(r=>r.readingFingerprint===fp).length};",
     '})()'
-  ].join('\\n'));
+  ].join('\n'));
   assert.equal(dual.preserved,true,'GPT must not overwrite Gemini');
   assert.equal(dual.hasGpt,true,'paste must be saved separately');
   assert.equal(dual.sameGemini,true,'archive must keep Gemini original');
