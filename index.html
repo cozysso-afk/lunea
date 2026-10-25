@@ -672,7 +672,7 @@ $('importChatgptReading').onclick=()=>{
   panel.style.cssText='background:#171829;color:#f5f1ff;border:1px solid #7f96a6;border-radius:14px;padding:18px;max-width:560px;width:100%;max-height:85vh;overflow:auto';
   const title=document.createElement('h3');title.textContent='💬 ChatGPT 해석 붙여넣기';
   const hint=document.createElement('p');
-  hint.textContent='ChatGPT 답변을 그대로 붙여넣어줘. Gemini 해설과 별도로 보존돼. 식별번호 없는 원문은 수동 입력(식별 미확인)으로 기록하고 기존 최초 판정은 바꾸지 않아.';
+  hint.textContent='GPT 해설은 원문 그대로 붙여넣으면 돼. 식별번호 대괄호가 빠져도 저장되고 Gemini 최초 판정은 유지돼. 다른 리딩의 식별번호가 확인되면 저장하지 않아.';
   hint.style.cssText='font-size:13px;line-height:1.55;opacity:.8';
   const area=document.createElement('textarea');
   area.id='luneaChatgptPasteText';area.rows=11;
@@ -763,7 +763,7 @@ $('archiveSearch').oninput=renderArchive;$('copyAllArchive').onclick=async()=>{c
 // Initial memory + iOS resume robustness
 window.addEventListener('pageshow',()=>{document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.setAttribute('aria-hidden','true'));syncProfile()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.querySelectorAll('.overlay:not(.show)').forEach(x=>x.style.pointerEvents='none');document.querySelectorAll('.overlay.show').forEach(x=>x.style.pointerEvents='auto')}});
-</script><script src="./lunea-reading-consistency-v1.js?v=20261026-gpt-dual-archive1"></script><script src="./lunea-cache-refresh-v1.js?v=5a7c07079d23"></script>
+</script><script src="./lunea-reading-consistency-v1.js?v=20261026-gpt-paste-tolerant2"></script><script src="./lunea-cache-refresh-v1.js?v=5a7c07079d23"></script>
   <script src="./spread-engine-v7.4.js?v=76-cause-rws-v1"></script>
   <script src="./lunea-card-meanings-v1.js?v=5a7c07079d23"></script>
   <script src="./lunea-structural-routing-v4.js?v=5a7c07079d23"></script>

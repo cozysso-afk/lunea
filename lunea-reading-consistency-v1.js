@@ -182,34 +182,47 @@
   }
 
   function parseExternal(raw,key,options={}) {
-    const id=readingId(key);
-    if(!id)return {ok:false,reason:'현재 카드 리딩이 없음'};
+    const expectedId=readingId(key);
+    if(!expectedId)return {ok:false,reason:'현재 카드 리딩이 없음'};
+    // GPT often adds a heading, Markdown, or drops the square brackets.
+    // Treat the explanation as user-supplied text; only a *valid matching*
+    // reading ID is evidence that it belongs to this exact draw.
     let value=String(raw||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').trim();
-    value=value.replace(/^\x60{3}(?:text|plaintext|markdown|md)?[ \t]*\n/i,'')
-               .replace(/\n\x60{3}[ \t]*$/,'').trim();
-    const idMatch=value.match(/^\s*(?:\*\*)?\[LUNEA_READING_ID\s*[:：]\s*([a-z0-9-]+)\](?:\*\*)?\s*\n/i);
-    if(idMatch) {
-      if(idMatch[1]!==id)return {ok:false,reason:'현재 리딩과 다른 질문·카드의 해석이야.'};
-      const body=value.slice(idMatch[0].length).trim()
-        .replace(/^\*\*(\[LUNEA_VERDICT:)/,'$1')
-        .replace(/(\[LUNEA_END:[A-Z_]+\])\*\*$/,'$1');
-      const hasMarkers=/LUNEA_VERDICT|LUNEA_END/.test(body);
-      if(hasMarkers) {
-        const checked=validate(body);
-        return checked.ok?{...checked,source:'chatgpt',verified:true}:checked;
-      }
-      if(body.length>=20 && body.length<=35000)
-        return {ok:true,text:body,source:'chatgpt',verified:true,verdict:null};
-      return {ok:false,reason:'본문이 너무 짧거나 길어.'};
-    }
-    // Never accept a wrong or misplaced ID as an unverified free-text answer.
-    if(/LUNEA_READING_ID/i.test(value))
-      return {ok:false,reason:'식별번호 위치나 형식이 달라. 현재 리딩의 프롬프트를 다시 확인해줘.'};
-    if(!options.allowPlainText)
-      return {ok:false,reason:'해석 맨 위의 LUNEA_READING_ID가 없음. 복사한 프롬프트 전체로 해석받아줘.'};
+    value=value.replace(/^`{3}(?:text|plaintext|markdown|md)?[ \t]*\n/i,'')
+               .replace(/\n`{3}[ \t]*$/,'').trim();
     if(value.length<20 || value.length>35000)
       return {ok:false,reason:'해설은 20~35000자 사이로 붙여넣어줘.'};
-    return {ok:true,text:value,source:'chatgpt',verified:false,verdict:null};
+
+    // Search anywhere, including after a ChatGPT preamble or Markdown prefix.
+    // If a different explicit ID is present, never silently save it to this draw.
+    const ids=[...value.matchAll(/LUNEA_READING_ID\s*[:：=]\s*\[?([a-z0-9-]+)/gi)]
+      .map(match=>match[1].toLowerCase());
+    if(ids.some(found=>found!==expectedId))
+      return {ok:false,reason:'다른 질문·카드의 식별번호야. 현재 리딩 해설만 붙여넣어줘.'};
+    if(!ids.length && !options.allowPlainText)
+      return {ok:false,reason:'해석의 식별번호가 없어. 수동 붙여넣기 모드로 저장해줘.'};
+
+    const verified=ids.length>0;
+    // A strict response may set the first verdict; a nonstandard response
+    // remains an independent GPT explanation, with no automatic verdict.
+    const header=value.match(/^\s*(?:#{1,6}\s*|>\s*)?(?:\*\*|`)?\s*\[?\s*LUNEA_READING_ID\s*[:：=]\s*([a-z0-9-]+)\s*\]?(?:\*\*|`)?[ \t]*\n/i);
+    const body=verified && header ? value.slice(header[0].length).trim() : value;
+    const normalized=body
+      .replace(/^\*\*(\[LUNEA_VERDICT:)/,'$1')
+      .replace(/(\[LUNEA_END:[A-Z_]+\])\*\*$/,'$1');
+    const checked=verified && header ? validate(normalized) : {ok:false};
+    if(checked.ok) return {...checked,source:'chatgpt',verified:true};
+
+    // Contradictory explicit marker pairs are unsafe to promote or store as
+    // a coherent verdict; partial/misspelled markup is still valid raw prose.
+    const opening=body.match(/(?:^|\n)\s*(?:\*{0,2})\[?LUNEA_VERDICT\s*[:：]\s*(YES|NO|UNCERTAIN|NON_BINARY)\]?/i);
+    const closing=body.match(/(?:^|\n)\s*(?:\*{0,2})\[?LUNEA_END\s*[:：]\s*(YES|NO|UNCERTAIN|NON_BINARY)\]?/i);
+    if(opening && closing && opening[1].toUpperCase()!==closing[1].toUpperCase())
+      return {ok:false,reason:'해설의 앞뒤 판정이 서로 달라. 원문을 확인해줘.'};
+
+    // Do not discard the user's GPT explanation just because its marker
+    // placement or Markdown differs from the prompt template.
+    return {ok:true,text:body,source:'chatgpt',verified,verdict:null};
   }
   const api=Object.freeze({version:VERSION,fingerprint,readingId,get,save,readingPrompt,validate,exportPrompt,parseExternal,getChatgpt,saveChatgpt});
   W.LUNEA_READING_CONSISTENCY_V1=api;

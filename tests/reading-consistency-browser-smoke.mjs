@@ -124,6 +124,30 @@ try{
   assert.equal(dual.visible,true,'GPT supplement should be visible beside Gemini');
   assert.equal(dual.count,1,'supplement update must not create duplicate archive rows');
 
+  const tolerant=await js([
+    '(async()=>{',
+    "  const api=window.LUNEA_READING_CONSISTENCY_V1;",
+    "  const fp=api.fingerprint(state,profile);const id=api.readingId(fp);",
+    "  const original=api.get(fp)?.text;",
+    "  const raw='**LUNEA_READING_ID: '+id+'**\\n**LUNEA_VERDICT:NON_BINARY**\\nGPT 답변은 친목 관계의 단서를 제시하지만 실제 연락을 보장하지 않습니다. 해석은 참고 자료이며 현실 결과와 구분해서 기록해야 합니다.\\nLUNEA_END:NON_BINARY';",
+    "  document.getElementById('importChatgptReading').onclick();",
+    "  document.getElementById('luneaChatgptPasteText').value=raw;",
+    "  await document.getElementById('luneaChatgptPasteAccept').onclick();",
+    "  const rows=JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3')||'[]');",
+    "  const matched=rows.filter(x=>x.readingFingerprint===fp);",
+    "  return {saved:matched[0]?.chatgpt?.includes('LUNEA_END:NON_BINARY'),",
+    "    originalRetained:api.get(fp)?.text===original,",
+    "    confirmedId:matched[0]?.chatgptMeta?.verified===true,",
+    "    noVerdictOverwrite:matched[0]?.conclusion?.verdict==='UNCERTAIN',",
+    "    noDuplicate:matched.length===1};",
+    '})()'
+  ].join('\n'));
+  assert.equal(tolerant.saved,true,'nonstandard ChatGPT response must be persisted');
+  assert.equal(tolerant.originalRetained,true,'first Gemini reading must remain');
+  assert.equal(tolerant.confirmedId,true,'matching ID without brackets must be recognized');
+  assert.equal(tolerant.noVerdictOverwrite,true,'unverified verdict syntax cannot change pinned verdict');
+  assert.equal(tolerant.noDuplicate,true,'same reading should be updated in place');
+
   const shared=await js([
     '(async()=>{',
     "  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__lastPrompt=text;}}});",
