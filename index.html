@@ -735,6 +735,8 @@ function saveCurrentReading({quiet=false}={}){
   const prior=priorIndex>=0?archive.splice(priorIndex,1)[0]:null;
   const ai=accepted?.text||prior?.ai||$('aiText')?.textContent||'';
   const item={
+    // Preserve Transit / Horary / Thai and other rich evidence when adding GPT text.
+    ...(prior||{}),
     id:prior?.id||secureId(),createdAt:prior?.createdAt||Date.now(),
     date:prior?.date||new Date().toLocaleString('ko-KR'),
     title:state.title,q:state.question,rationale:state.rationale,
