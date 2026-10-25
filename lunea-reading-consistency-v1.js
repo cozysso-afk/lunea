@@ -187,12 +187,12 @@
     let value=String(raw||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').trim();
     value=value.replace(/^\x60{3}(?:text|plaintext|markdown|md)?[ \t]*\n/i,'')
                .replace(/\n\x60{3}[ \t]*$/,'').trim();
-    const idMatch=value.match(/^\\s*(?:\\*\\*)?\\[LUNEA_READING_ID\\s*[:：]\\s*([a-z0-9-]+)\\](?:\\*\\*)?\\s*\\n/i);
+    const idMatch=value.match(/^\s*(?:\*\*)?\[LUNEA_READING_ID\s*[:：]\s*([a-z0-9-]+)\](?:\*\*)?\s*\n/i);
     if(idMatch) {
       if(idMatch[1]!==id)return {ok:false,reason:'현재 리딩과 다른 질문·카드의 해석이야.'};
       const body=value.slice(idMatch[0].length).trim()
-        .replace(/^\\*\\*(\\[LUNEA_VERDICT:)/,'$1')
-        .replace(/(\\[LUNEA_END:[A-Z_]+\\])\\*\\*$/,'$1');
+        .replace(/^\*\*(\[LUNEA_VERDICT:)/,'$1')
+        .replace(/(\[LUNEA_END:[A-Z_]+\])\*\*$/,'$1');
       const hasMarkers=/LUNEA_VERDICT|LUNEA_END/.test(body);
       if(hasMarkers) {
         const checked=validate(body);
