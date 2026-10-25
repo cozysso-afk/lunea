@@ -42,7 +42,7 @@
     if (!row || typeof row !== 'object') return 0;
     const keys = ['astroNatal','astroTransit','astroReturns','thaiTaksa','thaiTaksaRange','thaiRange','horary','timing','messageOracle','legacyImportedText'];
     return keys.reduce((n, key) => n + (row[key] != null && row[key] !== '' ? 1 : 0), 0)
-      + (row.ai ? 1 : 0)
+      + (row.ai ? 1 : 0) + (row.chatgpt ? 1 : 0)
       + (Array.isArray(row.cards) ? Math.min(2, row.cards.length) : 0);
   }
 
@@ -100,7 +100,8 @@
       reading.title || '',
       reading.q ? `질문: ${reading.q}` : '',
       cards,
-      reading.ai ? `[AI 해석]\n${reading.ai}` : ''
+      reading.ai ? `[AI 해석 · 최초 판정]\n${reading.ai}` : '',
+      reading.chatgpt ? `[ChatGPT 해설 · ${reading.chatgptMeta?.verified?'ID 확인':'수동 입력'}]\n${reading.chatgpt}` : ''
     ].filter(Boolean);
     const sections = [
       ['Natal / Astrology · 점성술', reading.astroNatal],
@@ -125,7 +126,12 @@
     try {
       const fn = W.LUNEA_EMERGENCY_REPAIR_V43?.archiveText;
       const text = fn?.(reading);
-      if (text) return String(text) + (reading?.messageOracle ? '\n\n[Message Oracle · 연락/소식]\n' + messageText(reading.messageOracle) : '');
+      if (text) {
+        let full=String(text) + (reading?.messageOracle ? '\n\n[Message Oracle · 연락/소식]\n' + messageText(reading.messageOracle) : '');
+        if (reading?.chatgpt && !full.includes(reading.chatgpt))
+          full+='\n\n[ChatGPT 해설 · '+(reading.chatgptMeta?.verified?'ID 확인':'수동 입력')+']\n'+reading.chatgpt;
+        return full;
+      }
     } catch {}
     return fallbackRichText(reading);
   }
@@ -148,6 +154,8 @@
     const reading = evidenceScore(local) >= evidenceScore(journal)
       ? {...journal, ...local}
       : {...local, ...journal};
+    reading.chatgpt=reading.chatgpt || journal.chatgpt || local.chatgpt || '';
+    reading.chatgptMeta=reading.chatgptMeta || journal.chatgptMeta || local.chatgptMeta || null;
     return {reading, entry};
   }
 
