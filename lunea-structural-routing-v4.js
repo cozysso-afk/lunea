@@ -76,7 +76,7 @@
     document.write('<script src="./lunea-category-art-v10.js?v=1001"><\/script>');
     document.write('<script src="./lunea-mobile-reading-controls-v12.js?v=1201"><\/script>');
     document.write('<script src="./lunea-opal-light-polish-v13.js?v=1301"><\/script>');
-    document.write('<script src="./lunea-reading-polish-v14.js?v=1401"><\/script>');
+    document.write('<script src="./lunea-reading-polish-v14.js?v=20261026-ab24-preflight2"><\/script>');
     document.write('<script src="./lunea-timing-moondial-sync-v15.js?v=1502"><\/script>');
     document.write('<script src="./lunea-timing-ab-inline-v16.js?v=c59d216af1e3"><\/script>');
     document.write('<script src="./lunea-manual-limit20-v17.js?v=1705"><\/script>');
@@ -146,7 +146,7 @@
     './lunea-category-art-v10.js?v=1001',
     './lunea-mobile-reading-controls-v12.js?v=1201',
     './lunea-opal-light-polish-v13.js?v=1301',
-    './lunea-reading-polish-v14.js?v=1401',
+    './lunea-reading-polish-v14.js?v=20261026-ab24-preflight2',
     './lunea-timing-moondial-sync-v15.js?v=1502',
     './lunea-timing-ab-inline-v16.js?v=c59d216af1e3',
     './lunea-manual-limit20-v17.js?v=1705',
