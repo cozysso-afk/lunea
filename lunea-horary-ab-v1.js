@@ -37,7 +37,7 @@
     const relational = /(상대|사람|인연|전남친|전여친|전애인|구남친|구여친|연인|이성|썸|친구|지인|동료|직장동료|상사|부하|배우자|남편|아내)/i.test(q);
     const personPredicate = /(생각|떠올|의식|기억|마음|감정|정서|호감|그리움|후회|궁금|연락|카톡|메시지|전화|dm|디엠|답장|만나|재회|관계|나를\s*보|내게\s*느끼|나한테\s*느끼)/i.test(q);
 
-    const labeledPair=/(?:\\bA\\s*(?:는|은|[:=：])[^\\n]{0,90}\\bB\\s*(?:는|은|[:=：])|\\bB\\s*(?:는|은|[:=：])[^\\n]{0,90}\\bA\\s*(?:는|은|[:=：]))/i.test(q);
+    const labeledPair=/(?:\bA\s*(?:는|은|[:=：])[^\n]{0,90}\bB\s*(?:는|은|[:=：])|\bB\s*(?:는|은|[:=：])[^\n]{0,90}\bA\s*(?:는|은|[:=：]))/i.test(q);
     const twoTargets = explicitPair || labeledPair || (parallelLabels && comparisonConnector);
     return twoTargets && (relational || personPredicate);
   }
