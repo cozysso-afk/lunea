@@ -78,6 +78,18 @@ assert.equal(engine.parseExternal(external,signature).ok,false,'cross-reading im
 assert.equal(engine.parseExternal(external.replace('[LUNEA_END:UNCERTAIN]','[LUNEA_END:YES]'),distinctKey).ok,false);
 assert.equal(engine.parseExternal('[LUNEA_VERDICT:UNCERTAIN]\n'+importBody+'\n[LUNEA_END:UNCERTAIN]',distinctKey).ok,false,'missing ID must be rejected');
 assert.equal(engine.get(distinctKey),null);
+
+const supplementary=engine.parseExternal('ChatGPT가 별도로 작성한 해설입니다. 카드 간 충돌과 연락을 실제로 확인할 수 없다는 점을 구분해 분석했습니다.',signature,{allowPlainText:true});
+assert.equal(supplementary.ok,true);
+assert.equal(supplementary.verified,false,'unmarked paste is an explicitly unverified supplement');
+const importedGpt=engine.saveChatgpt(signature,supplementary);
+assert.ok(importedGpt);
+assert.equal(engine.get(signature).verdict,'UNCERTAIN','Gemini-first verdict must remain unchanged');
+assert.equal(engine.getChatgpt(signature).text,supplementary.text);
+assert.equal(boot().getChatgpt(signature).text,supplementary.text,'GPT supplement must survive browser reload');
+assert.equal(engine.parseExternal('[LUNEA_READING_ID:wrong]\\nwrong answer',signature,{allowPlainText:true}).ok,false,'wrong reading ID must never silently import');
+assert.ok(engine.parseExternal('[LUNEA_READING_ID:'+id+']\n'+supplementary.text,signature).ok,'matching ID with ordinary prose should be accepted');
+
 const acceptedExternal=engine.save(distinctKey,checkedExternal);
 assert.equal(acceptedExternal.source,'chatgpt');
 assert.equal(engine.get(distinctKey).text,importBody);
@@ -92,7 +104,7 @@ const journal=fs.readFileSync(new URL('../lunea-reading-journal-v2.js',import.me
 assert.match(html,/lunea-reading-consistency-v1\.js/);
 assert.match(html,/getLuneaAcceptedReading\(readingKey\)/);
 assert.match(html,/consistency\.validate\(response\)/);
-assert.match(html,/readingFingerprint:/);
+assert.match(html,/const readingFingerprint=engine\?\.fingerprint\(state,profile\)/);
 assert.match(html,/temperature:\.2,topP:\.95/);
 assert.match(journal,/existing\?\.conclusion\?\.version/);
 assert.match(journal,/최초 판정/);

@@ -75,6 +75,8 @@
       merged.readingFingerprint = existing.readingFingerprint || merged.readingFingerprint;
       if (existing.ai && existing.conclusion?.verdict) merged.ai = existing.ai;
     }
+    if (existing?.chatgpt && !merged.chatgpt) merged.chatgpt = existing.chatgpt;
+    if (existing?.chatgptMeta && !merged.chatgptMeta) merged.chatgptMeta = clone(existing.chatgptMeta);
     return merged;
   }
 
@@ -268,7 +270,8 @@
       `질문: ${reading?.q || ''}`,
       cards,
       reading?.conclusion?.verdict ? `[최초 판정 · ${reading.conclusion.version}] ${reading.conclusion.verdict}` : '',
-      reading?.ai ? `[AI 해석]\n${reading.ai}` : ''
+      reading?.ai ? `[AI 해석 · 최초 판정]\n${reading.ai}` : '',
+      reading?.chatgpt ? `[ChatGPT 해설 · ${reading.chatgptMeta?.verified?'ID 확인':'수동 입력'}]\n${reading.chatgpt}` : ''
     ].filter(Boolean).join('\n\n');
   }
 
@@ -977,6 +980,7 @@
       open: openJournal,
       render: renderJournal,
       getAll,
+      upsertReading,
       export: exportJournal
     };
     console.info('✧ LUNEA Reading Journal V2 loaded · IndexedDB');

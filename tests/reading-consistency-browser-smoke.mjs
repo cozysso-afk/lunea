@@ -100,6 +100,30 @@ try{
   assert.equal(result.fingerprint,true,'original fingerprint saved');
   assert.equal(result.cached,true,'cache present');
 
+
+  const dual=await js([
+    '(async()=>{',
+    " const engine=window.LUNEA_READING_CONSISTENCY_V1;",
+    " const fp=engine.fingerprint(state,profile);",
+    " const primary=engine.get(fp);",
+    " const gpt='GPT 별도 해설입니다. 이 카드에서는 연락에 대한 상징적 지지 근거와 반대 근거를 구분해야 하며 현실 사건의 확정 시점은 알 수 없습니다.';",
+    " document.getElementById('importChatgptReading').onclick();",
+    " document.getElementById('luneaChatgptPasteText').value=gpt;",
+    " await document.getElementById('luneaChatgptPasteAccept').onclick();",
+    " const row=JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3')||'[]')[0];",
+    " await document.getElementById('aiRead').onclick();",
+    " return {preserved:engine.get(fp)?.text===primary.text,hasGpt:row?.chatgpt===gpt,",
+    "  sameGemini:row?.ai===primary.text,markedManual:row?.chatgptMeta?.verified===false,",
+    "  visible:!!document.getElementById('luneaSavedChatgpt'),count:JSON.parse(localStorage.getItem('LUNEA_ARCHIVE_V3')||'[]').filter(r=>r.readingFingerprint===fp).length};",
+    '})()'
+  ].join('\n'));
+  assert.equal(dual.preserved,true,'GPT must not overwrite Gemini');
+  assert.equal(dual.hasGpt,true,'paste must be saved separately');
+  assert.equal(dual.sameGemini,true,'archive must keep Gemini original');
+  assert.equal(dual.markedManual,true,'untagged response must be labelled unverified');
+  assert.equal(dual.visible,true,'GPT supplement should be visible beside Gemini');
+  assert.equal(dual.count,1,'supplement update must not create duplicate archive rows');
+
   const shared=await js([
     '(async()=>{',
     "  Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__lastPrompt=text;}}});",

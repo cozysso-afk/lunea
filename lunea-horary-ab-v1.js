@@ -9,7 +9,7 @@
   - Same-category people at one question moment are NOT given separate significators without a non-arbitrary basis.
   - Scenario words such as "각각" do NOT by themselves mean multiple people.
   - Re-asking A and B seconds/minutes apart merely to manufacture separate charts is discouraged.
-  - Automatic horary calculation is skipped only for genuine compound multi-person comparisons.
+  - A shared chart may be calculated, but individual judgments require justified distinct house roles.
   - Single-person horary remains completely unchanged.
 */
 (() => {
@@ -37,7 +37,8 @@
     const relational = /(상대|사람|인연|전남친|전여친|전애인|구남친|구여친|연인|이성|썸|친구|지인|동료|직장동료|상사|부하|배우자|남편|아내)/i.test(q);
     const personPredicate = /(생각|떠올|의식|기억|마음|감정|정서|호감|그리움|후회|궁금|연락|카톡|메시지|전화|dm|디엠|답장|만나|재회|관계|나를\s*보|내게\s*느끼|나한테\s*느끼)/i.test(q);
 
-    const twoTargets = explicitPair || (parallelLabels && comparisonConnector);
+    const labeledPair=/(?:\bA\s*(?:는|은|[:=：])[^\n]{0,90}\bB\s*(?:는|은|[:=：])|\bB\s*(?:는|은|[:=：])[^\n]{0,90}\bA\s*(?:는|은|[:=：]))/i.test(q);
+    const twoTargets = explicitPair || labeledPair || (parallelLabels && comparisonConnector);
     return twoTargets && (relational || personPredicate);
   }
 
@@ -51,12 +52,56 @@
     return [...new Set(classes)];
   }
 
+
+  // Only explicit labelled roles count. The name order never assigns houses.
+  // Conservative conventional relation categories: spouse/partner=7H, friend=11H.
+  function resolveTargets(question) {
+    const q=norm(question);
+    const map={배우자:7,남편:7,아내:7,연인:7,전남친:7,전여친:7,전애인:7,친구:11,지인:11};
+    const one=label=>{
+      const match=q.match(new RegExp(label+'\\s*(?:는|은|[:=：])\\s*(?:내\\s*)?(배우자|남편|아내|연인|전남친|전여친|전애인|친구|지인)(?![가-힣])','i'));
+      return match?{label,role:match[1],house:map[match[1]]}:null;
+    };
+    const A=one('A'),B=one('B');
+    return {A,B,assignable:!!(A && B && A.house!==B.house),multi:isMultiPersonQuestion(q)};
+  }
+
   function reasonFor(question) {
-    const roles = roleClassSummary(question);
-    if (roles.length <= 1) {
-      return 'A와 B가 질문자에게 동일하거나 구분 근거가 불분명한 관계 범주의 두 대상이므로, 이름 순서만으로 7하우스와 다른 하우스를 임의 배정할 수 없어.';
+    const roles=resolveTargets(question);
+    if(roles.assignable) return '질문에 명시된 관계 역할이 달라 7H와 11H를 각각 검토할 수 있어. 이는 이름 순서가 아닌 실제 역할에 따른 배정이야.';
+    return 'A/B가 같은 관계 범주이거나 질문에서 각각의 역할이 확정되지 않았어. 한 시각의 차트는 계산하지만 두 사람에게 임의 하우스를 배정하거나 누가 연락할지를 판정하지 않아.';
+  }
+
+  const RULERS=['Mars','Venus','Mercury','Moon','Sun','Mercury','Venus','Mars','Jupiter','Saturn','Saturn','Jupiter'];
+  function houseEvidence(data,house){
+    const lon=Number(data?.cusps?.[house-1]);
+    if(!Number.isFinite(lon))return null;
+    const ruler=RULERS[Math.floor((((lon%360)+360)%360)/30)];
+    const p=data?.planets?.[ruler]||{};
+    return {ruler,sign:p.sign||p.sign_en||'—',degree:p.degree??'—',house:p.house??'—',dignity:p.dignity_ko||p.dignity||'—'};
+  }
+  function renderRoleEvidence(question) {
+    const panel=$('luneaHoraryMultiGuard');
+    if(!panel)return;
+    panel.querySelector('#luneaHoraryABEvidence')?.remove();
+    const roles=resolveTargets(question);
+    if(!roles.multi)return;
+    const data=W.LUNEA_ASTRO_HORARY_V1?.getCurrent?.();
+    if(!data || norm(data?.question?.text||'')!==norm(question) || !$('astroHoraryResult')?.classList.contains('show'))return;
+    const evidence=document.createElement('div');
+    evidence.id='luneaHoraryABEvidence';
+    evidence.className='hg-small';
+    if(!roles.assignable) {
+      evidence.textContent='차트 계산 완료 · 이 결과는 질문 시각의 공통 배경 근거야. A/B 각각의 연락·시기·승패로 해석할 수는 없어.';
+    } else {
+      const segments=[roles.A,roles.B].map(target=>{
+        const e=houseEvidence(data,target.house);
+        return e?`${target.label}(${target.role}) · ${target.house}H 주인성 ${e.ruler} · ${e.sign} ${e.degree}° · 배치 ${e.house}H · 상태 ${e.dignity}`
+          :`${target.label}(${target.role}) · ${target.house}H · 차트 주인성 근거 없음`;
+      });
+      evidence.textContent='관계 역할에 따른 개별 시그니피케이터(승패·연락 확정 판정 아님): '+segments.join(' / ');
     }
-    return 'A와 B의 관계 역할이 서로 다를 가능성은 있지만, 현재 자동 엔진은 복합 질문에서 파생 하우스를 비임의적으로 확정하는 규칙을 갖고 있지 않아. 잘못된 자동 배정보다 개별 판정을 생략하는 편이 안전해.';
+    panel.appendChild(evidence);
   }
 
   function addStyles() {
@@ -93,24 +138,27 @@
     $('luneaHoraryInline')?.remove();
   }
 
+
   function syncGuard() {
-    const panel = ensureGuardPanel();
-    if (!panel) return;
-    const q = norm($('astroHoraryQuestion')?.value || '');
-    const multi = isMultiPersonQuestion(q);
-    panel.classList.toggle('show', multi);
-    if (!multi) {
-      panel.innerHTML = '';
-      const status = $('astroHoraryStatus');
-      if (status?.classList.contains('err') && /다중|개별 비교 판정 생략/.test(status.textContent || '')) {
-        status.className = 'horary-status';
-        status.textContent = '';
-      }
+    const panel=ensureGuardPanel();
+    if(!panel)return;
+    const question=norm($('astroHoraryQuestion')?.value||'');
+    const multi=isMultiPersonQuestion(question);
+    panel.classList.toggle('show',multi);
+    if(!multi){
+      panel.replaceChildren();
       return;
     }
-    panel.innerHTML = `<b>☿ 다중 대상 호라리 · 개별 비교 자동 판정 생략</b>
-      ${reasonFor(q)}
-      <div class="hg-small">같은 시각의 한 차트에서 두 사람을 하나의 7하우스 대상처럼 뭉개거나, A=7하우스 / B=5하우스처럼 이름 순서만으로 갈라놓지 않아. 또한 비교 결과를 만들기 위해 몇 초·몇 분 차이로 같은 질문을 반복해 별도 차트를 만드는 방식도 사용하지 않아.<br><br>권장: 이 질문은 A/B 대칭 타로로 비교하고, 호라리는 “A가 오늘 나를 의식하는가?”처럼 한 사람에 대한 독립 질문이 실제로 생겼을 때 그 질문 시각으로 계산해.</div>`;
+    const roles=resolveTargets(question);
+    const header=document.createElement('b');
+    header.textContent=roles.assignable?'☿ A/B 역할별 호라리 근거 · 한 차트':'☿ A/B 공통 차트 · 개별 인물 판정 보류';
+    const note=document.createElement('div');
+    note.textContent=reasonFor(question);
+    const guidance=document.createElement('div');
+    guidance.className='hg-small';
+    guidance.textContent='같은 시각의 질문은 한 차트만 계산해. 별도 하우스나 몇 분 차이로 새 차트를 만들어 A/B 결과를 조작하지 않아. 구별 가능한 관계 역할을 질문에 명시하면 하우스별 행성 근거를 보여줘.';
+    panel.replaceChildren(header,note,guidance);
+    renderRoleEvidence(question);
   }
 
   function installRunGuard() {
@@ -119,25 +167,20 @@
     const original = run.onclick;
     if (typeof original !== 'function') return false;
 
-    run.onclick = function(event) {
-      const q = norm($('astroHoraryQuestion')?.value || '');
-      if (isMultiPersonQuestion(q)) {
-        event?.preventDefault?.();
-        clearComputedUI();
-        syncGuard();
-        const status = $('astroHoraryStatus');
-        if (status) {
-          status.className = 'horary-status err';
-          status.textContent = '개별 비교 판정 생략 · 다중 동일/복합 대상에 비임의적인 시그니피케이터 분리 근거가 부족해. A/B 대칭 타로를 사용하거나 한 사람씩 실제 독립 질문으로 물어봐.';
-        }
-        return;
-      }
-      return original.call(this, event);
+
+    run.onclick=function(event){
+      syncGuard();
+      return original.call(this,event);
     };
     run.__luneaMultiTargetGuard = true;
 
     const q = $('astroHoraryQuestion');
     q?.addEventListener('input', syncGuard);
+    const result=$('astroHoraryResult');
+    if(result && !result.__luneaMultiEvidenceObserved){
+      new MutationObserver(()=>{if(result.classList.contains('show'))syncGuard();}).observe(result,{attributes:true,attributeFilter:['class'],childList:true});
+      result.__luneaMultiEvidenceObserved=true;
+    }
     const overlay = $('astroHoraryOverlay');
     if (overlay && !overlay.__luneaMultiGuardObserved) {
       new MutationObserver(syncGuard).observe(overlay, {attributes:true, attributeFilter:['class']});
@@ -155,7 +198,7 @@
       if (installRunGuard() || tries > 80) clearInterval(timer);
     }, 125);
     installRunGuard();
-    W.LUNEA_HORARY_MULTI_GUARD = { isMultiPersonQuestion, roleClassSummary };
+    W.LUNEA_HORARY_MULTI_GUARD = { isMultiPersonQuestion, roleClassSummary, resolveTargets };
     console.info('☿ LUNEA Horary Multi-Target Guard V3 loaded');
   }
 

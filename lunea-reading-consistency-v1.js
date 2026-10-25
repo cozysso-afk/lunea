@@ -9,6 +9,8 @@
   const W=window;
   const VERSION='reading-consistency-v1';
   const KEY='LUNEA_READING_CONSISTENCY_CACHE_V1';
+  const GPT_KEY='LUNEA_CHATGPT_READING_V1';
+  const gptMemory=new Map();
   const CODES=['YES','NO','UNCERTAIN','NON_BINARY'];
   const MAX_ENTRIES=25, MAX_CHARS=240000;
   const memory=new Map();
@@ -74,6 +76,42 @@
     }catch {}
     return record;
   }
+
+  // A ChatGPT explanation is an independent artifact, not a replacement for
+  // the first accepted Gemini/ChatGPT verdict.
+  function getChatgpt(key) {
+    if (!key) return null;
+    if (gptMemory.has(key)) return gptMemory.get(key);
+    try {
+      const rows=JSON.parse(W.localStorage.getItem(GPT_KEY)||'[]');
+      const found=Array.isArray(rows) ? rows.find(x=>x?.key===key && typeof x.text==='string') : null;
+      if (found) { gptMemory.set(key,found); return found; }
+    } catch {}
+    return null;
+  }
+  function saveChatgpt(key,result) {
+    const content=String(result?.text||'').trim();
+    if (!key || content.length<20 || content.length>35000) return null;
+    const record={
+      key, text:content, source:'chatgpt',
+      verified:result?.verified===true, verdict:CODES.includes(result?.verdict)?result.verdict:null,
+      recordedAt:new Date().toISOString()
+    };
+    // Save replacement only in the ChatGPT lane. Original verdict is immutable.
+    try {
+      const rows=JSON.parse(W.localStorage.getItem(GPT_KEY)||'[]');
+      const next=[record,...(Array.isArray(rows)?rows:[]).filter(x=>x?.key!==key)].slice(0,MAX_ENTRIES);
+      while(next.length>1 && JSON.stringify(next).length>MAX_CHARS)next.pop();
+      W.localStorage.setItem(GPT_KEY,JSON.stringify(next));
+      gptMemory.set(key,record);
+      return record;
+    } catch {
+      // The UI can still persist this independently to the Journal DB.
+      gptMemory.set(key,record);
+      return record;
+    }
+  }
+
   function readingPrompt(base) {
     return String(base||'') +
       '\n\n[루니아 동일 리딩 결론 일관성 계약 V1]\n' +
@@ -142,19 +180,37 @@
       '루니아에서 붙여넣기 검증을 할 수 있도록 이 형식을 정확히 지켜주세요.';
     return out;
   }
-  function parseExternal(raw,key) {
+
+  function parseExternal(raw,key,options={}) {
     const id=readingId(key);
     if(!id)return {ok:false,reason:'현재 카드 리딩이 없음'};
-    let value=String(raw||'').trim();
-    // Accept a full answer wrapped in a plain-text Markdown code fence.
-    value=value.replace(/^\x60{3}(?:text|plaintext)?[ \t]*\n/i,'')
+    let value=String(raw||'').replace(/^\uFEFF/,'').replace(/\r\n?/g,'\n').trim();
+    value=value.replace(/^\x60{3}(?:text|plaintext|markdown|md)?[ \t]*\n/i,'')
                .replace(/\n\x60{3}[ \t]*$/,'').trim();
-    const match=value.match(/^\[LUNEA_READING_ID:([a-z0-9-]+)\]\s*\n([\s\S]+)$/);
-    if(!match)return {ok:false,reason:'해석 맨 위의 LUNEA_READING_ID가 없음. 복사한 프롬프트 전체로 해석받아줘.'};
-    if(match[1]!==id)return {ok:false,reason:'현재 리딩과 다른 질문·카드의 해석이야.'};
-    const checked=validate(match[2]);
-    return checked.ok ? {...checked,source:'chatgpt'} : checked;
+    const idMatch=value.match(/^\s*(?:\*\*)?\[LUNEA_READING_ID\s*[:：]\s*([a-z0-9-]+)\](?:\*\*)?\s*\n/i);
+    if(idMatch) {
+      if(idMatch[1]!==id)return {ok:false,reason:'현재 리딩과 다른 질문·카드의 해석이야.'};
+      const body=value.slice(idMatch[0].length).trim()
+        .replace(/^\*\*(\[LUNEA_VERDICT:)/,'$1')
+        .replace(/(\[LUNEA_END:[A-Z_]+\])\*\*$/,'$1');
+      const hasMarkers=/LUNEA_VERDICT|LUNEA_END/.test(body);
+      if(hasMarkers) {
+        const checked=validate(body);
+        return checked.ok?{...checked,source:'chatgpt',verified:true}:checked;
+      }
+      if(body.length>=20 && body.length<=35000)
+        return {ok:true,text:body,source:'chatgpt',verified:true,verdict:null};
+      return {ok:false,reason:'본문이 너무 짧거나 길어.'};
+    }
+    // Never accept a wrong or misplaced ID as an unverified free-text answer.
+    if(/LUNEA_READING_ID/i.test(value))
+      return {ok:false,reason:'식별번호 위치나 형식이 달라. 현재 리딩의 프롬프트를 다시 확인해줘.'};
+    if(!options.allowPlainText)
+      return {ok:false,reason:'해석 맨 위의 LUNEA_READING_ID가 없음. 복사한 프롬프트 전체로 해석받아줘.'};
+    if(value.length<20 || value.length>35000)
+      return {ok:false,reason:'해설은 20~35000자 사이로 붙여넣어줘.'};
+    return {ok:true,text:value,source:'chatgpt',verified:false,verdict:null};
   }
-  const api=Object.freeze({version:VERSION,fingerprint,readingId,get,save,readingPrompt,validate,exportPrompt,parseExternal});
+  const api=Object.freeze({version:VERSION,fingerprint,readingId,get,save,readingPrompt,validate,exportPrompt,parseExternal,getChatgpt,saveChatgpt});
   W.LUNEA_READING_CONSISTENCY_V1=api;
 })();
