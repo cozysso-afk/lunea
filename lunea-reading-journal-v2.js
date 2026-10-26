@@ -653,19 +653,37 @@
     const detail = document.createElement('div');
     detail.className = 'archive-detail';
 
-    const review = reviewPanel(entry, rerender);
-    if (openId === entry.id) review.classList.add('open');
+    // Allocate review inputs only when requested. Closed rows may number in
+    // the hundreds; prebuilding textareas/date inputs increases mobile DOM cost.
+    let review = null;
+    const ensureReview = () => {
+      if (review) return review;
+      review = reviewPanel(entry, rerender);
+      // Match the journal's compact three-verdict UI even when a panel is
+      // inserted after the list observer's initial normalization pass.
+      review.querySelectorAll('.lj-statuses button').forEach(button => {
+        const status = button.dataset.luneaVerdictStatus;
+        if (status === 'pending' || status === 'unverifiable') button.remove();
+        else if (status === 'hit') button.textContent = '맞음';
+        else if (status === 'partial') button.textContent = '애매';
+        else if (status === 'miss') button.textContent = '틀림';
+      });
+      el.append(review);
+      return review;
+    };
+    if (openId === entry.id) ensureReview().classList.add('open');
 
     reviewBtn.onclick = event => {
       event?.preventDefault?.();
       event?.stopPropagation?.();
       const modal = $('archiveOverlay')?.querySelector('.archive-modal') || $('archiveOverlay')?.querySelector('.modal');
       const scrollTop = modal?.scrollTop || 0;
-      review.classList.toggle('open');
+      const panel = ensureReview();
+      panel.classList.toggle('open');
       if (modal) {
         modal.scrollTop = scrollTop;
         requestAnimationFrame(() => { modal.scrollTop = scrollTop; });
-        setTimeout(() => { if (review.isConnected) modal.scrollTop = scrollTop; }, 60);
+        setTimeout(() => { if (panel.isConnected) modal.scrollTop = scrollTop; }, 60);
       }
     };
     detailBtn.onclick = () => {
@@ -698,7 +716,7 @@
       rerender();
     };
 
-    el.append(meta, title, q, actions, detail, review);
+    el.prepend(meta, title, q, actions, detail);
     return el;
   }
 
