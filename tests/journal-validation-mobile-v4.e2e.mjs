@@ -88,6 +88,8 @@ try {
   await page.waitForFunction(() => document.querySelectorAll('#archiveList > .archive-item').length === 18);
   await page.waitForFunction(() => [...document.querySelectorAll('#archiveList > .archive-item')].every(card => !!card.dataset.luneaJournalId));
 
+  assert.equal(await page.locator('#archiveList .lj-review').count(), 0,
+    'closed journal rows must not eagerly allocate verification editors');
   const target = page.locator('#archiveList > .archive-item').nth(10);
   await target.scrollIntoViewIfNeeded();
   const openBefore = await target.evaluate(() => {
@@ -98,6 +100,8 @@ try {
   assert.equal(await reviewButton.getAttribute('type'), 'button', 'review button must never submit/navigate');
   await reviewButton.click();
   await target.locator('.lj-review.open').waitFor();
+  assert.equal(await page.locator('#archiveList .lj-review').count(), 1,
+    'opening one row should allocate only its verification editor');
   await page.waitForTimeout(90);
   const verdictLabels = await target.locator('.lj-statuses button').allTextContents();
   assert.deepEqual(verdictLabels.map(x => x.trim()), ['맞음', '애매', '틀림'], 'review must expose the current verdict labels');
