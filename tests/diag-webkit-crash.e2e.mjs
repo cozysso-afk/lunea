@@ -17,10 +17,17 @@ async function setup(tag) {
   page.on('console', msg => { const t = msg.text(); if (t.startsWith('DIAG ') || msg.type() === 'error') console.log(`[${tag}] ${t.slice(0, 300)}`); });
   page.on('pageerror', e => console.log(`[${tag}] PAGEERROR ${e.message.slice(0, 200)}`));
   page.on('dialog', d => d.accept());
+  const blocked = new Set((process.env.LUNEA_DIAG_BLOCK || '').split(',').filter(Boolean));
   await page.route('**/*', route => {
     const u = new URL(route.request().url());
+    const file = u.pathname.split('/').pop();
+    if (blocked.has(file)) return route.fulfill({status:200, contentType:'application/javascript', body:'/* blocked for crash bisect */'});
     if (u.origin === new URL(url).origin) return route.continue();
     return route.fulfill({status:200, contentType:u.pathname.endsWith('.css') ? 'text/css' : 'application/json', body:u.hostname.includes('fonts') ? '' : '{}'});
+  });
+  if (process.env.LUNEA_DIAG_NO_CV === '1') await page.addInitScript(() => {
+    const add = () => { const st = document.createElement('style'); st.textContent = '*,*::before,*::after{content-visibility:visible!important}'; (document.head || document.documentElement).appendChild(st); };
+    if (document.documentElement) add(); else document.addEventListener('readystatechange', add, {once:true});
   });
   await page.addInitScript(() => {
     localStorage.clear(); sessionStorage.clear();
@@ -90,7 +97,7 @@ for (const [tag, flow] of [
       await page.waitForTimeout(1500);
     }
   }],
-]) {
+].filter(([tag]) => !process.env.LUNEA_DIAG_FLOW || process.env.LUNEA_DIAG_FLOW === tag)) {
   const {context, page, isCrashed} = await setup(tag);
   try { await flow(page); console.log(`[${tag}] FLOW COMPLETED`); }
   catch (e) { console.log(`[${tag}] FLOW STOPPED crashed=${isCrashed()} ${e.message.split('\n')[0]}`); }
