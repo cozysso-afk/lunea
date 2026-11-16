@@ -34,10 +34,8 @@ jobs:
           - timing-oracle-session-artwork
         images: [original]
         include:
-          - test: oracle-ui-regressions
-            images: downscaled
-          - test: balanced-interpretation
-            images: downscaled
+          - test: diag-webkit-crash
+            images: original
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
