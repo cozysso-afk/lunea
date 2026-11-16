@@ -327,7 +327,8 @@
       animation:luneaStarBreath 3.8s ease-in-out infinite;
     }
     html.lunea-reading-flow-v5 .tarot-card-wrapper{
-      animation:luneaCardHalo 6s ease-in-out infinite,spawn .5s forwards!important;
+      /* No infinite filter animation on cards: an animated drop-shadow on every 3D-flipped card crashed WebKit's renderer a few readings in (bisected on Playwright WebKit). The card keeps its static box-shadow. */
+      animation:spawn .5s forwards!important;
     }
     html.lunea-reading-flow-v5 .tarot-card{
       border-radius:12px!important;
