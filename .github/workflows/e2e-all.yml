@@ -11,29 +11,42 @@ permissions:
 jobs:
   e2e:
     runs-on: ubuntu-24.04
-    name: e2e ${{ matrix.test }}
+    name: diag ${{ matrix.variant }}
     timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
-        test:
-          - ab24-mobile-preview
-          - balanced-interpretation
-          - cardback-first-frame
-          - daily-message-draft-prompt
-          - home-layout-visual-v36
-          - intimacy-oracle-extra-v365
-          - intimacy-oracle-late-runtime
-          - journal-validation-mobile-v4
-          - lenormand-v1
-          - meihua-v1
-          - message-oracle-persistence
-          - oracle-ui-regressions
-          - reading-lifecycle-v59
-          - system-support-lifecycle-v1
-          - tarot-local-faces
-          - timing-oracle-session-artwork
-          - diag-webkit-crash
+        include:
+          - test: diag-webkit-crash
+            variant: 'baseline'
+            drop: ''
+          - test: diag-webkit-crash
+            variant: 'drop-0-11'
+            drop: '0-11'
+          - test: diag-webkit-crash
+            variant: 'drop-11-22'
+            drop: '11-22'
+          - test: diag-webkit-crash
+            variant: 'drop-22-33'
+            drop: '22-33'
+          - test: diag-webkit-crash
+            variant: 'drop-33-44'
+            drop: '33-44'
+          - test: diag-webkit-crash
+            variant: 'drop-44-55'
+            drop: '44-55'
+          - test: diag-webkit-crash
+            variant: 'drop-55-66'
+            drop: '55-66'
+          - test: diag-webkit-crash
+            variant: 'drop-66-77'
+            drop: '66-77'
+          - test: diag-webkit-crash
+            variant: 'drop-77-88'
+            drop: '77-88'
+          - test: diag-webkit-crash
+            variant: 'drop-88-89'
+            drop: '88-89'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -51,4 +64,6 @@ jobs:
       - name: Run ${{ matrix.test }}
         env:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+          LUNEA_DIAG_CSS_DROP: ${{ matrix.drop }}
+          LUNEA_DIAG_FLOW: sectors
         run: node tests/${{ matrix.test }}.e2e.mjs

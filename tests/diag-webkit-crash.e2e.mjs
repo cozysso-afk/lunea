@@ -22,12 +22,21 @@ async function setup(tag) {
     const u = new URL(route.request().url());
     const file = u.pathname.split('/').pop();
     if (blocked.has(file)) return route.fulfill({status:200, contentType:'application/javascript', body:'/* blocked for crash bisect */'});
-    if (file === 'lunea-reading-flow-v5.js' && process.env.LUNEA_DIAG_PATCH) {
+    if (file === 'lunea-reading-flow-v5.js' && (process.env.LUNEA_DIAG_PATCH || process.env.LUNEA_DIAG_CSS_DROP)) {
       const fs = await import('node:fs');
       let body = fs.readFileSync('lunea-reading-flow-v5.js', 'utf8');
-      if (process.env.LUNEA_DIAG_PATCH.includes('nohas')) body = body.replaceAll(':has(', ':is(');
-      if (process.env.LUNEA_DIAG_PATCH.includes('noobs')) body = body.replace('ob.observe(document.documentElement,{childList:true,subtree:true})', 'void 0');
-      if (process.env.LUNEA_DIAG_PATCH.includes('noflipped')) body = body.replace('.tarot-card-wrapper:has(.tarot-card.flipped)', '.tarot-card-wrapper:is(.never-matches)');
+      if (process.env.LUNEA_DIAG_CSS_DROP) {
+        // Drop top-level CSS rules [from, to) inside the injected style text.
+        const [from, to] = process.env.LUNEA_DIAG_CSS_DROP.split('-').map(Number);
+        const a = body.indexOf('style.textContent = `') + 'style.textContent = `'.length, b = body.indexOf('`', a);
+        const css = body.slice(a, b); const rules = []; let depth = 0, start = 0;
+        for (let i = 0; i < css.length; i++) { if (css[i] === '{') depth++; else if (css[i] === '}') { depth--; if (depth === 0) { rules.push(css.slice(start, i + 1)); start = i + 1; } } }
+        console.log(`CSS rules total ${rules.length}, dropping ${from}-${to}`);
+        body = body.slice(0, a) + rules.filter((_, i) => i < from || i >= to).join('') + body.slice(b);
+      }
+      if ((process.env.LUNEA_DIAG_PATCH||'').includes('nohas')) body = body.replaceAll(':has(', ':is(');
+      if ((process.env.LUNEA_DIAG_PATCH||'').includes('noobs')) body = body.replace('ob.observe(document.documentElement,{childList:true,subtree:true})', 'void 0');
+      if ((process.env.LUNEA_DIAG_PATCH||'').includes('noflipped')) body = body.replace('.tarot-card-wrapper:has(.tarot-card.flipped)', '.tarot-card-wrapper:is(.never-matches)');
       return route.fulfill({status:200, contentType:'application/javascript', body});
     }
     if (u.origin === new URL(url).origin) return route.continue();

@@ -130,10 +130,10 @@
     }
 
     /* Direction boxes become a calm two-choice segmented control. */
-    html.lunea-reading-flow-v5 .sheet .field.lunea-field-has-radio{
+    html.lunea-reading-flow-v5 .sheet .field:has(.radio-box){
       display:grid;grid-template-columns:1fr 1fr;gap:7px;
     }
-    html.lunea-reading-flow-v5 .sheet .field.lunea-field-has-radio>label{grid-column:1/-1}
+    html.lunea-reading-flow-v5 .sheet .field:has(.radio-box)>label{grid-column:1/-1}
     html.lunea-reading-flow-v5 .sheet .radio-box{
       margin:0!important;min-height:62px;padding:10px!important;border-radius:15px!important;
       display:flex;flex-direction:column;justify-content:center;
@@ -530,18 +530,7 @@
     /* CSS carries the layout. We intentionally do not rearrange functional nodes. */
   }
 
-  /* WebKit renderer crash (Playwright WebKit on CI, after a few readings): the two
-     `.sheet .field:has(.radio-box)` rules were invalidated on every DOM change. The
-     same layout now keys off a class that is only written when it changes. */
-  function markRadioFields(){
-    document.querySelectorAll('.sheet .field').forEach(field=>{
-      const want = !!field.querySelector('.radio-box');
-      if (field.classList.contains('lunea-field-has-radio') !== want) field.classList.toggle('lunea-field-has-radio', want);
-    });
-  }
-
   function boot(){
-    markRadioFields();
     installSheetDecor();
     installPreviewDecor();
     installSpreadDecor();
@@ -549,7 +538,6 @@
 
     const ob = new MutationObserver(()=>{
       requestAnimationFrame(()=>{
-        markRadioFields();
         installSheetDecor();
         installPreviewDecor();
         installSpreadDecor();
