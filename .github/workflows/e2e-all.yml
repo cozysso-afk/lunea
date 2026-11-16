@@ -18,59 +18,53 @@ jobs:
       matrix:
         include:
           - test: diag-webkit-crash
-            variant: 'baseline'
+            variant: 'original-0'
             block: ''
+            images: 'original'
           - test: diag-webkit-crash
-            variant: 'baseline-2'
+            variant: 'downscaled-0'
             block: ''
+            images: 'downscaled'
           - test: diag-webkit-crash
-            variant: 'block-00'
-            block: 'lunea-reading-consistency-v1.js,lunea-astro-stability-v2.js,lunea-reading-attachments-v1.js,lunea-sheet-scroll-fix-v1.js,lunea-timing-moondial-sync-v15.js,lunea-thai-art-polish-v26.js,lunea-journal-header-fix-v1.js,lunea-mobile-runtime-fixes-v57.js,lunea-reading-context-v1.js,lunea-horary-mobile-actions-v45.js'
+            variant: 'original-1'
+            block: ''
+            images: 'original'
           - test: diag-webkit-crash
-            variant: 'block-01'
-            block: 'lunea-cache-refresh-v1.js,lunea-ios-performance-v3.js,lunea-message-oracle-support-v1.js,lunea-horary-ab-v1.js,lunea-timing-ab-inline-v16.js,lunea-mobile-journal-polish-v27.js,lunea-journal-verdict-labels-v1.js,lunea-runtime-regression-v60.js,celestial-profile-v4.js,lunea-horary-ai-guard-v49.js'
+            variant: 'downscaled-1'
+            block: ''
+            images: 'downscaled'
           - test: diag-webkit-crash
-            variant: 'block-02'
-            block: 'spread-engine-v7.4.js,interpretation-gloss-v1.js,lunea-journal-performance-v1.js,lunea-timing-ab-v1.js,lunea-manual-limit20-v17.js,lunea-sector-color-system-v28.js,lunea-cardback-sector-v20.js,lunea-ui-regression-final-v2.js,vedic-profile-v1.js,lunea-reading-share-oracle-pages-v1.js'
+            variant: 'original-2'
+            block: ''
+            images: 'original'
           - test: diag-webkit-crash
-            variant: 'block-03'
-            block: 'lunea-card-meanings-v1.js,lunea-mobile-interaction-hotfix-v1.js,lunea-reading-journal-v2.js,lunea-timing-prompt-repair-v1.js,lunea-horary-balance-v19-5.js,lunea-fixed-spread-depth-v30.js,lunea-timing-image-assets-v16.js,lunea-message-oracle-home-v1.js,lunea-horary-post-actions-v44.js,lunea-reading-share-ui-v6.js'
+            variant: 'downscaled-2'
+            block: ''
+            images: 'downscaled'
           - test: diag-webkit-crash
-            variant: 'block-04'
-            block: 'lunea-structural-routing-v4.js,lunea-reading-lifecycle-v59.js,lunea-archive-search-v1.js,lunea-timing-result-copy-v35.js,lunea-cardback-restore-v19.js,lunea-general-order-v30-5.js,lunea-horary-question-modes-v37.js,lunea-lenormand-v1.js,lunea-ai-response-guard-v1.js,lunea-horary-prashna-cross-v2.js'
+            variant: 'original-3'
+            block: ''
+            images: 'original'
           - test: diag-webkit-crash
-            variant: 'block-05'
-            block: 'timing-oracle-v1.js,lunea-timing-weekday-preload-v1.js,lunea-flip-all-fix-v1.js,lunea-thai-tarot-bridge-v32.js,lunea-universal-ai-opal-v20.js,lunea-reading-boundary-reset-v31.js,lunea-horary-hardening-v38.js,lunea-lenormand-polish-v1.js,lunea-archive-card-images-v1.js,lunea-meihua-ui-final-v2.js'
+            variant: 'downscaled-3'
+            block: ''
+            images: 'downscaled'
           - test: diag-webkit-crash
-            variant: 'block-06'
-            block: 'general-5-6-v1.js,lunea-luminous-theme-v1.js,lunea-question-casebook-v1.js,lunea-thai-range-v33.js,lunea-intimacy-v34.js,lunea-reading-action-order-v33.js,lunea-horary-location-button-v39.js,lunea-meihua-engine-v1.js,lunea-archive-card-restore-v46.js,lunea-horary-ai-explanation-v2.js'
+            variant: 'original-4'
+            block: ''
+            images: 'original'
           - test: diag-webkit-crash
-            variant: 'block-07'
-            block: 'profile-advanced-v2.js,lunea-luminous-layout-v2.js,lunea-question-casebook-web-v1.js,lunea-final-prompt-priority-v1.js,lunea-intimacy-ai-bridge-v34.js,lunea-boot-reveal-v29.js,lunea-horary-traditional-core-v40.js,lunea-meihua-v1.js,lunea-lenormand-archive-hotfix-v2.js,lunea-horary-answer-validator-v48.js'
+            variant: 'downscaled-4'
+            block: ''
+            images: 'downscaled'
           - test: diag-webkit-crash
-            variant: 'block-08'
-            block: 'profile-select-ui-v2.1.js,lunea-luminous-polish-v3.js,lunea-question-casebook-ranker-v1.js,lunea-daily-lock-v1.js,lunea-intimacy-legacy-v35.js,lunea-journal-detail-v51.js,lunea-horary-balance-guard-v41.js,lunea-meihua-polish-v1.js,lunea-reading-share-polish-v3.js,lunea-horary-result-ui-v2.js'
+            variant: 'original-5'
+            block: ''
+            images: 'original'
           - test: diag-webkit-crash
-            variant: 'block-09'
-            block: 'celestial-profile-v3.js,lunea-top-spacing-v4.js,lunea-user-spread-learning-v1.js,lunea-card-motion-timing-v7.js,lunea-intimacy-readability-v36.js,lunea-structural-routing-v2.js,lunea-horary-future-window-v2.js,lunea-reading-share-v1.js,lunea-reading-share-ui-v4.js'
-          - test: diag-webkit-crash
-            variant: 'block-10'
-            block: 'astro-natal-client-v1.js,lunea-gemini-model-picker-v1.js,lunea-learning-cloud-sync-v1.js,lunea-home-portal-v8.js,lunea-learning-success-gate-v1.js,lunea-astro-request-v1.js,lunea-horary-v2-judgment.js,lunea-home-visual-v36.js,lunea-recovery-ui-v65.js'
-          - test: diag-webkit-crash
-            variant: 'block-11'
-            block: 'astro-transit-v1.js,lunea-structural-routing-v4-base.js,lunea-ai-spread-preflight-v2.js,lunea-home-timing-polish-v9.js,lunea-daily-orbit6-v21.js,lunea-astro-origin-failover-v57.js,lunea-horary-interpretation-engine-v47.js,lunea-intimacy-oracle-v35.js,lunea-prashna-v1.js'
-          - test: diag-webkit-crash
-            variant: 'block-12'
-            block: 'astro-return-v1.js,lunea-manual-structure-v1.js,lunea-reading-flow-v5.js,lunea-category-art-v10.js,lunea-daily-celestial-v22.js,lunea-transit-request-v1.js,lunea-horary-mobile-stability-v42.js,lunea-thai-archive-timing-isolation-v27.js,lunea-horary-interpretation-bridge-v47.js'
-          - test: diag-webkit-crash
-            variant: 'block-13'
-            block: 'thai-taksa-v1.js,lunea-manual-everywhere-v1.js,lunea-transit-range-v1.js,lunea-mobile-reading-controls-v12.js,lunea-astro-resume-v23.js,lunea-runtime-state-v56.js,lunea-horary-return-stack-v1.js,lunea-intimacy-clean-v39.js,lunea-meihua-polish-runtime-v1.js'
-          - test: diag-webkit-crash
-            variant: 'block-14'
-            block: 'astro-horary-v1.js,lunea-manual-library-v1.js,lunea-transit-long-run-v1.js,lunea-opal-light-polish-v13.js,lunea-thai-standalone-v24.js,lunea-thai-date-center-v54.js,lunea-learning-auth-recovery-v2.js,lunea-intimacy-burgundy-v40.js,lunea-intimacy-oracle-ui-v36.js'
-          - test: diag-webkit-crash
-            variant: 'block-15'
-            block: 'lunea-lag-guard-v1.js,lunea-reading-draft-v1.js,lunea-astro-job-queue-v1.js,lunea-reading-polish-v14.js,lunea-thai-art-v25.js,lunea-horizontal-touch-stability-v1.js,lunea-emergency-repair-v43.js,lunea-intimacy-repair-v43.js,lunea-daily-interpretation-contract-v2.js'
+            variant: 'downscaled-5'
+            block: ''
+            images: 'downscaled'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -80,6 +74,23 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps webkit chromium
+      - name: Downscale images (long side 1200)
+        if: matrix.images == 'downscaled'
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          import glob,os
+          from PIL import Image
+          n=0
+          for p in glob.glob('**/*',recursive=True):
+            if not p.lower().endswith(('.png','.jpg','.jpeg','.webp')) or not os.path.isfile(p): continue
+            try:
+              im=Image.open(p)
+              if max(im.size)<=1200: continue
+              r=1200/max(im.size); im.resize((round(im.size[0]*r),round(im.size[1]*r)),Image.LANCZOS).save(p); n+=1
+            except Exception as e: print('skip',p,e)
+          print('downscaled',n)
+          PY
       - name: Start local server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
