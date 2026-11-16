@@ -72,5 +72,5 @@ test('preflight and loader enforce structure-only learned guidance and fresh cac
   assert.doesNotMatch(learning,/\.\.\.\(row\.positions\|\|\[\]\)/,'raw historical positions must not participate in semantic retrieval scoring');
   assert.match(learning,/guidanceAxes/);
   assert.equal((loader.match(/lunea-user-spread-learning-v1\.js\?v=109/g)||[]).length,2);
-  assert.equal((loader.match(/lunea-ai-spread-preflight-v2\.js\?v=106/g)||[]).length,2);
+  assert.equal((loader.match(/lunea-ai-spread-preflight-v2\.js\?v=107/g)||[]).length,2);
 });

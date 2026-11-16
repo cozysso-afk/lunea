@@ -39,7 +39,7 @@
     document.write('<script src="./lunea-luminous-layout-v2.js?v=202"><\/script>');
     document.write('<script src="./lunea-luminous-polish-v3.js?v=301"><\/script>');
     document.write('<script src="./lunea-top-spacing-v4.js?v=401"><\/script>');
-    document.write('<script src="./lunea-gemini-model-picker-v1.js?v=101"><\/script>');
+    document.write('<script src="./lunea-gemini-model-picker-v1.js?v=102"><\/script>');
     document.write('<script src="./lunea-structural-routing-v4-base.js?v=412"><\/script>');
     document.write('<script src="./lunea-manual-structure-v1.js?v=105"><\/script>');
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=103"><\/script>');
@@ -56,7 +56,7 @@
     document.write('<script src="./lunea-question-casebook-ranker-v1.js?v=101"><\/script>');
     document.write('<script src="./lunea-user-spread-learning-v1.js?v=109"><\/script>');
     document.write('<script src="./lunea-learning-cloud-sync-v1.js?v=104"><\/script>');
-    document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=106"><\/script>');
+    document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=107"><\/script>');
     document.write('<script src="./lunea-reading-flow-v5.js?v=502"><\/script>');
     document.write('<script src="./lunea-transit-range-v1.js?v=413641ad62e7"><\/script>');
     document.write('<script src="./lunea-transit-long-run-v1.js?v=413641ad62e7"><\/script>');
@@ -109,7 +109,7 @@
     './lunea-luminous-layout-v2.js?v=202',
     './lunea-luminous-polish-v3.js?v=301',
     './lunea-top-spacing-v4.js?v=401',
-    './lunea-gemini-model-picker-v1.js?v=101',
+    './lunea-gemini-model-picker-v1.js?v=102',
     './lunea-structural-routing-v4-base.js?v=412',
     './lunea-manual-structure-v1.js?v=105',
     './lunea-manual-everywhere-v1.js?v=103',
@@ -126,7 +126,7 @@
     './lunea-question-casebook-ranker-v1.js?v=101',
     './lunea-user-spread-learning-v1.js?v=109',
     './lunea-learning-cloud-sync-v1.js?v=104',
-    './lunea-ai-spread-preflight-v2.js?v=106',
+    './lunea-ai-spread-preflight-v2.js?v=107',
     './lunea-reading-flow-v5.js?v=502',
     './lunea-transit-range-v1.js?v=413641ad62e7',
     './lunea-transit-long-run-v1.js?v=413641ad62e7',

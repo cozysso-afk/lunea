@@ -303,7 +303,7 @@
   async function runAI() {
     if (!state.cards.length) return alert('먼저 레노먼드 카드를 뽑아줘.');
     const key = localStorage.getItem('LUNEA_API_KEY');
-    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-3.8-flash';
     if (!key) return alert('LUNEA API 설정을 먼저 해줘.');
     const button = $('lnAI');
     button.disabled = true;

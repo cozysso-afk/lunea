@@ -197,7 +197,7 @@
     if (!state.result) return alert('먼저 괘를 세워줘.');
     if (state.busy) return;
     const key = localStorage.getItem('LUNEA_API_KEY');
-    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-3.8-flash';
     if (!key) return alert('LUNEA API 설정을 먼저 해줘.');
     const button = $('mhAI');
     state.busy = true;
