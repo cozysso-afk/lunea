@@ -1,0 +1,90 @@
+name: Runtime budget V1 (WebKit, base vs head)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'tests/runtime-budget-v1.test.mjs'
+      - 'docs/runtime-budget-v1.md'
+      - '.github/workflows/runtime-budget-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Runtime budget contract
+        run: node tests/runtime-budget-v1.test.mjs
+      - name: All unit tests
+        run: |
+          fail=0
+          for t in tests/*.test.mjs; do
+            if ! timeout 90 node "$t" >/tmp/out.txt 2>&1; then echo "::error::$t"; tail -20 /tmp/out.txt; fail=1; fi
+          done
+          exit $fail
+
+  # Every WebKit scenario runs on the PR base and on the head. The job fails only
+  # when a scenario passes on base and fails on head, so earlier flakes or
+  # environment-only failures are reported but not blamed on this change.
+  webkit:
+    needs: contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        side: [base, head]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.side == 'base' && (github.event.pull_request.base.sha || 'main') || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright WebKit and Chromium
+        run: |
+          timeout 180 npm install --no-save --no-audit --no-fund playwright@1.64.0
+          timeout 300 npx playwright install --with-deps webkit chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0; sleep 1; done
+          exit 1
+      - name: Run every WebKit scenario
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        run: |
+          : > results-${{ matrix.side }}.txt
+          for t in tests/*.e2e.mjs; do
+            if timeout 300 node "$t" >/tmp/e2e.log 2>&1; then r=pass; else r=fail; echo "--- $t"; tail -25 /tmp/e2e.log; fi
+            echo "$r $(basename "$t")" | tee -a results-${{ matrix.side }}.txt
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: results-${{ matrix.side }}
+          path: results-${{ matrix.side }}.txt
+
+  compare:
+    needs: webkit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: No scenario that passes on base may fail on head
+        run: |
+          cat results-base.txt; echo; cat results-head.txt
+          regress=0
+          while read r t; do
+            if [ "$r" = pass ] && grep -qx "fail $t" results-head.txt; then echo "::error::regression: $t"; regress=1; fi
+          done < results-base.txt
+          exit $regress

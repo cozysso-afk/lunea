@@ -1,6 +1,177 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script id="luneaRuntimeBudgetV1">
+/* LUNEA runtime budget V1 · see docs/runtime-budget-v1.md */
+(()=>{
+  /* LUNEA DOM write guard V1
+     Many modules re-apply the same attribute, class, style or text on every
+     mutation or timer tick. Each identical write still queues a mutation record,
+     which wakes every document-wide MutationObserver, which writes again: the app
+     never goes idle. A write that would not change the DOM is skipped here, so no
+     record is queued. Writes that change something are untouched.
+     Not guarded: src/href (re-setting can be intentional), textContent on elements
+     whose children are not a single text node (setting it there removes children). */
+  const W=window;
+  if(W.__LUNEA_DOM_WRITE_GUARD_V1__)return;
+  W.__LUNEA_DOM_WRITE_GUARD_V1__=true;
+  const stats={skipped:0};
+  W.__LUNEA_DOM_WRITE_GUARD_STATS__=stats;
+  const skip=()=>{stats.skipped++;};
+  try{
+    const E=Element.prototype;
+    const setAttribute=E.setAttribute;
+    E.setAttribute=function(name,value){
+      const n=String(name).toLowerCase();
+      if(n!=='src'&&n!=='href'&&this.getAttribute(name)===String(value)){skip();return;}
+      return setAttribute.call(this,name,value);
+    };
+    const removeAttribute=E.removeAttribute;
+    E.removeAttribute=function(name){
+      if(!this.hasAttribute(name)){skip();return;}
+      return removeAttribute.call(this,name);
+    };
+    const toggleAttribute=E.toggleAttribute;
+    if(toggleAttribute)E.toggleAttribute=function(name,force){
+      if(arguments.length>1&&this.hasAttribute(name)===!!force){skip();return !!force;}
+      return toggleAttribute.apply(this,arguments);
+    };
+    const T=DOMTokenList.prototype;
+    const add=T.add,remove=T.remove,toggle=T.toggle;
+    T.add=function(...tokens){
+      if(tokens.length&&tokens.every(t=>this.contains(t))){skip();return;}
+      return add.apply(this,tokens);
+    };
+    T.remove=function(...tokens){
+      if(tokens.length&&tokens.every(t=>!this.contains(t))){skip();return;}
+      return remove.apply(this,tokens);
+    };
+    T.toggle=function(token,force){
+      if(arguments.length>1&&force!==undefined&&this.contains(token)===!!force){skip();return !!force;}
+      return toggle.apply(this,arguments);
+    };
+    const S=CSSStyleDeclaration.prototype;
+    const setProperty=S.setProperty;
+    S.setProperty=function(name,value,priority){
+      const v=value==null?'':String(value),p=priority==null?'':String(priority);
+      if(v!==''&&this.getPropertyValue(name)===v&&this.getPropertyPriority(name)===p){skip();return;}
+      return setProperty.apply(this,arguments);
+    };
+    const accessor=(proto,name,same)=>{
+      const d=Object.getOwnPropertyDescriptor(proto,name);
+      if(!d||!d.set||!d.get||!d.configurable)return;
+      Object.defineProperty(proto,name,{...d,set(v){if(same.call(this,d.get.call(this),v)){skip();return;}return d.set.call(this,v);}});
+    };
+    const H=HTMLElement.prototype;
+    accessor(H,'hidden',(cur,v)=>cur===!!v);
+    accessor(E,'className',(cur,v)=>cur===String(v));
+    accessor(E,'id',(cur,v)=>cur===String(v));
+    accessor(S,'cssText',(cur,v)=>cur===String(v));
+    accessor(Node.prototype,'textContent',function(cur,v){
+      if(this.nodeType!==1)return false;
+      const kids=this.childNodes;
+      const text=v==null?'':String(v);
+      if(kids.length===0)return text==='';
+      return kids.length===1&&kids[0].nodeType===3&&kids[0].data===text;
+    });
+    // Common inline-style properties written directly (el.style.display = ...).
+    for(const prop of ['display','opacity','visibility','transform','pointerEvents','height','minHeight','maxHeight','width','top','left','right','bottom','zIndex','overflow','transition','animation','filter','background','backgroundImage','color','position','margin','padding','paddingBottom','marginTop','gap','flex','order','willChange','contentVisibility','touchAction','webkitTransform','transformOrigin','boxShadow','borderColor','inset']){
+      accessor(S,prop,(cur,v)=>v!=null&&String(v)!==''&&cur===String(v));
+    }
+  }catch(e){try{console.info('[LUNEA DOM write guard] off',e&&e.message)}catch{}}
+})();
+(()=>{
+  /* LUNEA motion budget V1
+     Infinite glow loops that animate box-shadow, filter or background-position
+     repaint every frame. They play two full cycles, then rest at their end
+     state; transform/opacity loops (cheap, compositor-only) keep running. While a
+     reading sheet or modal covers the home screen, home animations pause. */
+  const W=window;
+  if(W.__LUNEA_MOTION_BUDGET_V1__)return;
+  W.__LUNEA_MOTION_BUDGET_V1__=true;
+  const COSTLY=['boxShadow','filter','backgroundPosition','backdropFilter','webkitBackdropFilter','textShadow'];
+  const PLAYS=2;
+  const settled=new WeakSet();
+  function costly(anim){
+    try{
+      const frames=anim.effect&&anim.effect.getKeyframes?anim.effect.getKeyframes():[];
+      return frames.some(f=>COSTLY.some(p=>p in f));
+    }catch{return false}
+  }
+  function settle(anim){
+    if(settled.has(anim))return;
+    try{
+      const t=anim.effect.getComputedTiming();
+      if(t.iterations!==Infinity||!costly(anim))return;
+      settled.add(anim);
+      const done=Math.max(PLAYS,Math.ceil(t.currentIteration||0)+1);
+      anim.effect.updateTiming({iterations:done,fill:'forwards'});
+    }catch{}
+  }
+  function sweep(){
+    try{for(const a of document.getAnimations())settle(a)}catch{}
+  }
+  // Event driven: a loop is considered when it repeats; no polling.
+  document.addEventListener('animationiteration',e=>{
+    try{
+      const t=e.target;if(!t||!t.getAnimations)return;
+      for(const a of t.getAnimations())if(a.animationName===e.animationName)settle(a);
+    }catch{}
+  },true);
+  if(document.readyState==='complete')setTimeout(sweep,1200);
+  else W.addEventListener('load',()=>setTimeout(sweep,1200),{once:true});
+  const style=document.createElement('style');
+  style.id='luneaMotionBudgetV1Style';
+  style.textContent='body.modal-open>.app,body.modal-open>.app *{animation-play-state:paused!important}';
+  (document.head||document.documentElement).appendChild(style);
+})();
+(()=>{
+  /* LUNEA feature defer V1
+     Feature modules that the home screen does not use (Horary/Prashna,
+     Intimacy, Meihua, Lenormand) are inserted right after the home screen is
+     revealed instead of during boot. While held, an inert placeholder with the
+     same id and src stays in the document, so loaders that look for an existing
+     element or scan document.scripts do not insert the module twice. On release
+     the original element replaces the placeholder, in the original order, and
+     fires its own load/error events. */
+  const W=window,root=document.documentElement;
+  if(W.__LUNEA_FEATURE_DEFER_V1__)return;
+  W.__LUNEA_FEATURE_DEFER_V1__=true;
+  const DEFER=/\/(?:[^\/?#]*(?:horary|prashna|intimacy|meihua|lenormand)[^\/?#]*)\.js(?:[?#]|$)/i;
+  const N=Node.prototype,ap=N.appendChild,ib=N.insertBefore,rc=N.replaceChild;
+  const queue=[];let released=false;
+  const hold=n=>!released&&n&&n.nodeType===1&&n.tagName==='SCRIPT'&&!n.__luneaDeferHeld&&(n.src&&DEFER.test(n.src));
+  function park(parent,node,ref){
+    node.__luneaDeferHeld=true;
+    const ph=document.createElement('script');
+    ph.type='text/x-lunea-deferred';
+    if(node.id)ph.id=node.id;
+    ph.setAttribute('src',node.getAttribute('src')||node.src);
+    ph.dataset.luneaDeferred='1';
+    queue.push([ph,node]);
+    return ref?ib.call(parent,ph,ref):ap.call(parent,ph);
+  }
+  N.appendChild=function(n){return hold(n)?(park(this,n,null),n):ap.call(this,n)};
+  N.insertBefore=function(n,r){return hold(n)?(park(this,n,r),n):ib.call(this,n,r)};
+  function release(){
+    if(released)return;released=true;
+    for(const [ph,node] of queue){
+      try{
+        if(ph.parentNode){ph.removeAttribute('id');rc.call(ph.parentNode,node,ph)}
+        else ap.call(document.head||root,node);
+      }catch{try{ap.call(document.head||root,node)}catch{}}
+    }
+    W.__LUNEA_FEATURE_DEFER_RELEASED__=queue.length;
+  }
+  W.__LUNEA_FEATURE_DEFER_RELEASE__=release;
+  const ready=()=>root.classList.contains('lunea-ui-ready');
+  const mo=new MutationObserver(()=>{if(ready()){mo.disconnect();requestAnimationFrame(release)}});
+  mo.observe(root,{attributes:true,attributeFilter:['class']});
+  // A user who reaches a feature before reveal, or a reveal that never comes, must not wait.
+  setTimeout(release,9000);
+  document.addEventListener('pointerdown',()=>{if(!released&&ready())release()},{capture:true,once:true});
+})();
+</script>
 <script id="luneaBootGateV29">
 (()=>{
   const root=document.documentElement;
