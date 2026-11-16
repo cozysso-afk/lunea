@@ -18,6 +18,22 @@
   const DEFAULT_MODEL = 'gemini-3.8-flash';
   const $ = id => document.getElementById(id);
 
+  const CATALOG_TTL_MS = 3 * 24 * 60 * 60 * 1000;
+  const CATALOG_AS_OF = '2026-11';
+  // Current Gemini API text lineup (ai.google.dev/gemini-api/docs/models, 2026-11).
+  // Shown before the key's own catalog is loaded; the live models.list result always wins.
+  const CURATED_MODELS = [
+    { id:'gemini-3.8-flash', displayName:'Gemini 3.8 Flash', note:'추천 · LUNEA 기본' },
+    { id:'gemini-4-argon', displayName:'Gemini 4 Argon', note:'최상위 추론 · 느리고 비쌈' },
+    { id:'gemini-3.7-flash', displayName:'Gemini 3.7 Flash', note:'' },
+    { id:'gemini-3.6-flash', displayName:'Gemini 3.6 Flash', note:'' },
+    { id:'gemini-3.1-pro-preview', displayName:'Gemini 3.1 Pro Preview', note:'Preview' },
+    { id:'gemini-3.5-flash-lite', displayName:'Gemini 3.5 Flash-Lite', note:'경량 · 저비용' },
+    { id:'gemini-3.1-flash-lite', displayName:'Gemini 3.1 Flash-Lite', note:'경량' }
+  ];
+  // Older generations: restricted to projects that used them before (new keys get 404).
+  const LEGACY_RE = /^gemini-(?:1\.|2\.0|2\.5)/i;
+
   const normalizeId = value => String(value || '').replace(/^models\//, '').trim();
   const currentModel = () => normalizeId(localStorage.getItem(MODEL_KEY)) || DEFAULT_MODEL;
 
@@ -25,7 +41,7 @@
     const id = normalizeId(model?.name || '');
     const methods = Array.isArray(model?.supportedGenerationMethods) ? model.supportedGenerationMethods : [];
     if (!id || !methods.includes('generateContent') || !/^gemini-/i.test(id)) return false;
-    return !/(embedding|imagen|veo|tts|live|native-audio|robotics|computer-use|image-generation)/i.test(id);
+    return !/(embedding|imagen|veo|tts|live|native-audio|robotics|computer-use|image|nano-banana|omni|transcribe|translate|aqa|deep-research|antigravity|lyria)/i.test(id);
   }
 
   function modelScore(model) {
@@ -34,7 +50,9 @@
     const major = Number(version?.[1] || 0);
     const minor = Number(version?.[2] || 0);
     let score = major * 10000 + minor * 100;
-    if (/pro/i.test(id)) score += 70;
+    if (LEGACY_RE.test(id)) score -= 100000;
+    if (/argon|ultra/i.test(id)) score += 90;
+    else if (/pro/i.test(id)) score += 70;
     else if (/flash/i.test(id)) score += 45;
     if (/lite/i.test(id)) score -= 20;
     if (/preview/i.test(id)) score -= 4;
@@ -44,22 +62,31 @@
   }
 
   function qualityLabel(id) {
+    if (LEGACY_RE.test(id)) return '구버전 · 신규 키 사용 불가';
+    if (/argon|ultra/i.test(id)) return '최상위 추론';
     if (/pro/i.test(id)) return '상위 품질';
     if (/flash.*lite|lite.*flash/i.test(id)) return '경량';
     if (/flash/i.test(id)) return '빠른 응답';
     return 'Gemini';
   }
 
-  function cachedCatalog() {
+  function cachedCatalogEntry() {
     try {
       const parsed = JSON.parse(localStorage.getItem(CATALOG_KEY) || 'null');
-      return Array.isArray(parsed?.models) ? parsed.models : [];
-    } catch { return []; }
+      return parsed && Array.isArray(parsed.models) ? parsed : null;
+    } catch { return null; }
+  }
+  function cachedCatalog() { return cachedCatalogEntry()?.models || []; }
+  function catalogIsStale() {
+    const entry = cachedCatalogEntry();
+    if (!entry || !entry.models.length) return true;
+    if (entry.asOf !== CATALOG_AS_OF) return true;
+    return !(Number(entry.at) > Date.now() - CATALOG_TTL_MS);
   }
 
   function saveCatalog(models) {
     try {
-      localStorage.setItem(CATALOG_KEY, JSON.stringify({ at: Date.now(), models }));
+      localStorage.setItem(CATALOG_KEY, JSON.stringify({ at: Date.now(), asOf: CATALOG_AS_OF, models }));
     } catch {}
   }
 
@@ -116,7 +143,8 @@
     const blocked = new Set([failed, ...retiredModels()]);
     let list = cachedCatalog();
     if (!list.length && key) { try { list = await fetchCatalog(key); } catch {} }
-    const usable = list.map(m => m.id).filter(id => id && !blocked.has(id) && !/preview|exp|experimental|lite/i.test(id));
+    if (!list.length) list = CURATED_MODELS;
+    const usable = list.map(m => m.id).filter(id => id && !blocked.has(id) && !LEGACY_RE.test(id) && !/preview|exp|experimental|lite|argon|ultra/i.test(id));
     const sameTier = usable.filter(id => (/pro/i.test(failed) ? /pro/i : /flash/i).test(id));
     const pick = [...(sameTier.length ? sameTier : usable)].sort((a, b) => modelScore(b) - modelScore(a))[0];
     if (pick) return pick;
@@ -149,6 +177,8 @@
 
   window.LuneaGemini = Object.assign(window.LuneaGemini || {}, {
     defaultModel: DEFAULT_MODEL,
+    curatedModels: CURATED_MODELS.map(m => ({ ...m })),
+    isLegacy: id => LEGACY_RE.test(normalizeId(id)),
     getModel: currentModel,
     setModel(id) {
       const model = normalizeId(id);
@@ -186,7 +216,7 @@
     controls.className = 'lunea-model-controls';
     controls.innerHTML = `
       <button type="button" class="mini" id="luneaLoadGeminiModels">모델 목록 새로고침</button>
-      <button type="button" class="mini" id="luneaRecommendGeminiModel">상위 Pro 선택</button>
+      <button type="button" class="mini" id="luneaRecommendGeminiModel">추천 모델 선택</button>
     `;
 
     const status = document.createElement('p');
@@ -214,9 +244,12 @@
 
     function render(list, preferred) {
       models = Array.isArray(list) ? list : [];
+      const live = models.length > 0;
       const selected = normalizeId(preferred || input.value || currentModel());
-      const ids = new Set(models.map(model => model.id));
-      const rows = [...models];
+      const notes = new Map(CURATED_MODELS.map(m => [m.id, m.note]));
+      const base = live ? models : CURATED_MODELS;
+      const ids = new Set(base.map(model => model.id));
+      const rows = [...base].sort((a, b) => (a.id === DEFAULT_MODEL ? -1 : b.id === DEFAULT_MODEL ? 1 : modelScore(b.id) - modelScore(a.id)));
       if (selected && !ids.has(selected)) rows.unshift({ id:selected, displayName:selected, inputTokenLimit:0, outputTokenLimit:0 });
       if (!rows.length) rows.push({ id:selected || DEFAULT_MODEL, displayName:selected || DEFAULT_MODEL });
 
@@ -225,14 +258,16 @@
         const option = document.createElement('option');
         option.value = model.id;
         const preview = /preview|exp|experimental/i.test(model.id) ? ' · Preview' : '';
-        option.textContent = `${model.displayName || model.id} · ${qualityLabel(model.id)}${preview}`;
+        const note = notes.get(model.id);
+        option.textContent = `${model.displayName || model.id} · ${note || qualityLabel(model.id)}${note ? '' : preview}`;
         select.appendChild(option);
       });
       select.value = rows.some(row => row.id === selected) ? selected : rows[0].id;
       input.value = select.value;
-      status.textContent = models.length
-        ? `${models.length}개 generateContent 모델 확인 · 선택값은 타로/AI 배열/호라리/시기 해석에 공통 적용돼. 무료/유료 여부는 Google 프로젝트의 현재 요금 정책에 따라 달라.`
-        : '현재 저장된 모델을 표시 중이야. API Key 입력 후 목록을 불러오면 이 키에서 사용 가능한 모델을 확인할 수 있어.';
+      const legacyNote = LEGACY_RE.test(select.value) ? ' ⚠ 선택한 모델은 구버전이라 새 API 키에서는 404가 나. Gemini 3.8 Flash를 권장해.' : '';
+      status.textContent = (live
+        ? `이 키에서 쓸 수 있는 ${models.length}개 텍스트 모델 · 선택값은 타로/AI 배열/호라리/시기 해석에 공통 적용돼. 무료/유료 여부는 Google 프로젝트 요금 정책에 따라 달라.`
+        : `현행 Gemini 텍스트 모델(${CATALOG_AS_OF} 기준)을 표시 중이야. API Key 입력 후 새로고침하면 이 키에서 실제로 쓸 수 있는 목록으로 바뀌어.`) + legacyNote;
     }
 
     async function loadModels({ quiet=false } = {}) {
@@ -256,13 +291,16 @@
       }
     }
 
-    select.addEventListener('change', () => { input.value = normalizeId(select.value); });
+    select.addEventListener('change', () => { input.value = normalizeId(select.value); render(models, input.value); });
     $('luneaLoadGeminiModels').addEventListener('click', () => loadModels());
     $('luneaRecommendGeminiModel').addEventListener('click', async () => {
       if (!models.length) await loadModels();
-      if (!models.length) return;
-      const pro = models.filter(model => /pro/i.test(model.id)).sort((a,b) => modelScore(b.id)-modelScore(a.id))[0];
-      const best = pro || [...models].sort((a,b) => modelScore(b.id)-modelScore(a.id))[0];
+      const pool = models.length ? models : CURATED_MODELS;
+      const ids = new Set(pool.map(model => model.id));
+      const best = ids.has(DEFAULT_MODEL)
+        ? pool.find(model => model.id === DEFAULT_MODEL)
+        : [...pool].filter(model => !LEGACY_RE.test(model.id) && /flash/i.test(model.id) && !/lite|preview|exp/i.test(model.id)).sort((a,b) => modelScore(b.id)-modelScore(a.id))[0]
+          || [...pool].sort((a,b) => modelScore(b.id)-modelScore(a.id))[0];
       if (!best) return;
       select.value = best.id;
       input.value = best.id;
@@ -279,7 +317,7 @@
       setTimeout(() => {
         render(cachedCatalog(), currentModel());
         const key = String(apiKeyInput.value || localStorage.getItem(API_KEY) || '').trim();
-        if (key && !cachedCatalog().length) loadModels({ quiet:true });
+        if (key && catalogIsStale()) loadModels({ quiet:true });
       }, 30);
     });
 
