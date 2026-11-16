@@ -32,6 +32,12 @@ jobs:
           - system-support-lifecycle-v1
           - tarot-local-faces
           - timing-oracle-session-artwork
+        images: [original]
+        include:
+          - test: oracle-ui-regressions
+            images: downscaled
+          - test: balanced-interpretation
+            images: downscaled
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,6 +47,24 @@ jobs:
         run: |
           npm install --no-save --no-audit --no-fund playwright@1.55.0
           npx playwright install --with-deps webkit chromium
+      - name: Experiment - downscale images (long side 1500)
+        if: matrix.images == 'downscaled'
+        run: |
+          python3 -m pip install --quiet pillow
+          python3 - <<'PY'
+          import glob,os
+          from PIL import Image
+          n=0
+          for p in glob.glob('**/*',recursive=True):
+            if not p.lower().endswith(('.png','.jpg','.jpeg','.webp')) or not os.path.isfile(p): continue
+            try:
+              im=Image.open(p)
+              if max(im.size)<=1500: continue
+              r=1500/max(im.size); im=im.resize((round(im.size[0]*r),round(im.size[1]*r)),Image.LANCZOS)
+              im.save(p); n+=1
+            except Exception as e: print('skip',p,e)
+          print('downscaled',n)
+          PY
       - name: Start local server
         run: |
           python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
