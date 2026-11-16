@@ -106,6 +106,20 @@ for (const [tag, flow] of [
     await step('intimacy-daily', 'pageshow', () => page.evaluate(() => window.dispatchEvent(new Event('pageshow'))));
     await page.waitForTimeout(4000);
   }],
+  ['sectors-reveal', async page => {
+    for (const cat of ['GENERAL', 'LOVE', 'CAREER', 'STOCK']) {
+      await step('sectors-reveal', `draw ${cat}`, () => draw(page, cat, '현재 이 선택을 어떻게 봐야 할까?'));
+      await step('sectors-reveal', `flipAll ${cat}`, async () => {
+        await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
+        await page.locator('#flipAll').dispatchEvent('click');
+        await page.waitForFunction(() => document.getElementById('flipAll')?.getAttribute('aria-busy') === 'false', null, {timeout:30000});
+      });
+      await step('sectors-reveal', `close ${cat}`, async () => {
+        await page.waitForFunction(() => !document.getElementById('flipAll').disabled);
+        await page.evaluate(() => document.querySelector('[data-close="spread"]').click());
+      });
+    }
+  }],
   ['sectors', async page => {
     for (const cat of ['GENERAL', 'LOVE', 'CAREER', 'STOCK']) {
       await step('sectors', `draw ${cat}`, () => draw(page, cat, `${cat} 질문`));
