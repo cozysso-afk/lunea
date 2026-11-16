@@ -42,6 +42,11 @@ async function setup(tag) {
     if (u.origin === new URL(url).origin) return route.continue();
     return route.fulfill({status:200, contentType:u.pathname.endsWith('.css') ? 'text/css' : 'application/json', body:u.hostname.includes('fonts') ? '' : '{}'});
   });
+  if (process.env.LUNEA_DIAG_KILL) await page.addInitScript(kill => {
+    const css = {anim:'*,*::before,*::after{animation:none!important}', filter:'*,*::before,*::after{filter:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}', trans:'*,*::before,*::after{transition:none!important}'}[kill];
+    const add = () => { const st = document.createElement('style'); st.textContent = css; (document.head || document.documentElement).appendChild(st); new MutationObserver(() => { if (st.parentNode !== document.head && document.head) document.head.appendChild(st); }).observe(document.documentElement, {childList:true}); };
+    if (document.documentElement) add(); else document.addEventListener('readystatechange', add, {once:true});
+  }, process.env.LUNEA_DIAG_KILL);
   if (process.env.LUNEA_DIAG_NO_CV === '1') await page.addInitScript(() => {
     const add = () => { const st = document.createElement('style'); st.textContent = '*,*::before,*::after{content-visibility:visible!important}'; (document.head || document.documentElement).appendChild(st); };
     if (document.documentElement) add(); else document.addEventListener('readystatechange', add, {once:true});

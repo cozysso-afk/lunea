@@ -18,53 +18,85 @@ jobs:
       matrix:
         include:
           - test: diag-webkit-crash
-            variant: 'original-0'
+            variant: 'none-0'
             block: ''
             images: 'original'
+            kill: ''
           - test: diag-webkit-crash
-            variant: 'downscaled-0'
-            block: ''
-            images: 'downscaled'
-          - test: diag-webkit-crash
-            variant: 'original-1'
+            variant: 'none-1'
             block: ''
             images: 'original'
+            kill: ''
           - test: diag-webkit-crash
-            variant: 'downscaled-1'
-            block: ''
-            images: 'downscaled'
-          - test: diag-webkit-crash
-            variant: 'original-2'
+            variant: 'none-2'
             block: ''
             images: 'original'
+            kill: ''
           - test: diag-webkit-crash
-            variant: 'downscaled-2'
-            block: ''
-            images: 'downscaled'
-          - test: diag-webkit-crash
-            variant: 'original-3'
+            variant: 'none-3'
             block: ''
             images: 'original'
+            kill: ''
           - test: diag-webkit-crash
-            variant: 'downscaled-3'
-            block: ''
-            images: 'downscaled'
-          - test: diag-webkit-crash
-            variant: 'original-4'
+            variant: 'anim-0'
             block: ''
             images: 'original'
+            kill: 'anim'
           - test: diag-webkit-crash
-            variant: 'downscaled-4'
-            block: ''
-            images: 'downscaled'
-          - test: diag-webkit-crash
-            variant: 'original-5'
+            variant: 'anim-1'
             block: ''
             images: 'original'
+            kill: 'anim'
           - test: diag-webkit-crash
-            variant: 'downscaled-5'
+            variant: 'anim-2'
             block: ''
-            images: 'downscaled'
+            images: 'original'
+            kill: 'anim'
+          - test: diag-webkit-crash
+            variant: 'anim-3'
+            block: ''
+            images: 'original'
+            kill: 'anim'
+          - test: diag-webkit-crash
+            variant: 'filter-0'
+            block: ''
+            images: 'original'
+            kill: 'filter'
+          - test: diag-webkit-crash
+            variant: 'filter-1'
+            block: ''
+            images: 'original'
+            kill: 'filter'
+          - test: diag-webkit-crash
+            variant: 'filter-2'
+            block: ''
+            images: 'original'
+            kill: 'filter'
+          - test: diag-webkit-crash
+            variant: 'filter-3'
+            block: ''
+            images: 'original'
+            kill: 'filter'
+          - test: diag-webkit-crash
+            variant: 'trans-0'
+            block: ''
+            images: 'original'
+            kill: 'trans'
+          - test: diag-webkit-crash
+            variant: 'trans-1'
+            block: ''
+            images: 'original'
+            kill: 'trans'
+          - test: diag-webkit-crash
+            variant: 'trans-2'
+            block: ''
+            images: 'original'
+            kill: 'trans'
+          - test: diag-webkit-crash
+            variant: 'trans-3'
+            block: ''
+            images: 'original'
+            kill: 'trans'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -101,4 +133,5 @@ jobs:
           LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
           LUNEA_DIAG_BLOCK: ${{ matrix.block }}
           LUNEA_DIAG_FLOW: sectors-reveal
+          LUNEA_DIAG_KILL: ${{ matrix.kill }}
         run: node tests/${{ matrix.test }}.e2e.mjs
