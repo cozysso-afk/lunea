@@ -1036,7 +1036,7 @@
   async function geminiCandidates(sem){
     const key=localStorage.getItem('LUNEA_API_KEY');
     if(!key)return[];
-    const model=localStorage.getItem('LUNEA_MODEL')||'gemini-2.5-flash';
+    const model=localStorage.getItem('LUNEA_MODEL')||'gemini-3.8-flash';
     const prompt=`너는 타로 해석자가 아니라 '질문을 카드 포지션으로 번역하는 스프레드 설계 엔진'이다.\n\n[원문]\n${sem.question}\n\n[앱의 구조 분석]\n- 핵심 의도: ${sem.kind}\n- 의도 태그: ${sem.intentTags.join(', ')||'general'}\n- 주제 도메인: ${sem.domains.join(', ')}\n- 관계 맥락: ${sem.relation}\n- 질문에 명시된 기간 창: ${sem.timeWindow?'있음':'없음'}\n- 사용자가 직접 나열한 세부 항목: ${sem.slots.join(' / ')||'없음'}\n- 탐지된 개념: ${sem.targets.map(x=>x.label).join(' / ')||'없음'}\n\n[절대 규칙]\n1) 관계 맥락보다 질문의 동사와 목적어를 우선한다. '헤어진 그'가 나와도 프사를 봤는지 묻는다면 재회 스프레드로 바꾸지 않는다.\n2) 사용자가 슬래시(/), 세미콜론 등으로 나열한 항목은 각 항목을 최소 1개의 독립 포지션으로 보존한다.\n3) 질문에 없는 재회·연락·미련·제3자·미래·조언을 임의로 추가하지 않는다.\n4) '현재 상황 / 숨겨진 변수 / 미래 결과 / 핵심 조언' 같은 범용 문구를 피한다. 각 포지션은 무엇을 판별하는지 구체적으로 쓴다.\n5) 2~9장. 단순 사실 확인은 3~4장, 복합 질문은 필요한 만큼만 쓴다.\n6) 같은 뜻을 말만 바꿔 반복하지 않는다.\n7) 후보 3개는 구조가 서로 달라야 한다. 제목만 바꾸고 포지션 의미가 같으면 안 된다.\n8) 관찰 여부(봤나/들었나/읽었나)는 증거-반증-판별을 포함하고, '봤다면 무슨 생각?'이 원문에 있을 때만 반응 카드를 추가한다.\n9) 추측/인식 질문은 사용자가 묻는 항목을 1:1로 배치하고, 왜 그렇게 추측하는지/어디서 틀릴 수 있는지 정도만 보정한다.\n10) 감정과 행동은 구분한다. 감정이 있다고 곧바로 연락/재회 포지션을 만들지 않는다.\n11) 시기 질문은 근거 없는 날짜 확정 대신 지연요인→전조→방아쇠→행동 단계로 설계한다.\n12) 건강은 진단/예후 대신 체감 상태·생활 부담·회복 자원·전문가 확인 필요 신호만 다룬다.\n13) 투자 질문은 가격 예언보다 판단 근거·편향·리스크·확인 조건을 다룬다.\n\n[최근 사용 배열 — 의미 중복 피하기]\n${recentSummary()}\n\n서로 다른 3개의 후보 스프레드를 JSON으로만 반환하라.`;
     const schema={type:'OBJECT',properties:{candidates:{type:'ARRAY',items:{type:'OBJECT',properties:{spreadTitle:{type:'STRING'},designRationale:{type:'STRING'},layoutType:{type:'STRING'},positions:{type:'ARRAY',items:{type:'STRING'}}},required:['spreadTitle','designRationale','layoutType','positions']}}},required:['candidates']};
     try{
@@ -1057,7 +1057,7 @@
 
   async function repairCandidate(sem,best,reasons){
     const key=localStorage.getItem('LUNEA_API_KEY');if(!key)return null;
-    const model=localStorage.getItem('LUNEA_MODEL')||'gemini-2.5-flash';
+    const model=localStorage.getItem('LUNEA_MODEL')||'gemini-3.8-flash';
     const prompt=`다음 타로 스프레드는 품질 검사에서 약점이 발견됐다. 원문 질문의 의도와 세부 항목을 보존하면서 딱 한 번 수정하라.\n\n원문: ${sem.question}\n의도: ${sem.kind}\n세부 항목: ${sem.slots.join(' / ')||'없음'}\n현재 후보: ${JSON.stringify(best)}\n문제점: ${reasons.join('; ')||'점수 부족'}\n\n2~9장, 중복 의미 금지, 범용 문구 금지, 질문에 없는 주제 추가 금지. JSON만 반환.`;
     const schema={type:'OBJECT',properties:{spreadTitle:{type:'STRING'},designRationale:{type:'STRING'},layoutType:{type:'STRING'},positions:{type:'ARRAY',items:{type:'STRING'}}},required:['spreadTitle','designRationale','layoutType','positions']};
     try{

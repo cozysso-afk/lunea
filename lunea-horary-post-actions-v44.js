@@ -188,7 +188,7 @@ ${prashna ? '### Horary ↔ Prashna 교차\n두 체계가 같은 방향인지 �
       return;
     }
     const key = localStorage.getItem('LUNEA_API_KEY');
-    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-3.8-flash';
     if (!key) {
       alert('LUNEA API 설정을 먼저 해줘.');
       return;

@@ -291,7 +291,7 @@
   }
   async function runAI() {
     if (!abState.A || !abState.B) return alert('먼저 A/B 시기 카드를 뽑아줘.');
-    const key=localStorage.getItem('LUNEA_API_KEY'), model=localStorage.getItem('LUNEA_MODEL')||'gemini-2.5-flash';
+    const key=localStorage.getItem('LUNEA_API_KEY'), model=localStorage.getItem('LUNEA_MODEL')||'gemini-3.8-flash';
     if(!key) return alert('LUNEA API 설정을 먼저 해줘.');
     const btn=$('luneaTimingABAIButton'),out=$('luneaTimingABAI');btn.disabled=true;btn.textContent='🔮 해석 중…';out.classList.add('show');out.textContent='A/B 시기 신호를 각각 읽는 중…';
     const prompt=`당신은 타로의 시기 질문을 과장 없이 읽는 숙련된 리더다.\n\n[질문]\n${abState.question}\n\n[A 시기 카드]\n${abState.A.label_ko} (${abState.A.label_en}) — ${abState.A.meaning}\n\n[B 시기 카드]\n${abState.B.label_ko} (${abState.B.label_en}) — ${abState.B.meaning}\n\n[규칙]\n- A와 B를 각각 독립적으로 읽은 뒤 마지막에만 비교한다.\n- 어느 한 사람을 선택하라는 결론으로 바꾸지 않는다.\n- 같은 카드나 비슷한 시기가 나왔으면 억지 차이를 만들지 않는다.\n- 메인 타로가 사건 가능성을 약하게 보면 시기 카드만으로 사건을 확정하지 않는다.\n- 연락·재회·행동 여부를 질문하지 않았다면 자동 확장하지 않는다.\n- 지연/불발 신호면 날짜를 억지로 만들지 않는다.\n\n[출력]\n1. A 시기 신호\n2. B 시기 신호\n3. 공통점/차이\n4. 불확실성`;

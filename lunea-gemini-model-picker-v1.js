@@ -15,7 +15,7 @@
   const MODEL_KEY = 'LUNEA_MODEL';
   const API_KEY = 'LUNEA_API_KEY';
   const CATALOG_KEY = 'LUNEA_GEMINI_MODEL_CATALOG_V1';
-  const DEFAULT_MODEL = 'gemini-2.5-flash';
+  const DEFAULT_MODEL = 'gemini-3.8-flash';
   const $ = id => document.getElementById(id);
 
   const normalizeId = value => String(value || '').replace(/^models\//, '').trim();
@@ -91,6 +91,60 @@
 
     saveCatalog(deduped);
     return deduped;
+  }
+
+  // Retired-model fallback: Google retires Gemini model IDs over time (e.g. gemini-2.5-flash
+  // now returns 404 "no longer available"). Every LUNEA generateContent call goes through
+  // window.fetch, so one wrapper here retries once with a live model and saves it.
+  const RETIRED_KEY = 'LUNEA_GEMINI_RETIRED_MODELS_V1';
+  const RETIRED_RE = /no longer available|is not found|not found for api version|not supported for generatecontent|has been deprecated|decommission/i;
+  const GEN_URL_RE = /^(https:\/\/generativelanguage\.googleapis\.com\/v1(?:beta|alpha)?\/models\/)([^:/?]+)(:(?:stream)?[Gg]enerateContent.*)$/;
+  const retiredModels = () => { try { return JSON.parse(localStorage.getItem(RETIRED_KEY) || '[]') || []; } catch { return []; } };
+  const markRetired = id => { try { const list = new Set(retiredModels()); list.add(id); localStorage.setItem(RETIRED_KEY, JSON.stringify([...list].slice(-20))); } catch {} };
+
+  function apiKeyFrom(url, init) {
+    try { const k = new URL(url).searchParams.get('key'); if (k) return k; } catch {}
+    try {
+      const h = init?.headers;
+      const v = h instanceof Headers ? h.get('x-goog-api-key') : (h && (h['x-goog-api-key'] || h['X-Goog-Api-Key']));
+      if (v) return v;
+    } catch {}
+    return localStorage.getItem(API_KEY) || '';
+  }
+
+  async function replacementFor(failed, key) {
+    const blocked = new Set([failed, ...retiredModels()]);
+    let list = cachedCatalog();
+    if (!list.length && key) { try { list = await fetchCatalog(key); } catch {} }
+    const usable = list.map(m => m.id).filter(id => id && !blocked.has(id) && !/preview|exp|experimental|lite/i.test(id));
+    const sameTier = usable.filter(id => (/pro/i.test(failed) ? /pro/i : /flash/i).test(id));
+    const pick = [...(sameTier.length ? sameTier : usable)].sort((a, b) => modelScore(b) - modelScore(a))[0];
+    if (pick) return pick;
+    return blocked.has(DEFAULT_MODEL) ? '' : DEFAULT_MODEL;
+  }
+
+  const nativeFetch = window.fetch ? window.fetch.bind(window) : null;
+  if (nativeFetch && !window.__LUNEA_GEMINI_RETIRED_FALLBACK__) {
+    window.__LUNEA_GEMINI_RETIRED_FALLBACK__ = true;
+    window.fetch = async function luneaGeminiFetch(input, init) {
+      const url = typeof input === 'string' ? input : (input instanceof URL ? input.href : '');
+      const match = url && url.match(GEN_URL_RE);
+      if (!match) return nativeFetch(input, init);
+      const res = await nativeFetch(input, init);
+      if (res.status !== 404 && res.status !== 400) return res;
+      let message = '';
+      try { message = String((await res.clone().json())?.error?.message || ''); } catch {}
+      if (!RETIRED_RE.test(message)) return res;
+      const failed = normalizeId(decodeURIComponent(match[2]));
+      markRetired(failed);
+      const next = await replacementFor(failed, apiKeyFrom(url, init));
+      if (!next || next === failed) return res;
+      const saved = normalizeId(localStorage.getItem(MODEL_KEY));
+      if (!saved || saved === failed) { try { localStorage.setItem(MODEL_KEY, next); } catch {} }
+      console.warn(`[LUNEA Gemini] ${failed} 사용 불가 → ${next}로 자동 전환`);
+      try { window.dispatchEvent(new CustomEvent('lunea:gemini-model-fallback', { detail: { from: failed, to: next } })); } catch {}
+      return nativeFetch(match[1] + encodeURIComponent(next) + match[3], init);
+    };
   }
 
   window.LuneaGemini = Object.assign(window.LuneaGemini || {}, {

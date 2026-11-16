@@ -105,7 +105,7 @@ test('Lenormand direct prompt compares real structural limits and keeps inferenc
   await runtime.runAI();
   assert.equal(requests.length, 1, 'the VM test must capture one mocked request rather than call an external LLM');
   const request = requests[0];
-  assert.equal(request.url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=test-key');
+  assert.equal(request.url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=test-key');
   assert.equal(request.options.method, 'POST');
   assert.equal(request.options.headers['Content-Type'], 'application/json');
   const body = JSON.parse(request.options.body);

@@ -90,7 +90,7 @@
   async function askPreflight(question, baseline, options = {}) {
     const key = localStorage.getItem('LUNEA_API_KEY');
     if (!key) return null;
-    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-2.5-flash';
+    const model = localStorage.getItem('LUNEA_MODEL') || 'gemini-3.8-flash';
     const avoid = Array.isArray(options.avoid) ? options.avoid.join(' / ') : '';
     const structural = isHardStructural(baseline);
 

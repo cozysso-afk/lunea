@@ -43,7 +43,7 @@ assert.match(preflight, /totalLearned/, 'AI preflight should carry cumulative le
 assert.match(preflight, /learnedText/, 'AI preflight must expose learned cases as classified guidance');
 assert.doesNotMatch(preflight, /learnedLongSpread|LEARNED LONG SPREAD V5/, 'learned layouts must not bypass classification by direct copy');
 assert.match(preflight, /QUESTION SEGMENT FALLBACK V6/, 'detailed questions need a no-extra-API segmentation fallback');
-assert.match(loader, /lunea-ai-spread-preflight-v2\.js\?v=106/, 'preflight cache must load structure-only learning guidance');
+assert.match(loader, /lunea-ai-spread-preflight-v2\.js\?v=107/, 'preflight cache must load structure-only learning guidance');
 assert.match(learning, /const MAX=1000/, 'local learning cap must be 1000');
 assert.match(cloud, /const MAX=1000/, 'cloud learning cap must match local 1000');
 assert.match(loader, /lunea-learning-cloud-sync-v1\.js\?v=104/, 'optional private cloud sync must remain loaded');
