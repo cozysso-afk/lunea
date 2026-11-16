@@ -52,9 +52,12 @@
   function questionSegments(question){
     const q=clean(question);
     if(!q)return[];
-    let prepared=q
+    // keep line breaks: users often list questions one per line
+    let prepared=String(question||'').normalize('NFKC').replace(/[ \t\u00a0]+/g,' ').trim()
       .replace(/\r?\n+/g,'\n')
-      .replace(/\s+(?:그리고|또한|추가로|마지막으로|그다음(?:으로)?|한편)\s+/g,'\n');
+      .replace(/\s+(?:그리고|또한|추가로|마지막으로|그다음(?:으로)?|한편)\s+/g,'\n')
+      .replace(/(?:^|\s)(?=\d{1,2}\s*[.)]\s+\S)/g,'\n')
+      .replace(/([?？])(?=\S)/g,'$1\n');
     let chunks=prepared.split(/\n+|[?？!！;；]+/).map(clean).filter(Boolean);
     const expanded=[];
     for(const chunk of chunks){
@@ -66,7 +69,7 @@
     }else chunks=expanded;
     const out=[],seen=new Set();
     for(let item of chunks){
-      item=clean(item.replace(/^[-*•·\s]+/,'').replace(/^\d{1,2}\s*[.)]\s*/,''));
+      item=clean(item.replace(/^[-*•·\s]+/,'').replace(/^\d{1,2}\s*[.)]\s+/,'').replace(/^(?:그리고|또한|추가로|마지막으로|그다음(?:으로)?|그럼|근데|그런데)\s*/,''));
       item=item.replace(/[?？]+$/,'').trim();
       if(item.length<4)continue;
       const key=item.toLowerCase().replace(/[^0-9a-z가-힣]+/g,'');
@@ -148,7 +151,9 @@
     const cases=caseContext(question);
     const structural=isStructural(baseline);
     const avoid=Array.isArray(options.avoid)?options.avoid.join(' / '):'';
-    const prompt=`너는 LUNEA의 타로 해석자가 아니라 '질문 분류기 + 스프레드 편집장'이다.\n\n[질문 원문 — 문장을 예쁘게 고치는 것이 목적이 아니다. 의미와 요구축만 정확히 이해할 것]\n${question}\n\n[현재 LUNEA 후보]\n${JSON.stringify(safeBaseline(baseline),null,2)}\n\n[이 질문과 가까운 LUNEA 내부 사례집]\n${cases.text}\n\n[사용자가 과거에 확정한 학습 사례 — 복사 금지]\n${cases.learnedText}\n\n사례는 정답 템플릿이 아니다. 먼저 현재 질문을 독립적으로 분류하고, 과거 사례에서는 현재 질문과 실제로 겹치는 '대상 구조 / 필요한 축 / 대칭 방식 / 복잡도'만 취사선택한다. 과거 포지션 문구나 카드 수를 통째로 따라 하지 않는다.\n\n[판정 순서]\n1. 사건 단계: 아직 기회 전 / 이미 예정 / 이미 발생 후 / 현재 진행 중을 먼저 구분한다.\n2. 대상 구조: 한 사람 / 두 사람 / 대상 수 미정 / 선택지 / 한 사람에 대한 여러 시나리오를 구분한다.\n3. 질문 기능: 사실·관찰 / 인식 / 감정 / 행동 / 원인 / 시기 / 결과 / 조언 / 비교 / 선택 / 복합을 구분한다.\n4. 사용자가 직접 요구한 정보축을 requestedAxes에 빠짐없이 적는다.\n5. 현재 후보가 그 구조를 정확히 덮으면 keepBaseline=true. 아니면 false로 하고 더 좋은 배열을 작성한다.\n\n[강제 규칙]\n- 오타, 반말, 줄임말, 문장 파편을 허용한다. 문법이 나빠도 핵심 의도를 버리지 않는다.\n- '각각'만으로 두 사람이라 판정하지 않는다.\n- A라는 한 사람 + 지금/몇 시간 뒤/내일/더 늦게 = 한 사람에 대한 시간 시나리오 비교다.\n- 답장 길게/짧게/이모티콘, 카톡/DM/전화처럼 방식이 여러 개여도 사람이 한 명이면 다중 인물이 아니다.\n- A/B 두 사람이 명시된 비교는 선택을 요구하지 않는 한 '누가 더 낫나'로 바꾸지 않는다. 동일 축 대칭을 지킨다.\n- 감정, 생각, 행동 의도, 실제 행동은 서로 다른 축이다.\n- '봤나/읽었나/들었나/그 계정이 그 사람인가' 같은 사실 불확실 질문은 지지 신호와 반대 신호를 모두 둔다.\n- 사용자가 직접 나열한 항목은 최소 한 포지션씩 보존한다.\n- 질문에 없는 재회, 제3자, 연락, 조언, 운명, 미래를 자동 추가하지 않는다.\n- '현재 상황 / 숨은 변수 / 핵심 조언 / 미래 결과' 같은 범용 자리를 원문 요구축 대신 쓰지 않는다.\n- 시기 질문은 날짜를 창작하지 않는다. 사용자가 준 기간·시나리오는 그대로 보존한다.\n- 사건이 이미 끝났다면 사전 조언 배열로 되돌리지 않는다. 아직 일정도 없다면 사후 평가 배열을 쓰지 않는다.\n- 건강은 진단·예후가 아니라 체감 부담, 생활 리듬, 회복 자원, 객관적 확인 기준만 다룬다.\n- 투자 질문은 가격 예언보다 근거·반증·리스크·판단 기준을 다룬다.\n- 과거 학습 배열은 '정답 복사본'이 아니다. 현재 질문에 필요한 축만 선택하고 불필요한 축은 버린다.\n- 과거 학습의 질문 원문·포지션 원문·배열명·카드 수는 현재 배열 설계 근거로 사용하지 않는다. 카드 수는 오직 현재 질문의 requestedAxes와 구조 복잡도로 결정한다.\n- 질문이 길고 여러 요구를 포함하면 먼저 의미 단위로 쪼개 requestedAxes를 만든 뒤 포지션에 배치한다. 명시된 요구를 카드 수 제한 때문에 임의 삭제하지 않는다.\n- 기본은 2~12장. 다만 현재 질문 자체에 서로 다른 명시 요구축이 13개 이상 분명한 경우에만 최대 20장까지 허용한다. 과거에 15장/20장을 썼다는 이유만으로 긴 배열을 재사용하지 않는다.\n${structural?`- 현재 후보는 LUNEA 구조 강제 결과다. 대상 수/대칭 topology가 맞으면 카드 수를 바꾸지 말고 같은 수의 더 정확한 포지션으로 교정한다.`:''}\n${avoid?`\n[이번 재생성에서 피할 직전 포지션]\n${avoid}\n말만 바꾼 반복 배열을 만들지 않는다.`:''}\n\n[포지션 문구 규칙]
+    const prompt=`너는 LUNEA의 타로 해석자가 아니라 '질문 분류기 + 스프레드 편집장'이다.\n\n[질문 원문 — 문장을 예쁘게 고치는 것이 목적이 아니다. 의미와 요구축만 정확히 이해할 것]\n${question}\n\n[현재 LUNEA 후보]\n${JSON.stringify(safeBaseline(baseline),null,2)}\n\n[이 질문과 가까운 LUNEA 내부 사례집]\n${cases.text}\n\n[사용자가 과거에 확정한 학습 사례 — 복사 금지]\n${cases.learnedText}\n\n사례는 정답 템플릿이 아니다. 먼저 현재 질문을 독립적으로 분류하고, 과거 사례에서는 현재 질문과 실제로 겹치는 '대상 구조 / 필요한 축 / 대칭 방식 / 복잡도'만 취사선택한다. 과거 포지션 문구나 카드 수를 통째로 따라 하지 않는다.\n\n[판정 순서]\n1. 사건 단계: 아직 기회 전 / 이미 예정 / 이미 발생 후 / 현재 진행 중을 먼저 구분한다.\n2. 대상 구조: 한 사람 / 두 사람 / 대상 수 미정 / 선택지 / 한 사람에 대한 여러 시나리오를 구분한다.\n3. 질문 기능: 사실·관찰 / 인식 / 감정 / 행동 / 원인 / 시기 / 결과 / 조언 / 비교 / 선택 / 복합을 구분한다.\n4. 사용자가 직접 요구한 정보축을 requestedAxes에 빠짐없이 적는다.\n5. 현재 후보가 그 구조를 정확히 덮으면 keepBaseline=true. 아니면 false로 하고 더 좋은 배열을 작성한다.\n\n[강제 규칙]\n- 오타, 반말, 줄임말, 문장 파편을 허용한다. 문법이 나빠도 핵심 의도를 버리지 않는다.\n- '각각'만으로 두 사람이라 판정하지 않는다.\n- A라는 한 사람 + 지금/몇 시간 뒤/내일/더 늦게 = 한 사람에 대한 시간 시나리오 비교다.\n- 답장 길게/짧게/이모티콘, 카톡/DM/전화처럼 방식이 여러 개여도 사람이 한 명이면 다중 인물이 아니다.\n- A/B 두 사람이 명시된 비교는 선택을 요구하지 않는 한 '누가 더 낫나'로 바꾸지 않는다. 동일 축 대칭을 지킨다.\n- 감정, 생각, 행동 의도, 실제 행동은 서로 다른 축이다.
+- 주어 없이 '~할까/보낼까/신청할까/말할까'로 끝나는 질문은 기본적으로 사용자 본인('나')의 행동 결정이다. 상대가 할지를 묻는 것으로 바꾸지 않는다.
+- 번호(1. 2. 3.)나 줄바꿈으로 나열된 질문은 항목마다 최소 한 포지션을 두고 순서를 지킨다.\n- '봤나/읽었나/들었나/그 계정이 그 사람인가' 같은 사실 불확실 질문은 지지 신호와 반대 신호를 모두 둔다.\n- 사용자가 직접 나열한 항목은 최소 한 포지션씩 보존한다.\n- 질문에 없는 재회, 제3자, 연락, 조언, 운명, 미래를 자동 추가하지 않는다.\n- '현재 상황 / 숨은 변수 / 핵심 조언 / 미래 결과' 같은 범용 자리를 원문 요구축 대신 쓰지 않는다.\n- 시기 질문은 날짜를 창작하지 않는다. 사용자가 준 기간·시나리오는 그대로 보존한다.\n- 사건이 이미 끝났다면 사전 조언 배열로 되돌리지 않는다. 아직 일정도 없다면 사후 평가 배열을 쓰지 않는다.\n- 건강은 진단·예후가 아니라 체감 부담, 생활 리듬, 회복 자원, 객관적 확인 기준만 다룬다.\n- 투자 질문은 가격 예언보다 근거·반증·리스크·판단 기준을 다룬다.\n- 과거 학습 배열은 '정답 복사본'이 아니다. 현재 질문에 필요한 축만 선택하고 불필요한 축은 버린다.\n- 과거 학습의 질문 원문·포지션 원문·배열명·카드 수는 현재 배열 설계 근거로 사용하지 않는다. 카드 수는 오직 현재 질문의 requestedAxes와 구조 복잡도로 결정한다.\n- 질문이 길고 여러 요구를 포함하면 먼저 의미 단위로 쪼개 requestedAxes를 만든 뒤 포지션에 배치한다. 명시된 요구를 카드 수 제한 때문에 임의 삭제하지 않는다.\n- 기본은 2~12장. 다만 현재 질문 자체에 서로 다른 명시 요구축이 13개 이상 분명한 경우에만 최대 20장까지 허용한다. 과거에 15장/20장을 썼다는 이유만으로 긴 배열을 재사용하지 않는다.\n${structural?`- 현재 후보는 LUNEA 구조 강제 결과다. 대상 수와 대칭 접두(예: 'A ·', 'B ·')는 그대로 유지한다. 다만 후보의 축이 질문에 없는 내용(과거 관계, 이별 이유 등)이거나 지나치게 많으면, 카드 수를 질문의 requestedAxes에 맞게 줄이거나 바꿔도 된다.`:''}\n${avoid?`\n[이번 재생성에서 피할 직전 포지션]\n${avoid}\n말만 바꾼 반복 배열을 만들지 않는다.`:''}\n\n[포지션 문구 규칙]
 - 포지션 하나는 카드 위에 붙는 이름표다. 한 가지 축만 담은 짧은 명사구로, 보통 10~28자 안에서 쓴다.
 - 사용자는 '나', 상대는 '상대'(또는 사용자가 쓴 호칭·이름)로 쓴다. '질문자'라는 말은 쓰지 않는다.
 - 'A · 속마음', '오늘 연락 · 상대 반응'처럼 비교·대칭 배열은 같은 접두와 같은 축 이름을 반복해 한눈에 대칭이 보이게 한다.
@@ -185,6 +190,20 @@
     }
   }
 
+  function targetPrefixes(positions){
+    const set=new Set();
+    for(const x of plainPositions(positions)){
+      const m=x.match(/^([^·:]{1,12}?)\s*[·:]\s*/);
+      if(m&&!/^(?:축|선택|기준|공통|종합|결론)/.test(m[1].trim()))set.add(m[1].trim());
+    }
+    return [...set];
+  }
+  function keepsTargets(basePositions,aiPositions){
+    const targets=targetPrefixes(basePositions);
+    if(targets.length<2)return true;
+    const ai=plainPositions(aiPositions);
+    return targets.every(t=>ai.some(x=>x.startsWith(t)||x.includes(`${t} ·`)));
+  }
   function readerVoice(text){
     return String(text||'')
       .replace(/질문자(?:님)?(에게|한테)/g,'나$1').replace(/질문자(?:님)?가/g,'내가').replace(/질문자(?:님)?는/g,'나는')
@@ -200,7 +219,9 @@
     let keep=!!ai.keepBaseline;
     if(!bp.length)keep=false;
     if(!ap.length)keep=true;
-    if(structural&&ap.length&&ap.length!==bp.length)keep=true;
+    // Structural (multi-target) candidates: the AI may change the card count, but it must keep
+    // every target the router found (e.g. "A ·" / "B ·" prefixes). Otherwise fall back to baseline.
+    if(structural&&ap.length&&ap.length!==bp.length&&!keepsTargets(bp,ap))keep=true;
     const positions=keep?bp:ap;
     const out={
       ...(baseline||{}),
