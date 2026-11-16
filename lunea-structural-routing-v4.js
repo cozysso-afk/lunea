@@ -57,7 +57,7 @@
     document.write('<script src="./lunea-user-spread-learning-v1.js?v=109"><\/script>');
     document.write('<script src="./lunea-learning-cloud-sync-v1.js?v=104"><\/script>');
     document.write('<script src="./lunea-ai-spread-preflight-v2.js?v=106"><\/script>');
-    document.write('<script src="./lunea-reading-flow-v5.js?v=501"><\/script>');
+    document.write('<script src="./lunea-reading-flow-v5.js?v=502"><\/script>');
     document.write('<script src="./lunea-transit-range-v1.js?v=e8b4ecb6e4f3"><\/script>');
     document.write('<script src="./lunea-transit-long-run-v1.js?v=e8b4ecb6e4f3"><\/script>');
     document.write('<script src="./lunea-astro-job-queue-v1.js?v=e8b4ecb6e4f3"><\/script>');
@@ -127,7 +127,7 @@
     './lunea-user-spread-learning-v1.js?v=109',
     './lunea-learning-cloud-sync-v1.js?v=104',
     './lunea-ai-spread-preflight-v2.js?v=106',
-    './lunea-reading-flow-v5.js?v=501',
+    './lunea-reading-flow-v5.js?v=502',
     './lunea-transit-range-v1.js?v=e8b4ecb6e4f3',
     './lunea-transit-long-run-v1.js?v=e8b4ecb6e4f3',
     './lunea-astro-job-queue-v1.js?v=e8b4ecb6e4f3',

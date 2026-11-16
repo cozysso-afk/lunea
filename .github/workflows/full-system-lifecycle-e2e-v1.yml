@@ -25,7 +25,7 @@ permissions:
 
 jobs:
   support-systems-webkit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -64,7 +64,7 @@ jobs:
           - lenormand-v1.e2e.mjs
           - meihua-v1.e2e.mjs
           - intimacy-oracle-late-runtime.e2e.mjs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
