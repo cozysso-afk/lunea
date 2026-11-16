@@ -39,7 +39,7 @@
     document.write('<script src="./lunea-luminous-layout-v2.js?v=202"><\/script>');
     document.write('<script src="./lunea-luminous-polish-v3.js?v=301"><\/script>');
     document.write('<script src="./lunea-top-spacing-v4.js?v=401"><\/script>');
-    document.write('<script src="./lunea-gemini-model-picker-v1.js?v=102"><\/script>');
+    document.write('<script src="./lunea-gemini-model-picker-v1.js?v=103"><\/script>');
     document.write('<script src="./lunea-structural-routing-v4-base.js?v=412"><\/script>');
     document.write('<script src="./lunea-manual-structure-v1.js?v=105"><\/script>');
     document.write('<script src="./lunea-manual-everywhere-v1.js?v=103"><\/script>');
@@ -109,7 +109,7 @@
     './lunea-luminous-layout-v2.js?v=202',
     './lunea-luminous-polish-v3.js?v=301',
     './lunea-top-spacing-v4.js?v=401',
-    './lunea-gemini-model-picker-v1.js?v=102',
+    './lunea-gemini-model-picker-v1.js?v=103',
     './lunea-structural-routing-v4-base.js?v=412',
     './lunea-manual-structure-v1.js?v=105',
     './lunea-manual-everywhere-v1.js?v=103',
