@@ -22,56 +22,37 @@ jobs:
             variant: 'baseline'
             block: ''
             nocv: '0'
+            patch: ''
           - test: diag-webkit-crash
             images: 'original'
-            variant: 'block-12-again'
-            block: 'astro-return-v1.js,lunea-manual-structure-v1.js,lunea-reading-flow-v5.js,lunea-category-art-v10.js,lunea-daily-celestial-v22.js,lunea-transit-request-v1.js,lunea-horary-mobile-stability-v42.js,lunea-thai-archive-timing-isolation-v27.js,lunea-horary-interpretation-bridge-v47.js'
+            variant: 'nohas'
+            block: ''
             nocv: '0'
+            patch: 'nohas'
           - test: diag-webkit-crash
             images: 'original'
-            variant: 'only-astro-return-v1'
-            block: 'astro-return-v1.js'
+            variant: 'noobs'
+            block: ''
             nocv: '0'
+            patch: 'noobs'
           - test: diag-webkit-crash
             images: 'original'
-            variant: 'only-lunea-manual-structure-v1'
-            block: 'lunea-manual-structure-v1.js'
+            variant: 'noflipped'
+            block: ''
             nocv: '0'
+            patch: 'noflipped'
           - test: diag-webkit-crash
             images: 'original'
-            variant: 'only-lunea-reading-flow-v5'
-            block: 'lunea-reading-flow-v5.js'
+            variant: 'nohas-2'
+            block: ''
             nocv: '0'
+            patch: 'nohas'
           - test: diag-webkit-crash
             images: 'original'
-            variant: 'only-lunea-category-art-v10'
-            block: 'lunea-category-art-v10.js'
+            variant: 'noobs-2'
+            block: ''
             nocv: '0'
-          - test: diag-webkit-crash
-            images: 'original'
-            variant: 'only-lunea-daily-celestial-v22'
-            block: 'lunea-daily-celestial-v22.js'
-            nocv: '0'
-          - test: diag-webkit-crash
-            images: 'original'
-            variant: 'only-lunea-transit-request-v1'
-            block: 'lunea-transit-request-v1.js'
-            nocv: '0'
-          - test: diag-webkit-crash
-            images: 'original'
-            variant: 'only-lunea-horary-mobile-stability-v42'
-            block: 'lunea-horary-mobile-stability-v42.js'
-            nocv: '0'
-          - test: diag-webkit-crash
-            images: 'original'
-            variant: 'only-lunea-thai-archive-timing-isolation-v27'
-            block: 'lunea-thai-archive-timing-isolation-v27.js'
-            nocv: '0'
-          - test: diag-webkit-crash
-            images: 'original'
-            variant: 'only-lunea-horary-interpretation-bridge-v47'
-            block: 'lunea-horary-interpretation-bridge-v47.js'
-            nocv: '0'
+            patch: 'noobs'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -110,4 +91,5 @@ jobs:
           LUNEA_DIAG_BLOCK: ${{ matrix.block }}
           LUNEA_DIAG_NO_CV: ${{ matrix.nocv }}
           LUNEA_DIAG_FLOW: sectors
+          LUNEA_DIAG_PATCH: ${{ matrix.patch }}
         run: node tests/${{ matrix.test }}.e2e.mjs

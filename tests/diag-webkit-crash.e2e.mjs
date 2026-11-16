@@ -18,10 +18,18 @@ async function setup(tag) {
   page.on('pageerror', e => console.log(`[${tag}] PAGEERROR ${e.message.slice(0, 200)}`));
   page.on('dialog', d => d.accept());
   const blocked = new Set((process.env.LUNEA_DIAG_BLOCK || '').split(',').filter(Boolean));
-  await page.route('**/*', route => {
+  await page.route('**/*', async route => {
     const u = new URL(route.request().url());
     const file = u.pathname.split('/').pop();
     if (blocked.has(file)) return route.fulfill({status:200, contentType:'application/javascript', body:'/* blocked for crash bisect */'});
+    if (file === 'lunea-reading-flow-v5.js' && process.env.LUNEA_DIAG_PATCH) {
+      const fs = await import('node:fs');
+      let body = fs.readFileSync('lunea-reading-flow-v5.js', 'utf8');
+      if (process.env.LUNEA_DIAG_PATCH.includes('nohas')) body = body.replaceAll(':has(', ':is(');
+      if (process.env.LUNEA_DIAG_PATCH.includes('noobs')) body = body.replace('ob.observe(document.documentElement,{childList:true,subtree:true})', 'void 0');
+      if (process.env.LUNEA_DIAG_PATCH.includes('noflipped')) body = body.replace('.tarot-card-wrapper:has(.tarot-card.flipped)', '.tarot-card-wrapper:is(.never-matches)');
+      return route.fulfill({status:200, contentType:'application/javascript', body});
+    }
     if (u.origin === new URL(url).origin) return route.continue();
     return route.fulfill({status:200, contentType:u.pathname.endsWith('.css') ? 'text/css' : 'application/json', body:u.hostname.includes('fonts') ? '' : '{}'});
   });
