@@ -22,7 +22,7 @@ permissions:
 
 jobs:
   daily-message-source:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
 
   daily-message-webkit:
     needs: daily-message-source
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4

@@ -35,7 +35,7 @@ await page.addInitScript(()=>{
 try {
   await page.goto(BASE_URL,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.readyState==='complete');
-  await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_V35 && window.LUNEA_INTIMACY_ORACLE_UI_V36?.version==='36.5',null,{timeout:20000});
+  await page.waitForFunction(()=>window.LUNEA_INTIMACY_ORACLE_V35 && Number.parseFloat(window.LUNEA_INTIMACY_ORACLE_UI_V36?.version)>=36.5,null,{timeout:20000});
 
   const initial=await page.evaluate(()=>{
     state.category='INTIMACY';

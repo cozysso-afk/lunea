@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   lenormand-contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -36,7 +36,7 @@ jobs:
 
   lenormand-mobile-webkit:
     needs: lenormand-contract
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4

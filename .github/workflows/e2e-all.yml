@@ -1,0 +1,58 @@
+name: E2E all (WebKit, iPhone, ubuntu-24.04)
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    runs-on: ubuntu-24.04
+    name: e2e ${{ matrix.test }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - ab24-mobile-preview
+          - balanced-interpretation
+          - cardback-first-frame
+          - daily-message-draft-prompt
+          - home-layout-visual-v36
+          - intimacy-oracle-extra-v365
+          - intimacy-oracle-late-runtime
+          - journal-validation-mobile-v4
+          - lenormand-v1
+          - meihua-v1
+          - message-oracle-persistence
+          - oracle-ui-regressions
+          - reading-lifecycle-v59
+          - system-support-lifecycle-v1
+          - tarot-local-faces
+          - timing-oracle-session-artwork
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Playwright
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.55.0
+          npx playwright install --with-deps webkit chromium
+      - name: Start local server
+        run: |
+          python3 -m http.server 4173 --bind 127.0.0.1 >/tmp/http.log 2>&1 &
+          for i in {1..30}; do curl -fsS http://127.0.0.1:4173/index.html >/dev/null && exit 0; sleep 1; done
+          exit 1
+      - name: Run ${{ matrix.test }}
+        env:
+          LUNEA_E2E_URL: http://127.0.0.1:4173/index.html
+        # Linux WebKit occasionally loses its renderer late in long scenarios
+        # (see tests/diag-webkit-crash.e2e.mjs); one retry, and the retry is logged.
+        run: |
+          node tests/${{ matrix.test }}.e2e.mjs && exit 0
+          echo "::warning::${{ matrix.test }} failed once; retrying"
+          node tests/${{ matrix.test }}.e2e.mjs

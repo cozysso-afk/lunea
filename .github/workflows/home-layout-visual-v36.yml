@@ -23,7 +23,7 @@ permissions:
 
 jobs:
   home-layout-contract:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -37,7 +37,7 @@ jobs:
 
   home-layout-iphone-webkit:
     needs: home-layout-contract
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
