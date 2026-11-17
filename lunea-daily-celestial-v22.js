@@ -249,6 +249,32 @@
         html.lunea-daily-celestial-v22 .lunea-daily-axis .axis-icon{width:41px!important;height:41px!important}.lunea-daily-axis .axis-icon svg{width:31px!important;height:31px!important}
         html.lunea-daily-celestial-v22 .lunea-daily-axis b{font-size:8.2px!important}.lunea-daily-axis span{font-size:7.8px!important}.lunea-daily-axis:nth-child(5) b{font-size:6.6px!important}
       }
+      /* COMPACT (2026-11): the daily card filled a whole phone screen.
+         Same parts, tighter: shorter sky, slimmer title, smaller tiles,
+         and the title's sub line is hidden because the footer repeats it. */
+      html.lunea-daily-celestial-v22 body .daily.lunea-daily-orbit6{padding:15px 12px 12px!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-sky{height:96px!important;margin:0 -11px 9px!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-moon{width:54px!important;height:54px!important;top:11px!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-moon::before{width:51px!important;height:51px!important;left:18px!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-crystal{transform:scale(.68)!important;transform-origin:bottom left!important;bottom:16px!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-crystal.right{transform:scaleX(-1) scale(.68)!important;transform-origin:bottom right!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-title-panel{margin:0 2px 9px!important;padding:12px 12px 10px!important;border-radius:19px!important}
+      html.lunea-daily-celestial-v22 body .daily.lunea-daily-orbit6 .lunea-v22-title-panel>h3{font-size:21px!important}
+      html.lunea-daily-celestial-v22 body .daily.lunea-daily-orbit6 .lunea-v22-title-panel>h3::before{margin:0 0 6px!important;font-size:7px!important}
+      html.lunea-daily-celestial-v22 body .daily.lunea-daily-orbit6 .lunea-v22-title-panel>p{margin:6px 0 0!important;font-size:10px!important;line-height:1.4!important}
+      html.lunea-daily-celestial-v22 body .daily.lunea-daily-orbit6 .lunea-v22-title-panel .lunea-daily-lock-note{display:none!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-orbit{width:112px!important;height:78px!important;top:4px!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-water{transform:scale(.8)!important;transform-origin:bottom right!important}
+      html.lunea-daily-celestial-v22 body .lunea-daily-six-grid{gap:6px!important;margin:0 1px 9px!important}
+      html.lunea-daily-celestial-v22 body .lunea-daily-six-grid .lunea-daily-axis{min-height:0!important;height:auto!important;padding:7px 3px 8px!important;border-radius:16px!important}
+      html.lunea-daily-celestial-v22 body .lunea-daily-six-grid .lunea-daily-axis .axis-num{font-size:10.5px!important}
+      html.lunea-daily-celestial-v22 body .lunea-daily-six-grid .lunea-daily-axis .axis-icon{width:32px!important;height:32px!important;margin:5px auto 4px!important}
+      html.lunea-daily-celestial-v22 body .lunea-daily-six-grid .lunea-daily-axis .axis-icon svg{width:23px!important;height:23px!important}
+      html.lunea-daily-celestial-v22 body .lunea-daily-six-grid .lunea-daily-axis b{min-height:0!important}
+      html.lunea-daily-celestial-v22 body .lunea-daily-six-grid .lunea-daily-axis span{margin-top:2px!important}
+      html.lunea-daily-celestial-v22 body .daily.lunea-daily-orbit6>#dailyBtn{min-height:48px!important;border-radius:17px!important}
+      html.lunea-daily-celestial-v22 body .daily.lunea-daily-orbit6>#dailyBtn::after{width:25px!important;height:25px!important;font-size:15px!important}
+      html.lunea-daily-celestial-v22 body .lunea-v22-daily-foot{margin:8px 2px 0!important}
       @media(prefers-reduced-motion:reduce){
         .lunea-v22-moon,.lunea-v22-water,.lunea-v22-starburst,html.lunea-daily-celestial-v22 .lunea-daily-axis,html.lunea-daily-celestial-v22 .daily.lunea-daily-orbit6>#dailyBtn::before{animation:none!important}
       }
