@@ -49,3 +49,16 @@ store.set('LUNEA_BIRTH_DATE', '1990-01-01');
 assert.equal(E.userDaewoonLine(), '', 'stale record for other birth data is ignored');
 
 console.log('orrery-engine-v1 ok');
+
+// Profile auto-calc wiring (source contract): typing birth data runs the
+// engine without the button, never the server, and sets the Thai weekday.
+{
+  const v4 = read('celestial-profile-v4.js');
+  assert.match(v4, /function scheduleAutoCalc\(\)/);
+  assert.match(v4, /\['birthDate','birthTime','birthPlace','cpv4Gender'\]\.forEach/);
+  assert.match(v4, /calculateSaju\(\{auto:true\}\)/);
+  assert.match(v4, /if \(auto\) \{\s*\/\/ Automatic runs never wake the server/);
+  assert.match(v4, /function setThaiDayFromBirth\(\)/);
+  assert.match(v4, /'수요일 낮' : '수요일 밤'/);
+}
+console.log('profile auto-calc contract ok');
