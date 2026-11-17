@@ -1,7 +1,7 @@
 'use strict';
 
 /*
-  LUNEA FINAL PROMPT PRIORITY V4
+  LUNEA FINAL PROMPT PRIORITY V5
   ==============================
   Last-mile RWS evidence priority + optional auxiliary-system boundary policy.
 
@@ -14,6 +14,8 @@
     private state, changing cause/probability ranking, or strengthening certainty.
   - Keep positive/negative conclusions evidence-proportional without systematic
     pessimistic or optimistic drift.
+  - V5: answer-shape rules (subject focus, concrete reading, answer first,
+    limits stated once, closing synthesis) and transit snapshot scope.
 */
 (() => {
   const W = window;
@@ -163,7 +165,7 @@
     if (!hasTransit(prompt)) {
       return '- Transit Scanner(트랜짓): 현재 질문의 실제 계산 결과 블록이 없으면 트랜짓을 참고했다고 말하거나 현재 천체 위치·시기를 새로 만들지 않는다.';
     }
-    return '- Transit Scanner(트랜짓): 실제 계산 결과가 있어도 질문이 시기·현재 흐름을 직접 묻고 RWS에서 이미 확인된 주제와 관련될 때만 짧게 보조할 수 있다. 사건 성립 여부·상대 속마음·행동 원인·가능성 순위를 판단하지 않고, RWS보다 강한 확신을 만들지 않는다. 관련 없으면 0문장으로 생략한다.';
+    return '- Transit Scanner(트랜짓): 실제 계산 결과가 있어도 질문이 시기·현재 흐름을 직접 묻고 RWS에서 이미 확인된 주제와 관련될 때만 짧게 보조할 수 있다. 사건 성립 여부·상대 속마음·행동 원인·가능성 순위를 판단하지 않고, RWS보다 강한 확신을 만들지 않는다. 계산값은 생성 시각의 스냅샷이므로 하루 전체·미래 기간의 흐름이나 정확한 사건 시각으로 확대하지 않는다. 관련 없으면 0문장으로 생략한다.';
   }
 
   function returnPolicy(prompt){
@@ -190,6 +192,26 @@
     return '- Saju(사주명리): 데이터가 있어도 자동 반영하지 않는다. 질문자의 기본 성향·부담·선택 기준·반응 방식이 현재 질문과 직접 관련될 때만 실제 입력된 원국 범위에서 짧게 보조할 수 있다. 입력되지 않은 대운·세운·합·충·형·파 등은 새로 생성하지 않는다. 상대 행동 원인·속마음·구체 사건·성립 여부·구체 시기·원인 순위를 판단하지 않으며, RWS보다 강한 단정을 만들지 않는다. 관련 없으면 0문장으로 생략한다.';
   }
 
+  // Answer-shape rules (V5). Ported from a reviewed external integrated-reading
+  // prompt: keep the question's subject in focus, name what kind of feeling or
+  // constraint the cards show, answer first, state limits once, and close with
+  // a short synthesis. These shape the answer only; they never add evidence.
+  function answerShapeLines(prompt){
+    const q = questionFromPrompt(prompt);
+    const otherSubject = classify(q) === 'other_focused' ||
+      /(?:걔|그\s*사람|그\s*분|상대(?:방)?|전남친|전여친|전애인|그\s*남자|그\s*여자)[^?]{0,60}(?:연락|답장|올까|할까|돌아|다가|생각|마음|속마음|감정|의도)/i.test(q);
+    const lines = [];
+    if (otherSubject) {
+      lines.push('12. [질문 초점] 질문 대상이 상대방이면 끝까지 상대의 생각·감정·행동 가능성을 중심으로 답한다. 상대에 대한 질문을 질문자의 불안·정보 부족·집착 분석으로 돌리지 않는다. 질문자 쪽 이야기는 질문에 직접 포함된 경우에만 짧게 다룬다.');
+    }
+    lines.push(
+      "12-1. [구체화] '마음이 있다', '관계가 복잡하다', '제약이 있다'에서 멈추지 않는다. 카드가 허용하는 범위에서 어떤 종류의 마음인지, 무엇과 무엇이 엇갈리는지, 제약이 내부 요인(망설임·우선순위)과 외부 여건 중 어느 쪽으로 읽히는지까지 풀어 쓴다. 구체 사건이나 제3자는 만들지 않는다.",
+      '12-2. [결론 먼저] 첫 단락에서 상징적으로 어느 쪽에 더 무게가 실리는지 먼저 답하고 이유를 이어서 설명한다. 근거가 엇갈리면 무엇이 더 결정적인지 판단한다. 한계·불확실성 설명은 한 번만 하고 반복하지 않으며, 묻지 않은 조건을 덧붙여 결론을 흐리지 않는다.',
+      '12-3. [종합 인사이트] 본문 끝에 "종합 인사이트"를 3~4문장으로 붙인다. 이미 분석한 근거를 함께 놓았을 때 드러나는 구조, 반복되기 쉬운 패턴, 앞으로 방향을 가를 핵심 변수 중 가장 중요한 것을 쉬운 말로 정리한다. 앞 결론의 반복이나 새로운 추측은 넣지 않는다.'
+    );
+    return lines;
+  }
+
   function finalBlock(prompt){
     if(isCausePrompt(prompt))return causeFinalBlock();
     return [
@@ -203,6 +225,7 @@
       westernPolicy(prompt),transitPolicy(prompt),returnPolicy(prompt),thaiPolicy(prompt),sajuPolicy(prompt),messagePolicy(prompt),
       '10. Timing Oracle을 포함한 시기 보조는 사용자가 언제·어느 시기·시간 흐름을 실제로 묻는 경우에만 사용한다. 제공된 시간 창을 벗어난 정밀 날짜를 만들지 않고 사건 성립도 보장하지 않는다.',
       '11. 서양점성술·사주·태국점성술은 서로 다른 체계다. 보조 체계가 RWS와 충돌하면 절충하거나 새로운 복합 결론을 만들지 말고 보조 체계를 생략하고 RWS 결론을 유지한다.',
+      ...answerShapeLines(prompt),
       FINAL_LINE
     ].join('\n');
   }
@@ -243,12 +266,13 @@
     W.promptString = wrapped;
     try { promptString = wrapped; } catch {}
     W.__LUNEA_FINAL_PROMPT_PRIORITY_INSTALLED__ = true;
-    console.info(`🧭 LUNEA Final Prompt Priority V4 installed · interpretation ${INTERPRETATION_RULE_VERSION}`);
+    console.info(`🧭 LUNEA Final Prompt Priority V5 installed · interpretation ${INTERPRETATION_RULE_VERSION}`);
     return true;
   }
 
   W.LUNEA_FINAL_PROMPT_PRIORITY_V1 = {
-    version:4,
+    version:5,
+    answerShapeLines,
     interpretationRuleVersion:INTERPRETATION_RULE_VERSION,
     ensure:install,
     classify,
