@@ -12,6 +12,7 @@
 
   const API_KEY = 'LUNEA_ASTRO_API_URL';
   const AUTO_KEY = 'LUNEA_SAJU_AUTO_V1';
+  const GENDER_KEY = 'LUNEA_BIRTH_GENDER';
   const DEFAULT_API = 'https://lunea-astro-api.onrender.com';
   const $ = id => document.getElementById(id);
 
@@ -193,7 +194,9 @@
     const ebox = $('cpv4Elements');
     if (ebox) ebox.innerHTML = ['목','화','토','금','수'].map(k => `<span>${k} ${data.visible_elements?.[k] ?? '—'}</span>`).join('');
     const provenance = data.provenance || {};
-    setSajuStatus(`자동계산 완료 · ${provenance.library || 'engine'} ${provenance.library_version || ''} · ${provenance.timezone || ''} · 진태양시 보정 ${provenance.true_solar_time_correction ? '적용' : '미적용'}`, 'ok');
+    const dw = window.LUNEA_ORRERY_ENGINE_V1?.daewoonText?.(data.daewoon) || '';
+    const dwNote = dw ? ` · 현재 대운 ${dw}` : (data.daewoon_needs_gender ? ' · 성별을 고르면 대운도 계산해' : '');
+    setSajuStatus(`자동계산 완료 · ${provenance.library || 'engine'} ${provenance.library_version || ''} · ${provenance.timezone || ''} · 진태양시 보정 ${provenance.true_solar_time_correction ? '적용' : '미적용'}${dwNote}`, 'ok');
   }
 
   function setSajuStatus(text, kind='') {
@@ -226,6 +229,28 @@
     const api = String(localStorage.getItem(API_KEY) || DEFAULT_API).replace(/\/+$/,'');
     btn.disabled = true;
     btn.textContent = '사주 계산 중…';
+    const gender = $('cpv4Gender')?.value || '';
+    try { localStorage.setItem(GENDER_KEY, gender); } catch {}
+
+    // 1) In-browser engine (@orrery/core): no server, no cold start.
+    const engine = window.LUNEA_ORRERY_ENGINE_V1;
+    if (engine) {
+      setSajuStatus('기기 안에서 사주를 계산 중…');
+      try {
+        const data = await engine.fourPillars({birthDate, birthTime, birthPlace, gender});
+        const record = {birthDate,birthTime,birthPlace,gender,data,savedAt:new Date().toISOString()};
+        localStorage.setItem(AUTO_KEY, JSON.stringify(record));
+        applyAutoResult(data, true);
+        setManualVisible(false);
+        btn.disabled = false;
+        btn.textContent = '✦ 사주 4주 자동 계산';
+        return;
+      } catch (err) {
+        console.warn('LUNEA orrery engine failed, falling back to Astro Core', err);
+      }
+    }
+
+    // 2) Fallback: Astro Core server.
     setSajuStatus('Astro Core에서 절기 기준 Four Pillars를 계산 중…');
     try {
       const controller = new AbortController();
@@ -266,14 +291,17 @@
     section.innerHTML = `
       <div class="cpv3-kicker">AUTO CALC · 사주 원국 자동입력</div>
       <p class="cpv4-note">공통 출생정보로 연주·월주·일주·시주를 자동 계산해. 신강/신약·용신·희신·기신처럼 학파 차이가 큰 판정은 자동으로 만들지 않아.</p>
+      <p class="cpv4-note">계산은 이 기기 안에서 해(@orrery/core · 한국 만세력 관례). 안 되면 Astro Core 서버로 넘어가.</p>
       <div class="cpv4-pillars" id="cpv4Pillars"><div class="cpv4-pillar"><small>년주</small><b>—</b></div><div class="cpv4-pillar"><small>월주</small><b>—</b></div><div class="cpv4-pillar"><small>일주</small><b>—</b></div><div class="cpv4-pillar"><small>시주</small><b>—</b></div></div>
       <div class="cpv4-elements" id="cpv4Elements"></div>
+      <div class="field" style="margin:9px 0 0"><label>성별 (대운 계산용)</label><select id="cpv4Gender"><option value="">선택 안 함</option><option value="F">여성</option><option value="M">남성</option></select></div>
       <div class="cpv4-auto-actions"><button type="button" id="cpv4SajuCalc">✦ 사주 4주 자동 계산</button><button type="button" id="cpv4SajuManual">직접 수정</button></div>
       <div class="cpv4-status" id="cpv4SajuStatus">자동 계산 전 · 기존 수동 입력값은 삭제하지 않아.</div>
     `;
     if (intro?.parentElement === panel) intro.insertAdjacentElement('afterend', section);
     else panel.prepend(section);
     $('cpv4SajuCalc').addEventListener('click', calculateSaju);
+    try { const g = localStorage.getItem(GENDER_KEY) || ''; if ($('cpv4Gender')) $('cpv4Gender').value = g; } catch {}
     $('cpv4SajuManual').addEventListener('click', () => setManualVisible($('cpv4SajuManual').dataset.open !== '1'));
 
     let saved = null;
