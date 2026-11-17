@@ -287,7 +287,33 @@
   }
 
   // ---------- prompt providers (sync) ----------
-  function userSajuLines(){ return sajuTimingLines(userPillars()); }
+  function userSajuLines(){
+    const rec = safeJSON(SAJU_AUTO_KEY);
+    const lines = [];
+    const pv = rec?.data?.provenance;
+    if (pv && /orrery/.test(pv.library || '')) {
+      lines.push(`- 계산 기준(엔진): ${pv.convention || '한국 만세력 관례'} · 경도 진태양시 보정 없음${pv.hour_override ? ` · 시진 직접 지정 ${pv.hour_override}시(사용자 생시 보정)` : ' · 시주는 출생시각 그대로'}`);
+    }
+    return [...lines, ...sajuTimingLines(userPillars())];
+  }
+
+  function userZiweiLines(now = new Date()){
+    const E = engine();
+    const rec = safeJSON(SAJU_AUTO_KEY);
+    if (!E?.ziweiLines || !core() || !rec?.birthDate) return [];
+    const b = userBirth();
+    if (b.birthDate !== rec.birthDate) return [];
+    return E.ziweiLines({birthDate:rec.birthDate, birthTime:rec.birthTime, gender:rec.gender, hourBranch:rec.hourBranch}, now);
+  }
+
+  // Partner: only with an exact birth time (the chart depends on the 시진).
+  function partnerZiweiLines(p, now = new Date()){
+    const E = engine();
+    if (!E?.ziweiLines || !core() || p?.timeUnknown || !/^\d{2}:\d{2}/.test(p?.birthTime || '')) return [];
+    const g = /남|^M$/i.test(p.gender || '') ? 'M' : (/여|^F$/i.test(p.gender || '') ? 'F' : '');
+    const lines = E.ziweiLines({birthDate:p.birthDate, birthTime:p.birthTime, gender:g}, now, {palaces:['命宮','夫妻','福德','遷移']});
+    return lines.map(l => l.replace(/^- /, '- 자미두수 '));
+  }
 
   function userWesternLines(){
     const out = {natal:'', extra:[]};
@@ -318,6 +344,7 @@
     const lines = [];
     const pp = partnerPillars(p);
     if (pp) lines.push(...sajuTimingLines(pp));
+    lines.push(...partnerZiweiLines(p));
     const cached = partnerCache.get(partnerKey(p, engineNatal()));
     if (cached) lines.push(...cached.lines);
     else warmPartner().catch(() => {});
@@ -339,7 +366,7 @@
 
   W.LUNEA_ORRERY_TIMING_V1 = {
     version:1, natalKey:NATAL_ENGINE_KEY,
-    sajuTimingLines, userSajuLines, userWesternLines, partnerLines,
+    sajuTimingLines, userSajuLines, userWesternLines, userZiweiLines, partnerZiweiLines, partnerLines,
     ensureUserNatal, engineNatal, refreshTransits, computeNatal, computePartnerWestern, warmPartner, warmup,
     _aspectOf:aspectOf
   };

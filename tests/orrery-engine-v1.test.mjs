@@ -55,7 +55,7 @@ console.log('orrery-engine-v1 ok');
 {
   const v4 = read('celestial-profile-v4.js');
   assert.match(v4, /function scheduleAutoCalc\(\)/);
-  assert.match(v4, /\['birthDate','birthTime','birthPlace','cpv4Gender'\]\.forEach/);
+  assert.match(v4, /\['birthDate','birthTime','birthPlace','cpv4Gender','cpv4HourBranch'\]\.forEach/);
   assert.match(v4, /calculateSaju\(\{auto:true\}\)/);
   assert.match(v4, /if \(auto\) \{\s*\/\/ Automatic runs never wake the server/);
   assert.match(v4, /function setThaiDayFromBirth\(\)/);
