@@ -206,8 +206,8 @@
       .lp1-form-actions{display:grid;grid-template-columns:1fr auto;gap:7px}
       #partnerStripTag{cursor:pointer}
       /* Four header buttons: keep clear of the brand subtitle on phones. */
-      header .head-actions:has(#partnerBtn){gap:4px!important}
-      header .head-actions:has(#partnerBtn) .icon-btn{width:34px!important;height:34px!important;border-radius:12px!important}
+      header .head-actions.lp1-four{gap:4px!important}
+      header .head-actions.lp1-four .icon-btn{width:34px!important;height:34px!important;border-radius:12px!important}
     `;
     document.head.appendChild(s);
   }
@@ -416,6 +416,7 @@
       b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3.2"/><circle cx="16.5" cy="8" r="3.2"/><path d="M2.8 20a5.3 5.3 0 0 1 10.4 0"/><path d="M16.5 19.8c-2.6-1.6-3.7-2.9-3.7-4.3a1.9 1.9 0 0 1 3.7-.6 1.9 1.9 0 0 1 3.7.6c0 1.4-1.1 2.7-3.7 4.3Z"/></svg>';
       b.onclick = open;
       const profileBtn = $('profileBtn');
+      actions.classList.add('lp1-four');
       if (profileBtn) profileBtn.insertAdjacentElement('afterend', b);
       else actions.appendChild(b);
     }
