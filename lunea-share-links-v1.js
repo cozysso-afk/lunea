@@ -148,12 +148,10 @@
   W.LUNEA_SHARE_LINKS_V1 = {version:1, apps:APPS, open, share};
 
   function boot(){ addStyles(); return ensureButton(); }
-  // Theme modules may rebuild the engine row once after boot; check again
-  // a couple of times after load instead of polling.
-  if (typeof W.addEventListener === 'function') {
-    W.addEventListener('load', () => { setTimeout(ensureButton, 600); setTimeout(ensureButton, 2500); }, {once:true});
-  }
+  // Attach after the page has fully loaded and settled, so boot-time card and
+  // reading modules keep their original timing.
+  function lateBoot(){ setTimeout(() => { if (!boot()) setTimeout(boot, 1500); }, 900); }
   if (typeof document === 'undefined') return;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { if (!boot()) setTimeout(boot, 300); }, {once:true});
-  else if (!boot()) setTimeout(boot, 300);
+  if (document.readyState === 'complete') lateBoot();
+  else W.addEventListener('load', lateBoot, {once:true});
 })();
