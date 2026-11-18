@@ -68,11 +68,43 @@
     return '';
   }
 
+  // Cities the engine lacks, with city-hall coordinates (needed for houses/ASC).
+  const EXTRA_CITIES = [
+    ['나주','전라남도',35.0160,126.7108],['광양','전라남도',34.9407,127.6959],['보성','전라남도',34.7715,127.0800],
+    ['정읍','전라북도',35.5699,126.8559],['남원','전라북도',35.4164,127.3904],['김제','전라북도',35.8036,126.8809],
+    ['서산','충청남도',36.7848,126.4503],['당진','충청남도',36.8898,126.6459],['공주','충청남도',36.4466,127.1190],
+    ['논산','충청남도',36.1872,127.0987],['보령','충청남도',36.3333,126.6128],
+    ['김천','경상북도',36.1398,128.1136],['영주','경상북도',36.8057,128.6240],['경산','경상북도',35.8251,128.7414],
+    ['양산','경상남도',35.3350,129.0373],['거제','경상남도',34.8806,128.6211],['통영','경상남도',34.8544,128.4331],
+    ['사천','경상남도',35.0037,128.0642],['밀양','경상남도',35.5038,128.7464],
+    ['동해','강원도',37.5247,129.1143],['삼척','강원도',37.4500,129.1650]
+  ].map(([name, region, lat, lon]) => ({name, region, lat, lon, extra:true}));
+
+  // "광주(경기도)" style values pick the region when a name repeats.
   function findCity(C, place){
     const q = String(place || '').trim();
     if (!q) return null;
-    const exact = C.KOREAN_CITIES.find(c => c.name === q) || C.WORLD_CITIES?.find?.(c => c.name === q);
+    const m = /^(.+?)\s*\((.+)\)$/.exec(q);
+    const all = [...(C.KOREAN_CITIES || []), ...EXTRA_CITIES];
+    if (m) {
+      const hit = all.find(c => c.name === m[1].trim() && c.region === m[2].trim());
+      if (hit) return hit;
+    }
+    const exact = all.find(c => c.name === q) || C.WORLD_CITIES?.find?.(c => c.name === q);
     return exact || C.filterCities(q)[0] || null;
+  }
+  function cityLabel(C, city){
+    if (!city) return '';
+    return city.extra ? `${city.name} (${city.region})` : C.formatCityName(city);
+  }
+  // Sync resolver for other modules (engine must be loaded). Falls back to Seoul.
+  function resolveCity(place){
+    const C = W.LUNEA_ORRERY_CORE;
+    if (!C) return null;
+    const city = findCity(C, place);
+    return city
+      ? {lat:city.lat, lon:city.lon, label:cityLabel(C, city), fallback:false}
+      : {lat:37.5665, lon:126.978, label:`서울 좌표로 대체 (입력: ${String(place || '').trim() || '없음'})`, fallback:true};
   }
 
   function pillarShape(detail){
@@ -139,7 +171,7 @@
       timezone: 'Asia/Seoul',
       true_solar_time_correction: false,
       convention: '한국 만세력 관례 · KST 시계 기준(역사적 서머타임 반영) · 야자시(split)',
-      place_resolved: city ? C.formatCityName(city) : '',
+      place_resolved: city ? cityLabel(C, city) : '',
       hour_override: input.hourOverride || ''
     };
 
@@ -255,10 +287,85 @@
     return lines;
   }
 
+  // ---------- 출생지 선택 목록 ----------
+  // Static copy of the engine's Korean city list (so the picker works before
+  // the engine loads) plus EXTRA_CITIES, grouped by region.
+  const ENGINE_CITY_NAMES = [["서울","서울특별시"],["부산","부산광역시"],["인천","인천광역시"],["대구","대구광역시"],["대전","대전광역시"],["광주","광주광역시"],["울산","울산광역시"],["세종","세종특별자치시"],["수원","경기도"],["고양","경기도"],["용인","경기도"],["성남","경기도"],["부천","경기도"],["안산","경기도"],["안양","경기도"],["남양주","경기도"],["화성","경기도"],["평택","경기도"],["의정부","경기도"],["시흥","경기도"],["파주","경기도"],["김포","경기도"],["광명","경기도"],["이천","경기도"],["군포","경기도"],["하남","경기도"],["오산","경기도"],["양주","경기도"],["구리","경기도"],["안성","경기도"],["포천","경기도"],["의왕","경기도"],["여주","경기도"],["양평","경기도"],["동두천","경기도"],["과천","경기도"],["광주","경기도"],["연천","경기도"],["가평","경기도"],["춘천","강원도"],["원주","강원도"],["강릉","강원도"],["속초","강원도"],["청주","충청북도"],["천안","충청남도"],["충주","충청북도"],["제천","충청북도"],["아산","충청남도"],["전주","전라북도"],["목포","전라남도"],["여수","전라남도"],["순천","전라남도"],["군산","전라북도"],["익산","전라북도"],["포항","경상북도"],["경주","경상북도"],["김해","경상남도"],["창원","경상남도"],["진주","경상남도"],["구미","경상북도"],["안동","경상북도"],["제주","제주특별자치도"],["서귀포","제주특별자치도"]];
+  const REGION_ORDER = ['서울특별시','부산광역시','대구광역시','인천광역시','광주광역시','대전광역시','울산광역시','세종특별자치시','경기도','강원도','충청북도','충청남도','전라북도','전라남도','경상북도','경상남도','제주특별자치도'];
+  function placeOptions(){
+    const seen = new Set();
+    const rows = [...ENGINE_CITY_NAMES.map(([n, r]) => ({name:n, region:r})), ...EXTRA_CITIES];
+    const dupNames = new Set(rows.filter((c, i) => rows.findIndex(x => x.name === c.name) !== i).map(c => c.name));
+    const groups = new Map(REGION_ORDER.map(r => [r, []]));
+    for (const c of rows) {
+      const isMetro = /특별시|광역시|특별자치시/.test(c.region);
+      const value = dupNames.has(c.name) && !isMetro ? `${c.name}(${c.region})` : c.name;
+      if (seen.has(value)) continue;
+      seen.add(value);
+      if (!groups.has(c.region)) groups.set(c.region, []);
+      groups.get(c.region).push({value, label: isMetro ? c.region : c.name});
+    }
+    groups.forEach(list => list.sort((a, b) => a.label.localeCompare(b.label, 'ko')));
+    return groups;
+  }
+
+  function attachPlacePicker(input){
+    if (!input || typeof document === 'undefined' || input.dataset.placePicker === '1') return null;
+    input.dataset.placePicker = '1';
+    if (!document.getElementById('luneaPlacePickerStyle')) {
+      const st = document.createElement('style');
+      st.id = 'luneaPlacePickerStyle';
+      st.textContent = '.lunea-place-picker{width:100%;min-width:0;max-width:100%;box-sizing:border-box}'
+        + 'input[data-place-picker="1"][hidden]{display:none!important}'
+        + 'input[data-place-picker="1"]:not([hidden]){margin-top:7px}';
+      document.head.appendChild(st);
+    }
+    const sel = document.createElement('select');
+    sel.className = 'lunea-place-picker';
+    sel.setAttribute('aria-label', '출생지 선택');
+    const groups = placeOptions();
+    let html = '<option value="">출생지 선택</option>';
+    const metro = [];
+    groups.forEach((list, region) => {
+      if (/특별시|광역시|특별자치시/.test(region)) { metro.push(...list); return; }
+      if (list.length) html += `<optgroup label="${region}">` + list.map(o => `<option value="${o.value}">${o.label}</option>`).join('') + '</optgroup>';
+    });
+    html = '<option value="">출생지 선택</option><optgroup label="특별시·광역시">' + metro.map(o => `<option value="${o.value}">${o.label}</option>`).join('') + '</optgroup>' + html.replace('<option value="">출생지 선택</option>', '');
+    html += '<option value="__custom__">기타 · 직접 입력 (해외 포함)</option>';
+    sel.innerHTML = html;
+    const values = new Set([...sel.options].map(o => o.value).filter(v => v && v !== '__custom__'));
+    const sync = () => {
+      const v = String(input.value || '').trim();
+      if (!v) { sel.value = ''; input.hidden = true; }
+      else if (values.has(v)) { sel.value = v; input.hidden = true; }
+      else { sel.value = '__custom__'; input.hidden = false; }
+    };
+    sel.addEventListener('change', () => {
+      if (sel.value === '__custom__') {
+        input.hidden = false;
+        if (values.has(String(input.value || '').trim())) input.value = '';
+        input.placeholder = '도시 이름 (목록에 없으면 서울 좌표로 대체)';
+        input.focus();
+        return;
+      }
+      input.value = sel.value;
+      input.hidden = true;
+      input.dispatchEvent(new Event('input', {bubbles:true}));
+      input.dispatchEvent(new Event('change', {bubbles:true}));
+    });
+    input.addEventListener('lunea:place-sync', sync);
+    input.insertAdjacentElement('beforebegin', sel);
+    sync();
+    // Values restored later by other modules (profile load) without events.
+    setTimeout(sync, 400); setTimeout(sync, 1500);
+    return sel;
+  }
+  W.LUNEA_PLACE_PICKER = {attach:attachPlacePicker, options:placeOptions, sync:input => input?.dispatchEvent(new Event('lunea:place-sync'))};
+
   W.LUNEA_ORRERY_ENGINE_V1 = {
     version: 1, engineVersion: VERSION, genderKey: GENDER_KEY,
     load, fourPillars, currentDaewoon, daewoonText, userDaewoonLine, ziweiChart, ziweiLines,
-    HOUR_REP, HOUR_RANGE,
+    HOUR_REP, HOUR_RANGE, resolveCity, EXTRA_CITIES,
     isLoaded: () => !!W.LUNEA_ORRERY_CORE
   };
 })();
