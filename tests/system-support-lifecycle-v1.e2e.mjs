@@ -327,6 +327,10 @@ async function testVedic(browser) {
   await page.locator('#cpv4VedicTab').click();
   await page.locator('#birthDate').fill('1990-05-12');
   await page.locator('#birthTime').fill('10:30');
+  // Birth place is a picker now; a place outside the list goes through
+  // "기타 · 직접 입력", which reveals the original text input.
+  const placePicker = page.locator('select.lunea-place-picker').first();
+  if (await placePicker.count()) await placePicker.selectOption('__custom__');
   await page.locator('#birthPlace').fill('Seoul');
   await page.waitForSelector('#vedicV1Calc');
   // The profile bundle can finish installing one last fetch adapter after the

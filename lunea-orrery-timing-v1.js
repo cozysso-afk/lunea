@@ -125,10 +125,7 @@
   // ---------- 2. natal (engine) ----------
   async function computeNatal(b){
     const C = await engine().load();
-    const city = (() => {
-      const q = (b.birthPlace || '').trim();
-      return C.KOREAN_CITIES.find(c => c.name === q) || C.filterCities(q)[0] || C.SEOUL;
-    })();
+    const city = engine().resolveCity(b.birthPlace);
     const [y, m, d] = b.birthDate.split('-').map(Number);
     const [hh, mm] = b.birthTime.split(':').map(Number);
     const chart = await C.calculateNatal({year:y, month:m, day:d, hour:hh, minute:mm, gender:'F', latitude:city.lat, longitude:city.lon}, 'P');
@@ -150,7 +147,7 @@
       .map(a => ({a:a.planet1, b:a.planet2, type:a.type, orb:a.orb}));
     return {
       schema:'LUNEA_NATAL_ENGINE_V1',
-      birth:{date:b.birthDate, time:b.birthTime, place_input:b.birthPlace, place_resolved:C.formatCityName(city), latitude:city.lat, longitude:city.lon},
+      birth:{date:b.birthDate, time:b.birthTime, place_input:b.birthPlace, place_resolved:city.label, latitude:city.lat, longitude:city.lon},
       planets,
       angles:{ASC:angle(chart.angles?.asc), MC:angle(chart.angles?.mc)},
       aspects,
@@ -162,10 +159,38 @@
     const b = userBirth();
     if (!birthReady(b) || !engine()) return null;
     const saved = safeJSON(NATAL_ENGINE_KEY);
-    if (saved?.chart && sameBirth(saved, b)) return saved.chart;
+    if (saved?.chart && sameBirth(saved, b)) { syncSunSign(saved.chart); return saved.chart; }
     const chart = await computeNatal(b);
     try { localStorage.setItem(NATAL_ENGINE_KEY, JSON.stringify({...b, chart, savedAt:new Date().toISOString()})); } catch {}
+    syncSunSign(chart);
     return chart;
+  }
+
+  // The legacy birthDate handler picks the sun sign from a fixed date table
+  // (3/21 → Aries), which is wrong on cusp days. Once the engine natal exists,
+  // the computed Sun decides: the #zodiac select and the saved profile follow it.
+  function syncSunSign(chart){
+    const sign = chart?.planets?.Sun?.sign;
+    if (!sign) return false;
+    let changed = false;
+    const sel = typeof document !== 'undefined' ? document.getElementById('zodiac') : null;
+    if (sel) {
+      const opt = [...sel.options].find(o => String(o.value || o.textContent).startsWith(sign));
+      if (opt && sel.value !== opt.value) { sel.value = opt.value; changed = true; }
+    }
+    const prof = safeJSON('LUNEA_USER_PROFILE');
+    if (prof && typeof prof === 'object' && prof.zodiac && !String(prof.zodiac).startsWith(sign)) {
+      const label = sel ? [...sel.options].find(o => String(o.value || o.textContent).startsWith(sign))?.value : '';
+      if (label) {
+        prof.zodiac = label;
+        try { localStorage.setItem('LUNEA_USER_PROFILE', JSON.stringify(prof)); } catch {}
+        // index.html keeps `profile` as a top-level let (shared global lexical scope).
+        try { if (typeof profile === 'object' && profile) profile.zodiac = label; } catch {}
+        try { if (typeof W.syncProfile === 'function') W.syncProfile(); } catch {}
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   function engineNatal(){
@@ -205,7 +230,7 @@
   async function computePartnerWestern(p){
     const C = await engine().load();
     if (!/^\d{4}-\d{2}-\d{2}$/.test(p.birthDate || '')) return null;
-    const city = C.KOREAN_CITIES.find(c => c.name === (p.birthPlace || '').trim()) || C.filterCities((p.birthPlace || '').trim())[0] || C.SEOUL;
+    const city = engine().resolveCity(p.birthPlace);
     const [y, m, d] = p.birthDate.split('-').map(Number);
     const unknown = !!p.timeUnknown || !/^\d{2}:\d{2}/.test(p.birthTime || '');
     const times = unknown
@@ -367,7 +392,7 @@
   W.LUNEA_ORRERY_TIMING_V1 = {
     version:1, natalKey:NATAL_ENGINE_KEY,
     sajuTimingLines, userSajuLines, userWesternLines, userZiweiLines, partnerZiweiLines, partnerLines,
-    ensureUserNatal, engineNatal, refreshTransits, computeNatal, computePartnerWestern, warmPartner, warmup,
+    ensureUserNatal, engineNatal, syncSunSign, refreshTransits, computeNatal, computePartnerWestern, warmPartner, warmup,
     _aspectOf:aspectOf
   };
 
