@@ -602,7 +602,18 @@
   function buildSeparatedProfileBlock() {
     const p = safeJSON('LUNEA_USER_PROFILE', {});
     const d = p.sajuDetail || {};
-    const pi = d.pillars || {};
+    // Saved pillars come from the 저장 button; without it, fall back to the
+    // engine's auto-calc record for the same birth date.
+    const auto = (() => {
+      const rec = safeJSON('LUNEA_SAJU_AUTO_V1', null);
+      const bd = document.getElementById('birthDate')?.value || localStorage.getItem('LUNEA_BIRTH_DATE') || '';
+      return rec?.data?.pillars && (!bd || rec.birthDate === bd) ? rec.data.pillars : null;
+    })();
+    const savedPi = d.pillars || {};
+    const pi = ['year','month','day','hour'].reduce((acc, k) => {
+      acc[k] = savedPi[k] || auto?.[k]?.hanja || '';
+      return acc;
+    }, {});
     const settings = readSettings();
     const T = window.LUNEA_ORRERY_TIMING_V1;
     const western = T?.userWesternLines?.() || {natal:'', extra:[]};
