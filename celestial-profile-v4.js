@@ -13,6 +13,7 @@
   const API_KEY = 'LUNEA_ASTRO_API_URL';
   const AUTO_KEY = 'LUNEA_SAJU_AUTO_V1';
   const GENDER_KEY = 'LUNEA_BIRTH_GENDER';
+  const HOUR_OVERRIDE_KEY = 'LUNEA_BIRTH_HOUR_OVERRIDE';
   const DEFAULT_API = 'https://lunea-astro-api.onrender.com';
   const $ = id => document.getElementById(id);
 
@@ -29,6 +30,7 @@
       .cpv4-shared-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
       .cpv4-shared-head b{font:700 10px 'Cinzel','Noto Serif KR',serif;color:#b8eee5;letter-spacing:1px}
       .cpv4-shared-head span{font-size:8.5px;color:#b6a8cb;border:1px solid rgba(189,164,248,.16);border-radius:999px;padding:3px 6px}
+      .cpv4-birth-grid .cpv4-hour-field{grid-column:1/-1}
       .cpv4-birth-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
       .cpv4-birth-grid .field{min-width:0;margin:0}
       .cpv4-birth-grid input,.cpv4-birth-grid select{width:100%;min-width:0;box-sizing:border-box}
@@ -67,7 +69,7 @@
     section.className = 'cpv4-shared-birth';
     section.innerHTML = `
       <div class="cpv4-shared-head"><b>COMMON · 출생정보</b><span>한 번 입력 · 모든 체계 공유</span></div>
-      <p class="cpv4-note">생년월일 · 출생시각 · 출생지를 한 번만 입력해. 다 채우면 사주 4주와 태국 출생 요일이 자동으로 계산돼. Western, Vedic 계산도 이 값을 공통 원본으로 사용해.</p>
+      <p class="cpv4-note">생년월일 · 출생시각 · 출생지를 한 번만 입력해. 다 채우면 사주 4주·자미두수·서양 출생차트·태국 출생 요일이 자동으로 계산돼.</p>
       <div class="cpv4-birth-grid" id="cpv4BirthGrid"></div>
     `;
     tabs.insertAdjacentElement('beforebegin', section);
@@ -81,6 +83,15 @@
     genderField.innerHTML = '<label>성별 (대운 계산용)</label><select id="cpv4Gender"><option value="">선택 안 함</option><option value="F">여성</option><option value="M">남성</option></select>';
     grid.appendChild(genderField);
     try { $('cpv4Gender').value = localStorage.getItem(GENDER_KEY) || ''; } catch {}
+    const hourField = document.createElement('div');
+    hourField.className = 'field cpv4-hour-field';
+    const ranges = [['子','23:30~01:30'],['丑','01:30~03:30'],['寅','03:30~05:30'],['卯','05:30~07:30'],['辰','07:30~09:30'],['巳','09:30~11:30'],['午','11:30~13:30'],['未','13:30~15:30'],['申','15:30~17:30'],['酉','17:30~19:30'],['戌','19:30~21:30'],['亥','21:30~23:30']];
+    const kr = {子:'자',丑:'축',寅:'인',卯:'묘',辰:'진',巳:'사',午:'오',未:'미',申:'신',酉:'유',戌:'술',亥:'해'};
+    hourField.innerHTML = '<label>시진 직접 지정 (생시 보정한 경우)</label><select id="cpv4HourBranch"><option value="">자동 · 출생시각 기준</option>'
+      + ranges.map(([b, r]) => `<option value="${b}">${b}시 ${kr[b]}시 · ${r}</option>`).join('') + '</select>'
+      + '<p class="cpv4-note" style="margin:5px 0 0">지정하면 사주 시주와 자미두수가 이 시진으로 계산돼. 서양 차트는 입력한 출생시각을 그대로 써.</p>';
+    grid.appendChild(hourField);
+    try { $('cpv4HourBranch').value = localStorage.getItem(HOUR_OVERRIDE_KEY) || ''; } catch {}
 
     const oldGrid = $('cpv3BirthGrid');
     if (oldGrid) oldGrid.hidden = true;
@@ -199,7 +210,8 @@
     if (ebox) ebox.innerHTML = ['목','화','토','금','수'].map(k => `<span>${k} ${data.visible_elements?.[k] ?? '—'}</span>`).join('');
     const provenance = data.provenance || {};
     const dw = window.LUNEA_ORRERY_ENGINE_V1?.daewoonText?.(data.daewoon) || '';
-    const dwNote = dw ? ` · 현재 대운 ${dw}` : (data.daewoon_needs_gender ? ' · 성별을 고르면 대운도 계산해' : '');
+    const dwNote = (dw ? ` · 현재 대운 ${dw}` : (data.daewoon_needs_gender ? ' · 성별을 고르면 대운도 계산해' : ''))
+      + (provenance.hour_override ? ` · 시진 직접 지정 ${provenance.hour_override}시` : '');
     setSajuStatus(`자동계산 완료 · ${provenance.library || 'engine'} ${provenance.library_version || ''} · ${provenance.timezone || ''} · 진태양시 보정 ${provenance.true_solar_time_correction ? '적용' : '미적용'}${dwNote}`, 'ok');
   }
 
@@ -235,15 +247,16 @@
     btn.disabled = true;
     btn.textContent = '사주 계산 중…';
     const gender = $('cpv4Gender')?.value || '';
-    try { localStorage.setItem(GENDER_KEY, gender); } catch {}
+    const hourBranch = $('cpv4HourBranch')?.value || '';
+    try { localStorage.setItem(GENDER_KEY, gender); localStorage.setItem(HOUR_OVERRIDE_KEY, hourBranch); } catch {}
 
     // 1) In-browser engine (@orrery/core): no server, no cold start.
     const engine = window.LUNEA_ORRERY_ENGINE_V1;
     if (engine) {
       setSajuStatus('기기 안에서 사주를 계산 중…');
       try {
-        const data = await engine.fourPillars({birthDate, birthTime, birthPlace, gender});
-        const record = {birthDate,birthTime,birthPlace,gender,data,savedAt:new Date().toISOString()};
+        const data = await engine.fourPillars({birthDate, birthTime, birthPlace, gender, hourBranch});
+        const record = {birthDate,birthTime,birthPlace,gender,hourBranch,data,savedAt:new Date().toISOString()};
         localStorage.setItem(AUTO_KEY, JSON.stringify(record));
         applyAutoResult(data, true);
         setManualVisible(false);
@@ -353,7 +366,8 @@
     let saved = null;
     try { saved = JSON.parse(localStorage.getItem(AUTO_KEY) || 'null'); } catch {}
     return !!(saved?.data && saved.birthDate === ($('birthDate')?.value || '') && saved.birthTime === ($('birthTime')?.value || '')
-      && saved.birthPlace === ($('birthPlace')?.value?.trim() || '') && (saved.gender || '') === ($('cpv4Gender')?.value || ''));
+      && saved.birthPlace === ($('birthPlace')?.value?.trim() || '') && (saved.gender || '') === ($('cpv4Gender')?.value || '')
+      && (saved.hourBranch || '') === ($('cpv4HourBranch')?.value || ''));
   }
 
   let autoTimer = 0;
@@ -368,7 +382,7 @@
   }
 
   function wireAutoCalc() {
-    ['birthDate','birthTime','birthPlace','cpv4Gender'].forEach(id => {
+    ['birthDate','birthTime','birthPlace','cpv4Gender','cpv4HourBranch'].forEach(id => {
       const el = $(id);
       if (!el || el.dataset.cpv4Auto === '1') return;
       el.dataset.cpv4Auto = '1';

@@ -630,6 +630,10 @@
       profileLine('기타 확인사항', d.special),
       profileLine('현재 대운(엔진 계산)', window.LUNEA_ORRERY_ENGINE_V1?.userDaewoonLine?.() || ''),
       ...sajuTiming,
+      ...(() => {
+        const zw = T?.userZiweiLines?.() || [];
+        return zw.length ? [``, `[ZIWEI DOUSHU · 자미두수]`, ...zw] : [];
+      })(),
       ``,
       `[THAI ASTROLOGY · 태국점성술]`,
       profileLine('출생 요일', p.thaiDay),
@@ -638,7 +642,7 @@
       `※ 위 Tarot 교차 조응은 태국 전통 원전의 고유 타로 대응이 아니라 LUNEA의 보조 상징 레이어다.`,
       ``,
       `[프로필 체계 사용 규칙]`,
-      `1. Western Astrology(서양점성술), Saju(사주명리), Thai Astrology(태국점성술)를 서로 다른 전통 체계로 취급한다.`,
+      `1. Western Astrology(서양점성술), Saju(사주명리), Ziwei Doushu(자미두수), Thai Astrology(태국점성술)를 서로 다른 전통 체계로 취급한다.`,
       `2. 서로 다른 체계의 개념을 같은 개념처럼 1:1 치환하지 않는다.`,
       `3. 질문 원문·스프레드 포지션·실제 뽑힌 RWS 카드가 기본이며, 프로필은 이를 보조한다.`,
       `4. 계산되지 않은 행성 위치·하우스·각·리턴·트랜짓을 추정하거나 지어내지 않는다.`,
