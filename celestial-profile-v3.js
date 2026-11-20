@@ -432,7 +432,7 @@
   function renderNatalSnapshot() {
     const grid = $('cpv3NatalGrid');
     if (!grid) return;
-    const natal = safeJSON(NATAL_KEY, null);
+    const natal = safeJSON(NATAL_KEY, null) || window.LUNEA_ORRERY_TIMING_V1?.engineNatal?.() || null;
     grid.replaceChildren();
 
     if (!natal || !Object.keys(natal).length) {
@@ -604,7 +604,10 @@
     const d = p.sajuDetail || {};
     const pi = d.pillars || {};
     const settings = readSettings();
-    const natalLines = natalPromptSummary();
+    const T = window.LUNEA_ORRERY_TIMING_V1;
+    const western = T?.userWesternLines?.() || {natal:'', extra:[]};
+    const natalLines = [natalPromptSummary() || western.natal, ...western.extra].filter(Boolean).join('\n');
+    const sajuTiming = T?.userSajuLines?.() || [];
 
     return [
       `[CELESTIAL PROFILE V3 — 서로 다른 체계를 분리해서 참고]`,
@@ -626,6 +629,7 @@
       profileLine('기신', d.gishin),
       profileLine('기타 확인사항', d.special),
       profileLine('현재 대운(엔진 계산)', window.LUNEA_ORRERY_ENGINE_V1?.userDaewoonLine?.() || ''),
+      ...sajuTiming,
       ``,
       `[THAI ASTROLOGY · 태국점성술]`,
       profileLine('출생 요일', p.thaiDay),
@@ -700,4 +704,5 @@
   } else {
     migrateAndBuild();
   }
+  window.addEventListener('lunea:engine-natal-updated', () => { try { renderNatalSnapshot(); } catch {} });
 })();

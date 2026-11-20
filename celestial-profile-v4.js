@@ -249,6 +249,11 @@
         setManualVisible(false);
         btn.disabled = false;
         btn.textContent = '✦ 사주 4주 자동 계산';
+        // Western natal + today's transits from the same engine, in the background.
+        const T = window.LUNEA_ORRERY_TIMING_V1;
+        if (T) T.ensureUserNatal().then(() => T.refreshTransits()).then(() => {
+          try { window.dispatchEvent(new CustomEvent('lunea:engine-natal-updated')); } catch {}
+        }).catch(err => console.warn('LUNEA engine natal skipped', err));
         return;
       } catch (err) {
         console.warn('LUNEA orrery engine failed, falling back to Astro Core', err);
