@@ -78,6 +78,7 @@
       const field = fieldContainer(id);
       if (field) grid.appendChild(field);
     });
+    window.LUNEA_PLACE_PICKER?.attach($('birthPlace'));
     const genderField = document.createElement('div');
     genderField.className = 'field';
     genderField.innerHTML = '<label>성별 (대운 계산용)</label><select id="cpv4Gender"><option value="">선택 안 함</option><option value="F">여성</option><option value="M">남성</option></select>';
@@ -376,6 +377,9 @@
     autoTimer = setTimeout(() => {
       setThaiDayFromBirth();
       const ready = /^\d{4}-\d{2}-\d{2}$/.test($('birthDate')?.value || '') && /^\d{2}:\d{2}/.test($('birthTime')?.value || '') && ($('birthPlace')?.value?.trim() || '').length >= 2;
+      // Undo the legacy date-table sun sign right away when the natal is known.
+      const T = window.LUNEA_ORRERY_TIMING_V1;
+      if (T) T.syncSunSign(T.engineNatal());
       if (!ready || autoRecordMatches() || !window.LUNEA_ORRERY_ENGINE_V1) return;
       calculateSaju({auto:true});
     }, 700);

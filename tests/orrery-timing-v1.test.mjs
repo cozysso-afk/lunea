@@ -72,3 +72,19 @@ assert.match(built, /- 오늘 트랜짓 스냅샷\(엔진 계산\): 표시된 �
 assert.match(read('lunea-final-prompt-priority-v1.js'), /「오늘 운」과 「오늘 운과 원국의 관계」는 계산 시각의 스냅샷/);
 
 console.log('orrery-timing-v1 ok');
+
+// Sun sign follows the computed Sun, never the legacy 3/21 → Aries date table.
+store.set('LUNEA_USER_PROFILE', JSON.stringify({zodiac:'Aries ♈ (양자리)'}));
+globalThis.document = {getElementById: id => id === 'zodiac' ? zodiacSel : null};
+const zodiacSel = {value:'Aries ♈ (양자리)', options:['Aries ♈ (양자리)','Pisces ♓ (물고기자리)'].map(v => ({value:v, textContent:v}))};
+assert.equal(T.syncSunSign(nat), true);
+assert.equal(zodiacSel.value, 'Pisces ♓ (물고기자리)');
+assert.equal(JSON.parse(store.get('LUNEA_USER_PROFILE')).zodiac, 'Pisces ♓ (물고기자리)');
+delete globalThis.document;
+
+// Birth place resolution: region-qualified names and added cities keep real coordinates.
+assert.equal(E.resolveCity('광주(경기도)').label, '광주 (경기도)');
+assert.ok(Math.abs(E.resolveCity('광주').lat - 35.1595) < 0.01);
+assert.equal(E.resolveCity('나주').label, '나주 (전라남도)');
+assert.equal(E.resolveCity('없는도시').fallback, true);
+console.log('sun sign + place ok');
