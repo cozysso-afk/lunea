@@ -415,7 +415,10 @@
     addStyles();
     return syncStrip();
   }
+  // Attach after the page has fully loaded and settled, so boot-time card and
+  // reading modules keep their original timing.
+  function lateBoot(){ setTimeout(() => { if (!boot()) setTimeout(boot, 1500); }, 900); }
   if (typeof document === 'undefined') return;
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { if (!boot()) setTimeout(boot, 300); }, {once:true});
-  else if (!boot()) setTimeout(boot, 300);
+  if (document.readyState === 'complete') lateBoot();
+  else W.addEventListener('load', lateBoot, {once:true});
 })();
