@@ -101,6 +101,25 @@
 
   async function calcSaju(partner){
     if (!partner.birthDate || !partner.birthPlace) throw new Error('생년월일과 출생지가 필요해.');
+    // In-browser engine first; the Astro Core server stays as a fallback.
+    const engine = W.LUNEA_ORRERY_ENGINE_V1;
+    if (engine) {
+      try {
+        const d = await engine.fourPillars({
+          birthDate:partner.birthDate, birthTime:partner.birthTime, birthPlace:partner.birthPlace,
+          gender:partner.gender, unknownTime:partner.timeUnknown
+        });
+        const keys = d.mode === 'exact' ? ['year','month','day','hour'] : ['year','month','day'];
+        const pillars = {hour:null};
+        keys.forEach(k => { pillars[k] = d.pillars[k] ? {display:d.pillars[k].display, ten_god_stem:d.pillars[k].ten_god_stem} : null; });
+        return {
+          mode:d.mode, pillars, unstable:d.unstable || [], dayStem:d.day_master?.stem || '',
+          trueSolar:false, engine:'orrery', daewoon:d.daewoon || []
+        };
+      } catch (err) {
+        console.warn('LUNEA partner: engine failed, using Astro Core', err);
+      }
+    }
     const api = String(localStorage.getItem(API_KEY) || DEFAULT_API).replace(/\/+$/,'');
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 120000);
@@ -158,8 +177,10 @@
     if (s?.pillars) {
       const keys = s.mode === 'exact' ? ['year','month','day','hour'] : ['year','month','day'];
       const parts = keys.map(k => s.pillars[k]?.display ? `${LABEL[k]} ${s.pillars[k].display}` : `${LABEL[k]} 미확정`);
-      rows.push(`- 사주 원국(Astro Core 계산): ${parts.join(' / ')}`);
+      rows.push(`- 사주 원국(${s.engine === 'orrery' ? '기기 내 엔진 계산' : 'Astro Core 계산'}): ${parts.join(' / ')}`);
       if (s.dayStem) rows.push(`- 사주 일간: ${s.dayStem}`);
+      const dw = s.daewoon?.length ? (W.LUNEA_ORRERY_ENGINE_V1?.daewoonText?.(s.daewoon) || '') : '';
+      if (dw) rows.push(`- 현재 대운(엔진 계산): ${dw}`);
       if (s.mode === 'range') {
         rows.push('- 출생시간 미상: 하루의 처음·끝 두 시점에서 같은 값이 나온 기둥만 표시했다. 시주는 제외했다.');
         if (s.unstable?.length) rows.push(`- 경계일로 미확정: ${s.unstable.map(k => LABEL[k]).join(', ')}`);
@@ -168,13 +189,13 @@
       rows.push('- 사주 원국: 계산 안 됨 (일간·기둥을 새로 만들어내지 않는다)');
     }
     if (p.memo) rows.push(`- 사용자 메모(사실 확인 안 된 사용자 진술): ${String(p.memo).slice(0,300)}`);
-    if (unknown) rows.push('- 시간 의존 항목 제외: 시주·대운 시작 시점·ASC·MC·하우스·달의 정확한 도수·자미두수 명반은 사용하지 않는다.');
+    if (unknown) rows.push('- 시간 의존 항목 제외: 시주·대운·ASC·MC·하우스·달의 정확한 도수·자미두수 명반은 사용하지 않는다.');
     return rows.join('\n');
   }
 
   function policyLine(prompt){
     if (!String(prompt || '').includes(MARKER)) return '';
-    return '- Partner Profile(상대방 출생 명식): 질문 대상이 이 사람일 때만 짧게 사용하고, 관련 없으면 0문장으로 생략한다. 상대의 평소 성향·관계에서 중요하게 여기는 것·감정 표현과 결정 방식을 설명하는 데만 쓰고, 지금의 속마음·연락 여부·사건 성립은 RWS 카드로 판단한다. 평소 성향과 현재 심리를 구분하고, 명식으로 속마음을 확인한 것처럼 쓰지 않는다. 제공된 값만 쓰며 미확정·제외 항목, 두 사람 사이의 정확한 각도, 대운·세운은 새로 만들지 않는다. 두 사람 일간·오행의 관계는 제공된 원국 범위에서 1~2문장까지만 다룬다.';
+    return '- Partner Profile(상대방 출생 명식): 질문 대상이 이 사람일 때만 짧게 사용하고, 관련 없으면 0문장으로 생략한다. 상대의 평소 성향·관계에서 중요하게 여기는 것·감정 표현과 결정 방식을 설명하는 데만 쓰고, 지금의 속마음·연락 여부·사건 성립은 RWS 카드로 판단한다. 평소 성향과 현재 심리를 구분하고, 명식으로 속마음을 확인한 것처럼 쓰지 않는다. 제공된 값만 쓰며 미확정·제외 항목, 두 사람 사이의 정확한 각도, 제공되지 않은 대운·세운은 새로 만들지 않는다. 제공된 대운은 상대가 지금 무게를 두는 삶의 과제를 설명하는 1문장 배경으로만 쓴다. 두 사람 일간·오행의 관계는 제공된 원국 범위에서 1~2문장까지만 다룬다.';
   }
 
   // ---------- UI ----------
@@ -369,7 +390,7 @@
     }
     const btn = $('lp1Save');
     btn.disabled = true;
-    status(timeUnknown ? '저장 완료 · 시간 모름이라 두 시점으로 사주를 계산 중… (서버가 자고 있으면 1분쯤 걸려)' : '저장 완료 · 사주 계산 중… (서버가 자고 있으면 1분쯤 걸려)');
+    status(timeUnknown ? '저장 완료 · 시간 모름이라 두 시점으로 사주를 계산 중…' : '저장 완료 · 사주 계산 중…');
     try {
       const saju = await calcSaju(partner);
       const s2 = load();
