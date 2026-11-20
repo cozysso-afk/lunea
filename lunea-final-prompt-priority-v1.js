@@ -119,6 +119,10 @@
     // evidence if a later feature replaced the earlier Message prompt wrapper.
     const message = W.LUNEA_MESSAGE_ORACLE_SUPPORT_V1?.promptBlock?.() || '';
     if (message && !hasMessageOracle(text)) text += `\n\n${message}`;
+    // Connected partner birth profile (lunea-partner-profile-v1.js), read live.
+    const partnerApi = W.LUNEA_PARTNER_PROFILE_V1;
+    const partner = partnerApi?.promptBlock?.() || '';
+    if (partner && !text.includes(partnerApi.marker)) text += `\n\n${partner}`;
     return collapseRepeatedTimingSector(W.LUNEA_INTERPRETATION_GLOSS_V2?.refreshEngineLedger?.(text) || text);
   }
 
@@ -223,6 +227,7 @@
       '5. 감정·의도·행동·결과와 원인·배경을 분리한다. 부담은 끌림 부재의 증거가 아니며, 끌림은 행동의 증거가 아니다. 근거가 부족하면 불확실하다고 답한다.',
       '6. interpretation_rule_version='+INTERPRETATION_RULE_VERSION+'. 보조 체계는 RWS 결론을 변경하는 독립 근거가 아니다. 관련 없으면 0문장으로 생략한다. 보조 체계 전체 분량은 최종 해석 본문의 최대 20% 이하로 한다.',
       westernPolicy(prompt),transitPolicy(prompt),returnPolicy(prompt),thaiPolicy(prompt),sajuPolicy(prompt),messagePolicy(prompt),
+      ...[W.LUNEA_PARTNER_PROFILE_V1?.policyLine?.(prompt) || ''].filter(Boolean),
       '10. Timing Oracle을 포함한 시기 보조는 사용자가 언제·어느 시기·시간 흐름을 실제로 묻는 경우에만 사용한다. 제공된 시간 창을 벗어난 정밀 날짜를 만들지 않고 사건 성립도 보장하지 않는다.',
       '11. 서양점성술·사주·태국점성술은 서로 다른 체계다. 보조 체계가 RWS와 충돌하면 절충하거나 새로운 복합 결론을 만들지 말고 보조 체계를 생략하고 RWS 결론을 유지한다.',
       ...answerShapeLines(prompt),
