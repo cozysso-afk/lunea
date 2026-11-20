@@ -201,9 +201,7 @@
   // constraint the cards show, answer first, state limits once, and close with
   // a short synthesis. These shape the answer only; they never add evidence.
   function answerShapeLines(prompt){
-    const q = questionFromPrompt(prompt);
-    const otherSubject = classify(q) === 'other_focused' ||
-      /(?:걔|그\s*사람|그\s*분|상대(?:방)?|전남친|전여친|전애인|그\s*남자|그\s*여자)[^?]{0,60}(?:연락|답장|올까|할까|돌아|다가|생각|마음|속마음|감정|의도)/i.test(q);
+    const otherSubject = isOtherSubject(prompt);
     const lines = [];
     if (otherSubject) {
       lines.push('12. [질문 초점] 질문 대상이 상대방이면 끝까지 상대의 생각·감정·행동 가능성을 중심으로 답한다. 상대에 대한 질문을 질문자의 불안·정보 부족·집착 분석으로 돌리지 않는다. 질문자 쪽 이야기는 질문에 직접 포함된 경우에만 짧게 다룬다.');
@@ -214,6 +212,20 @@
       '12-3. [종합 인사이트] 본문 끝에 "종합 인사이트"를 3~4문장으로 붙인다. 이미 분석한 근거를 함께 놓았을 때 드러나는 구조, 반복되기 쉬운 패턴, 앞으로 방향을 가를 핵심 변수 중 가장 중요한 것을 쉬운 말로 정리한다. 앞 결론의 반복이나 새로운 추측은 넣지 않는다.'
     );
     return lines;
+  }
+
+  function isOtherSubject(prompt){
+    const q = questionFromPrompt(prompt);
+    return classify(q) === 'other_focused' ||
+      /(?:걔|그\s*사람|그\s*분|상대(?:방)?|전남친|전여친|전애인|그\s*남자|그\s*여자)[^?]{0,60}(?:연락|답장|올까|할까|돌아|다가|생각|마음|속마음|감정|의도)/i.test(q);
+  }
+
+  function ziweiPolicy(prompt){
+    if (!String(prompt || '').includes('[ZIWEI DOUSHU · 자미두수]')) return [];
+    const other = isOtherSubject(prompt);
+    return [other
+      ? '- Ziwei Doushu(자미두수): 질문자의 명반이다. 타인의 생각·감정·행동·향후 사건을 질문자 명반으로 추론하지 않는다. 질문에 질문자의 관계 방식이 직접 포함된 경우에만 부처궁 등 1문장 보조할 수 있고, 관련 없으면 0문장으로 생략한다.'
+      : '- Ziwei Doushu(자미두수): 질문과 직접 관련된 궁 1~2개(예: 연애는 부처궁, 일은 관록궁)와 유년·대한의 큰 흐름만 1~2문장 보조한다. 유년은 음력년 단위의 큰 흐름이며 하루·특정 날짜의 사건으로 단정하지 않는다. 제공되지 않은 유월·유일·성요는 만들지 않는다. RWS 결론보다 강하게 확정하지 않으며, 관련 없으면 0문장으로 생략한다.'];
   }
 
   function finalBlock(prompt){
@@ -228,6 +240,7 @@
       '6. interpretation_rule_version='+INTERPRETATION_RULE_VERSION+'. 보조 체계는 RWS 결론을 변경하는 독립 근거가 아니다. 관련 없으면 0문장으로 생략한다. 보조 체계 전체 분량은 최종 해석 본문의 최대 20% 이하로 한다.',
       westernPolicy(prompt),transitPolicy(prompt),returnPolicy(prompt),thaiPolicy(prompt),sajuPolicy(prompt),messagePolicy(prompt),
       ...[W.LUNEA_PARTNER_PROFILE_V1?.policyLine?.(prompt) || ''].filter(Boolean),
+      ...ziweiPolicy(prompt),
       ...(String(prompt||'').includes('오늘 트랜짓 스냅샷(엔진 계산') ? ['- 오늘 트랜짓 스냅샷(엔진 계산): 표시된 시각의 행성 위치로 만든 3° 이내 각 목록이다. 질문이 지금의 흐름을 직접 묻고 RWS에서 이미 확인된 주제와 맞닿을 때만 1문장 보조하고, 하루 전체·미래 기간·정확한 사건 시각으로 확대하거나 상대의 결정을 확정하는 데 쓰지 않는다. 관련 없으면 0문장으로 생략한다.'] : []),
       '10. Timing Oracle을 포함한 시기 보조는 사용자가 언제·어느 시기·시간 흐름을 실제로 묻는 경우에만 사용한다. 제공된 시간 창을 벗어난 정밀 날짜를 만들지 않고 사건 성립도 보장하지 않는다.',
       '11. 서양점성술·사주·태국점성술은 서로 다른 체계다. 보조 체계가 RWS와 충돌하면 절충하거나 새로운 복합 결론을 만들지 말고 보조 체계를 생략하고 RWS 결론을 유지한다.',

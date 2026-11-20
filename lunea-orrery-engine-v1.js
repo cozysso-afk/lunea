@@ -117,8 +117,16 @@
     when both agree (solar-term and day-boundary edges are left unconfirmed);
     the hour pillar and 대운 are omitted.
   */
+  // Representative clock time (KST) inside each 시진 under the Korean
+  // 30-minute convention the engine uses for the hour pillar.
+  const HOUR_REP = {子:'00:30',丑:'02:30',寅:'04:30',卯:'06:30',辰:'08:30',巳:'10:30',午:'12:30',未:'14:30',申:'16:30',酉:'18:30',戌:'20:30',亥:'22:30'};
+  const HOUR_RANGE = {子:'23:30~01:30',丑:'01:30~03:30',寅:'03:30~05:30',卯:'05:30~07:30',辰:'07:30~09:30',巳:'09:30~11:30',午:'11:30~13:30',未:'13:30~15:30',申:'15:30~17:30',酉:'17:30~19:30',戌:'19:30~21:30',亥:'21:30~23:30'};
+
   async function fourPillars(input){
     const C = await load();
+    if (input.hourBranch && HOUR_REP[input.hourBranch]) {
+      input = {...input, birthTime: HOUR_REP[input.hourBranch], unknownTime: false, hourOverride: input.hourBranch};
+    }
     const d = parseDate(input.birthDate);
     if (!d) throw new Error('생년월일 형식이 올바르지 않아.');
     const city = findCity(C, input.birthPlace);
@@ -131,7 +139,8 @@
       timezone: 'Asia/Seoul',
       true_solar_time_correction: false,
       convention: '한국 만세력 관례 · KST 시계 기준(역사적 서머타임 반영) · 야자시(split)',
-      place_resolved: city ? C.formatCityName(city) : ''
+      place_resolved: city ? C.formatCityName(city) : '',
+      hour_override: input.hourOverride || ''
     };
 
     if (!unknown) {
@@ -197,9 +206,59 @@
     return daewoonText(rec.data.daewoon);
   }
 
+  // ---------- 자미두수 (sync; engine must already be loaded) ----------
+  // The 시진 always matches the saju hour pillar: an explicit hourBranch, or
+  // the branch the saju engine gives for the clock time (Korean 30-minute
+  // convention). The engine's own ziwei default uses whole-hour boundaries,
+  // which would put 07:15 in 辰 while saju says 卯; feeding the 시진's
+  // representative time keeps both systems on one 시진.
+  function ziweiChart(input){
+    const C = W.LUNEA_ORRERY_CORE;
+    const d = parseDate(input.birthDate);
+    if (!C || !d) return null;
+    let branch = HOUR_REP[input.hourBranch] ? input.hourBranch : '';
+    let t = parseTime(input.birthTime);
+    if (!branch) {
+      if (!t) return null;
+      branch = C.getFourPillars(d.year, d.month, d.day, t.hour, t.minute, 'split')[3][1];
+    }
+    // Keep a real 23:30-24:00 birth as entered; otherwise use the 시진's middle.
+    const useActual = !input.hourBranch && branch === '子' && t && t.hour === 23;
+    const [hh, mm] = useActual ? [t.hour, t.minute] : HOUR_REP[branch].split(':').map(Number);
+    const g = genderCode(input.gender);
+    const chart = C.createChart(d.year, d.month, d.day, hh, mm, g === 'M');
+    return {chart, branch, gender:g, overridden: !!HOUR_REP[input.hourBranch]};
+  }
+
+  const PALACE_KO = {命宮:'명궁',兄弟:'형제',夫妻:'부처',子女:'자녀',財帛:'재백',疾厄:'질액',遷移:'천이',交友:'교우',官祿:'관록',田宅:'전택',福德:'복덕',父母:'부모'};
+  function ziweiLines(input, now = new Date(), opts = {}){
+    const C = W.LUNEA_ORRERY_CORE;
+    const z = ziweiChart(input);
+    if (!C || !z) return [];
+    const {chart} = z;
+    const lines = [];
+    lines.push(`- 기준: 음력 ${chart.lunarYear}년 ${chart.isLeapMonth ? '윤' : ''}${chart.lunarMonth}월 ${chart.lunarDay}일 · ${z.branch}시(${HOUR_RANGE[z.branch]})${z.overridden ? ' · 사용자가 직접 지정한 시진' : ' · 사주 시주와 같은 시진'}`);
+    lines.push(`- 명궁 ${chart.mingGongZhi} · 신궁 ${chart.shenGongZhi} · 오행국 ${chart.wuXingJu.name}`);
+    const star = s => s.name + (s.siHua ? `(${s.siHua})` : '');
+    const order = opts.palaces || Object.keys(chart.palaces);
+    for (const name of order) {
+      const p = chart.palaces[name];
+      if (!p) continue;
+      lines.push(`- ${name}(${p.ganZhi}${p.isShenGong ? '·身' : ''}): ${p.stars.length ? p.stars.map(star).join(', ') : '주성 없음'}`);
+    }
+    const kst = new Intl.DateTimeFormat('en-CA', {timeZone:'Asia/Seoul', year:'numeric', month:'2-digit', day:'2-digit'}).format(now).split('-').map(Number);
+    const ly = C.getLunarYear(kst[0], kst[1], kst[2]);
+    const ln = C.calculateLiunian(chart, ly);
+    lines.push(`- 유년(${ly} 음력년, 큰 흐름): 유년 명궁 ${ln.mingGongZhi}, 본명 ${ln.natalPalaceAtMing}에 위치 · 유년 사화 ${Object.entries(ln.siHua).map(([k, v]) => `${k} ${v}`).join(', ')}`);
+    if (z.gender) lines.push(`- 현재 대한: ${ln.daxianPalaceName} (${ln.daxianAgeStart}~${ln.daxianAgeEnd}세)`);
+    else lines.push('- 대한: 성별 미입력으로 계산하지 않음');
+    return lines;
+  }
+
   W.LUNEA_ORRERY_ENGINE_V1 = {
     version: 1, engineVersion: VERSION, genderKey: GENDER_KEY,
-    load, fourPillars, currentDaewoon, daewoonText, userDaewoonLine,
+    load, fourPillars, currentDaewoon, daewoonText, userDaewoonLine, ziweiChart, ziweiLines,
+    HOUR_REP, HOUR_RANGE,
     isLoaded: () => !!W.LUNEA_ORRERY_CORE
   };
 })();
