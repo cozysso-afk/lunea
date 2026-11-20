@@ -429,6 +429,7 @@
   };
 
   function boot(){
+    return true;
     addStyles();
     if (!ensureButton()) return false;
     syncStrip();
