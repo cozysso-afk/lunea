@@ -26,7 +26,7 @@ vm.runInNewContext(source, {
 
 const api = window.LUNEA_FINAL_PROMPT_PRIORITY_V1;
 assert.ok(api, 'final prompt priority API missing');
-assert.equal(api.version, 4, 'RWS-bound auxiliary prompt policy must be V4');
+assert.equal(api.version, 5, 'RWS-bound auxiliary prompt policy must be V5');
 assert.equal(api.interpretationRuleVersion, 'v2', 'interpretation rule version must be v2');
 
 const natal = `
@@ -97,3 +97,17 @@ assert.ok(finalPromptOccurrences >= 1, 'Pages cache stamp must include the final
 assert.match(workflow, /Could not stamp both nested loader paths/);
 
 console.log('RWS-bound auxiliary tarot prompt priority regression tests: PASS');
+
+// V5 answer-shape rules: focus on the asked-about person, concrete reading, answer first, short synthesis.
+{
+  const mk = q => `[질문 원문]\n"${q}"\n\n[질문 유형]\n연애\n\n[뽑힌 카드]\n1. TEST`;
+  const other = api.build(mk('상대방에게서 다시 연락이 올까?'));
+  assert.match(other, /\[질문 초점\]/, 'questions about the other person keep that person in focus');
+  assert.match(other, /\[구체화\]/);
+  assert.match(other, /\[결론 먼저\]/);
+  assert.match(other, /종합 인사이트"를 3~4문장/);
+  assert.ok(other.trim().endsWith('관련 없는 보조 체계는 0문장으로 생략한다.'), 'final output line stays last');
+  const self = api.build(mk('이직 준비 어떻게 할까?'));
+  assert.doesNotMatch(self, /\[질문 초점\]/, 'self questions do not get the other-person focus rule');
+  assert.match(self, /종합 인사이트/);
+}
