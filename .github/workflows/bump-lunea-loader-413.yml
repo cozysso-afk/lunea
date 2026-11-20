@@ -52,6 +52,7 @@ jobs:
               'lunea-card-meanings-v1.js',
               'astro-horary-v1.js',
               'lunea-orrery-engine-v1.js',
+              'lunea-orrery-timing-v1.js',
               'lunea-partner-profile-v1.js',
               'lunea-share-links-v1.js',
           ):
