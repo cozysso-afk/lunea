@@ -205,9 +205,6 @@
       .lp1-empty{font-size:10.5px;color:var(--dim);padding:8px 2px}
       .lp1-form-actions{display:grid;grid-template-columns:1fr auto;gap:7px}
       #partnerStripTag{cursor:pointer}
-      /* Four header buttons: keep clear of the brand subtitle on phones. */
-      header .head-actions.lp1-four{gap:4px!important}
-      header .head-actions.lp1-four .icon-btn{width:34px!important;height:34px!important;border-radius:12px!important}
     `;
     document.head.appendChild(s);
   }
@@ -387,39 +384,25 @@
     }
   }
 
+  // Entry point lives on the profile strip, next to the user's own tags.
+  // (A fifth header button broke the mobile WebKit card-reveal e2e.)
   function syncStrip(){
     const tags = document.querySelector('#profileStrip .profile-tags');
-    const p = active();
+    if (!tags) return false;
     let tag = $('partnerStripTag');
-    if (!tags) return;
-    if (!p) { tag?.remove(); return; }
     if (!tag) {
       tag = document.createElement('span');
       tag.className = 'tag';
       tag.id = 'partnerStripTag';
+      tag.setAttribute('role','button');
+      tag.setAttribute('tabindex','0');
+      tag.title = '상대방 출생정보';
       tag.addEventListener('click', e => { e.stopPropagation(); open(); });
+      tag.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); open(); } });
       tags.appendChild(tag);
     }
-    tag.textContent = `💞 ${p.name || '상대'}`;
-  }
-
-  function ensureButton(){
-    const actions = document.querySelector('header .head-actions');
-    if (!actions) return false;
-    if (!$('partnerBtn')) {
-      const b = document.createElement('button');
-      b.className = 'icon-btn';
-      b.id = 'partnerBtn';
-      b.type = 'button';
-      b.title = '상대방 출생정보';
-      b.setAttribute('aria-label','상대방 출생정보');
-      b.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3.2"/><circle cx="16.5" cy="8" r="3.2"/><path d="M2.8 20a5.3 5.3 0 0 1 10.4 0"/><path d="M16.5 19.8c-2.6-1.6-3.7-2.9-3.7-4.3a1.9 1.9 0 0 1 3.7-.6 1.9 1.9 0 0 1 3.7.6c0 1.4-1.1 2.7-3.7 4.3Z"/></svg>';
-      b.onclick = open;
-      const profileBtn = $('profileBtn');
-      actions.classList.add('lp1-four');
-      if (profileBtn) profileBtn.insertAdjacentElement('afterend', b);
-      else actions.appendChild(b);
-    }
+    const p = active();
+    tag.textContent = p ? `💞 ${p.name || '상대'}` : '💞 상대 +';
     return true;
   }
 
@@ -430,9 +413,7 @@
 
   function boot(){
     addStyles();
-    if (!ensureButton()) return false;
-    syncStrip();
-    return true;
+    return syncStrip();
   }
   if (typeof document === 'undefined') return;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { if (!boot()) setTimeout(boot, 300); }, {once:true});
