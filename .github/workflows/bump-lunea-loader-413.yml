@@ -55,6 +55,7 @@ jobs:
               'lunea-orrery-timing-v1.js',
               'lunea-partner-profile-v1.js',
               'lunea-share-links-v1.js',
+              'lunea-profile-slots-v1.js',
           ):
               pattern = re.escape(asset) + r'\?v=[^"\']+'
               replacement = f'{asset}?v={build}'
