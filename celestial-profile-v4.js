@@ -31,7 +31,6 @@
       .cpv4-shared-head span{font-size:8.5px;color:#b6a8cb;border:1px solid rgba(189,164,248,.16);border-radius:999px;padding:3px 6px}
       .cpv4-birth-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}
       .cpv4-birth-grid .field{min-width:0;margin:0}
-      .cpv4-birth-grid .field:last-child{grid-column:1/-1}
       .cpv4-birth-grid input,.cpv4-birth-grid select{width:100%;min-width:0;box-sizing:border-box}
       .cpv4-note{font-size:9.4px;line-height:1.5;color:var(--dim);margin:4px 0 0}
       .cpv4-auto{margin:9px 0 12px;padding:12px;border-radius:15px;border:1px solid rgba(255,210,125,.17);background:linear-gradient(145deg,rgba(255,210,125,.055),rgba(189,164,248,.05))}
@@ -53,7 +52,7 @@
       .cpv4-vedic-policy{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
       .cpv4-vedic-policy div{padding:9px;border-radius:11px;border:1px solid rgba(189,164,248,.13);background:rgba(189,164,248,.04)}
       .cpv4-vedic-policy b{display:block;font-size:9.5px;color:#e8defa}.cpv4-vedic-policy span{display:block;margin-top:2px;font-size:8.6px;color:var(--dim)}
-      @media(max-width:380px){#cpv3Tabs.cpv4-tabs .cpv3-tab{font-size:8.4px}.cpv4-pillars{grid-template-columns:1fr 1fr}.cpv4-birth-grid{grid-template-columns:1fr}.cpv4-birth-grid .field:last-child{grid-column:auto}.cpv4-auto-actions{grid-template-columns:1fr}.cpv4-vedic-policy{grid-template-columns:1fr}}
+      @media(max-width:380px){#cpv3Tabs.cpv4-tabs .cpv3-tab{font-size:8.4px}.cpv4-pillars{grid-template-columns:1fr 1fr}.cpv4-birth-grid{grid-template-columns:1fr}.cpv4-auto-actions{grid-template-columns:1fr}.cpv4-vedic-policy{grid-template-columns:1fr}}
     `;
     document.head.appendChild(s);
   }
@@ -68,7 +67,7 @@
     section.className = 'cpv4-shared-birth';
     section.innerHTML = `
       <div class="cpv4-shared-head"><b>COMMON · 출생정보</b><span>한 번 입력 · 모든 체계 공유</span></div>
-      <p class="cpv4-note">생년월일 · 출생시각 · 출생지를 한 번만 입력해. Western, 사주, Thai, Vedic 계산이 이 값을 공통 원본으로 사용해.</p>
+      <p class="cpv4-note">생년월일 · 출생시각 · 출생지를 한 번만 입력해. 다 채우면 사주 4주와 태국 출생 요일이 자동으로 계산돼. Western, Vedic 계산도 이 값을 공통 원본으로 사용해.</p>
       <div class="cpv4-birth-grid" id="cpv4BirthGrid"></div>
     `;
     tabs.insertAdjacentElement('beforebegin', section);
@@ -77,6 +76,11 @@
       const field = fieldContainer(id);
       if (field) grid.appendChild(field);
     });
+    const genderField = document.createElement('div');
+    genderField.className = 'field';
+    genderField.innerHTML = '<label>성별 (대운 계산용)</label><select id="cpv4Gender"><option value="">선택 안 함</option><option value="F">여성</option><option value="M">남성</option></select>';
+    grid.appendChild(genderField);
+    try { $('cpv4Gender').value = localStorage.getItem(GENDER_KEY) || ''; } catch {}
 
     const oldGrid = $('cpv3BirthGrid');
     if (oldGrid) oldGrid.hidden = true;
@@ -217,12 +221,13 @@
     if (btn) btn.dataset.open = show ? '1' : '0';
   }
 
-  async function calculateSaju() {
+  async function calculateSaju(opts = {}) {
+    const auto = !!opts.auto;
     const birthDate = $('birthDate')?.value || '';
     const birthTime = $('birthTime')?.value || '';
     const birthPlace = $('birthPlace')?.value?.trim() || '';
     if (!birthDate || !birthTime || !birthPlace) {
-      setSajuStatus('공통 출생정보의 생년월일 · 출생시각 · 출생지를 먼저 입력해.', 'err');
+      if (!auto) setSajuStatus('공통 출생정보의 생년월일 · 출생시각 · 출생지를 먼저 입력해.', 'err');
       return;
     }
     const btn = $('cpv4SajuCalc');
@@ -248,6 +253,13 @@
       } catch (err) {
         console.warn('LUNEA orrery engine failed, falling back to Astro Core', err);
       }
+    }
+    if (auto) {
+      // Automatic runs never wake the server; the button still can.
+      setSajuStatus('자동계산이 안 됐어 · 아래 「사주 4주 자동 계산」 버튼으로 다시 시도해줘.', 'err');
+      btn.disabled = false;
+      btn.textContent = '✦ 사주 4주 자동 계산';
+      return;
     }
 
     // 2) Fallback: Astro Core server.
@@ -294,14 +306,13 @@
       <p class="cpv4-note">계산은 이 기기 안에서 해(@orrery/core · 한국 만세력 관례). 안 되면 Astro Core 서버로 넘어가.</p>
       <div class="cpv4-pillars" id="cpv4Pillars"><div class="cpv4-pillar"><small>년주</small><b>—</b></div><div class="cpv4-pillar"><small>월주</small><b>—</b></div><div class="cpv4-pillar"><small>일주</small><b>—</b></div><div class="cpv4-pillar"><small>시주</small><b>—</b></div></div>
       <div class="cpv4-elements" id="cpv4Elements"></div>
-      <div class="field" style="margin:9px 0 0"><label>성별 (대운 계산용)</label><select id="cpv4Gender"><option value="">선택 안 함</option><option value="F">여성</option><option value="M">남성</option></select></div>
       <div class="cpv4-auto-actions"><button type="button" id="cpv4SajuCalc">✦ 사주 4주 자동 계산</button><button type="button" id="cpv4SajuManual">직접 수정</button></div>
       <div class="cpv4-status" id="cpv4SajuStatus">자동 계산 전 · 기존 수동 입력값은 삭제하지 않아.</div>
     `;
     if (intro?.parentElement === panel) intro.insertAdjacentElement('afterend', section);
     else panel.prepend(section);
-    $('cpv4SajuCalc').addEventListener('click', calculateSaju);
-    try { const g = localStorage.getItem(GENDER_KEY) || ''; if ($('cpv4Gender')) $('cpv4Gender').value = g; } catch {}
+    $('cpv4SajuCalc').addEventListener('click', () => calculateSaju());
+    wireAutoCalc();
     $('cpv4SajuManual').addEventListener('click', () => setManualVisible($('cpv4SajuManual').dataset.open !== '1'));
 
     let saved = null;
@@ -310,6 +321,55 @@
     if (sameBirth && saved.data) applyAutoResult(saved.data, false);
     setManualVisible(false);
     return true;
+  }
+
+  // ---------- automatic calculation while typing birth data ----------
+  const THAI_WEEK = ['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+  function setThaiDayFromBirth() {
+    const sel = $('thai');
+    const date = $('birthDate')?.value || '';
+    if (!sel || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    const idx = new Date(`${date}T12:00:00`).getDay();
+    let label = THAI_WEEK[idx];
+    if (idx === 3) {
+      const time = $('birthTime')?.value || '';
+      if (!/^\d{2}:\d{2}/.test(time)) return;  // 낮/밤 needs the birth time
+      const h = +time.slice(0,2);
+      label = h >= 6 && h < 18 ? '수요일 낮' : '수요일 밤';
+    }
+    const option = [...sel.options].find(o => String(o.value).split('|')[0] === label);
+    if (option && sel.value !== option.value) {
+      sel.value = option.value;
+      sel.dispatchEvent(new Event('change', {bubbles:true}));
+    }
+  }
+
+  function autoRecordMatches() {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(AUTO_KEY) || 'null'); } catch {}
+    return !!(saved?.data && saved.birthDate === ($('birthDate')?.value || '') && saved.birthTime === ($('birthTime')?.value || '')
+      && saved.birthPlace === ($('birthPlace')?.value?.trim() || '') && (saved.gender || '') === ($('cpv4Gender')?.value || ''));
+  }
+
+  let autoTimer = 0;
+  function scheduleAutoCalc() {
+    clearTimeout(autoTimer);
+    autoTimer = setTimeout(() => {
+      setThaiDayFromBirth();
+      const ready = /^\d{4}-\d{2}-\d{2}$/.test($('birthDate')?.value || '') && /^\d{2}:\d{2}/.test($('birthTime')?.value || '') && ($('birthPlace')?.value?.trim() || '').length >= 2;
+      if (!ready || autoRecordMatches() || !window.LUNEA_ORRERY_ENGINE_V1) return;
+      calculateSaju({auto:true});
+    }, 700);
+  }
+
+  function wireAutoCalc() {
+    ['birthDate','birthTime','birthPlace','cpv4Gender'].forEach(id => {
+      const el = $(id);
+      if (!el || el.dataset.cpv4Auto === '1') return;
+      el.dataset.cpv4Auto = '1';
+      el.addEventListener('change', scheduleAutoCalc);
+      if (id === 'birthPlace') el.addEventListener('input', scheduleAutoCalc);
+    });
   }
 
   function bootOnce() {
