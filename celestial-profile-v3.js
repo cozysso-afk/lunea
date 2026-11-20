@@ -625,6 +625,7 @@
       profileLine('희신', d.heeshin),
       profileLine('기신', d.gishin),
       profileLine('기타 확인사항', d.special),
+      profileLine('현재 대운(엔진 계산)', window.LUNEA_ORRERY_ENGINE_V1?.userDaewoonLine?.() || ''),
       ``,
       `[THAI ASTROLOGY · 태국점성술]`,
       profileLine('출생 요일', p.thaiDay),
