@@ -148,9 +148,11 @@
   W.LUNEA_SHARE_LINKS_V1 = {version:1, apps:APPS, open, share};
 
   function boot(){ addStyles(); return ensureButton(); }
-  // Theme modules may rebuild the engine row after boot; put the button back.
-  let tries = 0;
-  const keep = setInterval(() => { tries += 1; if (typeof document !== 'undefined') ensureButton(); if (tries > 40) clearInterval(keep); }, 250);
+  // Theme modules may rebuild the engine row once after boot; check again
+  // a couple of times after load instead of polling.
+  if (typeof W.addEventListener === 'function') {
+    W.addEventListener('load', () => { setTimeout(ensureButton, 600); setTimeout(ensureButton, 2500); }, {once:true});
+  }
   if (typeof document === 'undefined') return;
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { if (!boot()) setTimeout(boot, 300); }, {once:true});
   else if (!boot()) setTimeout(boot, 300);
