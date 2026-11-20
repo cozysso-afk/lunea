@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+<script src="./lunea-privacy-guard-v1.js?v=2"></script>
+<script>
+if (!window.__LUNEA_PRIVACY_GUARD_V1__) {
+  window.fetch = () => Promise.reject(new Error('개인정보 보호 기능을 불러오지 못했습니다. 페이지를 새로고침해 주세요.'));
+}
+</script>
 <script id="luneaBootGateV29">
 (()=>{
   const root=document.documentElement;
@@ -787,6 +793,5 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden){document.
   <script src="./lunea-profile-slots-v1.js?v=a1b9853dc930"></script>
   <script src="./interpretation-gloss-v1.js?v=lean-prompt-20261022"></script>
   
-  <script src="./lunea-privacy-guard-v1.js?v=1"></script>
 </body>
 </html>

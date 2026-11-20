@@ -1,0 +1,20 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+
+const calls = [];
+const storage = new Map([['LUNEA_PARTNERS_V1', JSON.stringify({partners:[{name:'밍', birthPlace:'샘플시'}]})]]);
+const window = {fetch:(url, init) => calls.push(init), confirm:() => false};
+const context = {window, URL, document:{baseURI:'https://example.org/'}, localStorage:{getItem:key => storage.get(key)}};
+vm.runInNewContext(readFileSync(new URL('../lunea-privacy-guard-v1.js', import.meta.url),'utf8'), context);
+const url = new URL('https://generativelanguage.googleapis.com/v1beta/models/test:generateContent?key=test');
+const post = body => window.fetch(url,{method:'POST',body:JSON.stringify(body)});
+const message = {parts:[{text:'밍 샘플시 2002년 3월 12일 test@example.org 카드 별'}]};
+await post({contents:[message], systemInstruction:message});
+assert.doesNotMatch(calls[0].body,/밍|샘플시|2002|example.org/);
+assert.match(calls[0].body,/카드 별/);
+await assert.rejects(post({contents:[{parts:[{inlineData:{data:'sample'}}]}]}));
+await assert.rejects(window.fetch('https://lunea-astro-api.onrender.com/v1/natal',{method:'POST'}));
+assert.equal(calls.length,1);
+await window.fetch('https://generativelanguage.googleapis.com/v1beta/models?key=test');
+assert.equal(calls.length,2);
