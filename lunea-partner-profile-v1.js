@@ -220,7 +220,12 @@
       .lp1-actions button.on{border-color:rgba(255,190,214,.55);color:#ffd6e6}
       .lp1-row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
       .lp1-row .field{min-width:0;margin:0 0 8px}
-      .lp1-row input,.lp1-row select{width:100%;min-width:0;box-sizing:border-box}
+      .lp1-row input,.lp1-row select{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+      /* iOS Safari: empty date/time inputs ignore width and collapse or overflow. */
+      #partnerOverlay input[type=date],#partnerOverlay input[type=time]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;min-height:46px;box-sizing:border-box;text-align:left;line-height:1.2}
+      #partnerOverlay input[type=date]::-webkit-date-and-time-value,#partnerOverlay input[type=time]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}
+      #partnerOverlay input[type=time]:disabled{opacity:.45}
+      #partnerOverlay .lp1-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
       .lp1-check{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--dim);margin:-2px 0 10px}
       .lp1-check input{width:auto}
       .lp1-status{font-size:9.6px;line-height:1.5;color:var(--dim);margin-top:7px;min-height:14px}
@@ -248,7 +253,7 @@
         <div class="sub" id="lp1FormTitle" style="margin-top:6px">새 사람 추가</div>
         <input type="hidden" id="lp1Id">
         <div class="lp1-row">
-          <div class="field"><label>이름/호칭</label><input type="text" id="lp1Name" maxlength="30" placeholder="예: 진"></div>
+          <div class="field"><label>이름/호칭</label><input type="text" id="lp1Name" maxlength="30" placeholder="예: 연준"></div>
           <div class="field"><label>관계</label><input type="text" id="lp1Relation" maxlength="30" placeholder="예: 썸, 전 연인"></div>
         </div>
         <div class="lp1-row">
@@ -257,7 +262,7 @@
         </div>
         <label class="lp1-check"><input type="checkbox" id="lp1Unknown"> 태어난 시간 모름</label>
         <div class="lp1-row">
-          <div class="field"><label>출생지</label><input type="text" id="lp1Place" maxlength="60" placeholder="예: 광주"></div>
+          <div class="field"><label>출생지</label><input type="text" id="lp1Place" maxlength="60" placeholder="도시 이름"></div>
           <div class="field"><label>성별</label><select id="lp1Gender"><option value="">선택 안 함</option><option>남성</option><option>여성</option></select></div>
         </div>
         <div class="field"><label>메모 (선택)</label><input type="text" id="lp1Memo" maxlength="300" placeholder="리딩에 참고할 짧은 맥락"></div>
@@ -274,6 +279,7 @@
     $('lp1Save').onclick = onSave;
     $('lp1Reset').onclick = () => fillForm(null);
     $('lp1List').addEventListener('click', onListClick);
+    W.LUNEA_PLACE_PICKER?.attach($('lp1Place'));
   }
 
   function open(){
@@ -322,6 +328,7 @@
     $('lp1Unknown').checked = !!p?.timeUnknown;
     $('lp1Time').disabled = !!p?.timeUnknown;
     $('lp1Place').value = p?.birthPlace || '';
+    W.LUNEA_PLACE_PICKER?.sync($('lp1Place'));
     $('lp1Gender').value = p?.gender || '';
     $('lp1Memo').value = p?.memo || '';
     $('lp1FormTitle').textContent = p ? `수정 중 · ${p.name || '이름 없음'}` : '새 사람 추가';
